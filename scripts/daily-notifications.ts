@@ -68,7 +68,7 @@ export async function sendDailyNotifications() {
         priorityId: priority._id
       })
         .sort({ createdAt: -1 })
-        .lean();
+        .lean() as any;
 
       const lastActivity = lastComment
         ? new Date(lastComment.createdAt)
