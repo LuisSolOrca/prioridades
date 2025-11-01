@@ -25,7 +25,8 @@ interface Priority {
   status: string;
   completionPercentage: number;
   userId: string;
-  initiativeId: string;
+  initiativeId?: string; // Mantener para compatibilidad
+  initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   weekStart: string;
   weekEnd: string;
 }
@@ -137,7 +138,11 @@ export default function AnalyticsPage() {
   });
 
   const initiativeStats = initiatives.map(initiative => {
-    const initiativePriorities = priorities.filter(p => p.initiativeId === initiative._id);
+    // Filtrar prioridades que incluyen esta iniciativa (compatibilidad con initiativeId e initiativeIds)
+    const initiativePriorities = priorities.filter(p => {
+      const priorityInitiativeIds = p.initiativeIds || (p.initiativeId ? [p.initiativeId] : []);
+      return priorityInitiativeIds.includes(initiative._id);
+    });
     return {
       initiative,
       count: initiativePriorities.length,
@@ -159,9 +164,12 @@ export default function AnalyticsPage() {
 
   const getUserStatsForInitiative = (initiativeId: string) => {
     return users.map(user => {
-      const userInitiativePriorities = priorities.filter(
-        p => p.userId === user._id && p.initiativeId === initiativeId
-      );
+      // Filtrar prioridades del usuario que incluyen esta iniciativa (compatibilidad con initiativeId e initiativeIds)
+      const userInitiativePriorities = priorities.filter(p => {
+        if (p.userId !== user._id) return false;
+        const priorityInitiativeIds = p.initiativeIds || (p.initiativeId ? [p.initiativeId] : []);
+        return priorityInitiativeIds.includes(initiativeId);
+      });
       const completed = userInitiativePriorities.filter(p => p.status === 'COMPLETADO').length;
       const avgCompletion = userInitiativePriorities.length > 0
         ? userInitiativePriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userInitiativePriorities.length
