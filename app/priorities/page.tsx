@@ -18,6 +18,20 @@ interface Initiative {
   isActive: boolean;
 }
 
+interface ChecklistItem {
+  _id?: string;
+  text: string;
+  completed: boolean;
+  createdAt?: string;
+}
+
+interface EvidenceLink {
+  _id?: string;
+  title: string;
+  url: string;
+  createdAt?: string;
+}
+
 interface Priority {
   _id?: string;
   title: string;
@@ -29,6 +43,8 @@ interface Priority {
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
+  checklist?: ChecklistItem[];
+  evidenceLinks?: EvidenceLink[];
   wasEdited?: boolean;
 }
 
@@ -47,7 +63,9 @@ export default function PrioritiesPage() {
     status: 'EN_TIEMPO',
     userId: '',
     weekStart: '',
-    weekEnd: ''
+    weekEnd: '',
+    checklist: [],
+    evidenceLinks: []
   });
   const [loading, setLoading] = useState(true);
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, 1 = next week

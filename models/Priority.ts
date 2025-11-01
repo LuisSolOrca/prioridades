@@ -2,6 +2,20 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 export type PriorityStatus = 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
 
+export interface IChecklistItem {
+  _id?: mongoose.Types.ObjectId;
+  text: string;
+  completed: boolean;
+  createdAt?: Date;
+}
+
+export interface IEvidenceLink {
+  _id?: mongoose.Types.ObjectId;
+  title: string;
+  url: string;
+  createdAt?: Date;
+}
+
 export interface IPriority {
   _id: mongoose.Types.ObjectId;
   title: string;
@@ -15,6 +29,8 @@ export interface IPriority {
   userId: mongoose.Types.ObjectId;
   initiativeId?: mongoose.Types.ObjectId; // Mantener para compatibilidad hacia atrás
   initiativeIds: mongoose.Types.ObjectId[]; // Nuevo campo para múltiples iniciativas
+  checklist: IChecklistItem[]; // Lista de tareas
+  evidenceLinks: IEvidenceLink[]; // Enlaces de evidencia
   createdAt: Date;
   updatedAt: Date;
   lastEditedAt?: Date;
@@ -81,6 +97,22 @@ const PrioritySchema = new Schema<IPriority>({
   },
   lastEditedAt: {
     type: Date,
+  },
+  checklist: {
+    type: [{
+      text: { type: String, required: true, trim: true },
+      completed: { type: Boolean, default: false },
+      createdAt: { type: Date, default: Date.now }
+    }],
+    default: []
+  },
+  evidenceLinks: {
+    type: [{
+      title: { type: String, required: true, trim: true },
+      url: { type: String, required: true, trim: true },
+      createdAt: { type: Date, default: Date.now }
+    }],
+    default: []
   },
 }, {
   timestamps: true,
