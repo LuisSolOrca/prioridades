@@ -10,7 +10,6 @@ import StatusBadge from '@/components/StatusBadge';
 import CommentsSection from '@/components/CommentsSection';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
-import { exportToPowerPoint } from '@/lib/exportToPowerPoint';
 import ReactMarkdown from 'react-markdown';
 
 interface User {
@@ -314,7 +313,31 @@ export default function DashboardPage() {
   const handleExportPowerPoint = async () => {
     try {
       const weekLabel = getWeekLabel(currentWeek.monday);
-      await exportToPowerPoint(priorities, users, initiatives, weekLabel);
+
+      const response = await fetch('/api/export/powerpoint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStart: currentWeek.monday.toISOString(),
+          weekEnd: currentWeek.friday.toISOString(),
+          weekLabel,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar el reporte');
+      }
+
+      // Download file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_Prioridades_${weekLabel.replace(/\s/g, '_')}.pptx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('Error exporting to PowerPoint:', error);
       alert('Error al exportar a PowerPoint. Por favor, intenta de nuevo.');
