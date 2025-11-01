@@ -73,9 +73,10 @@ interface UserPriorityCardProps {
   initiatives: Initiative[];
   isExpanded: boolean;
   onToggle: () => void;
+  onViewDetails: (priority: Priority) => void;
 }
 
-function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle }: UserPriorityCardProps) {
+function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle, onViewDetails }: UserPriorityCardProps) {
   const avgCompletion = priorities.length > 0
     ? priorities.reduce((sum, p) => sum + p.completionPercentage, 0) / priorities.length
     : 0;
@@ -143,7 +144,19 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle 
                   <div key={priority._id} className="border-l-4 pl-3 py-2 bg-gray-50 rounded" style={{ borderColor: initiative?.color }}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="font-medium text-gray-800 text-sm">{priority.title}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-gray-800 text-sm">{priority.title}</div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewDetails(priority);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 transition"
+                            title="Ver descripción detallada"
+                          >
+                            🔍
+                          </button>
+                        </div>
                         <div className="text-xs text-gray-500 mt-1">{initiative?.name}</div>
                       </div>
                       <StatusBadge status={priority.status} />
@@ -180,6 +193,7 @@ export default function DashboardPage() {
   const [currentWeek, setCurrentWeek] = useState(getWeekDates());
   const [loading, setLoading] = useState(true);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [selectedPriority, setSelectedPriority] = useState<Priority | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -250,6 +264,14 @@ export default function DashboardPage() {
       }
       return newSet;
     });
+  };
+
+  const handleViewDetails = (priority: Priority) => {
+    setSelectedPriority(priority);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedPriority(null);
   };
 
   if (status === 'loading' || loading) {
@@ -330,11 +352,112 @@ export default function DashboardPage() {
                 initiatives={initiatives}
                 isExpanded={expandedUsers.has(user._id)}
                 onToggle={() => toggleUser(user._id)}
+                onViewDetails={handleViewDetails}
               />
             ))}
           </div>
         </div>
       </div>
+
+      {/* Modal de Descripción Detallada */}
+      {selectedPriority && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={handleCloseModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    {selectedPriority.title}
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <StatusBadge status={selectedPriority.status} />
+                    <span className="text-sm text-gray-500">
+                      {initiatives.find(i => i._id === selectedPriority.initiativeId)?.name}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Descripción */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Descripción</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  {selectedPriority.description ? (
+                    <p className="text-gray-700 whitespace-pre-wrap">{selectedPriority.description}</p>
+                  ) : (
+                    <p className="text-gray-400 italic">Sin descripción</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Información Adicional */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Usuario</h3>
+                  <p className="text-gray-800">
+                    {users.find(u => u._id === selectedPriority.userId)?.name}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Iniciativa</h3>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor: initiatives.find(i => i._id === selectedPriority.initiativeId)?.color
+                      }}
+                    ></div>
+                    <p className="text-gray-800">
+                      {initiatives.find(i => i._id === selectedPriority.initiativeId)?.name}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Semana</h3>
+                  <p className="text-gray-800">
+                    {new Date(selectedPriority.weekStart).toLocaleDateString('es-MX')} - {new Date(selectedPriority.weekEnd).toLocaleDateString('es-MX')}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Avance</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-blue-600 h-3 rounded-full transition-all"
+                        style={{ width: `${selectedPriority.completionPercentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="font-semibold text-gray-800">{selectedPriority.completionPercentage}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón Cerrar */}
+              <div className="flex justify-end">
+                <button
+                  onClick={handleCloseModal}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
