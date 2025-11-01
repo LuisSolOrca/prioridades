@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       weekEnd: new Date(weekEnd)
     }).populate('userId', 'name email')
       .populate('initiativeIds', 'name color')
+      .populate('initiativeId', 'name color') // También popular el campo singular para compatibilidad
       .lean();
 
     // Obtener todas las iniciativas estratégicas
@@ -48,7 +49,20 @@ export async function POST(request: NextRequest) {
 
     // Preparar el contexto para la IA
     const prioritiesContext = priorities.map((p: any) => {
-      const initiativeNames = p.initiativeIds?.map((init: any) => init.name).join(', ') || 'Sin iniciativa';
+      // Manejar tanto initiativeIds (array) como initiativeId (singular) para compatibilidad
+      let initiativeNames = 'Sin iniciativa';
+
+      if (p.initiativeIds && p.initiativeIds.length > 0) {
+        // Usar initiativeIds si existe y tiene elementos
+        initiativeNames = p.initiativeIds
+          .filter((init: any) => init && init.name) // Filtrar nulls/undefined
+          .map((init: any) => init.name)
+          .join(', ');
+      } else if (p.initiativeId && p.initiativeId.name) {
+        // Fallback a initiativeId singular
+        initiativeNames = p.initiativeId.name;
+      }
+
       return {
         usuario: p.userId?.name || 'Usuario desconocido',
         titulo: p.title,
