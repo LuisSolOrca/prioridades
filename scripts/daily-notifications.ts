@@ -27,8 +27,12 @@ export async function sendDailyNotifications() {
     const results = {
       dueSoon: 0,
       inactive: 0,
-      initiativesAtRisk: 0
+      initiativesAtRisk: 0,
+      weekendReminders: 0
     };
+
+    // Si es viernes, también enviar recordatorios de fin de semana
+    const isFriday = now.getDay() === 5;
 
     // 1. Prioridades próximas a vencer (vencen mañana y no están completadas)
     console.log('[DAILY_NOTIFICATIONS] Checking priorities due soon...');
@@ -126,6 +130,19 @@ export async function sendDailyNotifications() {
             console.error(`[DAILY_NOTIFICATIONS] Error notifying initiative at risk for user ${userId}:`, error);
           }
         }
+      }
+    }
+
+    // 4. Si es viernes, enviar recordatorios de fin de semana
+    if (isFriday) {
+      console.log('[DAILY_NOTIFICATIONS] Friday - sending weekend reminders...');
+
+      // Importar función de weekend reminder
+      const { default: sendWeekendReminders } = await import('./weekend-reminder');
+      const weekendResult = await sendWeekendReminders();
+
+      if (weekendResult.success) {
+        results.weekendReminders = weekendResult.usersNotified || 0;
       }
     }
 
