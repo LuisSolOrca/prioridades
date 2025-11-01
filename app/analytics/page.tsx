@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { exportUserStats, exportInitiativeStats } from '@/lib/exportToExcel';
 
 interface User {
   _id: string;
@@ -106,6 +107,14 @@ export default function AnalyticsPage() {
     };
   }).sort((a, b) => b.count - a.count);
 
+  const handleExportUserStats = () => {
+    exportUserStats(userStats, 'Analitica_Usuarios');
+  };
+
+  const handleExportInitiativeStats = () => {
+    exportInitiativeStats(initiativeStats, 'Analitica_Iniciativas');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -116,7 +125,16 @@ export default function AnalyticsPage() {
           </h1>
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Rendimiento por Usuario</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Rendimiento por Usuario</h2>
+              <button
+                onClick={handleExportUserStats}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold text-sm"
+                title="Exportar a Excel"
+              >
+                📥 Exportar a Excel
+              </button>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -167,7 +185,16 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Distribución por Iniciativa Estratégica</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Distribución por Iniciativa Estratégica</h2>
+              <button
+                onClick={handleExportInitiativeStats}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold text-sm"
+                title="Exportar a Excel"
+              >
+                📥 Exportar a Excel
+              </button>
+            </div>
             <div className="space-y-4">
               {initiativeStats.map(stat => (
                 <div key={stat.initiative._id}>

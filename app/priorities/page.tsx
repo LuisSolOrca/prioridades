@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
+import { exportPriorities } from '@/lib/exportToExcel';
 
 interface Initiative {
   _id: string;
@@ -151,6 +152,12 @@ export default function PrioritiesPage() {
     }
   };
 
+  const handleExport = () => {
+    const users = [{ _id: (session!.user as any).id, name: session!.user?.name || 'Usuario', email: session!.user?.email || '' }];
+    const fileName = `Mis_Prioridades_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}`;
+    exportPriorities(priorities, users, initiatives, fileName);
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -164,7 +171,8 @@ export default function PrioritiesPage() {
 
   if (!session) return null;
 
-  const hasMoreThanFive = priorities.length > 5;
+  const activePriorities = priorities.filter(p => p.status !== 'COMPLETADO');
+  const hasMoreThanFive = activePriorities.length > 5;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,12 +183,21 @@ export default function PrioritiesPage() {
             <h1 className="text-3xl font-bold text-gray-800">
               📋 Mis Prioridades
             </h1>
-            <button
-              onClick={handleNew}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              + Nueva Prioridad
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleExport}
+                className="bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+                title="Exportar a Excel"
+              >
+                📥 Exportar a Excel
+              </button>
+              <button
+                onClick={handleNew}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                + Nueva Prioridad
+              </button>
+            </div>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -201,10 +218,10 @@ export default function PrioritiesPage() {
                 <span className="text-yellow-600 text-xl mr-3 mt-1">⚠️</span>
                 <div>
                   <h3 className="font-bold text-yellow-900 mb-1">
-                    Advertencia: Más de 5 prioridades
+                    Advertencia: Más de 5 prioridades activas
                   </h3>
                   <p className="text-sm text-yellow-700">
-                    Tienes {priorities.length} prioridades esta semana. Se recomienda mantener máximo 5 para asegurar el foco y cumplimiento.
+                    Tienes {activePriorities.length} prioridades activas esta semana (sin contar las completadas). Se recomienda mantener máximo 5 para asegurar el foco y cumplimiento.
                   </p>
                 </div>
               </div>

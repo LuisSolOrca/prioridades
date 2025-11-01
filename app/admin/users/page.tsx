@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { exportUsers } from '@/lib/exportToExcel';
 
 interface User {
   _id?: string;
@@ -200,6 +201,10 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleExport = () => {
+    exportUsers(users as any, 'Usuarios');
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -230,12 +235,21 @@ export default function AdminUsersPage() {
                 {activeCount} usuarios activos • {adminCount} administradores • {users.length} total
               </p>
             </div>
-            <button
-              onClick={handleNew}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
-            >
-              + Nuevo Usuario
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleExport}
+                className="bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-md"
+                title="Exportar a Excel"
+              >
+                📥 Exportar a Excel
+              </button>
+              <button
+                onClick={handleNew}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+              >
+                + Nuevo Usuario
+              </button>
+            </div>
           </div>
 
           {showForm ? (

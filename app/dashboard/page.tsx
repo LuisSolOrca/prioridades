@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
+import { exportPriorities } from '@/lib/exportToExcel';
 
 interface User {
   _id: string;
@@ -197,6 +198,11 @@ export default function DashboardPage() {
     setCurrentWeek(getWeekDates(newMonday));
   };
 
+  const handleExport = () => {
+    const fileName = `Dashboard_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}`;
+    exportPriorities(priorities, users, initiatives, fileName);
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -222,6 +228,13 @@ export default function DashboardPage() {
               📊 Dashboard de Prioridades
             </h1>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleExport}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
+                title="Exportar a Excel"
+              >
+                📥 Exportar a Excel
+              </button>
               <button
                 onClick={() => navigateWeek(-1)}
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"

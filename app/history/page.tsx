@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import { getWeekLabel } from '@/lib/utils';
+import { exportPriorities } from '@/lib/exportToExcel';
 
 interface User {
   _id: string;
@@ -74,7 +75,7 @@ export default function HistoryPage() {
     }
   };
 
-  const weekGroups = useMemo(() => {
+  const filteredPriorities = useMemo(() => {
     let filtered = priorities;
 
     if (selectedUser !== 'all') {
@@ -85,8 +86,12 @@ export default function HistoryPage() {
       filtered = filtered.filter(p => p.initiativeId === selectedInitiative);
     }
 
+    return filtered;
+  }, [priorities, selectedUser, selectedInitiative]);
+
+  const weekGroups = useMemo(() => {
     const groups: { [key: string]: Priority[] } = {};
-    filtered.forEach(priority => {
+    filteredPriorities.forEach(priority => {
       const weekKey = new Date(priority.weekStart).toISOString().split('T')[0];
       if (!groups[weekKey]) {
         groups[weekKey] = [];
@@ -100,7 +105,11 @@ export default function HistoryPage() {
         priorities
       }))
       .sort((a, b) => b.weekStart.getTime() - a.weekStart.getTime());
-  }, [priorities, selectedUser, selectedInitiative]);
+  }, [filteredPriorities]);
+
+  const handleExport = () => {
+    exportPriorities(filteredPriorities as any, users as any, initiatives as any, 'Historico_Prioridades');
+  };
 
   if (status === 'loading' || loading) {
     return (
@@ -120,9 +129,18 @@ export default function HistoryPage() {
       <Navbar />
       <div className="container mx-auto px-4 py-6">
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold text-gray-800">
-            📅 Histórico de Prioridades
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-gray-800">
+              📅 Histórico de Prioridades
+            </h1>
+            <button
+              onClick={handleExport}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
+              title="Exportar a Excel"
+            >
+              📥 Exportar a Excel
+            </button>
+          </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
