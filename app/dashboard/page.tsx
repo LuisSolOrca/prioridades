@@ -249,6 +249,10 @@ export default function DashboardPage() {
     setCurrentWeek(getWeekDates(newMonday));
   };
 
+  const goToCurrentWeek = () => {
+    setCurrentWeek(getWeekDates());
+  };
+
   const handleExport = () => {
     const fileName = `Dashboard_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}`;
     exportPriorities(priorities, users, initiatives, fileName);
@@ -311,6 +315,13 @@ export default function DashboardPage() {
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
               >
                 ←
+              </button>
+              <button
+                onClick={goToCurrentWeek}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+                title="Ir a la semana actual"
+              >
+                📅 Hoy
               </button>
               <div className="text-center">
                 <div className="text-sm text-gray-600">Semana del</div>
