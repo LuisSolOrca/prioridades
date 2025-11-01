@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/weekend-reminder",
+      "schedule": "0 18 * * 5"
+    }
+  ]
+}

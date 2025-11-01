@@ -1,0 +1,63 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface INotification extends Document {
+  _id: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  type: 'STATUS_CHANGE' | 'COMMENT' | 'MENTION' | 'WEEKEND_REMINDER' | 'PRIORITY_ASSIGNED';
+  title: string;
+  message: string;
+  priorityId?: mongoose.Types.ObjectId;
+  commentId?: mongoose.Types.ObjectId;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const NotificationSchema = new Schema<INotification>({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  type: {
+    type: String,
+    enum: ['STATUS_CHANGE', 'COMMENT', 'MENTION', 'WEEKEND_REMINDER', 'PRIORITY_ASSIGNED'],
+    required: true
+  },
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  message: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  priorityId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Priority'
+  },
+  commentId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Comment'
+  },
+  actionUrl: {
+    type: String,
+    trim: true
+  },
+  isRead: {
+    type: Boolean,
+    default: false,
+    index: true
+  }
+}, {
+  timestamps: true
+});
+
+// Índice compuesto para optimizar consultas de notificaciones no leídas por usuario
+NotificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+
+export default mongoose.models.Notification || mongoose.model<INotification>('Notification', NotificationSchema);

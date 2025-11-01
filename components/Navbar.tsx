@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import NotificationCenter from './NotificationCenter';
 
 interface NavButtonProps {
   label: string;
@@ -122,6 +123,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center space-x-4">
+              <NotificationCenter />
               <div className="text-right hidden lg:block">
                 <div className="text-sm font-semibold text-gray-800">{user.name}</div>
                 <div className="text-xs text-gray-500">{user.role === 'ADMIN' ? 'Administrador' : 'Usuario'}</div>
@@ -149,8 +151,13 @@ export default function Navbar() {
             <div className="py-2 space-y-1">
               {/* Información del usuario en móvil */}
               <div className="px-4 py-3 border-b border-gray-200">
-                <div className="text-sm font-semibold text-gray-800">{user.name}</div>
-                <div className="text-xs text-gray-500">{user.role === 'ADMIN' ? 'Administrador' : 'Usuario'}</div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-800">{user.name}</div>
+                    <div className="text-xs text-gray-500">{user.role === 'ADMIN' ? 'Administrador' : 'Usuario'}</div>
+                  </div>
+                  <NotificationCenter />
+                </div>
               </div>
 
               <NavButton

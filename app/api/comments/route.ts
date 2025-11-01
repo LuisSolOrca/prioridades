@@ -6,6 +6,7 @@ import Comment from '@/models/Comment';
 import Priority from '@/models/Priority';
 import User from '@/models/User';
 import { sendEmail, emailTemplates } from '@/lib/email';
+import { notifyComment, notifyMention } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,10 +74,10 @@ export async function POST(request: NextRequest) {
       .populate('userId', 'name email')
       .lean();
 
-    // Enviar notificación por email al dueño de la prioridad (solo para comentarios normales, no del sistema)
+    // Crear notificaciones y enviar emails (solo para comentarios normales, no del sistema)
     if (!isSystemComment) {
       try {
-        console.log('[EMAIL] Starting email notification process for comment');
+        console.log('[EMAIL] Starting notification process for comment');
         const priority = await Priority.findById(priorityId).lean();
 
         if (!priority) {
@@ -86,6 +87,52 @@ export async function POST(request: NextRequest) {
 
         const priorityOwner = await User.findById(priority.userId).lean();
         const commentAuthor = await User.findById((session.user as any).id).lean();
+
+        // Crear notificación in-app si no es el propio dueño quien comenta
+        if (priorityOwner && commentAuthor && priorityOwner._id.toString() !== commentAuthor._id.toString()) {
+          // Crear notificación de comentario
+          await notifyComment(
+            priorityOwner._id.toString(),
+            commentAuthor.name,
+            priority.title,
+            text.trim(),
+            priorityId,
+            comment._id.toString()
+          ).catch(err => console.error('[NOTIFICATION] Error creating comment notification:', err));
+        }
+
+        // Detectar menciones (@username) y crear notificaciones
+        const mentionRegex = /@(\w+)/g;
+        const mentions = text.match(mentionRegex);
+
+        if (mentions && commentAuthor) {
+          console.log('[NOTIFICATION] Mentions detected:', mentions);
+
+          // Extraer nombres de usuario únicos
+          const usernames = [...new Set(mentions.map(m => m.substring(1)))];
+
+          // Buscar usuarios mencionados por nombre (case-insensitive)
+          for (const username of usernames) {
+            try {
+              const mentionedUser = await User.findOne({
+                name: { $regex: new RegExp(`^${username}$`, 'i') }
+              }).lean();
+
+              if (mentionedUser && mentionedUser._id.toString() !== commentAuthor._id.toString()) {
+                await notifyMention(
+                  mentionedUser._id.toString(),
+                  commentAuthor.name,
+                  priority.title,
+                  text.trim(),
+                  priorityId,
+                  comment._id.toString()
+                ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
+              }
+            } catch (err) {
+              console.error(`[NOTIFICATION] Error finding user ${username}:`, err);
+            }
+          }
+        }
 
       console.log('[EMAIL] Priority owner:', priorityOwner?.email);
       console.log('[EMAIL] Comment author:', commentAuthor?.email);

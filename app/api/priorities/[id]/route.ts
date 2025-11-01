@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
+import { notifyStatusChange } from '@/lib/notifications';
 
 export async function GET(
   request: NextRequest,
@@ -63,6 +64,9 @@ export async function PUT(
 
     const body = await request.json();
 
+    // Guardar estado anterior para detectar cambios
+    const oldStatus = priority.status;
+
     // Preparar datos para actualizar
     const updateData: any = {
       ...body,
@@ -85,6 +89,21 @@ export async function PUT(
       updateData,
       { new: true, runValidators: true }
     );
+
+    // Notificar si el estado cambió
+    if (body.status && body.status !== oldStatus) {
+      try {
+        await notifyStatusChange(
+          priority.userId.toString(),
+          priority.title,
+          oldStatus,
+          body.status,
+          id
+        );
+      } catch (notifyError) {
+        console.error('Error sending status change notification:', notifyError);
+      }
+    }
 
     return NextResponse.json(updatedPriority);
   } catch (error: any) {
