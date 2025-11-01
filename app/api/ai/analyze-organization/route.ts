@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import User from '@/models/User';
 import StrategicInitiative from '@/models/StrategicInitiative';
+import AIPromptConfig from '@/models/AIPromptConfig';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,7 +59,33 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    const systemPrompt = `Eres un consultor experto en gestión estratégica y análisis organizacional. Tu tarea es analizar las prioridades semanales de un equipo y proporcionar insights valiosos.
+    const completedCount = priorities.filter((p: any) => p.status === 'COMPLETADO').length;
+    const inRiskCount = priorities.filter((p: any) => p.status === 'EN_RIESGO').length;
+    const blockedCount = priorities.filter((p: any) => p.status === 'BLOQUEADO').length;
+
+    // Obtener configuración de prompts desde la base de datos
+    const config = await AIPromptConfig.findOne({ promptType: 'organization_analysis', isActive: true });
+
+    let systemPrompt = '';
+    let userPrompt = '';
+    let temperature = 0.7;
+    let maxTokens = 2000;
+
+    if (config) {
+      // Usar configuración personalizada
+      systemPrompt = config.systemPrompt;
+      userPrompt = config.userPromptTemplate
+        .replace('{{prioritiesContext}}', JSON.stringify(prioritiesContext, null, 2))
+        .replace('{{initiativesContext}}', initiatives.map((init: any) => `- ${init.name}: ${init.description || 'Sin descripción'}`).join('\n'))
+        .replace('{{totalPriorities}}', priorities.length.toString())
+        .replace('{{completedCount}}', completedCount.toString())
+        .replace('{{inRiskCount}}', inRiskCount.toString())
+        .replace('{{blockedCount}}', blockedCount.toString());
+      temperature = config.temperature;
+      maxTokens = config.maxTokens;
+    } else {
+      // Fallback a prompts por defecto si no hay configuración
+      systemPrompt = `Eres un consultor experto en gestión estratégica y análisis organizacional. Tu tarea es analizar las prioridades semanales de un equipo y proporcionar insights valiosos.
 
 Analiza:
 1. **Alineación estratégica**: ¿Qué iniciativas estratégicas tienen más atención? ¿Hay desequilibrios?
@@ -69,7 +96,7 @@ Analiza:
 
 Responde en español, de manera profesional pero concisa. Usa formato markdown con secciones claras.`;
 
-    const userPrompt = `Analiza las siguientes prioridades semanales del equipo:
+      userPrompt = `Analiza las siguientes prioridades semanales del equipo:
 
 ${JSON.stringify(prioritiesContext, null, 2)}
 
@@ -77,11 +104,12 @@ Iniciativas estratégicas disponibles:
 ${initiatives.map((init: any) => `- ${init.name}: ${init.description || 'Sin descripción'}`).join('\n')}
 
 Total de prioridades: ${priorities.length}
-Prioridades completadas: ${priorities.filter((p: any) => p.status === 'COMPLETADO').length}
-Prioridades en riesgo: ${priorities.filter((p: any) => p.status === 'EN_RIESGO').length}
-Prioridades bloqueadas: ${priorities.filter((p: any) => p.status === 'BLOQUEADO').length}
+Prioridades completadas: ${completedCount}
+Prioridades en riesgo: ${inRiskCount}
+Prioridades bloqueadas: ${blockedCount}
 
 Proporciona un análisis completo considerando dependencias, alineación estratégica, riesgos y recomendaciones.`;
+    }
 
     // Llamar a la API de Groq
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -102,8 +130,8 @@ Proporciona un análisis completo considerando dependencias, alineación estrat�
             content: userPrompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature,
+        max_tokens: maxTokens,
       }),
     });
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import connectDB from '@/lib/mongodb';
+import AIPromptConfig from '@/models/AIPromptConfig';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,12 +29,25 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Preparar el prompt según el tipo
+    // Obtener configuración de prompts desde la base de datos
+    await connectDB();
+    const config = await AIPromptConfig.findOne({ promptType: type, isActive: true });
+
     let systemPrompt = '';
     let userPrompt = '';
+    let temperature = 0.7;
+    let maxTokens = 500;
 
-    if (type === 'title') {
-      systemPrompt = `Eres un asistente experto en gestión de proyectos y objetivos empresariales. Tu tarea es mejorar títulos de prioridades semanales para que sean:
+    if (config) {
+      // Usar configuración personalizada
+      systemPrompt = config.systemPrompt;
+      userPrompt = config.userPromptTemplate.replace('{{text}}', text);
+      temperature = config.temperature;
+      maxTokens = config.maxTokens;
+    } else {
+      // Fallback a prompts por defecto si no hay configuración
+      if (type === 'title') {
+        systemPrompt = `Eres un asistente experto en gestión de proyectos y objetivos empresariales. Tu tarea es mejorar títulos de prioridades semanales para que sean:
 - Concisos y directos (máximo 10-12 palabras)
 - Específicos y medibles cuando sea posible
 - Orientados a resultados
@@ -41,13 +56,13 @@ export async function POST(request: NextRequest) {
 
 No agregues explicaciones adicionales, solo devuelve el título mejorado.`;
 
-      userPrompt = `Mejora este título de prioridad semanal:
+        userPrompt = `Mejora este título de prioridad semanal:
 
 "${text}"
 
 Devuelve SOLO el título mejorado, sin comillas ni explicaciones adicionales.`;
-    } else {
-      systemPrompt = `Eres un asistente experto en gestión de proyectos y objetivos empresariales. Tu tarea es mejorar descripciones de prioridades semanales para que sean:
+      } else {
+        systemPrompt = `Eres un asistente experto en gestión de proyectos y objetivos empresariales. Tu tarea es mejorar descripciones de prioridades semanales para que sean:
 - Claras y específicas sobre qué se debe lograr
 - Incluyan pasos concretos cuando sea relevante
 - Mencionen resultados esperados o entregables
@@ -57,11 +72,12 @@ Devuelve SOLO el título mejorado, sin comillas ni explicaciones adicionales.`;
 
 No agregues títulos ni secciones, solo devuelve la descripción mejorada.`;
 
-      userPrompt = `Mejora esta descripción de prioridad semanal:
+        userPrompt = `Mejora esta descripción de prioridad semanal:
 
 "${text}"
 
 Devuelve SOLO la descripción mejorada, sin títulos ni explicaciones adicionales.`;
+      }
     }
 
     // Llamar a la API de Groq
@@ -83,8 +99,8 @@ Devuelve SOLO la descripción mejorada, sin títulos ni explicaciones adicionale
             content: userPrompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 500,
+        temperature,
+        max_tokens: maxTokens,
       }),
     });
 

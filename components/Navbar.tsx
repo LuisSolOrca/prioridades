@@ -112,6 +112,11 @@ export default function Navbar() {
                     active={pathname === '/admin/initiatives'}
                     onClick={() => router.push('/admin/initiatives')}
                   />
+                  <NavButton
+                    label="Config IA"
+                    active={pathname === '/admin/ai-config'}
+                    onClick={() => router.push('/admin/ai-config')}
+                  />
                 </>
               )}
             </div>
@@ -190,6 +195,12 @@ export default function Navbar() {
                     label="Iniciativas"
                     active={pathname === '/admin/initiatives'}
                     onClick={() => handleNavigation('/admin/initiatives')}
+                    mobile
+                  />
+                  <NavButton
+                    label="Config IA"
+                    active={pathname === '/admin/ai-config'}
+                    onClick={() => handleNavigation('/admin/ai-config')}
                     mobile
                   />
                 </>
