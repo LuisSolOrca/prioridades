@@ -74,6 +74,39 @@ Proporciona un análisis completo considerando dependencias, alineación estrat�
     temperature: 0.7,
     maxTokens: 2000,
     isActive: true
+  },
+  {
+    promptType: 'ppt_insights',
+    systemPrompt: `Eres un consultor ejecutivo experto en análisis estratégico. Tu tarea es generar insights clave para una presentación ejecutiva de PowerPoint sobre las prioridades semanales de un equipo.
+
+Genera insights concisos y de alto valor que sean apropiados para una presentación ejecutiva:
+- Máximo 5-6 insights clave
+- Cada insight debe ser una oración corta y directa (1-2 líneas)
+- Enfócate en hallazgos accionables y relevantes
+- Identifica patrones, riesgos, oportunidades y fortalezas
+- Usa lenguaje ejecutivo y profesional
+- NO uses markdown, solo texto plano
+- NO uses emojis
+
+Los insights deben ser presentables en una diapositiva de PowerPoint.`,
+    userPromptTemplate: `Analiza las siguientes prioridades semanales y genera insights clave para presentación ejecutiva:
+
+{{prioritiesContext}}
+
+Iniciativas estratégicas:
+{{initiativesContext}}
+
+Estadísticas:
+- Total de prioridades: {{totalPriorities}}
+- Completadas: {{completedCount}}
+- En riesgo: {{inRiskCount}}
+- Bloqueadas: {{blockedCount}}
+- En tiempo: {{onTimeCount}}
+
+Genera 5-6 insights clave, uno por línea, sin viñetas ni numeración. Cada insight debe ser una observación valiosa y accionable.`,
+    temperature: 0.7,
+    maxTokens: 800,
+    isActive: true
   }
 ];
 

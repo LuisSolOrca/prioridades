@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import User from '@/models/User';
 import StrategicInitiative from '@/models/StrategicInitiative';
+import AIPromptConfig from '@/models/AIPromptConfig';
 import pptxgen from 'pptxgenjs';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -33,6 +34,73 @@ export async function POST(request: NextRequest) {
         weekEnd: { $lte: new Date(weekEnd) },
       }).lean(),
     ]);
+
+    // Generate AI insights for PowerPoint
+    let aiInsights: string[] = [];
+    try {
+      const apiKey = process.env.GROQ_API_KEY;
+
+      if (apiKey) {
+        // Prepare context for AI
+        const prioritiesContext = priorities.map((p: any) => ({
+          usuario: users.find((u: any) => u._id.toString() === p.userId.toString())?.name || 'Desconocido',
+          titulo: p.title,
+          descripcion: p.description || '',
+          estado: p.status,
+          porcentajeCompletado: p.completionPercentage
+        }));
+
+        const completedCount = priorities.filter((p: any) => p.status === 'COMPLETADO').length;
+        const inRiskCount = priorities.filter((p: any) => p.status === 'EN_RIESGO').length;
+        const blockedCount = priorities.filter((p: any) => p.status === 'BLOQUEADO').length;
+        const onTimeCount = priorities.filter((p: any) => p.status === 'EN_TIEMPO').length;
+
+        // Get AI prompt configuration
+        const config = await AIPromptConfig.findOne({ promptType: 'ppt_insights', isActive: true });
+
+        if (config) {
+          const userPrompt = config.userPromptTemplate
+            .replace('{{prioritiesContext}}', JSON.stringify(prioritiesContext, null, 2))
+            .replace('{{initiativesContext}}', initiatives.map((init: any) => `- ${init.name}: ${init.description || 'Sin descripción'}`).join('\n'))
+            .replace('{{totalPriorities}}', priorities.length.toString())
+            .replace('{{completedCount}}', completedCount.toString())
+            .replace('{{inRiskCount}}', inRiskCount.toString())
+            .replace('{{blockedCount}}', blockedCount.toString())
+            .replace('{{onTimeCount}}', onTimeCount.toString());
+
+          // Call Groq API
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              messages: [
+                { role: 'system', content: config.systemPrompt },
+                { role: 'user', content: userPrompt }
+              ],
+              temperature: config.temperature,
+              max_tokens: config.maxTokens,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const insightsText = data.choices[0]?.message?.content?.trim() || '';
+            // Split insights by newlines and filter out empty lines
+            aiInsights = insightsText
+              .split('\n')
+              .map((line: string) => line.trim())
+              .filter((line: string) => line.length > 0 && !line.match(/^[0-9.-]+\s*$/));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error generating AI insights:', error);
+      // Continue without AI insights if there's an error
+    }
 
     // Create PowerPoint
     const pptx = new pptxgen();
@@ -412,6 +480,73 @@ export async function POST(request: NextRequest) {
         border: { type: 'solid', color: 'e5e7eb', pt: 1 },
         autoPage: false,
         fontSize: 9,
+      });
+    }
+
+    // ==========================================
+    // AI Insights Slide (if available)
+    // ==========================================
+    if (aiInsights.length > 0) {
+      const slideInsights = pptx.addSlide();
+      slideInsights.background = { fill: colors.white };
+      addLogoToSlide(slideInsights);
+
+      // Header bar
+      slideInsights.addShape('rect', {
+        x: 0,
+        y: 0,
+        w: '100%',
+        h: 1,
+        fill: { color: colors.info, transparency: 10 },
+      });
+
+      slideInsights.addText('INSIGHTS GENERADOS POR IA', {
+        x: MARGIN_H,
+        y: 0.25,
+        w: 10 - (2 * MARGIN_H),
+        h: 0.5,
+        fontSize: 26,
+        bold: true,
+        color: colors.dark,
+      });
+
+      slideInsights.addText('Análisis inteligente de las prioridades de la semana', {
+        x: MARGIN_H,
+        y: 0.75,
+        w: 10 - (2 * MARGIN_H),
+        h: 0.3,
+        fontSize: 12,
+        color: '6b7280',
+      });
+
+      // AI Insights content
+      const INSIGHTS_START_Y = 1.3;
+      const INSIGHT_HEIGHT = 0.5;
+      const INSIGHT_GAP = 0.15;
+
+      aiInsights.slice(0, 6).forEach((insight, idx) => {
+        const yPos = INSIGHTS_START_Y + (idx * (INSIGHT_HEIGHT + INSIGHT_GAP));
+
+        // Bullet point background
+        slideInsights.addShape('roundRect', {
+          x: MARGIN_H,
+          y: yPos,
+          w: 10 - (2 * MARGIN_H),
+          h: INSIGHT_HEIGHT,
+          fill: { color: colors.light },
+          line: { color: colors.info, pt: 1 },
+        });
+
+        // Insight text
+        slideInsights.addText(insight, {
+          x: MARGIN_H + 0.2,
+          y: yPos + 0.1,
+          w: 10 - (2 * MARGIN_H) - 0.4,
+          h: INSIGHT_HEIGHT - 0.2,
+          fontSize: 14,
+          color: colors.dark,
+          valign: 'middle',
+        });
       });
     }
 
