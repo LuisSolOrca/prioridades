@@ -244,3 +244,4 @@ Este proyecto es privado y confidencial.
 ---
 
 **Desarrollado con ❤️ para optimizar el seguimiento de prioridades estratégicas**
+
