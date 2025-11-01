@@ -292,7 +292,14 @@ export default function PrioritiesPage() {
                       step="5"
                       className="w-full"
                       value={formData.completionPercentage}
-                      onChange={(e) => setFormData({ ...formData, completionPercentage: parseInt(e.target.value) })}
+                      onChange={(e) => {
+                        const percentage = parseInt(e.target.value);
+                        setFormData({
+                          ...formData,
+                          completionPercentage: percentage,
+                          status: percentage === 100 ? 'COMPLETADO' : formData.status
+                        });
+                      }}
                     />
                   </div>
                 </div>
