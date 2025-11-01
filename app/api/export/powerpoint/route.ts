@@ -160,9 +160,9 @@ export async function POST(request: NextRequest) {
     slide2.background = { fill: colors.light };
 
     slide2.addText('RESUMEN EJECUTIVO', {
-      x: 0.5,
+      x: 0.3,
       y: 0.3,
-      w: 12,
+      w: 12.4,
       h: 0.6,
       fontSize: 32,
       bold: true,
@@ -201,9 +201,9 @@ export async function POST(request: NextRequest) {
     ];
 
     slide2.addChart('doughnut' as any, statusChartData, {
-      x: 0.5,
+      x: 0.3,
       y: 1.3,
-      w: 5,
+      w: 5.5,
       h: 3.8,
       title: 'Distribución por Estado',
       titleFontSize: 14,
@@ -229,9 +229,9 @@ export async function POST(request: NextRequest) {
     ];
 
     slide2.addChart('bar' as any, userChartData, {
-      x: 6,
+      x: 6.2,
       y: 1.3,
-      w: 6.5,
+      w: 6.3,
       h: 3.8,
       title: 'Prioridades por Usuario',
       titleFontSize: 14,
@@ -251,11 +251,11 @@ export async function POST(request: NextRequest) {
     slide3.background = { fill: colors.light };
 
     slide3.addText('ANÁLISIS POR INICIATIVAS ESTRATÉGICAS', {
-      x: 0.5,
+      x: 0.3,
       y: 0.3,
-      w: 12,
+      w: 12.4,
       h: 0.6,
-      fontSize: 32,
+      fontSize: 28,
       bold: true,
       color: colors.dark,
     });
@@ -277,9 +277,9 @@ export async function POST(request: NextRequest) {
     ];
 
     slide3.addChart('bar' as any, initiativeChartData, {
-      x: 1,
+      x: 0.5,
       y: 1.3,
-      w: 11,
+      w: 12,
       h: 3.8,
       title: 'Distribución por Iniciativa Estratégica',
       titleFontSize: 14,
@@ -312,9 +312,9 @@ export async function POST(request: NextRequest) {
       });
 
       slide.addText((user as any).name, {
-        x: 0.5,
+        x: 0.3,
         y: 0.25,
-        w: 8,
+        w: 10,
         h: 0.5,
         fontSize: 28,
         bold: true,
@@ -327,9 +327,9 @@ export async function POST(request: NextRequest) {
         : 0;
 
       slide.addText(`${userPriorities.length} Prioridades | ${userCompleted} Completadas | ${userAvg}% Avance Promedio`, {
-        x: 0.5,
+        x: 0.3,
         y: 0.65,
-        w: 8,
+        w: 10,
         h: 0.3,
         fontSize: 14,
         color: '6b7280',
@@ -373,11 +373,11 @@ export async function POST(request: NextRequest) {
       });
 
       slide.addTable(tableData, {
-        x: 0.5,
+        x: 0.3,
         y: 1.3,
-        w: 12,
+        w: 12.4,
         h: 3.8,
-        colW: [5.5, 2, 1.5, 3],
+        colW: [5.8, 2.2, 1.5, 2.9],
         border: { type: 'solid', color: 'e5e7eb', pt: 1 },
         autoPage: false,
         fontSize: 10,
@@ -391,9 +391,9 @@ export async function POST(request: NextRequest) {
     slideFinal.background = { fill: colors.light };
 
     slideFinal.addText('CONCLUSIONES Y PRÓXIMOS PASOS', {
-      x: 0.5,
+      x: 0.3,
       y: 0.5,
-      w: 12,
+      w: 12.4,
       h: 0.8,
       fontSize: 32,
       bold: true,
@@ -415,9 +415,9 @@ export async function POST(request: NextRequest) {
 
     conclusions.forEach((conclusion, idx) => {
       slideFinal.addText(conclusion, {
-        x: 1.5,
+        x: 1,
         y: 2 + (idx * 0.6),
-        w: 10,
+        w: 11,
         h: 0.5,
         fontSize: 18,
         color: colors.dark,
