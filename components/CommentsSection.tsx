@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 
 interface Comment {
@@ -20,6 +20,12 @@ interface CommentsSectionProps {
   priorityId: string;
 }
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -28,6 +34,14 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+
+  // Mention autocomplete states
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionUsers, setMentionUsers] = useState<User[]>([]);
+  const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     loadComments();
@@ -44,6 +58,90 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
       console.error('Error loading comments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Search users for mention autocomplete
+  const searchUsers = async (query: string) => {
+    if (query.length < 1) {
+      setMentionUsers([]);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        const users = await res.json();
+        setMentionUsers(users);
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+    }
+  };
+
+  // Handle textarea change with mention detection
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+
+    setNewComment(value);
+
+    // Detect @ mention
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1);
+      // Check if there's no space after @
+      if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+        setMentionSearch(textAfterAt);
+        setMentionCursorPosition(lastAtIndex);
+        setShowMentionDropdown(true);
+        setSelectedMentionIndex(0);
+        searchUsers(textAfterAt);
+      } else {
+        setShowMentionDropdown(false);
+      }
+    } else {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  // Handle mention selection
+  const selectMention = (user: User) => {
+    const beforeMention = newComment.slice(0, mentionCursorPosition);
+    const afterMention = newComment.slice(mentionCursorPosition + mentionSearch.length + 1);
+    const newText = `${beforeMention}@${user.name} ${afterMention}`;
+
+    setNewComment(newText);
+    setShowMentionDropdown(false);
+    setMentionUsers([]);
+
+    // Focus back on textarea
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const newCursorPos = beforeMention.length + user.name.length + 2;
+      textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  // Handle keyboard navigation in mention dropdown
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!showMentionDropdown || mentionUsers.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) =>
+        prev < mentionUsers.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedMentionIndex((prev) => (prev > 0 ? prev - 1 : prev));
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      selectMention(mentionUsers[selectedMentionIndex]);
+    } else if (e.key === 'Escape') {
+      setShowMentionDropdown(false);
     }
   };
 
@@ -149,16 +247,54 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
       </h3>
 
       {/* Formulario para nuevo comentario */}
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Escribe un comentario..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          rows={3}
-          disabled={submitting}
-        />
-        <div className="flex justify-end">
+      <form onSubmit={handleSubmit} className="space-y-2 relative">
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={newComment}
+            onChange={handleTextareaChange}
+            onKeyDown={handleTextareaKeyDown}
+            placeholder="Escribe un comentario... (usa @ para mencionar usuarios)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            rows={3}
+            disabled={submitting}
+          />
+
+          {/* Mention Autocomplete Dropdown */}
+          {showMentionDropdown && mentionUsers.length > 0 && (
+            <div className="absolute z-10 w-64 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+              {mentionUsers.map((user, index) => (
+                <button
+                  key={user._id}
+                  type="button"
+                  onClick={() => selectMention(user)}
+                  className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition ${
+                    index === selectedMentionIndex ? 'bg-blue-100' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-gray-800 truncate">
+                        {user.name}
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {user.email}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-between items-center">
+          <div className="text-xs text-gray-500">
+            💡 Usa @ para mencionar usuarios
+          </div>
           <button
             type="submit"
             disabled={submitting || !newComment.trim()}

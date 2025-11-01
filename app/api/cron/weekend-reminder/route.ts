@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
     const result = await sendWeekendReminders();
 
     return NextResponse.json({
-      success: true,
       message: 'Recordatorios de fin de semana enviados',
       ...result
     });
@@ -50,7 +49,6 @@ export async function GET(request: NextRequest) {
     const result = await sendWeekendReminders();
 
     return NextResponse.json({
-      success: true,
       message: 'Recordatorios de fin de semana enviados (modo desarrollo)',
       ...result
     });
