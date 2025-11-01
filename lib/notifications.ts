@@ -44,45 +44,118 @@ export async function createNotification(params: CreateNotificationParams) {
       const user = await User.findById(params.userId).lean();
       if (user && user.emailNotifications?.enabled) {
         const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const priorityUrl = `${baseUrl}${params.actionUrl || '/priorities'}`;
 
         let emailContent;
         switch (params.type) {
           case 'STATUS_CHANGE':
             if (user.emailNotifications.statusChanges) {
-              emailContent = {
-                subject: `⚠️ ${params.title}`,
-                html: `
-                  <h2>${params.title}</h2>
-                  <p>${params.message}</p>
-                  <p><a href="${baseUrl}${params.actionUrl || '/priorities'}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Prioridad</a></p>
-                `
-              };
+              // Extraer oldStatus y newStatus del mensaje
+              const statusMatch = params.message.match(/"([^"]+)" a "([^"]+)"/);
+              const oldStatus = statusMatch ? statusMatch[1] : 'Estado anterior';
+              const newStatus = statusMatch ? statusMatch[2] : 'Nuevo estado';
+              emailContent = emailTemplates.statusChange({
+                priorityTitle: params.title.replace(/^Prioridad "(.+)" cambió a .+$/, '$1'),
+                oldStatus,
+                newStatus,
+                priorityUrl
+              });
             }
             break;
 
           case 'COMMENT':
-          case 'MENTION':
             if (user.emailNotifications.newComments) {
-              emailContent = {
-                subject: `💬 ${params.title}`,
-                html: `
-                  <h2>${params.title}</h2>
-                  <p>${params.message}</p>
-                  <p><a href="${baseUrl}${params.actionUrl || '/priorities'}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Comentario</a></p>
-                `
-              };
+              // Extraer nombre del comentarista del título
+              const commenterName = params.title.split(' comentó en ')[0];
+              const priorityTitle = params.title.split('" comentó en "')[1]?.replace('"', '') || 'Prioridad';
+              emailContent = emailTemplates.newComment({
+                priorityTitle,
+                commentAuthor: commenterName,
+                commentText: params.message,
+                priorityUrl
+              });
             }
             break;
 
+          case 'MENTION':
+            if (user.emailNotifications.newComments) {
+              // Extraer nombre del mencionador del título
+              const mentionerName = params.title.split(' te mencionó en ')[0];
+              const priorityTitle = params.title.split('" te mencionó en "')[1]?.replace('"', '') || 'Prioridad';
+              emailContent = emailTemplates.mention({
+                mentionerName,
+                priorityTitle,
+                commentText: params.message,
+                priorityUrl
+              });
+            }
+            break;
+
+          case 'COMMENT_REPLY':
+            if (user.emailNotifications.newComments) {
+              const replierName = params.title.split(' respondió a tu comentario en ')[0];
+              const priorityTitle = params.title.split('" respondió a tu comentario en "')[1]?.replace('"', '') || 'Prioridad';
+              emailContent = emailTemplates.commentReply({
+                replierName,
+                priorityTitle,
+                replyText: params.message,
+                priorityUrl
+              });
+            }
+            break;
+
+          case 'PRIORITY_DUE_SOON':
+            emailContent = emailTemplates.priorityDueSoon({
+              priorityTitle: params.title.replace(/^⏰ Prioridad "(.+)" vence pronto$/, '$1'),
+              completionPercentage: parseInt(params.message.match(/(\d+)%/)?.[1] || '0'),
+              priorityUrl
+            });
+            break;
+
+          case 'COMPLETION_MILESTONE':
+            emailContent = emailTemplates.completionMilestone({
+              priorityTitle: params.title.match(/"(.+)" alcanzó/)?.[1] || 'Prioridad',
+              milestone: parseInt(params.title.match(/(\d+)%/)?.[1] || '0'),
+              priorityUrl
+            });
+            break;
+
+          case 'PRIORITY_INACTIVE':
+            emailContent = emailTemplates.priorityInactive({
+              priorityTitle: params.title.replace(/^🔔 Prioridad "(.+)" sin actividad$/, '$1'),
+              daysInactive: parseInt(params.message.match(/(\d+) días/)?.[1] || '0'),
+              priorityUrl
+            });
+            break;
+
+          case 'PRIORITY_UNBLOCKED':
+            const unblockedTitle = params.title.replace(/^✅ ¡Prioridad "(.+)" desbloqueada!$/, '$1');
+            const unblockedStatus = params.message.match(/"Bloqueado" a "([^"]+)"/)?.[1] || 'En Tiempo';
+            emailContent = emailTemplates.priorityUnblocked({
+              priorityTitle: unblockedTitle,
+              newStatus: unblockedStatus,
+              priorityUrl
+            });
+            break;
+
+          case 'WEEK_COMPLETED':
+            const weekMatch = params.message.match(/semana (.+)\./);
+            emailContent = emailTemplates.weekCompleted({
+              weekStr: weekMatch ? weekMatch[1] : 'actual',
+              priorityUrl
+            });
+            break;
+
+          case 'WEEK_START_REMINDER':
+            emailContent = emailTemplates.weekStartReminder({
+              priorityUrl
+            });
+            break;
+
           case 'WEEKEND_REMINDER':
-            emailContent = {
-              subject: `📅 ${params.title}`,
-              html: `
-                <h2>${params.title}</h2>
-                <p>${params.message}</p>
-                <p><a href="${baseUrl}/priorities" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Prioridades</a></p>
-              `
-            };
+            emailContent = emailTemplates.weekendReminder({
+              priorityUrl
+            });
             break;
         }
 
@@ -210,7 +283,7 @@ export async function notifyCompletionMilestone(
     message: `¡Excelente progreso! Has completado el ${milestone}% de esta prioridad.`,
     priorityId,
     actionUrl: `/priorities`,
-    sendEmail: false // Solo in-app, no email
+    sendEmail: true // Enviar email para celebrar el progreso
   });
 }
 
