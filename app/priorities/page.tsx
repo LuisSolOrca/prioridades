@@ -424,6 +424,56 @@ export default function PrioritiesPage() {
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="Ej: Aumentar ventas del producto X en 15%"
                   />
+
+                  {/* Sugerencia de IA para Título */}
+                  {aiSuggestion && aiSuggestion.type === 'title' && (
+                    <div className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xl">✨</span>
+                          <h4 className="text-sm font-bold text-purple-900">Sugerencia de IA</h4>
+                        </div>
+                        <button
+                          onClick={handleRejectSuggestion}
+                          className="text-gray-400 hover:text-gray-600 text-lg"
+                          title="Cerrar"
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Original</p>
+                          <div className="bg-white/70 rounded p-2 text-sm text-gray-700">
+                            {formData.title}
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-semibold text-purple-700 uppercase mb-1">Mejorado</p>
+                          <div className="bg-white rounded p-2 text-sm text-gray-800 font-medium border-2 border-purple-300">
+                            {aiSuggestion.text}
+                          </div>
+                        </div>
+
+                        <div className="flex space-x-2 pt-1">
+                          <button
+                            onClick={handleAcceptSuggestion}
+                            className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                          >
+                            ✓ Usar Esta Versión
+                          </button>
+                          <button
+                            onClick={handleRejectSuggestion}
+                            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
+                          >
+                            × Mantener Original
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -464,6 +514,56 @@ export default function PrioritiesPage() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Describe los pasos específicos y resultados esperados..."
                   ></textarea>
+
+                  {/* Sugerencia de IA para Descripción */}
+                  {aiSuggestion && aiSuggestion.type === 'description' && (
+                    <div className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xl">✨</span>
+                          <h4 className="text-sm font-bold text-purple-900">Sugerencia de IA</h4>
+                        </div>
+                        <button
+                          onClick={handleRejectSuggestion}
+                          className="text-gray-400 hover:text-gray-600 text-lg"
+                          title="Cerrar"
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Original</p>
+                          <div className="bg-white/70 rounded p-2 text-sm text-gray-700 whitespace-pre-wrap">
+                            {formData.description}
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-semibold text-purple-700 uppercase mb-1">Mejorado</p>
+                          <div className="bg-white rounded p-2 text-sm text-gray-800 font-medium border-2 border-purple-300 whitespace-pre-wrap">
+                            {aiSuggestion.text}
+                          </div>
+                        </div>
+
+                        <div className="flex space-x-2 pt-1">
+                          <button
+                            onClick={handleAcceptSuggestion}
+                            className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                          >
+                            ✓ Usar Esta Versión
+                          </button>
+                          <button
+                            onClick={handleRejectSuggestion}
+                            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
+                          >
+                            × Mantener Original
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -573,62 +673,6 @@ export default function PrioritiesPage() {
                   </button>
                 </div>
               </form>
-
-              {/* Modal de Sugerencia de IA */}
-              {aiSuggestion && (
-                <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">✨</span>
-                      <h3 className="text-lg font-bold text-purple-900">
-                        Sugerencia de IA
-                      </h3>
-                    </div>
-                    <button
-                      onClick={handleRejectSuggestion}
-                      className="text-gray-400 hover:text-gray-600 text-xl"
-                      title="Cerrar"
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-600 uppercase mb-1">
-                        {aiSuggestion.type === 'title' ? 'Texto Original' : 'Descripción Original'}
-                      </p>
-                      <div className="bg-white/70 rounded-lg p-3 text-sm text-gray-700">
-                        {aiSuggestion.type === 'title' ? formData.title : formData.description}
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold text-purple-700 uppercase mb-1">
-                        {aiSuggestion.type === 'title' ? 'Título Mejorado' : 'Descripción Mejorada'}
-                      </p>
-                      <div className="bg-white rounded-lg p-3 text-sm text-gray-800 font-medium border-2 border-purple-300">
-                        {aiSuggestion.text}
-                      </div>
-                    </div>
-
-                    <div className="flex space-x-3 pt-2">
-                      <button
-                        onClick={handleAcceptSuggestion}
-                        className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-medium"
-                      >
-                        ✓ Usar Esta Versión
-                      </button>
-                      <button
-                        onClick={handleRejectSuggestion}
-                        className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
-                      >
-                        × Mantener Original
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             <div className="space-y-6">
