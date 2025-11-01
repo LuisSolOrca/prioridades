@@ -48,7 +48,9 @@ export default function PrioritiesPage() {
     weekEnd: ''
   });
   const [loading, setLoading] = useState(true);
+  const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, 1 = next week
   const currentWeek = getWeekDates();
+  const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -62,18 +64,23 @@ export default function PrioritiesPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [initiativesRes, prioritiesRes] = await Promise.all([
+
+      // Cargar prioridades de la semana actual y la siguiente
+      const [initiativesRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes] = await Promise.all([
         fetch('/api/initiatives?activeOnly=true'),
-        fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`)
+        fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`),
+        fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${nextWeek.monday.toISOString()}&weekEnd=${nextWeek.friday.toISOString()}`)
       ]);
 
-      const [initiativesData, prioritiesData] = await Promise.all([
+      const [initiativesData, currentWeekPriorities, nextWeekPriorities] = await Promise.all([
         initiativesRes.json(),
-        prioritiesRes.json()
+        currentWeekPrioritiesRes.json(),
+        nextWeekPrioritiesRes.json()
       ]);
 
       setInitiatives(initiativesData);
-      setPriorities(prioritiesData);
+      // Combinar prioridades de ambas semanas
+      setPriorities([...currentWeekPriorities, ...nextWeekPriorities]);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -92,6 +99,7 @@ export default function PrioritiesPage() {
       weekStart: currentWeek.monday.toISOString(),
       weekEnd: currentWeek.friday.toISOString()
     });
+    setSelectedWeekOffset(0);
     setEditingPriority(null);
     setShowForm(true);
   };
@@ -154,7 +162,7 @@ export default function PrioritiesPage() {
 
   const handleExport = () => {
     const users = [{ _id: (session!.user as any).id, name: session!.user?.name || 'Usuario', email: session!.user?.email || '' }];
-    const fileName = `Mis_Prioridades_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}`;
+    const fileName = `Mis_Prioridades_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}_y_Siguiente`;
     exportPriorities(priorities, users, initiatives, fileName);
   };
 
@@ -171,7 +179,18 @@ export default function PrioritiesPage() {
 
   if (!session) return null;
 
-  const activePriorities = priorities.filter(p => p.status !== 'COMPLETADO');
+  // Separar prioridades por semana
+  const currentWeekPriorities = priorities.filter(p => {
+    const pWeekStart = new Date(p.weekStart);
+    return pWeekStart >= currentWeek.monday && pWeekStart <= currentWeek.friday;
+  });
+
+  const nextWeekPriorities = priorities.filter(p => {
+    const pWeekStart = new Date(p.weekStart);
+    return pWeekStart >= nextWeek.monday && pWeekStart <= nextWeek.friday;
+  });
+
+  const activePriorities = currentWeekPriorities.filter(p => p.status !== 'COMPLETADO');
   const hasMoreThanFive = activePriorities.length > 5;
 
   return (
@@ -206,7 +225,7 @@ export default function PrioritiesPage() {
               <div>
                 <div className="font-semibold text-blue-900">Semana actual: {getWeekLabel(currentWeek.monday)}</div>
                 <div className="text-sm text-blue-700">
-                  {priorities.length} prioridades asignadas
+                  {currentWeekPriorities.length} prioridades esta semana • {nextWeekPriorities.length} prioridades siguiente semana
                 </div>
               </div>
             </div>
@@ -234,6 +253,31 @@ export default function PrioritiesPage() {
                 {editingPriority ? 'Editar Prioridad' : 'Nueva Prioridad'}
               </h2>
               <form onSubmit={handleSave} className="space-y-6">
+                {!editingPriority && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Semana *
+                    </label>
+                    <select
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={selectedWeekOffset}
+                      onChange={(e) => {
+                        const offset = parseInt(e.target.value);
+                        setSelectedWeekOffset(offset);
+                        const targetWeek = offset === 0 ? currentWeek : nextWeek;
+                        setFormData({
+                          ...formData,
+                          weekStart: targetWeek.monday.toISOString(),
+                          weekEnd: targetWeek.friday.toISOString()
+                        });
+                      }}
+                    >
+                      <option value="0">Semana Actual ({getWeekLabel(currentWeek.monday)})</option>
+                      <option value="1">Siguiente Semana ({getWeekLabel(nextWeek.monday)})</option>
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Título de la Prioridad *
@@ -349,47 +393,129 @@ export default function PrioritiesPage() {
               </form>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {priorities.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                  <div className="text-6xl mb-4">📋</div>
-                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No tienes prioridades esta semana</h3>
-                  <p className="text-gray-500">Comienza agregando tu primera prioridad</p>
-                </div>
-              ) : (
-                priorities.map(priority => {
-                  const initiative = initiatives.find(i => i._id === priority.initiativeId);
-                  return (
-                    <div key={priority._id} className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderColor: initiative?.color }}>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-800">{priority.title}</h3>
-                            {priority.wasEdited && (
-                              <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
-                                ✏️ Editado
-                              </span>
-                            )}
+            <div className="space-y-6">
+              {/* Semana Actual */}
+              <div>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  📅 Semana Actual ({getWeekLabel(currentWeek.monday)})
+                </h2>
+                <div className="grid grid-cols-1 gap-4">
+                  {currentWeekPriorities.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                      <div className="text-4xl mb-2">📋</div>
+                      <p className="text-gray-500">No tienes prioridades esta semana</p>
+                    </div>
+                  ) : (
+                    currentWeekPriorities.map(priority => {
+                      const initiative = initiatives.find(i => i._id === priority.initiativeId);
+                      return (
+                        <div key={priority._id} className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderColor: initiative?.color }}>
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-800">{priority.title}</h3>
+                                {priority.wasEdited && (
+                                  <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                                    ✏️ Editado
+                                  </span>
+                                )}
+                              </div>
+                              {priority.description && (
+                                <p className="text-sm text-gray-600 mb-3">{priority.description}</p>
+                              )}
+                              <div className="flex items-center space-x-4 text-sm">
+                                <span className="text-gray-600">
+                                  <span style={{ color: initiative?.color }}>●</span> {initiative?.name}
+                                </span>
+                                <StatusBadge status={priority.status} />
+                              </div>
+                            </div>
+                            <div className="flex space-x-2 ml-4">
+                              {priority.status === 'COMPLETADO' ? (
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-green-600 text-xs font-medium bg-green-50 px-3 py-2 rounded-lg">
+                                    ✓ Completado (Solo lectura)
+                                  </span>
+                                </div>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleEdit(priority)}
+                                    className="text-blue-600 hover:bg-blue-50 w-10 h-10 rounded-lg transition"
+                                    title="Editar prioridad"
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(priority._id!)}
+                                    className="text-red-600 hover:bg-red-50 w-10 h-10 rounded-lg transition"
+                                    title="Eliminar prioridad"
+                                  >
+                                    🗑️
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
-                          {priority.description && (
-                            <p className="text-sm text-gray-600 mb-3">{priority.description}</p>
-                          )}
-                          <div className="flex items-center space-x-4 text-sm">
-                            <span className="text-gray-600">
-                              <span style={{ color: initiative?.color }}>●</span> {initiative?.name}
-                            </span>
-                            <StatusBadge status={priority.status} />
+
+                          <div className="space-y-3">
+                            <div>
+                              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                <span className="font-medium">Porcentaje de Completado</span>
+                                <span className="text-lg font-bold text-gray-800">{priority.completionPercentage}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                  className="bg-blue-600 h-3 rounded-full transition-all"
+                                  style={{ width: `${priority.completionPercentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex space-x-2 ml-4">
-                          {priority.status === 'COMPLETADO' ? (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-green-600 text-xs font-medium bg-green-50 px-3 py-2 rounded-lg">
-                                ✓ Completado (Solo lectura)
-                              </span>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Siguiente Semana */}
+              <div>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  📅 Siguiente Semana ({getWeekLabel(nextWeek.monday)})
+                </h2>
+                <div className="grid grid-cols-1 gap-4">
+                  {nextWeekPriorities.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                      <div className="text-4xl mb-2">📋</div>
+                      <p className="text-gray-500">No tienes prioridades planificadas para la siguiente semana</p>
+                    </div>
+                  ) : (
+                    nextWeekPriorities.map(priority => {
+                      const initiative = initiatives.find(i => i._id === priority.initiativeId);
+                      return (
+                        <div key={priority._id} className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderColor: initiative?.color }}>
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-800">{priority.title}</h3>
+                                {priority.wasEdited && (
+                                  <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                                    ✏️ Editado
+                                  </span>
+                                )}
+                              </div>
+                              {priority.description && (
+                                <p className="text-sm text-gray-600 mb-3">{priority.description}</p>
+                              )}
+                              <div className="flex items-center space-x-4 text-sm">
+                                <span className="text-gray-600">
+                                  <span style={{ color: initiative?.color }}>●</span> {initiative?.name}
+                                </span>
+                                <StatusBadge status={priority.status} />
+                              </div>
                             </div>
-                          ) : (
-                            <>
+                            <div className="flex space-x-2 ml-4">
                               <button
                                 onClick={() => handleEdit(priority)}
                                 className="text-blue-600 hover:bg-blue-50 w-10 h-10 rounded-lg transition"
@@ -404,29 +530,29 @@ export default function PrioritiesPage() {
                               >
                                 🗑️
                               </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                            </div>
+                          </div>
 
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                            <span className="font-medium">Porcentaje de Completado</span>
-                            <span className="text-lg font-bold text-gray-800">{priority.completionPercentage}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className="bg-blue-600 h-3 rounded-full transition-all"
-                              style={{ width: `${priority.completionPercentage}%` }}
-                            ></div>
+                          <div className="space-y-3">
+                            <div>
+                              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                <span className="font-medium">Porcentaje de Completado</span>
+                                <span className="text-lg font-bold text-gray-800">{priority.completionPercentage}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                  className="bg-blue-600 h-3 rounded-full transition-all"
+                                  style={{ width: `${priority.completionPercentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
