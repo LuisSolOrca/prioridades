@@ -60,6 +60,11 @@ export default function Navbar() {
                 active={pathname === '/history'}
                 onClick={() => router.push('/history')}
               />
+              <NavButton
+                label="Reportes"
+                active={pathname === '/reports'}
+                onClick={() => router.push('/reports')}
+              />
               {user.role === 'ADMIN' && (
                 <>
                   <NavButton
