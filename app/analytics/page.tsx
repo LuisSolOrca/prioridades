@@ -26,6 +26,8 @@ interface Priority {
   completionPercentage: number;
   userId: string;
   initiativeId: string;
+  weekStart: string;
+  weekEnd: string;
 }
 
 export default function AnalyticsPage() {
@@ -33,9 +35,11 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
-  const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [allPriorities, setAllPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -62,12 +66,45 @@ export default function AnalyticsPage() {
 
       setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
-      setPriorities(prioritiesData);
+      setAllPriorities(prioritiesData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Filtrar prioridades por rango de fechas
+  const priorities = allPriorities.filter(priority => {
+    if (!dateFrom && !dateTo) return true;
+
+    const priorityStart = new Date(priority.weekStart);
+    const priorityEnd = new Date(priority.weekEnd);
+
+    if (dateFrom && dateTo) {
+      const from = new Date(dateFrom);
+      const to = new Date(dateTo);
+      return (priorityStart >= from && priorityStart <= to) ||
+             (priorityEnd >= from && priorityEnd <= to) ||
+             (priorityStart <= from && priorityEnd >= to);
+    }
+
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      return priorityEnd >= from;
+    }
+
+    if (dateTo) {
+      const to = new Date(dateTo);
+      return priorityStart <= to;
+    }
+
+    return true;
+  });
+
+  const handleClearFilters = () => {
+    setDateFrom('');
+    setDateTo('');
   };
 
   if (status === 'loading' || loading) {
@@ -151,6 +188,54 @@ export default function AnalyticsPage() {
           <h1 className="text-3xl font-bold text-gray-800">
             📊 Analítica y Métricas
           </h1>
+
+          {/* Filtros de Rango de Tiempo */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">🗓️ Filtros de Tiempo</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Desde
+                </label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Hasta
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <button
+                  onClick={handleClearFilters}
+                  className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                  🔄 Limpiar Filtros
+                </button>
+              </div>
+            </div>
+            {(dateFrom || dateTo) && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  📊 Mostrando datos filtrados:
+                  {dateFrom && ` desde ${new Date(dateFrom).toLocaleDateString('es-MX')}`}
+                  {dateFrom && dateTo && ' '}
+                  {dateTo && ` hasta ${new Date(dateTo).toLocaleDateString('es-MX')}`}
+                  {' '}• {priorities.length} prioridades
+                </p>
+              </div>
+            )}
+          </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
