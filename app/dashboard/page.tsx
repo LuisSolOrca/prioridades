@@ -77,9 +77,10 @@ interface UserPriorityCardProps {
   isExpanded: boolean;
   onToggle: () => void;
   onViewDetails: (priority: Priority) => void;
+  commentCounts: { [key: string]: number };
 }
 
-function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle, onViewDetails }: UserPriorityCardProps) {
+function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle, onViewDetails, commentCounts }: UserPriorityCardProps) {
   const avgCompletion = priorities.length > 0
     ? priorities.reduce((sum, p) => sum + p.completionPercentage, 0) / priorities.length
     : 0;
@@ -160,10 +161,15 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                               e.stopPropagation();
                               onViewDetails(priority);
                             }}
-                            className="text-blue-600 hover:text-blue-800 transition"
+                            className="text-blue-600 hover:text-blue-800 transition relative"
                             title="Ver descripción detallada"
                           >
                             🔍
+                            {commentCounts[priority._id] > 0 && (
+                              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                {commentCounts[priority._id]}
+                              </span>
+                            )}
                           </button>
                         </div>
                         <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-1">
@@ -213,6 +219,7 @@ export default function DashboardPage() {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -245,10 +252,36 @@ export default function DashboardPage() {
       setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
       setPriorities(prioritiesData);
+
+      // Cargar conteos de comentarios
+      await loadCommentCounts(prioritiesData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCommentCounts = async (prioritiesToLoad: Priority[]) => {
+    try {
+      const priorityIds = prioritiesToLoad
+        .filter(p => p._id)
+        .map(p => p._id!)
+        .join(',');
+
+      if (!priorityIds) {
+        setCommentCounts({});
+        return;
+      }
+
+      const response = await fetch(`/api/comments/counts?priorityIds=${priorityIds}`);
+      if (!response.ok) throw new Error('Error loading comment counts');
+
+      const counts = await response.json();
+      setCommentCounts(counts);
+    } catch (error) {
+      console.error('Error loading comment counts:', error);
+      setCommentCounts({});
     }
   };
 
@@ -295,6 +328,7 @@ export default function DashboardPage() {
 
   const handleCloseModal = () => {
     setSelectedPriority(null);
+    loadCommentCounts(priorities);
   };
 
   const handleAIAnalysis = async () => {
@@ -430,6 +464,7 @@ export default function DashboardPage() {
                 isExpanded={expandedUsers.has(user._id)}
                 onToggle={() => toggleUser(user._id)}
                 onViewDetails={handleViewDetails}
+                commentCounts={commentCounts}
               />
             ))}
           </div>

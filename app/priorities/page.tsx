@@ -55,6 +55,7 @@ export default function PrioritiesPage() {
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
   const [selectedPriorityForComments, setSelectedPriorityForComments] = useState<Priority | null>(null);
+  const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -86,11 +87,38 @@ export default function PrioritiesPage() {
 
       setInitiatives(initiativesData);
       // Combinar prioridades de ambas semanas
-      setPriorities([...currentWeekPriorities, ...nextWeekPriorities]);
+      const allPriorities = [...currentWeekPriorities, ...nextWeekPriorities];
+      setPriorities(allPriorities);
+
+      // Cargar conteos de comentarios
+      await loadCommentCounts(allPriorities);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCommentCounts = async (prioritiesToLoad: Priority[]) => {
+    try {
+      const priorityIds = prioritiesToLoad
+        .filter(p => p._id)
+        .map(p => p._id!)
+        .join(',');
+
+      if (!priorityIds) {
+        setCommentCounts({});
+        return;
+      }
+
+      const response = await fetch(`/api/comments/counts?priorityIds=${priorityIds}`);
+      if (!response.ok) throw new Error('Error loading comment counts');
+
+      const counts = await response.json();
+      setCommentCounts(counts);
+    } catch (error) {
+      console.error('Error loading comment counts:', error);
+      setCommentCounts({});
     }
   };
 
@@ -738,10 +766,15 @@ export default function PrioritiesPage() {
                             <div className="flex space-x-2 ml-4">
                               <button
                                 onClick={() => setSelectedPriorityForComments(priority)}
-                                className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition"
+                                className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition relative"
                                 title="Ver comentarios"
                               >
                                 💬
+                                {priority._id && commentCounts[priority._id] > 0 && (
+                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                    {commentCounts[priority._id]}
+                                  </span>
+                                )}
                               </button>
                               {priority.status === 'COMPLETADO' ? (
                                 <div className="flex items-center space-x-2">
@@ -852,10 +885,15 @@ export default function PrioritiesPage() {
                             <div className="flex space-x-2 ml-4">
                               <button
                                 onClick={() => setSelectedPriorityForComments(priority)}
-                                className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition"
+                                className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition relative"
                                 title="Ver comentarios"
                               >
                                 💬
+                                {priority._id && commentCounts[priority._id] > 0 && (
+                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                    {commentCounts[priority._id]}
+                                  </span>
+                                )}
                               </button>
                               <button
                                 onClick={() => handleEdit(priority)}
@@ -904,7 +942,10 @@ export default function PrioritiesPage() {
       {selectedPriorityForComments && selectedPriorityForComments._id && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedPriorityForComments(null)}
+          onClick={() => {
+            setSelectedPriorityForComments(null);
+            loadCommentCounts(priorities);
+          }}
         >
           <div
             className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
@@ -939,7 +980,10 @@ export default function PrioritiesPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedPriorityForComments(null)}
+                  onClick={() => {
+                    setSelectedPriorityForComments(null);
+                    loadCommentCounts(priorities);
+                  }}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold ml-4"
                 >
                   ×
@@ -952,7 +996,10 @@ export default function PrioritiesPage() {
               {/* Close Button */}
               <div className="flex justify-end mt-6 pt-4 border-t">
                 <button
-                  onClick={() => setSelectedPriorityForComments(null)}
+                  onClick={() => {
+                    setSelectedPriorityForComments(null);
+                    loadCommentCounts(priorities);
+                  }}
                   className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition font-semibold"
                 >
                   Cerrar
