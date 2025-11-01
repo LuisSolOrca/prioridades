@@ -5,6 +5,7 @@ export interface IComment extends Document {
   priorityId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   text: string;
+  isSystemComment: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +26,10 @@ const CommentSchema = new Schema<IComment>({
     type: String,
     required: true,
     trim: true
+  },
+  isSystemComment: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

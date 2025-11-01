@@ -104,10 +104,20 @@ export default function PrioritiesKanbanPage() {
 
     try {
       const updateData: any = {};
+      const changes: string[] = [];
+
+      // Status labels mapping
+      const statusLabels: Record<string, string> = {
+        'EN_TIEMPO': 'En Tiempo',
+        'EN_RIESGO': 'En Riesgo',
+        'BLOQUEADO': 'Bloqueado',
+        'COMPLETADO': 'Completado'
+      };
 
       // Check if status changed
       if (sourceStatus !== destStatus) {
         updateData.status = destStatus;
+        changes.push(`Estado cambiado de "${statusLabels[sourceStatus]}" a "${statusLabels[destStatus]}"`);
       }
 
       // Check if week changed
@@ -115,6 +125,12 @@ export default function PrioritiesKanbanPage() {
         const targetWeek = destWeek === 'current' ? currentWeek : nextWeek;
         updateData.weekStart = targetWeek.monday.toISOString();
         updateData.weekEnd = targetWeek.friday.toISOString();
+
+        const weekLabels: Record<string, string> = {
+          'current': `Semana Actual (${getWeekLabel(currentWeek.monday)})`,
+          'next': `Siguiente Semana (${getWeekLabel(nextWeek.monday)})`
+        };
+        changes.push(`Reprogramado de "${weekLabels[sourceWeek]}" a "${weekLabels[destWeek]}"`);
       }
 
       // Only update if something changed
@@ -127,6 +143,20 @@ export default function PrioritiesKanbanPage() {
 
         if (!res.ok) {
           throw new Error('Error al actualizar la prioridad');
+        }
+
+        // Create system comment
+        if (changes.length > 0) {
+          const commentText = `🤖 ${changes.join(' • ')}`;
+          await fetch('/api/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              priorityId: draggableId,
+              text: commentText,
+              isSystemComment: true
+            }),
+          });
         }
 
         await loadData();

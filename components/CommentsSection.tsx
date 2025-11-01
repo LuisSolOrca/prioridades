@@ -11,6 +11,7 @@ interface Comment {
     name: string;
     email: string;
   };
+  isSystemComment: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -181,69 +182,92 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
           </div>
         ) : (
           comments.map(comment => (
-            <div key={comment._id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                    {comment.userId.name.split(' ').map(n => n[0]).join('')}
+            comment.isSystemComment ? (
+              // System comment - read-only with special styling
+              <div key={comment._id} className="bg-blue-50 rounded-lg p-3 border border-blue-200 border-l-4">
+                <div className="flex items-start space-x-2">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    🤖
                   </div>
-                  <div>
-                    <div className="font-semibold text-sm text-gray-800">
-                      {comment.userId.name}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="font-semibold text-sm text-blue-900">
+                        Sistema
+                      </div>
+                      <div className="text-xs text-blue-600">
+                        {formatDate(comment.createdAt)}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {formatDate(comment.createdAt)}
-                      {comment.createdAt !== comment.updatedAt && ' (editado)'}
-                    </div>
+                    <p className="text-blue-800 text-sm whitespace-pre-wrap">{comment.text}</p>
                   </div>
                 </div>
-                {(comment.userId._id === currentUserId || isAdmin) && (
-                  <div className="flex space-x-2">
-                    {comment.userId._id === currentUserId && editingId !== comment._id && (
-                      <button
-                        onClick={() => startEdit(comment)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        ✏️
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDelete(comment._id)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      🗑️
-                    </button>
+              </div>
+            ) : (
+              // Regular user comment - editable
+              <div key={comment._id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                      {comment.userId.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm text-gray-800">
+                        {comment.userId.name}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {formatDate(comment.createdAt)}
+                        {comment.createdAt !== comment.updatedAt && ' (editado)'}
+                      </div>
+                    </div>
                   </div>
+                  {(comment.userId._id === currentUserId || isAdmin) && (
+                    <div className="flex space-x-2">
+                      {comment.userId._id === currentUserId && editingId !== comment._id && (
+                        <button
+                          onClick={() => startEdit(comment)}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(comment._id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {editingId === comment._id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                      rows={3}
+                    />
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={cancelEdit}
+                        className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => handleEdit(comment._id)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition"
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{comment.text}</p>
                 )}
               </div>
-
-              {editingId === comment._id ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-                    rows={3}
-                  />
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      onClick={cancelEdit}
-                      className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300 transition"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={() => handleEdit(comment._id)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition"
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-700 text-sm whitespace-pre-wrap">{comment.text}</p>
-              )}
-            </div>
+            )
           ))
         )}
       </div>

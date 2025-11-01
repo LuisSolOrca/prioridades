@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { priorityId, text } = body;
+    const { priorityId, text, isSystemComment } = body;
 
     if (!priorityId || !text) {
       return NextResponse.json({
@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
     const comment = await Comment.create({
       priorityId,
       userId: (session.user as any).id,
-      text: text.trim()
+      text: text.trim(),
+      isSystemComment: isSystemComment || false
     });
 
     // Poblar el usuario antes de devolver
@@ -72,18 +73,19 @@ export async function POST(request: NextRequest) {
       .populate('userId', 'name email')
       .lean();
 
-    // Enviar notificación por email al dueño de la prioridad
-    try {
-      console.log('[EMAIL] Starting email notification process for comment');
-      const priority = await Priority.findById(priorityId).lean();
+    // Enviar notificación por email al dueño de la prioridad (solo para comentarios normales, no del sistema)
+    if (!isSystemComment) {
+      try {
+        console.log('[EMAIL] Starting email notification process for comment');
+        const priority = await Priority.findById(priorityId).lean();
 
-      if (!priority) {
-        console.log('[EMAIL] Priority not found');
-        return NextResponse.json(populatedComment, { status: 201 });
-      }
+        if (!priority) {
+          console.log('[EMAIL] Priority not found');
+          return NextResponse.json(populatedComment, { status: 201 });
+        }
 
-      const priorityOwner = await User.findById(priority.userId).lean();
-      const commentAuthor = await User.findById((session.user as any).id).lean();
+        const priorityOwner = await User.findById(priority.userId).lean();
+        const commentAuthor = await User.findById((session.user as any).id).lean();
 
       console.log('[EMAIL] Priority owner:', priorityOwner?.email);
       console.log('[EMAIL] Comment author:', commentAuthor?.email);
@@ -135,9 +137,12 @@ export async function POST(request: NextRequest) {
         if (!priorityOwner?.emailNotifications?.enabled) console.log('[EMAIL] - Notifications disabled');
         if (!priorityOwner?.emailNotifications?.newComments) console.log('[EMAIL] - New comments notifications disabled');
       }
-    } catch (emailError) {
-      // No fallar la creación del comentario si el email falla
-      console.error('[EMAIL] Error in email notification process:', emailError);
+      } catch (emailError) {
+        // No fallar la creación del comentario si el email falla
+        console.error('[EMAIL] Error in email notification process:', emailError);
+      }
+    } else {
+      console.log('[EMAIL] Skipping email notification for system comment');
     }
 
     return NextResponse.json(populatedComment, { status: 201 });
