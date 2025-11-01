@@ -88,11 +88,6 @@ export default function LoginPage() {
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
-
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Credenciales iniciales:</p>
-          <p className="font-mono text-xs mt-1">admin@empresa.com</p>
-        </div>
       </div>
     </div>
   );
