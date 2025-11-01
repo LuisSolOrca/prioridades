@@ -6,6 +6,8 @@ import Priority from '@/models/Priority';
 import User from '@/models/User';
 import StrategicInitiative from '@/models/StrategicInitiative';
 import pptxgen from 'pptxgenjs';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +56,31 @@ export async function POST(request: NextRequest) {
       white: 'ffffff',
     };
 
+    // Layout constants for 16:9 (10" x 5.625")
+    const MARGIN_H = 0.5; // Horizontal margin
+    const MARGIN_V = 0.3; // Vertical margin (top)
+    const TITLE_Y = MARGIN_V;
+    const TITLE_H = 0.6;
+    const CONTENT_Y = TITLE_Y + TITLE_H + 0.3; // Content starts after title
+    const CONTENT_H = 5.625 - CONTENT_Y - MARGIN_V; // Available height for content
+    const CHART_GAP = 0.3; // Gap between charts
+
+    // Read Orca logo
+    const logoPath = path.join(process.cwd(), 'public', 'orca-logo.png');
+    const logoBase64 = fs.readFileSync(logoPath, { encoding: 'base64' });
+    const logoDataUrl = `data:image/png;base64,${logoBase64}`;
+
+    // Helper function to add logo to a slide
+    const addLogoToSlide = (slide: any) => {
+      slide.addImage({
+        data: logoDataUrl,
+        x: 10 - MARGIN_H - 0.8, // Right aligned
+        y: MARGIN_V,
+        w: 0.7,
+        h: 0.7,
+      });
+    };
+
     // ==========================================
     // SLIDE 1: Cover
     // ==========================================
@@ -69,9 +96,9 @@ export async function POST(request: NextRequest) {
     });
 
     slide1.addText('REPORTE DE PRIORIDADES', {
-      x: 1,
+      x: 0,
       y: 1.2,
-      w: 11,
+      w: '100%',
       h: 1,
       fontSize: 48,
       bold: true,
@@ -80,9 +107,9 @@ export async function POST(request: NextRequest) {
     });
 
     slide1.addText(weekLabel, {
-      x: 1,
-      y: 2.3,
-      w: 11,
+      x: 0,
+      y: 2.6,
+      w: '100%',
       h: 0.6,
       fontSize: 32,
       color: colors.primary,
@@ -96,9 +123,9 @@ export async function POST(request: NextRequest) {
     });
 
     slide1.addText(`Generado: ${today}`, {
-      x: 1,
+      x: 0,
       y: 4.8,
-      w: 11,
+      w: '100%',
       h: 0.4,
       fontSize: 14,
       color: '6b7280',
@@ -119,13 +146,19 @@ export async function POST(request: NextRequest) {
       { label: 'Avance Prom.', value: `${avgCompletion}%`, color: colors.primary },
     ];
 
+    // Center the stats cards
+    const CARD_WIDTH = 2;
+    const CARD_GAP = 0.5;
+    const TOTAL_CARDS_WIDTH = (CARD_WIDTH * 3) + (CARD_GAP * 2);
+    const CARDS_START_X = (10 - TOTAL_CARDS_WIDTH) / 2;
+
     statsData.forEach((stat, idx) => {
-      const x = 2.5 + (idx * 2.5);
+      const x = CARDS_START_X + (idx * (CARD_WIDTH + CARD_GAP));
 
       slide1.addShape('roundRect', {
         x,
         y: statsY,
-        w: 2,
+        w: CARD_WIDTH,
         h: 1,
         fill: { color: stat.color, transparency: 10 },
         line: { color: stat.color, pt: 2 },
@@ -134,7 +167,7 @@ export async function POST(request: NextRequest) {
       slide1.addText(stat.value, {
         x,
         y: statsY + 0.15,
-        w: 2,
+        w: CARD_WIDTH,
         h: 0.5,
         fontSize: 32,
         bold: true,
@@ -145,7 +178,7 @@ export async function POST(request: NextRequest) {
       slide1.addText(stat.label, {
         x,
         y: statsY + 0.65,
-        w: 2,
+        w: CARD_WIDTH,
         h: 0.3,
         fontSize: 14,
         color: colors.dark,
@@ -153,18 +186,23 @@ export async function POST(request: NextRequest) {
       });
     });
 
+    // Add logo to slide 1
+    addLogoToSlide(slide1);
+
     // ==========================================
     // SLIDE 2: Executive Summary
     // ==========================================
     const slide2 = pptx.addSlide();
     slide2.background = { fill: colors.light };
+    addLogoToSlide(slide2);
 
+    // Title
     slide2.addText('RESUMEN EJECUTIVO', {
-      x: 0.3,
-      y: 0.3,
-      w: 12.4,
-      h: 0.6,
-      fontSize: 32,
+      x: MARGIN_H,
+      y: TITLE_Y,
+      w: 10 - (2 * MARGIN_H),
+      h: TITLE_H,
+      fontSize: 28,
       bold: true,
       color: colors.dark,
     });
@@ -179,39 +217,27 @@ export async function POST(request: NextRequest) {
 
     const statusChartData = [
       {
-        name: 'En Tiempo',
-        labels: ['En Tiempo'],
-        values: [statusCounts.EN_TIEMPO],
-      },
-      {
-        name: 'En Riesgo',
-        labels: ['En Riesgo'],
-        values: [statusCounts.EN_RIESGO],
-      },
-      {
-        name: 'Bloqueado',
-        labels: ['Bloqueado'],
-        values: [statusCounts.BLOQUEADO],
-      },
-      {
-        name: 'Completado',
-        labels: ['Completado'],
-        values: [statusCounts.COMPLETADO],
+        name: 'Estado',
+        labels: ['En Tiempo', 'En Riesgo', 'Bloqueado', 'Completado'],
+        values: [statusCounts.EN_TIEMPO, statusCounts.EN_RIESGO, statusCounts.BLOQUEADO, statusCounts.COMPLETADO],
       },
     ];
 
+    // Charts side by side with proper spacing
+    const chartWidth = (10 - (2 * MARGIN_H) - CHART_GAP) / 2; // Split space for 2 charts
+
     slide2.addChart('doughnut' as any, statusChartData, {
-      x: 0.3,
-      y: 1.3,
-      w: 5.5,
-      h: 3.8,
+      x: MARGIN_H,
+      y: CONTENT_Y,
+      w: chartWidth,
+      h: CONTENT_H,
       title: 'Distribución por Estado',
-      titleFontSize: 14,
+      titleFontSize: 13,
       chartColors: [colors.success, colors.warning, colors.danger, colors.info],
       holeSize: 50,
       showLegend: true,
       legendPos: 'b',
-      legendFontSize: 10,
+      legendFontSize: 9,
     });
 
     // User priorities chart
@@ -229,17 +255,17 @@ export async function POST(request: NextRequest) {
     ];
 
     slide2.addChart('bar' as any, userChartData, {
-      x: 6.2,
-      y: 1.3,
-      w: 6.3,
-      h: 3.8,
+      x: MARGIN_H + chartWidth + CHART_GAP,
+      y: CONTENT_Y,
+      w: chartWidth,
+      h: CONTENT_H,
       title: 'Prioridades por Usuario',
-      titleFontSize: 14,
+      titleFontSize: 13,
       chartColors: [colors.primary],
       barDir: 'bar',
       showValue: true,
       valAxisMaxVal: Math.max(...userPriorityCounts.map((u: any) => u.count)) + 2,
-      catAxisLabelFontSize: 10,
+      catAxisLabelFontSize: 9,
       showValAxisTitle: false,
       showCatAxisTitle: false,
     });
@@ -249,13 +275,14 @@ export async function POST(request: NextRequest) {
     // ==========================================
     const slide3 = pptx.addSlide();
     slide3.background = { fill: colors.light };
+    addLogoToSlide(slide3);
 
     slide3.addText('ANÁLISIS POR INICIATIVAS ESTRATÉGICAS', {
-      x: 0.3,
-      y: 0.3,
-      w: 12.4,
-      h: 0.6,
-      fontSize: 28,
+      x: MARGIN_H,
+      y: TITLE_Y,
+      w: 10 - (2 * MARGIN_H),
+      h: TITLE_H,
+      fontSize: 26,
       bold: true,
       color: colors.dark,
     });
@@ -277,17 +304,17 @@ export async function POST(request: NextRequest) {
     ];
 
     slide3.addChart('bar' as any, initiativeChartData, {
-      x: 0.5,
-      y: 1.3,
-      w: 12,
-      h: 3.8,
+      x: MARGIN_H,
+      y: CONTENT_Y,
+      w: 10 - (2 * MARGIN_H),
+      h: CONTENT_H,
       title: 'Distribución por Iniciativa Estratégica',
-      titleFontSize: 14,
+      titleFontSize: 13,
       chartColors: initiativeCounts.map((i: any) => i.color.replace('#', '')),
       barDir: 'bar',
       showValue: true,
       valAxisMaxVal: Math.max(...initiativeCounts.map((i: any) => i.count)) + 2,
-      catAxisLabelFontSize: 11,
+      catAxisLabelFontSize: 10,
       showValAxisTitle: false,
       showCatAxisTitle: false,
     });
@@ -302,6 +329,7 @@ export async function POST(request: NextRequest) {
 
       const slide = pptx.addSlide();
       slide.background = { fill: colors.white };
+      addLogoToSlide(slide);
 
       slide.addShape('rect', {
         x: 0,
@@ -312,11 +340,11 @@ export async function POST(request: NextRequest) {
       });
 
       slide.addText((user as any).name, {
-        x: 0.3,
-        y: 0.25,
-        w: 10,
+        x: MARGIN_H,
+        y: 0.2,
+        w: 10 - (2 * MARGIN_H),
         h: 0.5,
-        fontSize: 28,
+        fontSize: 26,
         bold: true,
         color: colors.dark,
       });
@@ -327,11 +355,11 @@ export async function POST(request: NextRequest) {
         : 0;
 
       slide.addText(`${userPriorities.length} Prioridades | ${userCompleted} Completadas | ${userAvg}% Avance Promedio`, {
-        x: 0.3,
-        y: 0.65,
-        w: 10,
+        x: MARGIN_H,
+        y: 0.7,
+        w: 10 - (2 * MARGIN_H),
         h: 0.3,
-        fontSize: 14,
+        fontSize: 12,
         color: '6b7280',
       });
 
@@ -372,15 +400,18 @@ export async function POST(request: NextRequest) {
         ]);
       });
 
+      const TABLE_Y = 1.2;
+      const TABLE_H = 5.625 - TABLE_Y - 0.3;
+
       slide.addTable(tableData, {
-        x: 0.3,
-        y: 1.3,
-        w: 12.4,
-        h: 3.8,
-        colW: [5.8, 2.2, 1.5, 2.9],
+        x: MARGIN_H,
+        y: TABLE_Y,
+        w: 10 - (2 * MARGIN_H),
+        h: TABLE_H,
+        colW: [4.5, 1.8, 1.2, 1.5],
         border: { type: 'solid', color: 'e5e7eb', pt: 1 },
         autoPage: false,
-        fontSize: 10,
+        fontSize: 9,
       });
     }
 
@@ -389,13 +420,18 @@ export async function POST(request: NextRequest) {
     // ==========================================
     const slideFinal = pptx.addSlide();
     slideFinal.background = { fill: colors.light };
+    addLogoToSlide(slideFinal);
+
+    const CONCLUSIONS_TITLE_Y = TITLE_Y + 0.5;
+    const CONCLUSIONS_CONTENT_Y = CONCLUSIONS_TITLE_Y + 0.8;
+    const BULLET_SPACING = 0.6;
 
     slideFinal.addText('CONCLUSIONES Y PRÓXIMOS PASOS', {
-      x: 0.3,
-      y: 0.5,
-      w: 12.4,
-      h: 0.8,
-      fontSize: 32,
+      x: MARGIN_H,
+      y: CONCLUSIONS_TITLE_Y,
+      w: 10 - (2 * MARGIN_H),
+      h: 0.6,
+      fontSize: 28,
       bold: true,
       color: colors.dark,
       align: 'center',
@@ -415,9 +451,9 @@ export async function POST(request: NextRequest) {
 
     conclusions.forEach((conclusion, idx) => {
       slideFinal.addText(conclusion, {
-        x: 1,
-        y: 2 + (idx * 0.6),
-        w: 11,
+        x: MARGIN_H + 0.5,
+        y: CONCLUSIONS_CONTENT_Y + (idx * BULLET_SPACING),
+        w: 10 - (2 * MARGIN_H) - 0.5,
         h: 0.5,
         fontSize: 18,
         color: colors.dark,
