@@ -66,7 +66,7 @@ export default function HistoryPage() {
       const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
-        fetch('/api/priorities')
+        fetch('/api/priorities?forDashboard=true')
       ]);
 
       const [usersData, initiativesData, prioritiesData] = await Promise.all([
