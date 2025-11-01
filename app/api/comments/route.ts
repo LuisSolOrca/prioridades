@@ -79,18 +79,21 @@ export async function POST(request: NextRequest) {
         const priorityOwner = await User.findById(priority.userId).lean();
         const commentAuthor = await User.findById((session.user as any).id).lean();
 
-        // Solo enviar si el comentario NO es del dueño de la prioridad
+        // Enviar email SIEMPRE, tanto si es del dueño como si no (para tener registro)
         if (
           priorityOwner &&
           commentAuthor &&
-          priorityOwner._id.toString() !== commentAuthor._id.toString() &&
           priorityOwner.emailNotifications?.enabled &&
           priorityOwner.emailNotifications?.newComments
         ) {
           const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
+          // Determinar si es propio comentario o de otro usuario
+          const isOwnComment = priorityOwner._id.toString() === commentAuthor._id.toString();
+
           const emailContent = emailTemplates.newComment({
             priorityTitle: priority.title,
-            commentAuthor: commentAuthor.name,
+            commentAuthor: isOwnComment ? `${commentAuthor.name} (tú)` : commentAuthor.name,
             commentText: text.trim(),
             priorityUrl: `${baseUrl}/priorities`,
           });
@@ -98,7 +101,9 @@ export async function POST(request: NextRequest) {
           // Enviar email de forma asíncrona sin bloquear la respuesta
           sendEmail({
             to: priorityOwner.email,
-            subject: emailContent.subject,
+            subject: isOwnComment
+              ? `📝 Registro de tu comentario: ${priority.title}`
+              : emailContent.subject,
             html: emailContent.html,
           }).catch(err => console.error('Error sending notification email:', err));
         }
