@@ -54,6 +54,7 @@ export default function PrioritiesPage() {
   const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
+  const [selectedPriorityForComments, setSelectedPriorityForComments] = useState<Priority | null>(null);
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -735,6 +736,13 @@ export default function PrioritiesPage() {
                               </div>
                             </div>
                             <div className="flex space-x-2 ml-4">
+                              <button
+                                onClick={() => setSelectedPriorityForComments(priority)}
+                                className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition"
+                                title="Ver comentarios"
+                              >
+                                💬
+                              </button>
                               {priority.status === 'COMPLETADO' ? (
                                 <div className="flex items-center space-x-2">
                                   <span className="text-green-600 text-xs font-medium bg-green-50 px-3 py-2 rounded-lg">
@@ -775,13 +783,6 @@ export default function PrioritiesPage() {
                                 ></div>
                               </div>
                             </div>
-
-                            {/* Comments Section */}
-                            {priority._id && (
-                              <div className="pt-4 mt-4 border-t border-gray-200">
-                                <CommentsSection priorityId={priority._id} />
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
@@ -850,6 +851,13 @@ export default function PrioritiesPage() {
                             </div>
                             <div className="flex space-x-2 ml-4">
                               <button
+                                onClick={() => setSelectedPriorityForComments(priority)}
+                                className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition"
+                                title="Ver comentarios"
+                              >
+                                💬
+                              </button>
+                              <button
                                 onClick={() => handleEdit(priority)}
                                 className="text-blue-600 hover:bg-blue-50 w-10 h-10 rounded-lg transition"
                                 title="Editar prioridad"
@@ -879,13 +887,6 @@ export default function PrioritiesPage() {
                                 ></div>
                               </div>
                             </div>
-
-                            {/* Comments Section */}
-                            {priority._id && (
-                              <div className="pt-4 mt-4 border-t border-gray-200">
-                                <CommentsSection priorityId={priority._id} />
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
@@ -898,6 +899,69 @@ export default function PrioritiesPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Comentarios */}
+      {selectedPriorityForComments && selectedPriorityForComments._id && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedPriorityForComments(null)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4 pb-4 border-b">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    {selectedPriorityForComments.title}
+                  </h2>
+                  {selectedPriorityForComments.description && (
+                    <p className="text-sm text-gray-600 mb-3">
+                      {selectedPriorityForComments.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <StatusBadge status={selectedPriorityForComments.status} />
+                    {(() => {
+                      const priorityInitiativeIds = selectedPriorityForComments.initiativeIds ||
+                        (selectedPriorityForComments.initiativeId ? [selectedPriorityForComments.initiativeId] : []);
+                      const priorityInitiatives = priorityInitiativeIds
+                        .map(id => initiatives.find(i => i._id === id))
+                        .filter((init): init is Initiative => init !== undefined);
+                      return priorityInitiatives.map(initiative => (
+                        <span key={initiative._id} className="text-sm text-gray-500 inline-flex items-center">
+                          <span style={{ color: initiative.color }}>●</span> {initiative.name}
+                        </span>
+                      ));
+                    })()}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedPriorityForComments(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold ml-4"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Comments Section */}
+              <CommentsSection priorityId={selectedPriorityForComments._id} />
+
+              {/* Close Button */}
+              <div className="flex justify-end mt-6 pt-4 border-t">
+                <button
+                  onClick={() => setSelectedPriorityForComments(null)}
+                  className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition font-semibold"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
