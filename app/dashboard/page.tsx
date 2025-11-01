@@ -321,7 +321,7 @@ export default function DashboardPage() {
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
                 title="Ir a la semana actual"
               >
-                📅 Hoy
+                📅 Semana Actual
               </button>
               <div className="text-center">
                 <div className="text-sm text-gray-600">Semana del</div>
