@@ -10,6 +10,7 @@ import StatusBadge from '@/components/StatusBadge';
 import CommentsSection from '@/components/CommentsSection';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
+import { exportToPowerPoint } from '@/lib/exportToPowerPoint';
 import ReactMarkdown from 'react-markdown';
 
 interface User {
@@ -310,6 +311,11 @@ export default function DashboardPage() {
     exportPriorities(priorities, users, initiatives, fileName);
   };
 
+  const handleExportPowerPoint = () => {
+    const weekLabel = getWeekLabel(currentWeek.monday);
+    exportToPowerPoint(priorities, users, initiatives, weekLabel);
+  };
+
   const toggleUser = (userId: string) => {
     setExpandedUsers(prev => {
       const newSet = new Set(prev);
@@ -404,11 +410,18 @@ export default function DashboardPage() {
                 🤖 Análisis IA
               </button>
               <button
+                onClick={handleExportPowerPoint}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition font-semibold"
+                title="Exportar a PowerPoint"
+              >
+                📊 Exportar PPT
+              </button>
+              <button
                 onClick={handleExport}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
                 title="Exportar a Excel"
               >
-                📥 Exportar a Excel
+                📥 Exportar Excel
               </button>
               <button
                 onClick={() => navigateWeek(-1)}
