@@ -7,6 +7,7 @@ interface KanbanBoardProps {
   priorities: any[];
   onStatusChange: (priorityId: string, newStatus: string) => Promise<void>;
   onViewDetails: (priority: any) => void;
+  weekId: string; // Identificador único para esta semana
 }
 
 const columns = [
@@ -36,7 +37,7 @@ const columns = [
   },
 ];
 
-export default function KanbanBoard({ priorities, onStatusChange, onViewDetails }: KanbanBoardProps) {
+export default function KanbanBoard({ priorities, onStatusChange, onViewDetails, weekId }: KanbanBoardProps) {
   const handleDragEnd = async (result: DropResult) => {
     // Save current scroll position
     const scrollY = window.scrollY;
@@ -109,7 +110,7 @@ export default function KanbanBoard({ priorities, onStatusChange, onViewDetails 
               </div>
 
               {/* Droppable Column */}
-              <Droppable droppableId={column.id}>
+              <Droppable droppableId={`${weekId}-${column.id}`}>
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}

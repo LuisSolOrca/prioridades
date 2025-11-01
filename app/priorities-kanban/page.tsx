@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import Navbar from '@/components/Navbar';
-import KanbanBoard from '@/components/KanbanBoard';
+import KanbanCard from '@/components/KanbanCard';
 import CommentsSection from '@/components/CommentsSection';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 
@@ -85,22 +86,78 @@ export default function PrioritiesKanbanPage() {
     }
   };
 
-  const handleKanbanStatusChange = async (priorityId: string, newStatus: string) => {
-    try {
-      const res = await fetch(`/api/priorities/${priorityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
+  const handleDragEnd = async (result: DropResult) => {
+    // Save scroll position
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
 
-      if (!res.ok) {
-        throw new Error('Error al actualizar el estado');
+    const { destination, source, draggableId } = result;
+
+    // No destination or dropped in the same place
+    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
+      return;
+    }
+
+    // Parse droppableId format: "weekId-status"
+    const [sourceWeek, sourceStatus] = source.droppableId.split('-');
+    const [destWeek, destStatus] = destination.droppableId.split('-');
+
+    try {
+      const updateData: any = {};
+
+      // Check if status changed
+      if (sourceStatus !== destStatus) {
+        updateData.status = destStatus;
       }
 
-      await loadData();
+      // Check if week changed
+      if (sourceWeek !== destWeek) {
+        const targetWeek = destWeek === 'current' ? currentWeek : nextWeek;
+        updateData.weekStart = targetWeek.monday.toISOString();
+        updateData.weekEnd = targetWeek.friday.toISOString();
+      }
+
+      // Only update if something changed
+      if (Object.keys(updateData).length > 0) {
+        const res = await fetch(`/api/priorities/${draggableId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateData),
+        });
+
+        if (!res.ok) {
+          throw new Error('Error al actualizar la prioridad');
+        }
+
+        await loadData();
+
+        // Restore scroll position
+        requestAnimationFrame(() => {
+          window.scrollTo(scrollX, scrollY);
+        });
+      }
     } catch (error) {
-      console.error('Error updating priority status:', error);
-      alert('Error al actualizar el estado de la prioridad');
+      console.error('Error updating priority:', error);
+      alert('Error al actualizar la prioridad');
+      await loadData(); // Reload to reset UI
+    }
+  };
+
+  const handleDragStart = () => {
+    if (window) {
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const handleDragUpdate = () => {
+    if (window && document.body.style.overflow !== 'hidden') {
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const resetScroll = () => {
+    if (window) {
+      document.body.style.overflow = '';
     }
   };
 
@@ -117,54 +174,105 @@ export default function PrioritiesKanbanPage() {
 
   if (!session) return null;
 
+  const columns = [
+    { id: 'EN_TIEMPO', title: 'En Tiempo', color: 'bg-green-100', headerColor: 'bg-green-600' },
+    { id: 'EN_RIESGO', title: 'En Riesgo', color: 'bg-yellow-100', headerColor: 'bg-yellow-600' },
+    { id: 'BLOQUEADO', title: 'Bloqueado', color: 'bg-red-100', headerColor: 'bg-red-600' },
+    { id: 'COMPLETADO', title: 'Completado', color: 'bg-blue-100', headerColor: 'bg-blue-600' },
+  ];
+
+  const renderWeekBoard = (weekId: string, weekLabel: string, priorities: Priority[]) => {
+    return (
+      <div key={weekId}>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          📅 {weekLabel}
+          <span className="ml-3 text-sm font-normal text-gray-600">
+            {priorities.length} {priorities.length === 1 ? 'prioridad' : 'prioridades'}
+          </span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {columns.map(column => {
+            const columnPriorities = priorities.filter(p => p.status === column.id);
+
+            return (
+              <div key={column.id} className="flex flex-col">
+                <div className={`${column.headerColor} text-white rounded-t-lg px-4 py-3 flex items-center justify-between`}>
+                  <h3 className="font-bold text-sm">{column.title}</h3>
+                  <span className="bg-white bg-opacity-30 rounded-full px-2 py-1 text-xs font-semibold">
+                    {columnPriorities.length}
+                  </span>
+                </div>
+
+                <Droppable droppableId={`${weekId}-${column.id}`}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`
+                        ${column.color} rounded-b-lg p-3 min-h-[500px] flex-1
+                        ${snapshot.isDraggingOver ? 'ring-2 ring-blue-400 bg-opacity-80' : ''}
+                        transition-all duration-200
+                      `}
+                    >
+                      {columnPriorities.map((priority, index) => (
+                        <KanbanCard
+                          key={priority._id}
+                          priority={priority}
+                          index={index}
+                          onViewDetails={setSelectedPriorityForComments}
+                        />
+                      ))}
+                      {provided.placeholder}
+
+                      {columnPriorities.length === 0 && (
+                        <div className="text-center text-gray-400 text-sm mt-8">
+                          No hay prioridades
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="container mx-auto px-4 py-6">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-800">
-              📊 Vista Kanban - Prioridades
-            </h1>
-            <button
-              onClick={() => router.push('/priorities')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              📋 Ver Lista
-            </button>
-          </div>
+        <DragDropContext
+          onDragStart={handleDragStart}
+          onDragUpdate={handleDragUpdate}
+          onDragEnd={(result) => {
+            handleDragEnd(result);
+            resetScroll();
+          }}
+        >
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-gray-800">
+                📊 Vista Kanban - Prioridades
+              </h1>
+              <button
+                onClick={() => router.push('/priorities')}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                📋 Ver Lista
+              </button>
+            </div>
 
-          {/* Current Week Kanban */}
-          <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              📅 Semana Actual ({getWeekLabel(currentWeek.monday)})
-              <span className="ml-3 text-sm font-normal text-gray-600">
-                {currentWeekPriorities.length} {currentWeekPriorities.length === 1 ? 'prioridad' : 'prioridades'}
-              </span>
-            </h2>
-            <KanbanBoard
-              priorities={currentWeekPriorities}
-              onStatusChange={handleKanbanStatusChange}
-              onViewDetails={setSelectedPriorityForComments}
-            />
-          </div>
+            {/* Current Week Board */}
+            {renderWeekBoard('current', `Semana Actual (${getWeekLabel(currentWeek.monday)})`, currentWeekPriorities)}
 
-          {/* Next Week Kanban */}
-          <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              📅 Siguiente Semana ({getWeekLabel(nextWeek.monday)})
-              <span className="ml-3 text-sm font-normal text-gray-600">
-                {nextWeekPriorities.length} {nextWeekPriorities.length === 1 ? 'prioridad' : 'prioridades'}
-              </span>
-            </h2>
-            <KanbanBoard
-              priorities={nextWeekPriorities}
-              onStatusChange={handleKanbanStatusChange}
-              onViewDetails={setSelectedPriorityForComments}
-            />
+            {/* Next Week Board */}
+            {renderWeekBoard('next', `Siguiente Semana (${getWeekLabel(nextWeek.monday)})`, nextWeekPriorities)}
           </div>
-        </div>
+        </DragDropContext>
       </div>
 
       {/* Modal de Comentarios */}
