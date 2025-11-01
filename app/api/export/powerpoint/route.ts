@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const slide1 = pptx.addSlide();
     slide1.background = { fill: 'FFFFFF' };
 
-    slide1.addShape(pptx.shapes.RECTANGLE, {
+    slide1.addShape('rect', {
       x: 0,
       y: 0,
       w: '100%',
@@ -122,13 +122,13 @@ export async function POST(request: NextRequest) {
     statsData.forEach((stat, idx) => {
       const x = 2.5 + (idx * 2.5);
 
-      slide1.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+      slide1.addShape('roundRect', {
         x,
         y: statsY,
         w: 2,
         h: 1,
         fill: { color: stat.color, transparency: 10 },
-        line: { color: stat.color, width: 2 },
+        line: { color: stat.color, pt: 2 },
       });
 
       slide1.addText(stat.value, {
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    slide2.addChart(pptx.charts.DOUGHNUT, statusChartData, {
+    slide2.addChart('doughnut' as any, statusChartData, {
       x: 0.5,
       y: 1.2,
       w: 5.5,
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    slide2.addChart(pptx.charts.BAR, userChartData, {
+    slide2.addChart('bar' as any, userChartData, {
       x: 6.5,
       y: 1.2,
       w: 6,
@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    slide3.addChart(pptx.charts.BAR, initiativeChartData, {
+    slide3.addChart('bar' as any, initiativeChartData, {
       x: 0.5,
       y: 1.2,
       w: 12,
@@ -291,7 +291,7 @@ export async function POST(request: NextRequest) {
       const slide = pptx.addSlide();
       slide.background = { fill: colors.white };
 
-      slide.addShape(pptx.shapes.RECTANGLE, {
+      slide.addShape('rect', {
         x: 0,
         y: 0,
         w: '100%',
