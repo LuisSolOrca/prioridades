@@ -311,9 +311,14 @@ export default function DashboardPage() {
     exportPriorities(priorities, users, initiatives, fileName);
   };
 
-  const handleExportPowerPoint = () => {
-    const weekLabel = getWeekLabel(currentWeek.monday);
-    exportToPowerPoint(priorities, users, initiatives, weekLabel);
+  const handleExportPowerPoint = async () => {
+    try {
+      const weekLabel = getWeekLabel(currentWeek.monday);
+      await exportToPowerPoint(priorities, users, initiatives, weekLabel);
+    } catch (error) {
+      console.error('Error exporting to PowerPoint:', error);
+      alert('Error al exportar a PowerPoint. Por favor, intenta de nuevo.');
+    }
   };
 
   const toggleUser = (userId: string) => {

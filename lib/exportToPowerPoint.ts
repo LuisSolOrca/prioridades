@@ -1,4 +1,4 @@
-import pptxgen from 'pptxgenjs';
+'use client';
 
 interface User {
   _id: string;
@@ -23,12 +23,14 @@ interface Priority {
   initiativeIds?: string[];
 }
 
-export function exportToPowerPoint(
+export async function exportToPowerPoint(
   priorities: Priority[],
   users: User[],
   initiatives: Initiative[],
   weekLabel: string
 ) {
+  // Dynamic import to avoid SSR issues
+  const pptxgen = (await import('pptxgenjs')).default;
   const pptx = new pptxgen();
 
   // Configuración de tamaño y tema
