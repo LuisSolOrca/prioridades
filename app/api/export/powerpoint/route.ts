@@ -521,10 +521,11 @@ export async function POST(request: NextRequest) {
 
       // AI Insights content
       const INSIGHTS_START_Y = 1.3;
-      const INSIGHT_HEIGHT = 0.5;
-      const INSIGHT_GAP = 0.15;
+      const INSIGHT_HEIGHT = 0.6;
+      const INSIGHT_GAP = 0.1;
+      const MAX_INSIGHTS = 5; // Reduce to 5 for better spacing
 
-      aiInsights.slice(0, 6).forEach((insight, idx) => {
+      aiInsights.slice(0, MAX_INSIGHTS).forEach((insight, idx) => {
         const yPos = INSIGHTS_START_Y + (idx * (INSIGHT_HEIGHT + INSIGHT_GAP));
 
         // Bullet point background
@@ -537,15 +538,16 @@ export async function POST(request: NextRequest) {
           line: { color: colors.info, pt: 1 },
         });
 
-        // Insight text
+        // Insight text with word wrap enabled
         slideInsights.addText(insight, {
-          x: MARGIN_H + 0.2,
+          x: MARGIN_H + 0.15,
           y: yPos + 0.1,
-          w: 10 - (2 * MARGIN_H) - 0.4,
+          w: 10 - (2 * MARGIN_H) - 0.3,
           h: INSIGHT_HEIGHT - 0.2,
-          fontSize: 14,
+          fontSize: 12,
           color: colors.dark,
-          valign: 'middle',
+          valign: 'top',
+          wrap: true,
         });
       });
     }
