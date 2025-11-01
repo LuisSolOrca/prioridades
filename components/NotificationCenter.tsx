@@ -325,7 +325,7 @@ export default function NotificationCenter() {
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    window.location.href = '/notifications';
+                    window.location.href = '/priorities';
                   }}
                   className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                 >
