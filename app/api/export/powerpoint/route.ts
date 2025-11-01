@@ -202,14 +202,16 @@ export async function POST(request: NextRequest) {
 
     slide2.addChart('doughnut' as any, statusChartData, {
       x: 0.5,
-      y: 1.2,
-      w: 5.5,
-      h: 4,
+      y: 1.3,
+      w: 5,
+      h: 3.8,
       title: 'Distribución por Estado',
+      titleFontSize: 14,
       chartColors: [colors.success, colors.warning, colors.danger, colors.info],
       holeSize: 50,
       showLegend: true,
       legendPos: 'b',
+      legendFontSize: 10,
     });
 
     // User priorities chart
@@ -227,14 +229,19 @@ export async function POST(request: NextRequest) {
     ];
 
     slide2.addChart('bar' as any, userChartData, {
-      x: 6.5,
-      y: 1.2,
-      w: 6,
-      h: 4,
+      x: 6,
+      y: 1.3,
+      w: 6.5,
+      h: 3.8,
       title: 'Prioridades por Usuario',
+      titleFontSize: 14,
       chartColors: [colors.primary],
       barDir: 'bar',
       showValue: true,
+      valAxisMaxVal: Math.max(...userPriorityCounts.map((u: any) => u.count)) + 2,
+      catAxisLabelFontSize: 10,
+      showValAxisTitle: false,
+      showCatAxisTitle: false,
     });
 
     // ==========================================
@@ -270,14 +277,19 @@ export async function POST(request: NextRequest) {
     ];
 
     slide3.addChart('bar' as any, initiativeChartData, {
-      x: 0.5,
-      y: 1.2,
-      w: 12,
-      h: 4.2,
+      x: 1,
+      y: 1.3,
+      w: 11,
+      h: 3.8,
       title: 'Distribución por Iniciativa Estratégica',
+      titleFontSize: 14,
       chartColors: initiativeCounts.map((i: any) => i.color.replace('#', '')),
       barDir: 'bar',
       showValue: true,
+      valAxisMaxVal: Math.max(...initiativeCounts.map((i: any) => i.count)) + 2,
+      catAxisLabelFontSize: 11,
+      showValAxisTitle: false,
+      showCatAxisTitle: false,
     });
 
     // ==========================================
@@ -364,8 +376,11 @@ export async function POST(request: NextRequest) {
         x: 0.5,
         y: 1.3,
         w: 12,
+        h: 3.8,
         colW: [5.5, 2, 1.5, 3],
         border: { type: 'solid', color: 'e5e7eb', pt: 1 },
+        autoPage: false,
+        fontSize: 10,
       });
     }
 
