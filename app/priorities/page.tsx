@@ -51,6 +51,8 @@ export default function PrioritiesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, 1 = next week
   const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
+  const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -197,6 +199,56 @@ export default function PrioritiesPage() {
     });
   };
 
+  const handleImproveWithAI = async (type: 'title' | 'description') => {
+    const text = type === 'title' ? formData.title : formData.description;
+
+    if (!text || text.trim() === '') {
+      alert(`Primero escribe ${type === 'title' ? 'un título' : 'una descripción'} para que la IA pueda mejorarlo`);
+      return;
+    }
+
+    setAiLoading(type);
+    setAiSuggestion(null);
+
+    try {
+      const res = await fetch('/api/ai/improve-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, type })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error al mejorar el texto');
+      }
+
+      const data = await res.json();
+      setAiSuggestion({ type, text: data.improvedText });
+
+    } catch (error: any) {
+      console.error('Error improving text:', error);
+      alert(error.message || 'Error al comunicarse con la IA');
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
+  const handleAcceptSuggestion = () => {
+    if (!aiSuggestion) return;
+
+    if (aiSuggestion.type === 'title') {
+      setFormData({ ...formData, title: aiSuggestion.text });
+    } else {
+      setFormData({ ...formData, description: aiSuggestion.text });
+    }
+
+    setAiSuggestion(null);
+  };
+
+  const handleRejectSuggestion = () => {
+    setAiSuggestion(null);
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -333,9 +385,36 @@ export default function PrioritiesPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Título de la Prioridad *
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Título de la Prioridad *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleImproveWithAI('title')}
+                      disabled={aiLoading === 'title' || !formData.title}
+                      className={`text-xs px-3 py-1 rounded-lg transition flex items-center space-x-1 ${
+                        aiLoading === 'title'
+                          ? 'bg-gray-300 cursor-not-allowed'
+                          : formData.title
+                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                      title="Mejorar con IA"
+                    >
+                      {aiLoading === 'title' ? (
+                        <>
+                          <span className="animate-spin">⚙️</span>
+                          <span>Mejorando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>✨</span>
+                          <span>Mejorar con IA</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     required
@@ -348,9 +427,36 @@ export default function PrioritiesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción Detallada
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Descripción Detallada
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleImproveWithAI('description')}
+                      disabled={aiLoading === 'description' || !formData.description}
+                      className={`text-xs px-3 py-1 rounded-lg transition flex items-center space-x-1 ${
+                        aiLoading === 'description'
+                          ? 'bg-gray-300 cursor-not-allowed'
+                          : formData.description
+                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                      title="Mejorar con IA"
+                    >
+                      {aiLoading === 'description' ? (
+                        <>
+                          <span className="animate-spin">⚙️</span>
+                          <span>Mejorando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>✨</span>
+                          <span>Mejorar con IA</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     rows={4}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -467,6 +573,62 @@ export default function PrioritiesPage() {
                   </button>
                 </div>
               </form>
+
+              {/* Modal de Sugerencia de IA */}
+              {aiSuggestion && (
+                <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-2xl">✨</span>
+                      <h3 className="text-lg font-bold text-purple-900">
+                        Sugerencia de IA
+                      </h3>
+                    </div>
+                    <button
+                      onClick={handleRejectSuggestion}
+                      className="text-gray-400 hover:text-gray-600 text-xl"
+                      title="Cerrar"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 uppercase mb-1">
+                        {aiSuggestion.type === 'title' ? 'Texto Original' : 'Descripción Original'}
+                      </p>
+                      <div className="bg-white/70 rounded-lg p-3 text-sm text-gray-700">
+                        {aiSuggestion.type === 'title' ? formData.title : formData.description}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-purple-700 uppercase mb-1">
+                        {aiSuggestion.type === 'title' ? 'Título Mejorado' : 'Descripción Mejorada'}
+                      </p>
+                      <div className="bg-white rounded-lg p-3 text-sm text-gray-800 font-medium border-2 border-purple-300">
+                        {aiSuggestion.text}
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-3 pt-2">
+                      <button
+                        onClick={handleAcceptSuggestion}
+                        className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-medium"
+                      >
+                        ✓ Usar Esta Versión
+                      </button>
+                      <button
+                        onClick={handleRejectSuggestion}
+                        className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
+                      >
+                        × Mantener Original
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-6">
