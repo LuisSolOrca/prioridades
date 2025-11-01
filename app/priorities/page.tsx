@@ -26,7 +26,8 @@ interface Priority {
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
   userId: string;
-  initiativeId: string;
+  initiativeId?: string; // Mantener para compatibilidad
+  initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   wasEdited?: boolean;
 }
 
@@ -40,7 +41,7 @@ export default function PrioritiesPage() {
   const [formData, setFormData] = useState<Priority>({
     title: '',
     description: '',
-    initiativeId: '',
+    initiativeIds: [],
     completionPercentage: 0,
     status: 'EN_TIEMPO',
     userId: '',
@@ -49,6 +50,7 @@ export default function PrioritiesPage() {
   });
   const [loading, setLoading] = useState(true);
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, 1 = next week
+  const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -92,26 +94,37 @@ export default function PrioritiesPage() {
     setFormData({
       title: '',
       description: '',
-      initiativeId: '',
+      initiativeIds: [],
       completionPercentage: 0,
       status: 'EN_TIEMPO',
       userId: (session!.user as any).id,
-      weekStart: currentWeek.monday.toISOString(),
-      weekEnd: currentWeek.friday.toISOString()
+      weekStart: nextWeek.monday.toISOString(),
+      weekEnd: nextWeek.friday.toISOString()
     });
-    setSelectedWeekOffset(0);
+    setSelectedWeekOffset(1); // Cambiar a siguiente semana por defecto
     setEditingPriority(null);
     setShowForm(true);
   };
 
   const handleEdit = (priority: Priority) => {
-    setFormData(priority);
+    // Compatibilidad: convertir initiativeId a initiativeIds si existe
+    const editFormData = {
+      ...priority,
+      initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : [])
+    };
+    setFormData(editFormData);
     setEditingPriority(priority);
     setShowForm(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validar que se haya seleccionado al menos una iniciativa
+    if (!formData.initiativeIds || formData.initiativeIds.length === 0) {
+      alert('Debes seleccionar al menos una iniciativa estratégica');
+      return;
+    }
 
     try {
       if (editingPriority?._id) {
@@ -122,7 +135,10 @@ export default function PrioritiesPage() {
           body: JSON.stringify(formData)
         });
 
-        if (!res.ok) throw new Error('Error updating priority');
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Error updating priority');
+        }
       } else {
         // Create
         const res = await fetch('/api/priorities', {
@@ -131,15 +147,18 @@ export default function PrioritiesPage() {
           body: JSON.stringify(formData)
         });
 
-        if (!res.ok) throw new Error('Error creating priority');
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Error creating priority');
+        }
       }
 
       await loadData();
       setShowForm(false);
       setEditingPriority(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving priority:', error);
-      alert('Error al guardar la prioridad');
+      alert(error.message || 'Error al guardar la prioridad');
     }
   };
 
@@ -164,6 +183,18 @@ export default function PrioritiesPage() {
     const users = [{ _id: (session!.user as any).id, name: session!.user?.name || 'Usuario', email: session!.user?.email || '' }];
     const fileName = `Mis_Prioridades_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}_y_Siguiente`;
     exportPriorities(priorities, users, initiatives, fileName);
+  };
+
+  const toggleWeekCollapse = (weekKey: string) => {
+    setCollapsedWeeks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(weekKey)) {
+        newSet.delete(weekKey);
+      } else {
+        newSet.add(weekKey);
+      }
+      return newSet;
+    });
   };
 
   if (status === 'loading' || loading) {
@@ -192,6 +223,10 @@ export default function PrioritiesPage() {
 
   const activePriorities = currentWeekPriorities.filter(p => p.status !== 'COMPLETADO');
   const hasMoreThanFive = activePriorities.length > 5;
+  const currentWeekTotal = currentWeekPriorities.length;
+  const nextWeekTotal = nextWeekPriorities.length;
+  const currentWeekAtLimit = currentWeekTotal >= 10;
+  const nextWeekAtLimit = nextWeekTotal >= 10;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -225,13 +260,32 @@ export default function PrioritiesPage() {
               <div>
                 <div className="font-semibold text-blue-900">Semana actual: {getWeekLabel(currentWeek.monday)}</div>
                 <div className="text-sm text-blue-700">
-                  {currentWeekPriorities.length} prioridades esta semana • {nextWeekPriorities.length} prioridades siguiente semana
+                  {currentWeekPriorities.length}/10 prioridades esta semana • {nextWeekPriorities.length}/10 prioridades siguiente semana
                 </div>
               </div>
             </div>
           </div>
 
-          {hasMoreThanFive && (
+          {(currentWeekAtLimit || nextWeekAtLimit) && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+              <div className="flex items-start">
+                <span className="text-red-600 text-xl mr-3 mt-1">🚫</span>
+                <div>
+                  <h3 className="font-bold text-red-900 mb-1">
+                    Límite Alcanzado
+                  </h3>
+                  <p className="text-sm text-red-700">
+                    {currentWeekAtLimit && 'Has alcanzado el límite de 10 prioridades para la semana actual.'}
+                    {currentWeekAtLimit && nextWeekAtLimit && ' '}
+                    {nextWeekAtLimit && 'Has alcanzado el límite de 10 prioridades para la siguiente semana.'}
+                    {' '}Para agregar una nueva prioridad, elimina alguna existente.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {hasMoreThanFive && !currentWeekAtLimit && (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
               <div className="flex items-start">
                 <span className="text-yellow-600 text-xl mr-3 mt-1">⚠️</span>
@@ -240,7 +294,7 @@ export default function PrioritiesPage() {
                     Advertencia: Más de 5 prioridades activas
                   </h3>
                   <p className="text-sm text-yellow-700">
-                    Tienes {activePriorities.length} prioridades activas esta semana (sin contar las completadas). Se recomienda mantener máximo 5 para asegurar el foco y cumplimiento.
+                    Tienes {activePriorities.length} prioridades activas esta semana (sin contar las completadas). Se recomienda mantener máximo 5 para asegurar el foco y cumplimiento. El límite máximo es de 10 prioridades por semana.
                   </p>
                 </div>
               </div>
@@ -308,21 +362,43 @@ export default function PrioritiesPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Iniciativa Estratégica *
+                    Iniciativas Estratégicas * (selecciona una o más)
                   </label>
-                  <select
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={formData.initiativeId}
-                    onChange={(e) => setFormData({ ...formData, initiativeId: e.target.value })}
-                  >
-                    <option value="">-- Seleccionar Iniciativa --</option>
-                    {initiatives.map(initiative => (
-                      <option key={initiative._id} value={initiative._id}>
-                        {initiative.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto space-y-2">
+                    {initiatives.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No hay iniciativas disponibles</p>
+                    ) : (
+                      initiatives.map(initiative => (
+                        <label
+                          key={initiative._id}
+                          className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            checked={(formData.initiativeIds || []).includes(initiative._id)}
+                            onChange={(e) => {
+                              const currentIds = formData.initiativeIds || [];
+                              const newIds = e.target.checked
+                                ? [...currentIds, initiative._id]
+                                : currentIds.filter(id => id !== initiative._id);
+                              setFormData({ ...formData, initiativeIds: newIds });
+                            }}
+                          />
+                          <div className="flex items-center space-x-2 flex-1">
+                            <div
+                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: initiative.color }}
+                            ></div>
+                            <span className="text-gray-800">{initiative.name}</span>
+                          </div>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  {(!formData.initiativeIds || formData.initiativeIds.length === 0) && (
+                    <p className="text-red-500 text-xs mt-1">Debes seleccionar al menos una iniciativa</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -396,20 +472,36 @@ export default function PrioritiesPage() {
             <div className="space-y-6">
               {/* Semana Actual */}
               <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                  📅 Semana Actual ({getWeekLabel(currentWeek.monday)})
-                </h2>
-                <div className="grid grid-cols-1 gap-4">
-                  {currentWeekPriorities.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                      <div className="text-4xl mb-2">📋</div>
-                      <p className="text-gray-500">No tienes prioridades esta semana</p>
-                    </div>
-                  ) : (
+                <div
+                  className="flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-lg transition"
+                  onClick={() => toggleWeekCollapse('current')}
+                >
+                  <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                    <span className="mr-2">{collapsedWeeks.has('current') ? '▶' : '▼'}</span>
+                    📅 Semana Actual ({getWeekLabel(currentWeek.monday)})
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      {currentWeekPriorities.length} {currentWeekPriorities.length === 1 ? 'prioridad' : 'prioridades'}
+                    </span>
+                  </h2>
+                </div>
+                {!collapsedWeeks.has('current') && (
+                  <div className="grid grid-cols-1 gap-4">
+                    {currentWeekPriorities.length === 0 ? (
+                      <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                        <div className="text-4xl mb-2">📋</div>
+                        <p className="text-gray-500">No tienes prioridades esta semana</p>
+                      </div>
+                    ) : (
                     currentWeekPriorities.map(priority => {
-                      const initiative = initiatives.find(i => i._id === priority.initiativeId);
+                      // Obtener iniciativas (compatibilidad con ambos campos)
+                      const priorityInitiativeIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
+                      const priorityInitiatives = priorityInitiativeIds
+                        .map(id => initiatives.find(i => i._id === id))
+                        .filter((init): init is Initiative => init !== undefined);
+                      const primaryInitiative = priorityInitiatives[0];
+
                       return (
-                        <div key={priority._id} className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderColor: initiative?.color }}>
+                        <div key={priority._id} className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderColor: primaryInitiative?.color || '#ccc' }}>
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
@@ -423,10 +515,15 @@ export default function PrioritiesPage() {
                               {priority.description && (
                                 <p className="text-sm text-gray-600 mb-3">{priority.description}</p>
                               )}
+                              <div className="flex items-center flex-wrap gap-2 text-sm mb-2">
+                                {priorityInitiatives.map(initiative => (
+                                  <span key={initiative._id} className="inline-flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded">
+                                    <span style={{ color: initiative.color }}>●</span>
+                                    <span className="text-gray-700">{initiative.name}</span>
+                                  </span>
+                                ))}
+                              </div>
                               <div className="flex items-center space-x-4 text-sm">
-                                <span className="text-gray-600">
-                                  <span style={{ color: initiative?.color }}>●</span> {initiative?.name}
-                                </span>
                                 <StatusBadge status={priority.status} />
                               </div>
                             </div>
@@ -474,27 +571,44 @@ export default function PrioritiesPage() {
                           </div>
                         </div>
                       );
-                    })
-                  )}
-                </div>
+                      })
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Siguiente Semana */}
               <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                  📅 Siguiente Semana ({getWeekLabel(nextWeek.monday)})
-                </h2>
-                <div className="grid grid-cols-1 gap-4">
-                  {nextWeekPriorities.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                      <div className="text-4xl mb-2">📋</div>
-                      <p className="text-gray-500">No tienes prioridades planificadas para la siguiente semana</p>
-                    </div>
-                  ) : (
+                <div
+                  className="flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-lg transition"
+                  onClick={() => toggleWeekCollapse('next')}
+                >
+                  <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                    <span className="mr-2">{collapsedWeeks.has('next') ? '▶' : '▼'}</span>
+                    📅 Siguiente Semana ({getWeekLabel(nextWeek.monday)})
+                    <span className="ml-3 text-sm font-normal text-gray-600">
+                      {nextWeekPriorities.length} {nextWeekPriorities.length === 1 ? 'prioridad' : 'prioridades'}
+                    </span>
+                  </h2>
+                </div>
+                {!collapsedWeeks.has('next') && (
+                  <div className="grid grid-cols-1 gap-4">
+                    {nextWeekPriorities.length === 0 ? (
+                      <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                        <div className="text-4xl mb-2">📋</div>
+                        <p className="text-gray-500">No tienes prioridades planificadas para la siguiente semana</p>
+                      </div>
+                    ) : (
                     nextWeekPriorities.map(priority => {
-                      const initiative = initiatives.find(i => i._id === priority.initiativeId);
+                      // Obtener iniciativas (compatibilidad con ambos campos)
+                      const priorityInitiativeIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
+                      const priorityInitiatives = priorityInitiativeIds
+                        .map(id => initiatives.find(i => i._id === id))
+                        .filter((init): init is Initiative => init !== undefined);
+                      const primaryInitiative = priorityInitiatives[0];
+
                       return (
-                        <div key={priority._id} className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderColor: initiative?.color }}>
+                        <div key={priority._id} className="bg-white rounded-lg shadow-md p-6 border-l-4" style={{ borderColor: primaryInitiative?.color || '#ccc' }}>
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
@@ -508,10 +622,15 @@ export default function PrioritiesPage() {
                               {priority.description && (
                                 <p className="text-sm text-gray-600 mb-3">{priority.description}</p>
                               )}
+                              <div className="flex items-center flex-wrap gap-2 text-sm mb-2">
+                                {priorityInitiatives.map(initiative => (
+                                  <span key={initiative._id} className="inline-flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded">
+                                    <span style={{ color: initiative.color }}>●</span>
+                                    <span className="text-gray-700">{initiative.name}</span>
+                                  </span>
+                                ))}
+                              </div>
                               <div className="flex items-center space-x-4 text-sm">
-                                <span className="text-gray-600">
-                                  <span style={{ color: initiative?.color }}>●</span> {initiative?.name}
-                                </span>
                                 <StatusBadge status={priority.status} />
                               </div>
                             </div>
@@ -549,9 +668,10 @@ export default function PrioritiesPage() {
                           </div>
                         </div>
                       );
-                    })
-                  )}
-                </div>
+                      })
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

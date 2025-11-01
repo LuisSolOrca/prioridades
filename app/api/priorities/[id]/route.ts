@@ -61,10 +61,17 @@ export async function PUT(
 
     const body = await request.json();
 
+    // Compatibilidad: convertir initiativeId a initiativeIds si existe
+    let initiativeIds = body.initiativeIds || [];
+    if (body.initiativeId && initiativeIds.length === 0) {
+      initiativeIds = [body.initiativeId];
+    }
+
     const updatedPriority = await Priority.findByIdAndUpdate(
       params.id,
       {
         ...body,
+        initiativeIds,
         wasEdited: true,
         lastEditedAt: new Date(),
         updatedAt: new Date()

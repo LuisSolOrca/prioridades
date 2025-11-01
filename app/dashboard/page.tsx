@@ -35,7 +35,8 @@ interface Priority {
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
   userId: string;
-  initiativeId: string;
+  initiativeId?: string; // Mantener para compatibilidad
+  initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   wasEdited: boolean;
 }
 
@@ -139,9 +140,15 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
               </div>
             ) : (
               priorities.map(priority => {
-                const initiative = initiatives.find(i => i._id === priority.initiativeId);
+                // Obtener iniciativas (compatibilidad con ambos campos)
+                const priorityInitiativeIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
+                const priorityInitiatives = priorityInitiativeIds
+                  .map(id => initiatives.find(i => i._id === id))
+                  .filter((init): init is Initiative => init !== undefined);
+                const primaryInitiative = priorityInitiatives[0];
+
                 return (
-                  <div key={priority._id} className="border-l-4 pl-3 py-2 bg-gray-50 rounded" style={{ borderColor: initiative?.color }}>
+                  <div key={priority._id} className="border-l-4 pl-3 py-2 bg-gray-50 rounded" style={{ borderColor: primaryInitiative?.color || '#ccc' }}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -157,7 +164,14 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                             🔍
                           </button>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">{initiative?.name}</div>
+                        <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-1">
+                          {priorityInitiatives.map((initiative, idx) => initiative && (
+                            <span key={initiative._id}>
+                              <span style={{ color: initiative.color }}>●</span> {initiative.name}
+                              {idx < priorityInitiatives.length - 1 ? ' • ' : ''}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                       <StatusBadge status={priority.status} />
                     </div>
@@ -214,7 +228,7 @@ export default function DashboardPage() {
       const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
         fetch('/api/users?activeOnly=true'),
         fetch('/api/initiatives?activeOnly=true'),
-        fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`)
+        fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`)
       ]);
 
       const [usersData, initiativesData, prioritiesData] = await Promise.all([
@@ -387,11 +401,19 @@ export default function DashboardPage() {
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">
                     {selectedPriority.title}
                   </h2>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <StatusBadge status={selectedPriority.status} />
-                    <span className="text-sm text-gray-500">
-                      {initiatives.find(i => i._id === selectedPriority.initiativeId)?.name}
-                    </span>
+                    {(() => {
+                      const priorityInitiativeIds = selectedPriority.initiativeIds || (selectedPriority.initiativeId ? [selectedPriority.initiativeId] : []);
+                      const priorityInitiatives = priorityInitiativeIds
+                        .map(id => initiatives.find(i => i._id === id))
+                        .filter((init): init is Initiative => init !== undefined);
+                      return priorityInitiatives.map(initiative => (
+                        <span key={initiative._id} className="text-sm text-gray-500">
+                          <span style={{ color: initiative.color }}>●</span> {initiative.name}
+                        </span>
+                      ));
+                    })()}
                   </div>
                 </div>
                 <button
@@ -423,17 +445,23 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Iniciativa</h3>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{
-                        backgroundColor: initiatives.find(i => i._id === selectedPriority.initiativeId)?.color
-                      }}
-                    ></div>
-                    <p className="text-gray-800">
-                      {initiatives.find(i => i._id === selectedPriority.initiativeId)?.name}
-                    </p>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Iniciativa(s)</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const priorityInitiativeIds = selectedPriority.initiativeIds || (selectedPriority.initiativeId ? [selectedPriority.initiativeId] : []);
+                      const priorityInitiatives = priorityInitiativeIds
+                        .map(id => initiatives.find(i => i._id === id))
+                        .filter((init): init is Initiative => init !== undefined);
+                      return priorityInitiatives.map(initiative => (
+                        <div key={initiative._id} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: initiative.color }}
+                          ></div>
+                          <span className="text-gray-800 text-sm">{initiative.name}</span>
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
                 <div>

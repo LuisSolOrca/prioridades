@@ -13,7 +13,8 @@ export interface IPriority {
   wasEdited: boolean;
   isCarriedOver: boolean;
   userId: mongoose.Types.ObjectId;
-  initiativeId: mongoose.Types.ObjectId;
+  initiativeId?: mongoose.Types.ObjectId; // Mantener para compatibilidad hacia atrás
+  initiativeIds: mongoose.Types.ObjectId[]; // Nuevo campo para múltiples iniciativas
   createdAt: Date;
   updatedAt: Date;
   lastEditedAt?: Date;
@@ -65,7 +66,18 @@ const PrioritySchema = new Schema<IPriority>({
   initiativeId: {
     type: Schema.Types.ObjectId,
     ref: 'StrategicInitiative',
-    required: true,
+    required: false, // Ya no es requerido, para compatibilidad
+  },
+  initiativeIds: {
+    type: [Schema.Types.ObjectId],
+    ref: 'StrategicInitiative',
+    default: [],
+    validate: {
+      validator: function(v: mongoose.Types.ObjectId[]) {
+        return v && v.length > 0; // Al menos una iniciativa requerida
+      },
+      message: 'Debe seleccionar al menos una iniciativa estratégica'
+    }
   },
   lastEditedAt: {
     type: Date,

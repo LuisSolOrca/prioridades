@@ -18,13 +18,21 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
     const weekStart = searchParams.get('weekStart');
     const weekEnd = searchParams.get('weekEnd');
+    const forDashboard = searchParams.get('forDashboard'); // Nuevo parámetro para indicar que es para el dashboard
 
     let query: any = {};
 
-    // Si es usuario normal, solo ver sus prioridades
-    if ((session.user as any).role !== 'ADMIN' && !userId) {
-      query.userId = (session.user as any).id;
+    // Si es para el dashboard, mostrar todas las prioridades (ambos roles pueden ver el dashboard completo)
+    // Si no es para el dashboard, aplicar filtros según el rol
+    if (forDashboard !== 'true') {
+      // Si es usuario normal, solo ver sus prioridades
+      if ((session.user as any).role !== 'ADMIN' && !userId) {
+        query.userId = (session.user as any).id;
+      } else if (userId) {
+        query.userId = userId;
+      }
     } else if (userId) {
+      // Incluso para dashboard, respetar el filtro de userId si se especifica
       query.userId = userId;
     }
 
@@ -64,8 +72,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No puedes crear prioridades para otros usuarios' }, { status: 403 });
     }
 
+    // Validar límite de 10 prioridades por semana
+    const existingPriorities = await Priority.countDocuments({
+      userId: body.userId,
+      weekStart: body.weekStart
+    });
+
+    if (existingPriorities >= 10) {
+      return NextResponse.json({
+        error: 'Has alcanzado el límite de 10 prioridades por semana. Para agregar una nueva, elimina alguna existente.'
+      }, { status: 400 });
+    }
+
+    // Compatibilidad: convertir initiativeId a initiativeIds si existe
+    let initiativeIds = body.initiativeIds || [];
+    if (body.initiativeId && initiativeIds.length === 0) {
+      initiativeIds = [body.initiativeId];
+    }
+
     const priority = await Priority.create({
       ...body,
+      initiativeIds,
       wasEdited: false,
       isCarriedOver: false,
       createdAt: new Date(),

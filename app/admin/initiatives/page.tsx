@@ -243,6 +243,7 @@ export default function AdminInitiativesPage() {
                 <p className="mt-1">
                   Son los ejes de acción principales de la empresa. Todas las prioridades deben estar
                   alineadas a al menos una iniciativa para asegurar que el trabajo está enfocado en lo estratégico.
+                  Todas las iniciativas son independientes e igualmente importantes.
                 </p>
               </div>
             </div>
@@ -350,35 +351,16 @@ export default function AdminInitiativesPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start flex-1">
-                      <div className="flex flex-col space-y-1 mr-3">
-                        <button
-                          onClick={() => moveInitiative(index, 'up')}
-                          disabled={index === 0}
-                          className="text-gray-400 hover:text-blue-600 disabled:opacity-30"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          onClick={() => moveInitiative(index, 'down')}
-                          disabled={index === initiatives.length - 1}
-                          className="text-gray-400 hover:text-blue-600 disabled:opacity-30"
-                        >
-                          ↓
-                        </button>
-                      </div>
-
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                            className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: initiative.color }}
-                          >
-                            {initiative.order}
-                          </div>
+                          ></div>
                           <h3 className="text-lg font-bold text-gray-800">{initiative.name}</h3>
                         </div>
                         {initiative.description && (
-                          <p className="text-sm text-gray-600 mt-2 ml-11">{initiative.description}</p>
+                          <p className="text-sm text-gray-600 mt-2">{initiative.description}</p>
                         )}
                       </div>
 
