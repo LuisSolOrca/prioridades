@@ -269,8 +269,6 @@ export default function DashboardPage() {
         .map(p => p._id!)
         .join(',');
 
-      console.log('[DASHBOARD COMMENT COUNTS] Priority IDs:', priorityIds);
-
       if (!priorityIds) {
         setCommentCounts({});
         return;
@@ -280,7 +278,6 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error('Error loading comment counts');
 
       const counts = await response.json();
-      console.log('[DASHBOARD COMMENT COUNTS] Loaded counts:', counts);
       setCommentCounts(counts);
     } catch (error) {
       console.error('Error loading comment counts:', error);

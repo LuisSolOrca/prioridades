@@ -30,11 +30,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({});
     }
 
+    // Convert string IDs to ObjectIds for MongoDB comparison
+    const mongoose = require('mongoose');
+    const objectIds = priorityIds.map(id => {
+      try {
+        return new mongoose.Types.ObjectId(id);
+      } catch (e) {
+        console.error('[API COUNTS] Invalid ObjectId:', id);
+        return null;
+      }
+    }).filter(id => id !== null);
+
     // Aggregate comment counts by priorityId
     const counts = await Comment.aggregate([
       {
         $match: {
-          priorityId: { $in: priorityIds }
+          priorityId: { $in: objectIds }
         }
       },
       {
@@ -46,8 +57,10 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Convert to object format: { priorityId: count }
+    // Convert ObjectId back to string for the key
     const countsMap = counts.reduce((acc, item) => {
-      acc[item._id] = item.count;
+      const stringId = item._id.toString();
+      acc[stringId] = item.count;
       return acc;
     }, {} as { [key: string]: number });
 
