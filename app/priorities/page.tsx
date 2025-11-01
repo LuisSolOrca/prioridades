@@ -289,7 +289,14 @@ export default function PrioritiesPage() {
                     <select
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      onChange={(e) => {
+                        const newStatus = e.target.value as any;
+                        setFormData({
+                          ...formData,
+                          status: newStatus,
+                          completionPercentage: newStatus === 'COMPLETADO' ? 100 : formData.completionPercentage
+                        });
+                      }}
                     >
                       <option value="EN_TIEMPO">En Tiempo</option>
                       <option value="EN_RIESGO">En Riesgo</option>
