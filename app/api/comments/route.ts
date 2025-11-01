@@ -74,43 +74,70 @@ export async function POST(request: NextRequest) {
 
     // Enviar notificación por email al dueño de la prioridad
     try {
+      console.log('[EMAIL] Starting email notification process for comment');
       const priority = await Priority.findById(priorityId).lean();
-      if (priority) {
-        const priorityOwner = await User.findById(priority.userId).lean();
-        const commentAuthor = await User.findById((session.user as any).id).lean();
 
-        // Enviar email SIEMPRE, tanto si es del dueño como si no (para tener registro)
-        if (
-          priorityOwner &&
-          commentAuthor &&
-          priorityOwner.emailNotifications?.enabled &&
-          priorityOwner.emailNotifications?.newComments
-        ) {
-          const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      if (!priority) {
+        console.log('[EMAIL] Priority not found');
+        return NextResponse.json(populatedComment, { status: 201 });
+      }
 
-          // Determinar si es propio comentario o de otro usuario
-          const isOwnComment = priorityOwner._id.toString() === commentAuthor._id.toString();
+      const priorityOwner = await User.findById(priority.userId).lean();
+      const commentAuthor = await User.findById((session.user as any).id).lean();
 
-          const emailContent = emailTemplates.newComment({
-            priorityTitle: priority.title,
-            commentAuthor: isOwnComment ? `${commentAuthor.name} (tú)` : commentAuthor.name,
-            commentText: text.trim(),
-            priorityUrl: `${baseUrl}/priorities`,
+      console.log('[EMAIL] Priority owner:', priorityOwner?.email);
+      console.log('[EMAIL] Comment author:', commentAuthor?.email);
+      console.log('[EMAIL] Email notifications enabled:', priorityOwner?.emailNotifications?.enabled);
+      console.log('[EMAIL] New comments enabled:', priorityOwner?.emailNotifications?.newComments);
+      console.log('[EMAIL] EMAIL_USERNAME set:', !!process.env.EMAIL_USERNAME);
+      console.log('[EMAIL] EMAIL_PASSWORD set:', !!process.env.EMAIL_PASSWORD);
+
+      // Enviar email SIEMPRE, tanto si es del dueño como si no (para tener registro)
+      if (
+        priorityOwner &&
+        commentAuthor &&
+        priorityOwner.emailNotifications?.enabled &&
+        priorityOwner.emailNotifications?.newComments
+      ) {
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
+        // Determinar si es propio comentario o de otro usuario
+        const isOwnComment = priorityOwner._id.toString() === commentAuthor._id.toString();
+
+        console.log('[EMAIL] Is own comment:', isOwnComment);
+        console.log('[EMAIL] Sending to:', priorityOwner.email);
+
+        const emailContent = emailTemplates.newComment({
+          priorityTitle: priority.title,
+          commentAuthor: isOwnComment ? `${commentAuthor.name} (tú)` : commentAuthor.name,
+          commentText: text.trim(),
+          priorityUrl: `${baseUrl}/priorities`,
+        });
+
+        // Enviar email de forma asíncrona sin bloquear la respuesta
+        sendEmail({
+          to: priorityOwner.email,
+          subject: isOwnComment
+            ? `📝 Registro de tu comentario: ${priority.title}`
+            : emailContent.subject,
+          html: emailContent.html,
+        })
+          .then((result) => {
+            console.log('[EMAIL] Email sent successfully:', result);
+          })
+          .catch(err => {
+            console.error('[EMAIL] Error sending notification email:', err);
           });
-
-          // Enviar email de forma asíncrona sin bloquear la respuesta
-          sendEmail({
-            to: priorityOwner.email,
-            subject: isOwnComment
-              ? `📝 Registro de tu comentario: ${priority.title}`
-              : emailContent.subject,
-            html: emailContent.html,
-          }).catch(err => console.error('Error sending notification email:', err));
-        }
+      } else {
+        console.log('[EMAIL] Email not sent - conditions not met');
+        if (!priorityOwner) console.log('[EMAIL] - No priority owner');
+        if (!commentAuthor) console.log('[EMAIL] - No comment author');
+        if (!priorityOwner?.emailNotifications?.enabled) console.log('[EMAIL] - Notifications disabled');
+        if (!priorityOwner?.emailNotifications?.newComments) console.log('[EMAIL] - New comments notifications disabled');
       }
     } catch (emailError) {
       // No fallar la creación del comentario si el email falla
-      console.error('Error sending email notification:', emailError);
+      console.error('[EMAIL] Error in email notification process:', emailError);
     }
 
     return NextResponse.json(populatedComment, { status: 201 });
