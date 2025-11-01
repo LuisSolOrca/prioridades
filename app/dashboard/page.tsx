@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
+import ReactMarkdown from 'react-markdown';
 
 interface User {
   _id: string;
@@ -208,6 +209,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [selectedPriority, setSelectedPriority] = useState<Priority | null>(null);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const [analysisLoading, setAnalysisLoading] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -292,6 +296,46 @@ export default function DashboardPage() {
     setSelectedPriority(null);
   };
 
+  const handleAIAnalysis = async () => {
+    if (priorities.length === 0) {
+      alert('No hay prioridades para analizar en esta semana');
+      return;
+    }
+
+    setShowAnalysisModal(true);
+    setAnalysisLoading(true);
+    setAiAnalysis('');
+
+    try {
+      const res = await fetch('/api/ai/analyze-organization', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStart: currentWeek.monday.toISOString(),
+          weekEnd: currentWeek.friday.toISOString()
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Error al generar el análisis');
+      }
+
+      const data = await res.json();
+      setAiAnalysis(data.analysis);
+    } catch (error: any) {
+      console.error('Error analyzing organization:', error);
+      setAiAnalysis(`❌ **Error**: ${error.message}`);
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  const closeAnalysisModal = () => {
+    setShowAnalysisModal(false);
+    setAiAnalysis('');
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -317,6 +361,13 @@ export default function DashboardPage() {
               📊 Dashboard de Prioridades
             </h1>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleAIAnalysis}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-semibold"
+                title="Análisis Organizacional con IA"
+              >
+                🤖 Análisis IA
+              </button>
               <button
                 onClick={handleExport}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
@@ -492,6 +543,101 @@ export default function DashboardPage() {
                 >
                   Cerrar
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Análisis Organizacional con IA */}
+      {showAnalysisModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={closeAnalysisModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="text-4xl">🤖</div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Análisis Organizacional con IA
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Semana del {getWeekLabel(currentWeek.monday)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeAnalysisModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Contenido del análisis */}
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 mb-6">
+                {analysisLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin text-6xl mb-4">🤖</div>
+                    <div className="text-lg font-semibold text-gray-700 mb-2">
+                      Analizando la situación organizacional...
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Esto puede tomar unos segundos
+                    </div>
+                  </div>
+                ) : aiAnalysis ? (
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown
+                      components={{
+                        h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-gray-800 mb-4 mt-6" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-xl font-bold text-gray-800 mb-3 mt-5" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-gray-700 mb-2 mt-4" {...props} />,
+                        p: ({node, ...props}) => <p className="text-gray-700 mb-3 leading-relaxed" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc list-inside mb-3 space-y-1 text-gray-700" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-3 space-y-1 text-gray-700" {...props} />,
+                        li: ({node, ...props}) => <li className="ml-4" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
+                        em: ({node, ...props}) => <em className="italic text-gray-600" {...props} />,
+                        code: ({node, ...props}) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800" {...props} />,
+                      }}
+                    >
+                      {aiAnalysis}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    Sin análisis disponible
+                  </div>
+                )}
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={closeAnalysisModal}
+                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-semibold"
+                >
+                  Cerrar
+                </button>
+                {!analysisLoading && aiAnalysis && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiAnalysis);
+                      alert('Análisis copiado al portapapeles');
+                    }}
+                    className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-semibold"
+                  >
+                    📋 Copiar Análisis
+                  </button>
+                )}
               </div>
             </div>
           </div>
