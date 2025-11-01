@@ -83,8 +83,12 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle 
   const completed = priorities.filter(p => p.status === 'COMPLETADO').length;
   const completionRate = priorities.length > 0 ? (completed / priorities.length * 100).toFixed(0) : 0;
 
+  const blocked = priorities.filter(p => p.status === 'BLOQUEADO').length;
+  const atRisk = priorities.filter(p => p.status === 'EN_RIESGO').length;
+  const hasRisks = blocked > 0 || atRisk > 0;
+
   return (
-    <div className="bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow">
+    <div className={`bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow ${hasRisks ? 'border-l-4 border-l-red-500' : ''}`}>
       <div
         className="p-6 cursor-pointer"
         onClick={onToggle}
@@ -97,6 +101,13 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle 
             <div className="flex-1">
               <div className="flex items-center">
                 <div className="font-semibold text-gray-800">{user.name}</div>
+                {hasRisks && (
+                  <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-semibold flex items-center">
+                    ⚠️ {blocked > 0 && `${blocked} bloqueada${blocked > 1 ? 's' : ''}`}
+                    {blocked > 0 && atRisk > 0 && ' • '}
+                    {atRisk > 0 && `${atRisk} en riesgo`}
+                  </span>
+                )}
                 <span className="ml-2 text-sm text-gray-400">
                   {isExpanded ? '▼' : '▶'}
                 </span>
