@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
@@ -43,6 +43,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [expandedUserInTable, setExpandedUserInTable] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -184,6 +185,36 @@ export default function AnalyticsPage() {
     });
   };
 
+  const getInitiativeStatsForUser = (userId: string) => {
+    return initiatives.map(initiative => {
+      const userInitiativePriorities = priorities.filter(p => {
+        if (p.userId !== userId) return false;
+        const priorityInitiativeIds = p.initiativeIds || (p.initiativeId ? [p.initiativeId] : []);
+        return priorityInitiativeIds.includes(initiative._id);
+      });
+
+      const completed = userInitiativePriorities.filter(p => p.status === 'COMPLETADO').length;
+      const avgCompletion = userInitiativePriorities.length > 0
+        ? userInitiativePriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userInitiativePriorities.length
+        : 0;
+
+      return {
+        initiative,
+        total: userInitiativePriorities.length,
+        completed,
+        completionRate: userInitiativePriorities.length > 0
+          ? (completed / userInitiativePriorities.length * 100).toFixed(1)
+          : 0,
+        avgCompletion: avgCompletion.toFixed(1)
+      };
+    }).filter(stat => stat.total > 0)
+      .sort((a, b) => b.total - a.total);
+  };
+
+  const toggleUserInTable = (userId: string) => {
+    setExpandedUserInTable(expandedUserInTable === userId ? null : userId);
+  };
+
   const getUserStatsForInitiative = (initiativeId: string) => {
     return users.map(user => {
       // Filtrar prioridades del usuario que incluyen esta iniciativa (compatibilidad con initiativeId e initiativeIds)
@@ -287,41 +318,114 @@ export default function AnalyticsPage() {
                     <th className="text-center py-3 px-4">Completadas</th>
                     <th className="text-center py-3 px-4">Tasa Completado</th>
                     <th className="text-center py-3 px-4">% Promedio Avance</th>
+                    <th className="text-center py-3 px-4">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {userStats.map(stat => (
-                    <tr key={stat.user._id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2">
-                            {stat.user.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          {stat.user.name}
-                        </div>
-                      </td>
-                      <td className="text-center py-3 px-4 font-semibold">{stat.total}</td>
-                      <td className="text-center py-3 px-4">
-                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                          {stat.completed}
-                        </span>
-                      </td>
-                      <td className="text-center py-3 px-4">
-                        <span className="font-bold text-blue-600">{stat.completionRate}%</span>
-                      </td>
-                      <td className="text-center py-3 px-4">
-                        <div className="flex items-center justify-center">
-                          <div className="w-24 bg-gray-200 rounded-full h-3 mr-2">
-                            <div
-                              className="bg-blue-600 h-3 rounded-full"
-                              style={{ width: `${stat.avgCompletion}%` }}
-                            ></div>
-                          </div>
-                          <span className="font-semibold">{stat.avgCompletion}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {userStats.map(stat => {
+                    const isExpanded = expandedUserInTable === stat.user._id;
+                    const initiativeStats = isExpanded ? getInitiativeStatsForUser(stat.user._id) : [];
+
+                    return (
+                      <React.Fragment key={stat.user._id}>
+                        <tr className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2">
+                                {stat.user.name.split(' ').map(n => n[0]).join('')}
+                              </div>
+                              {stat.user.name}
+                            </div>
+                          </td>
+                          <td className="text-center py-3 px-4 font-semibold">{stat.total}</td>
+                          <td className="text-center py-3 px-4">
+                            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                              {stat.completed}
+                            </span>
+                          </td>
+                          <td className="text-center py-3 px-4">
+                            <span className="font-bold text-blue-600">{stat.completionRate}%</span>
+                          </td>
+                          <td className="text-center py-3 px-4">
+                            <div className="flex items-center justify-center">
+                              <div className="w-24 bg-gray-200 rounded-full h-3 mr-2">
+                                <div
+                                  className="bg-blue-600 h-3 rounded-full"
+                                  style={{ width: `${stat.avgCompletion}%` }}
+                                ></div>
+                              </div>
+                              <span className="font-semibold">{stat.avgCompletion}%</span>
+                            </div>
+                          </td>
+                          <td className="text-center py-3 px-4">
+                            <button
+                              onClick={() => toggleUserInTable(stat.user._id)}
+                              className="text-blue-600 hover:text-blue-800 transition text-xl"
+                              title="Ver desglose por iniciativa"
+                            >
+                              {isExpanded ? '🔽' : '🔍'}
+                            </button>
+                          </td>
+                        </tr>
+                        {isExpanded && initiativeStats.length > 0 && (
+                          <tr>
+                            <td colSpan={6} className="bg-gray-50 p-4 border-b">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                                📊 Desglose por Iniciativa Estratégica
+                              </h4>
+                              <div className="space-y-2">
+                                {initiativeStats.map(initStat => (
+                                  <div
+                                    key={initStat.initiative._id}
+                                    className="bg-white border border-gray-200 rounded-lg p-3"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center flex-1">
+                                        <div
+                                          className="w-3 h-3 rounded-full mr-3"
+                                          style={{ backgroundColor: initStat.initiative.color }}
+                                        ></div>
+                                        <div className="flex-1">
+                                          <div className="font-medium text-gray-800 text-sm">
+                                            {initStat.initiative.name}
+                                          </div>
+                                          <div className="text-xs text-gray-600">
+                                            {initStat.total} prioridades • {initStat.completed} completadas
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center space-x-4">
+                                        <div className="text-right">
+                                          <div className="text-xs text-gray-600">Tasa Completado</div>
+                                          <div className="font-bold text-blue-600 text-sm">
+                                            {initStat.completionRate}%
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                            <div
+                                              className="h-2 rounded-full"
+                                              style={{
+                                                width: `${initStat.avgCompletion}%`,
+                                                backgroundColor: initStat.initiative.color
+                                              }}
+                                            ></div>
+                                          </div>
+                                          <span className="text-xs font-semibold text-gray-700">
+                                            {initStat.avgCompletion}%
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
