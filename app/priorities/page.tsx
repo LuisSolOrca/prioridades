@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import CommentsSection from '@/components/CommentsSection';
+import PriorityFormModal from '@/components/PriorityFormModal';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 
@@ -70,8 +71,6 @@ export default function PrioritiesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, 1 = next week
   const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
-  const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
-  const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
   const [selectedPriorityForComments, setSelectedPriorityForComments] = useState<Priority | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
   const currentWeek = getWeekDates();
@@ -149,7 +148,9 @@ export default function PrioritiesPage() {
       status: 'EN_TIEMPO',
       userId: (session!.user as any).id,
       weekStart: nextWeek.monday.toISOString(),
-      weekEnd: nextWeek.friday.toISOString()
+      weekEnd: nextWeek.friday.toISOString(),
+      checklist: [],
+      evidenceLinks: []
     });
     setSelectedWeekOffset(1); // Cambiar a siguiente semana por defecto
     setEditingPriority(null);
@@ -245,56 +246,6 @@ export default function PrioritiesPage() {
       }
       return newSet;
     });
-  };
-
-  const handleImproveWithAI = async (type: 'title' | 'description') => {
-    const text = type === 'title' ? formData.title : formData.description;
-
-    if (!text || text.trim() === '') {
-      alert(`Primero escribe ${type === 'title' ? 'un título' : 'una descripción'} para que la IA pueda mejorarlo`);
-      return;
-    }
-
-    setAiLoading(type);
-    setAiSuggestion(null);
-
-    try {
-      const res = await fetch('/api/ai/improve-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, type })
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Error al mejorar el texto');
-      }
-
-      const data = await res.json();
-      setAiSuggestion({ type, text: data.improvedText });
-
-    } catch (error: any) {
-      console.error('Error improving text:', error);
-      alert(error.message || 'Error al comunicarse con la IA');
-    } finally {
-      setAiLoading(null);
-    }
-  };
-
-  const handleAcceptSuggestion = () => {
-    if (!aiSuggestion) return;
-
-    if (aiSuggestion.type === 'title') {
-      setFormData({ ...formData, title: aiSuggestion.text });
-    } else {
-      setFormData({ ...formData, description: aiSuggestion.text });
-    }
-
-    setAiSuggestion(null);
-  };
-
-  const handleRejectSuggestion = () => {
-    setAiSuggestion(null);
   };
 
   if (status === 'loading' || loading) {
@@ -408,328 +359,7 @@ export default function PrioritiesPage() {
             </div>
           )}
 
-          {showForm ? (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">
-                {editingPriority ? 'Editar Prioridad' : 'Nueva Prioridad'}
-              </h2>
-              <form onSubmit={handleSave} className="space-y-6">
-                {!editingPriority && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Semana *
-                    </label>
-                    <select
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={selectedWeekOffset}
-                      onChange={(e) => {
-                        const offset = parseInt(e.target.value);
-                        setSelectedWeekOffset(offset);
-                        const targetWeek = offset === 0 ? currentWeek : nextWeek;
-                        setFormData({
-                          ...formData,
-                          weekStart: targetWeek.monday.toISOString(),
-                          weekEnd: targetWeek.friday.toISOString()
-                        });
-                      }}
-                    >
-                      <option value="0">Semana Actual ({getWeekLabel(currentWeek.monday)})</option>
-                      <option value="1">Siguiente Semana ({getWeekLabel(nextWeek.monday)})</option>
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Título de la Prioridad *
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => handleImproveWithAI('title')}
-                      disabled={aiLoading === 'title' || !formData.title}
-                      className={`text-xs px-3 py-1 rounded-lg transition flex items-center space-x-1 ${
-                        aiLoading === 'title'
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : formData.title
-                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      }`}
-                      title="Mejorar con IA"
-                    >
-                      {aiLoading === 'title' ? (
-                        <>
-                          <span className="animate-spin">⚙️</span>
-                          <span>Mejorando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>✨</span>
-                          <span>Mejorar con IA</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    maxLength={150}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Ej: Aumentar ventas del producto X en 15%"
-                  />
-
-                  {/* Sugerencia de IA para Título */}
-                  {aiSuggestion && aiSuggestion.type === 'title' && (
-                    <div className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xl">✨</span>
-                          <h4 className="text-sm font-bold text-purple-900">Sugerencia de IA</h4>
-                        </div>
-                        <button
-                          onClick={handleRejectSuggestion}
-                          className="text-gray-400 hover:text-gray-600 text-lg"
-                          title="Cerrar"
-                        >
-                          ×
-                        </button>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Original</p>
-                          <div className="bg-white/70 rounded p-2 text-sm text-gray-700">
-                            {formData.title}
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-xs font-semibold text-purple-700 uppercase mb-1">Mejorado</p>
-                          <div className="bg-white rounded p-2 text-sm text-gray-800 font-medium border-2 border-purple-300">
-                            {aiSuggestion.text}
-                          </div>
-                        </div>
-
-                        <div className="flex space-x-2 pt-1">
-                          <button
-                            onClick={handleAcceptSuggestion}
-                            className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium"
-                          >
-                            ✓ Usar Esta Versión
-                          </button>
-                          <button
-                            onClick={handleRejectSuggestion}
-                            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
-                          >
-                            × Mantener Original
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Descripción Detallada
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => handleImproveWithAI('description')}
-                      disabled={aiLoading === 'description' || !formData.description}
-                      className={`text-xs px-3 py-1 rounded-lg transition flex items-center space-x-1 ${
-                        aiLoading === 'description'
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : formData.description
-                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      }`}
-                      title="Mejorar con IA"
-                    >
-                      {aiLoading === 'description' ? (
-                        <>
-                          <span className="animate-spin">⚙️</span>
-                          <span>Mejorando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>✨</span>
-                          <span>Mejorar con IA</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Describe los pasos específicos y resultados esperados..."
-                  ></textarea>
-
-                  {/* Sugerencia de IA para Descripción */}
-                  {aiSuggestion && aiSuggestion.type === 'description' && (
-                    <div className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xl">✨</span>
-                          <h4 className="text-sm font-bold text-purple-900">Sugerencia de IA</h4>
-                        </div>
-                        <button
-                          onClick={handleRejectSuggestion}
-                          className="text-gray-400 hover:text-gray-600 text-lg"
-                          title="Cerrar"
-                        >
-                          ×
-                        </button>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Original</p>
-                          <div className="bg-white/70 rounded p-2 text-sm text-gray-700 whitespace-pre-wrap">
-                            {formData.description}
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-xs font-semibold text-purple-700 uppercase mb-1">Mejorado</p>
-                          <div className="bg-white rounded p-2 text-sm text-gray-800 font-medium border-2 border-purple-300 whitespace-pre-wrap">
-                            {aiSuggestion.text}
-                          </div>
-                        </div>
-
-                        <div className="flex space-x-2 pt-1">
-                          <button
-                            onClick={handleAcceptSuggestion}
-                            className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium"
-                          >
-                            ✓ Usar Esta Versión
-                          </button>
-                          <button
-                            onClick={handleRejectSuggestion}
-                            className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
-                          >
-                            × Mantener Original
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Iniciativas Estratégicas * (selecciona una o más)
-                  </label>
-                  <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto space-y-2">
-                    {initiatives.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No hay iniciativas disponibles</p>
-                    ) : (
-                      initiatives.map(initiative => (
-                        <label
-                          key={initiative._id}
-                          className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            checked={(formData.initiativeIds || []).includes(initiative._id)}
-                            onChange={(e) => {
-                              const currentIds = formData.initiativeIds || [];
-                              const newIds = e.target.checked
-                                ? [...currentIds, initiative._id]
-                                : currentIds.filter(id => id !== initiative._id);
-                              setFormData({ ...formData, initiativeIds: newIds });
-                            }}
-                          />
-                          <div className="flex items-center space-x-2 flex-1">
-                            <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: initiative.color }}
-                            ></div>
-                            <span className="text-gray-800">{initiative.name}</span>
-                          </div>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                  {(!formData.initiativeIds || formData.initiativeIds.length === 0) && (
-                    <p className="text-red-500 text-xs mt-1">Debes seleccionar al menos una iniciativa</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Estado
-                    </label>
-                    <select
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={formData.status}
-                      onChange={(e) => {
-                        const newStatus = e.target.value as any;
-                        setFormData({
-                          ...formData,
-                          status: newStatus,
-                          completionPercentage: newStatus === 'COMPLETADO' ? 100 : formData.completionPercentage
-                        });
-                      }}
-                    >
-                      <option value="EN_TIEMPO">En Tiempo</option>
-                      <option value="EN_RIESGO">En Riesgo</option>
-                      <option value="BLOQUEADO">Bloqueado</option>
-                      <option value="COMPLETADO">Completado</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Porcentaje Completado: {formData.completionPercentage}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      className="w-full"
-                      value={formData.completionPercentage}
-                      onChange={(e) => {
-                        const percentage = parseInt(e.target.value);
-                        setFormData({
-                          ...formData,
-                          completionPercentage: percentage,
-                          status: percentage === 100 ? 'COMPLETADO' : formData.status
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingPriority(null);
-                    }}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    💾 Guardar Prioridad
-                  </button>
-                </div>
-              </form>
-            </div>
-          ) : (
+          {!showForm && (
             <div className="space-y-6">
               {/* Semana Actual */}
               <div>
@@ -962,6 +592,40 @@ export default function PrioritiesPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Formulario */}
+      <PriorityFormModal
+        isOpen={showForm}
+        onClose={() => {
+          setShowForm(false);
+          setEditingPriority(null);
+        }}
+        formData={{
+          title: formData.title,
+          description: formData.description,
+          initiativeIds: formData.initiativeIds || [],
+          completionPercentage: formData.completionPercentage,
+          status: formData.status,
+          checklist: formData.checklist || [],
+          evidenceLinks: formData.evidenceLinks || [],
+          weekStart: formData.weekStart,
+          weekEnd: formData.weekEnd
+        }}
+        setFormData={(data) => setFormData({ ...formData, ...data })}
+        handleSubmit={handleSave}
+        initiatives={initiatives}
+        isEditing={!!editingPriority}
+        weekLabel={editingPriority
+          ? getWeekLabel(new Date(formData.weekStart))
+          : selectedWeekOffset === 0
+            ? getWeekLabel(currentWeek.monday)
+            : getWeekLabel(nextWeek.monday)
+        }
+        currentWeek={currentWeek}
+        nextWeek={nextWeek}
+        selectedWeekOffset={selectedWeekOffset}
+        setSelectedWeekOffset={setSelectedWeekOffset}
+      />
 
       {/* Modal de Comentarios */}
       {selectedPriorityForComments && selectedPriorityForComments._id && (
