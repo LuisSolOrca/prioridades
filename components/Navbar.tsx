@@ -122,6 +122,13 @@ export default function Navbar() {
                 <div className="text-xs text-gray-500">{user.role === 'ADMIN' ? 'Administrador' : 'Usuario'}</div>
               </div>
               <button
+                onClick={() => router.push('/profile')}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                title="Mi Perfil"
+              >
+                👤 Perfil
+              </button>
+              <button
                 onClick={() => signOut({ callbackUrl: '/login' })}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
               >
@@ -188,8 +195,14 @@ export default function Navbar() {
                 </>
               )}
 
-              {/* Botón salir en móvil */}
-              <div className="px-4 py-3 border-t border-gray-200">
+              {/* Botones de perfil y salir en móvil */}
+              <div className="px-4 py-3 border-t border-gray-200 space-y-2">
+                <button
+                  onClick={() => handleNavigation('/profile')}
+                  className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                >
+                  👤 Mi Perfil
+                </button>
                 <button
                   onClick={() => signOut({ callbackUrl: '/login' })}
                   className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
