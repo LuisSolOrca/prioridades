@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
           console.log('[NOTIFICATION] Mentions detected:', mentions);
 
           // Extraer nombres de usuario únicos y limpiar
-          const usernames = [...new Set(mentions.map((m: string) => m.substring(1).trim()))];
+          const usernames: string[] = [...new Set(mentions.map((m: string) => m.substring(1).trim()))];
 
           // Buscar usuarios mencionados por nombre (case-insensitive, coincidencia exacta o parcial)
           for (const username of usernames) {
