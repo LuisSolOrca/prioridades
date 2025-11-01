@@ -6,7 +6,7 @@ import Priority from '@/models/Priority';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,8 @@ export async function GET(
 
     await connectDB();
 
-    const priority = await Priority.findById(params.id);
+    const { id } = await params;
+    const priority = await Priority.findById(id);
 
     if (!priority) {
       return NextResponse.json({ error: 'Prioridad no encontrada' }, { status: 404 });
@@ -37,7 +38,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -48,7 +49,8 @@ export async function PUT(
 
     await connectDB();
 
-    const priority = await Priority.findById(params.id);
+    const { id } = await params;
+    const priority = await Priority.findById(id);
 
     if (!priority) {
       return NextResponse.json({ error: 'Prioridad no encontrada' }, { status: 404 });
@@ -61,21 +63,26 @@ export async function PUT(
 
     const body = await request.json();
 
-    // Compatibilidad: convertir initiativeId a initiativeIds si existe
-    let initiativeIds = body.initiativeIds || [];
-    if (body.initiativeId && initiativeIds.length === 0) {
-      initiativeIds = [body.initiativeId];
+    // Preparar datos para actualizar
+    const updateData: any = {
+      ...body,
+      wasEdited: true,
+      lastEditedAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Solo manejar initiativeIds si viene en el body
+    if (body.initiativeIds !== undefined || body.initiativeId !== undefined) {
+      let initiativeIds = body.initiativeIds || [];
+      if (body.initiativeId && initiativeIds.length === 0) {
+        initiativeIds = [body.initiativeId];
+      }
+      updateData.initiativeIds = initiativeIds;
     }
 
     const updatedPriority = await Priority.findByIdAndUpdate(
-      params.id,
-      {
-        ...body,
-        initiativeIds,
-        wasEdited: true,
-        lastEditedAt: new Date(),
-        updatedAt: new Date()
-      },
+      id,
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -88,7 +95,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -99,7 +106,8 @@ export async function DELETE(
 
     await connectDB();
 
-    const priority = await Priority.findById(params.id);
+    const { id } = await params;
+    const priority = await Priority.findById(id);
 
     if (!priority) {
       return NextResponse.json({ error: 'Prioridad no encontrada' }, { status: 404 });
@@ -110,7 +118,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    await Priority.findByIdAndDelete(params.id);
+    await Priority.findByIdAndDelete(id);
 
     return NextResponse.json({ message: 'Prioridad eliminada exitosamente' });
   } catch (error: any) {

@@ -328,6 +328,13 @@ export default function PrioritiesPage() {
                 📥 Exportar a Excel
               </button>
               <button
+                onClick={() => router.push('/priorities-kanban')}
+                className="bg-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 transition"
+                title="Ver Vista Kanban"
+              >
+                📊 Vista Kanban
+              </button>
+              <button
                 onClick={handleNew}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
               >

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "bcryptjs": "^2.4.3",
     "date-fns": "^3.6.0",
     "docx": "^9.5.1",
