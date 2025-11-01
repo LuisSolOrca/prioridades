@@ -8,6 +8,12 @@ export interface IUser {
   password: string;
   role: 'ADMIN' | 'USER';
   isActive: boolean;
+  emailNotifications?: {
+    enabled: boolean;
+    newComments: boolean;
+    priorityAssigned: boolean;
+    statusChanges: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +50,20 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
   isActive: {
     type: Boolean,
     default: true,
+  },
+  emailNotifications: {
+    type: {
+      enabled: { type: Boolean, default: true },
+      newComments: { type: Boolean, default: true },
+      priorityAssigned: { type: Boolean, default: true },
+      statusChanges: { type: Boolean, default: true },
+    },
+    default: {
+      enabled: true,
+      newComments: true,
+      priorityAssigned: true,
+      statusChanges: true,
+    },
   },
 }, {
   timestamps: true,

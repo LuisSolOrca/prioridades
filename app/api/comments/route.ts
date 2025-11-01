@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Comment from '@/models/Comment';
+import Priority from '@/models/Priority';
+import User from '@/models/User';
+import { sendEmail, emailTemplates } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
   try {
@@ -68,6 +71,42 @@ export async function POST(request: NextRequest) {
     const populatedComment = await Comment.findById(comment._id)
       .populate('userId', 'name email')
       .lean();
+
+    // Enviar notificación por email al dueño de la prioridad
+    try {
+      const priority = await Priority.findById(priorityId).lean();
+      if (priority) {
+        const priorityOwner = await User.findById(priority.userId).lean();
+        const commentAuthor = await User.findById((session.user as any).id).lean();
+
+        // Solo enviar si el comentario NO es del dueño de la prioridad
+        if (
+          priorityOwner &&
+          commentAuthor &&
+          priorityOwner._id.toString() !== commentAuthor._id.toString() &&
+          priorityOwner.emailNotifications?.enabled &&
+          priorityOwner.emailNotifications?.newComments
+        ) {
+          const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+          const emailContent = emailTemplates.newComment({
+            priorityTitle: priority.title,
+            commentAuthor: commentAuthor.name,
+            commentText: text.trim(),
+            priorityUrl: `${baseUrl}/priorities`,
+          });
+
+          // Enviar email de forma asíncrona sin bloquear la respuesta
+          sendEmail({
+            to: priorityOwner.email,
+            subject: emailContent.subject,
+            html: emailContent.html,
+          }).catch(err => console.error('Error sending notification email:', err));
+        }
+      }
+    } catch (emailError) {
+      // No fallar la creación del comentario si el email falla
+      console.error('Error sending email notification:', emailError);
+    }
 
     return NextResponse.json(populatedComment, { status: 201 });
   } catch (error: any) {

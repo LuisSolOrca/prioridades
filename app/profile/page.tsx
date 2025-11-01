@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
@@ -16,6 +16,59 @@ export default function ProfilePage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    enabled: true,
+    newComments: true,
+    priorityAssigned: true,
+    statusChanges: true,
+  });
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [prefsMessage, setPrefsMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  // Load notification preferences
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadNotificationPreferences();
+    }
+  }, [status]);
+
+  const loadNotificationPreferences = async () => {
+    try {
+      const res = await fetch('/api/users/notification-preferences');
+      if (res.ok) {
+        const data = await res.json();
+        setNotificationPrefs(data.emailNotifications);
+      }
+    } catch (error) {
+      console.error('Error loading notification preferences:', error);
+    }
+  };
+
+  const handleSaveNotificationPreferences = async () => {
+    setSavingPrefs(true);
+    setPrefsMessage(null);
+
+    try {
+      const res = await fetch('/api/users/notification-preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailNotifications: notificationPrefs })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al guardar preferencias');
+      }
+
+      setPrefsMessage({ type: 'success', text: 'Preferencias guardadas exitosamente' });
+      setTimeout(() => setPrefsMessage(null), 3000);
+    } catch (error: any) {
+      setPrefsMessage({ type: 'error', text: error.message || 'Error al guardar preferencias' });
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
 
   // Redirect if not authenticated
   if (status === 'unauthenticated') {
@@ -115,6 +168,110 @@ export default function ProfilePage() {
                 <p className="text-gray-800 font-medium">
                   {(session?.user as any)?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Email Notifications Section */}
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">📧 Notificaciones por Email</h2>
+
+            {prefsMessage && (
+              <div className={`mb-4 p-4 rounded-lg ${
+                prefsMessage.type === 'success'
+                  ? 'bg-green-50 border border-green-200 text-green-800'
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center">
+                  <span className="text-xl mr-2">
+                    {prefsMessage.type === 'success' ? '✓' : '⚠️'}
+                  </span>
+                  <span>{prefsMessage.text}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="font-medium text-gray-800">Habilitar notificaciones por email</div>
+                  <div className="text-sm text-gray-600">Activa o desactiva todas las notificaciones por correo</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={notificationPrefs.enabled}
+                    onChange={(e) => setNotificationPrefs({ ...notificationPrefs, enabled: e.target.checked })}
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              {notificationPrefs.enabled && (
+                <>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">💬 Nuevos comentarios</div>
+                      <div className="text-sm text-gray-600">Recibe un email cuando alguien comente en tus prioridades</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={notificationPrefs.newComments}
+                        onChange={(e) => setNotificationPrefs({ ...notificationPrefs, newComments: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">📋 Prioridad asignada</div>
+                      <div className="text-sm text-gray-600">Recibe un email cuando se te asigne una nueva prioridad</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={notificationPrefs.priorityAssigned}
+                        onChange={(e) => setNotificationPrefs({ ...notificationPrefs, priorityAssigned: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">🔔 Cambios de estado</div>
+                      <div className="text-sm text-gray-600">Recibe un email cuando cambie el estado de tus prioridades</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={notificationPrefs.statusChanges}
+                        onChange={(e) => setNotificationPrefs({ ...notificationPrefs, statusChanges: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </>
+              )}
+
+              <div className="pt-4">
+                <button
+                  onClick={handleSaveNotificationPreferences}
+                  disabled={savingPrefs}
+                  className={`w-full px-6 py-3 rounded-lg font-medium transition ${
+                    savingPrefs
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                >
+                  {savingPrefs ? 'Guardando...' : '💾 Guardar Preferencias'}
+                </button>
               </div>
             </div>
           </div>
