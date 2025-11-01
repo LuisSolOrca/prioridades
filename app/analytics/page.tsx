@@ -35,6 +35,7 @@ export default function AnalyticsPage() {
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -113,6 +114,33 @@ export default function AnalyticsPage() {
 
   const handleExportInitiativeStats = () => {
     exportInitiativeStats(initiativeStats, 'Analitica_Iniciativas');
+  };
+
+  const toggleInitiativeDrillDown = (initiativeId: string) => {
+    setExpandedInitiative(expandedInitiative === initiativeId ? null : initiativeId);
+  };
+
+  const getUserStatsForInitiative = (initiativeId: string) => {
+    return users.map(user => {
+      const userInitiativePriorities = priorities.filter(
+        p => p.userId === user._id && p.initiativeId === initiativeId
+      );
+      const completed = userInitiativePriorities.filter(p => p.status === 'COMPLETADO').length;
+      const avgCompletion = userInitiativePriorities.length > 0
+        ? userInitiativePriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userInitiativePriorities.length
+        : 0;
+
+      return {
+        user,
+        total: userInitiativePriorities.length,
+        completed,
+        completionRate: userInitiativePriorities.length > 0
+          ? (completed / userInitiativePriorities.length * 100).toFixed(1)
+          : 0,
+        avgCompletion: avgCompletion.toFixed(1)
+      };
+    }).filter(stat => stat.total > 0)
+      .sort((a, b) => b.total - a.total);
   };
 
   return (
@@ -196,32 +224,97 @@ export default function AnalyticsPage() {
               </button>
             </div>
             <div className="space-y-4">
-              {initiativeStats.map(stat => (
-                <div key={stat.initiative._id}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      <div
-                        className="w-4 h-4 rounded-full mr-3"
-                        style={{ backgroundColor: stat.initiative.color }}
-                      ></div>
-                      <span className="font-medium text-gray-800">{stat.initiative.name}</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm text-gray-600">{stat.count} prioridades</span>
-                      <span className="font-bold text-gray-800">{stat.percentage}%</span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+              {initiativeStats.map(stat => {
+                const isExpanded = expandedInitiative === stat.initiative._id;
+                const userStats = isExpanded ? getUserStatsForInitiative(stat.initiative._id) : [];
+
+                return (
+                  <div key={stat.initiative._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div
-                      className="h-3 rounded-full"
-                      style={{
-                        width: `${stat.percentage}%`,
-                        backgroundColor: stat.initiative.color
-                      }}
-                    ></div>
+                      className="cursor-pointer"
+                      onClick={() => toggleInitiativeDrillDown(stat.initiative._id)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center flex-1">
+                          <div
+                            className="w-4 h-4 rounded-full mr-3"
+                            style={{ backgroundColor: stat.initiative.color }}
+                          ></div>
+                          <span className="font-medium text-gray-800">{stat.initiative.name}</span>
+                          <span className="ml-2 text-sm text-gray-500">
+                            {isExpanded ? '▼' : '▶'}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm text-gray-600">{stat.count} prioridades</span>
+                          <span className="font-bold text-gray-800">{stat.percentage}%</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div
+                          className="h-3 rounded-full transition-all"
+                          style={{
+                            width: `${stat.percentage}%`,
+                            backgroundColor: stat.initiative.color
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {isExpanded && userStats.length > 0 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                          📊 Desglose por Usuario
+                        </h4>
+                        <div className="space-y-3">
+                          {userStats.map(userStat => (
+                            <div
+                              key={userStat.user._id}
+                              className="bg-gray-50 rounded-lg p-3 flex items-center justify-between"
+                            >
+                              <div className="flex items-center flex-1">
+                                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
+                                  {userStat.user.name.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-800 text-sm">
+                                    {userStat.user.name}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {userStat.total} prioridades • {userStat.completed} completadas
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                <div className="text-right">
+                                  <div className="text-xs text-gray-600">Tasa Completado</div>
+                                  <div className="font-bold text-blue-600 text-sm">
+                                    {userStat.completionRate}%
+                                  </div>
+                                </div>
+                                <div className="flex items-center">
+                                  <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                    <div
+                                      className="h-2 rounded-full"
+                                      style={{
+                                        width: `${userStat.avgCompletion}%`,
+                                        backgroundColor: stat.initiative.color
+                                      }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-xs font-semibold text-gray-700">
+                                    {userStat.avgCompletion}%
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
