@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
         prioritiesRes.json()
       ]);
 
-      setUsers(usersData.filter((u: User) => u.role === 'USER'));
+      setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
       setPriorities(prioritiesData);
     } catch (error) {
