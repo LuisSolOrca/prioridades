@@ -106,6 +106,8 @@ export default function PrioritiesPage() {
         .map(p => p._id!)
         .join(',');
 
+      console.log('[COMMENT COUNTS] Priority IDs:', priorityIds);
+
       if (!priorityIds) {
         setCommentCounts({});
         return;
@@ -115,6 +117,7 @@ export default function PrioritiesPage() {
       if (!response.ok) throw new Error('Error loading comment counts');
 
       const counts = await response.json();
+      console.log('[COMMENT COUNTS] Loaded counts:', counts);
       setCommentCounts(counts);
     } catch (error) {
       console.error('Error loading comment counts:', error);
@@ -771,7 +774,7 @@ export default function PrioritiesPage() {
                               >
                                 💬
                                 {priority._id && commentCounts[priority._id] > 0 && (
-                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style={{ zIndex: 10 }}>
                                     {commentCounts[priority._id]}
                                   </span>
                                 )}
@@ -890,7 +893,7 @@ export default function PrioritiesPage() {
                               >
                                 💬
                                 {priority._id && commentCounts[priority._id] > 0 && (
-                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style={{ zIndex: 10 }}>
                                     {commentCounts[priority._id]}
                                   </span>
                                 )}

@@ -166,7 +166,7 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                           >
                             🔍
                             {commentCounts[priority._id] > 0 && (
-                              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center" style={{ zIndex: 10 }}>
                                 {commentCounts[priority._id]}
                               </span>
                             )}
@@ -269,6 +269,8 @@ export default function DashboardPage() {
         .map(p => p._id!)
         .join(',');
 
+      console.log('[DASHBOARD COMMENT COUNTS] Priority IDs:', priorityIds);
+
       if (!priorityIds) {
         setCommentCounts({});
         return;
@@ -278,6 +280,7 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error('Error loading comment counts');
 
       const counts = await response.json();
+      console.log('[DASHBOARD COMMENT COUNTS] Loaded counts:', counts);
       setCommentCounts(counts);
     } catch (error) {
       console.error('Error loading comment counts:', error);
