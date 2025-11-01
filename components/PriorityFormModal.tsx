@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import ChecklistManager, { ChecklistItem } from './ChecklistManager';
 import EvidenceLinksManager, { EvidenceLink } from './EvidenceLinksManager';
@@ -18,6 +19,8 @@ interface PriorityFormData {
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
   checklist: ChecklistItem[];
   evidenceLinks: EvidenceLink[];
+  weekStart?: string;
+  weekEnd?: string;
 }
 
 interface PriorityFormModalProps {
@@ -29,6 +32,10 @@ interface PriorityFormModalProps {
   initiatives: Initiative[];
   isEditing: boolean;
   weekLabel: string;
+  currentWeek?: any;
+  nextWeek?: any;
+  selectedWeekOffset?: number;
+  setSelectedWeekOffset?: (offset: number) => void;
 }
 
 export default function PriorityFormModal({
@@ -39,8 +46,69 @@ export default function PriorityFormModal({
   handleSubmit,
   initiatives,
   isEditing,
-  weekLabel
+  weekLabel,
+  currentWeek,
+  nextWeek,
+  selectedWeekOffset = 0,
+  setSelectedWeekOffset
 }: PriorityFormModalProps) {
+  const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
+
+  const handleImproveWithAI = async (type: 'title' | 'description') => {
+    const text = type === 'title' ? formData.title : formData.description;
+
+    if (!text || text.trim() === '') {
+      alert(`Primero escribe ${type === 'title' ? 'un título' : 'una descripción'} para que la IA pueda mejorarlo`);
+      return;
+    }
+
+    setAiLoading(type);
+    setAiSuggestion(null);
+
+    try {
+      const res = await fetch('/api/ai/improve-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, type })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error al mejorar el texto');
+      }
+
+      const data = await res.json();
+      setAiSuggestion({ type, text: data.improvedText });
+
+    } catch (error: any) {
+      console.error('Error improving text:', error);
+      alert(error.message || 'Error al comunicarse con la IA');
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
+  const handleAcceptSuggestion = () => {
+    if (!aiSuggestion) return;
+
+    if (aiSuggestion.type === 'title') {
+      setFormData({ ...formData, title: aiSuggestion.text });
+    } else {
+      setFormData({ ...formData, description: aiSuggestion.text });
+    }
+
+    setAiSuggestion(null);
+  };
+
+  const handleRejectSuggestion = () => {
+    setAiSuggestion(null);
+  };
+
+  const getWeekLabel = (date: Date) => {
+    return date.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -61,11 +129,64 @@ export default function PriorityFormModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Título */}
+          {/* Selector de Semana (solo cuando se crea) */}
+          {!isEditing && currentWeek && nextWeek && setSelectedWeekOffset && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Semana *
+              </label>
+              <select
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={selectedWeekOffset}
+                onChange={(e) => {
+                  const offset = parseInt(e.target.value);
+                  setSelectedWeekOffset(offset);
+                  const targetWeek = offset === 0 ? currentWeek : nextWeek;
+                  setFormData({
+                    ...formData,
+                    weekStart: targetWeek.monday.toISOString(),
+                    weekEnd: targetWeek.friday.toISOString()
+                  });
+                }}
+              >
+                <option value="0">Semana Actual ({getWeekLabel(currentWeek.monday)})</option>
+                <option value="1">Siguiente Semana ({getWeekLabel(nextWeek.monday)})</option>
+              </select>
+            </div>
+          )}
+
+          {/* Título con IA */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Título *
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Título de la Prioridad *
+              </label>
+              <button
+                type="button"
+                onClick={() => handleImproveWithAI('title')}
+                disabled={aiLoading === 'title' || !formData.title}
+                className={`text-xs px-3 py-1 rounded-lg transition flex items-center space-x-1 ${
+                  aiLoading === 'title'
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : formData.title
+                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+                title="Mejorar con IA"
+              >
+                {aiLoading === 'title' ? (
+                  <>
+                    <span className="animate-spin">⚙️</span>
+                    <span>Mejorando...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>✨</span>
+                    <span>Mejorar con IA</span>
+                  </>
+                )}
+              </button>
+            </div>
             <input
               type="text"
               value={formData.title}
@@ -73,20 +194,155 @@ export default function PriorityFormModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
               maxLength={150}
+              placeholder="Ej: Aumentar ventas del producto X en 15%"
             />
+
+            {/* Sugerencia de IA para Título */}
+            {aiSuggestion && aiSuggestion.type === 'title' && (
+              <div className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl">✨</span>
+                    <h4 className="text-sm font-bold text-purple-900">Sugerencia de IA</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRejectSuggestion}
+                    className="text-gray-400 hover:text-gray-600 text-lg"
+                    title="Cerrar"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Original</p>
+                    <div className="bg-white/70 rounded p-2 text-sm text-gray-700">
+                      {formData.title}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-purple-700 uppercase mb-1">Mejorado</p>
+                    <div className="bg-white rounded p-2 text-sm text-gray-800 font-medium border-2 border-purple-300">
+                      {aiSuggestion.text}
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleAcceptSuggestion}
+                      className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                    >
+                      ✓ Usar Esta Versión
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRejectSuggestion}
+                      className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
+                    >
+                      × Mantener Original
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Descripción */}
+          {/* Descripción con IA */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Descripción
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Descripción Detallada
+              </label>
+              <button
+                type="button"
+                onClick={() => handleImproveWithAI('description')}
+                disabled={aiLoading === 'description' || !formData.description}
+                className={`text-xs px-3 py-1 rounded-lg transition flex items-center space-x-1 ${
+                  aiLoading === 'description'
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : formData.description
+                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+                title="Mejorar con IA"
+              >
+                {aiLoading === 'description' ? (
+                  <>
+                    <span className="animate-spin">⚙️</span>
+                    <span>Mejorando...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>✨</span>
+                    <span>Mejorar con IA</span>
+                  </>
+                )}
+              </button>
+            </div>
             <textarea
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               rows={3}
+              placeholder="Describe los objetivos y el alcance de esta prioridad"
             />
+
+            {/* Sugerencia de IA para Descripción */}
+            {aiSuggestion && aiSuggestion.type === 'description' && (
+              <div className="mt-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl">✨</span>
+                    <h4 className="text-sm font-bold text-purple-900">Sugerencia de IA</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRejectSuggestion}
+                    className="text-gray-400 hover:text-gray-600 text-lg"
+                    title="Cerrar"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Original</p>
+                    <div className="bg-white/70 rounded p-2 text-sm text-gray-700">
+                      {formData.description}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-purple-700 uppercase mb-1">Mejorado</p>
+                    <div className="bg-white rounded p-2 text-sm text-gray-800 font-medium border-2 border-purple-300">
+                      {aiSuggestion.text}
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleAcceptSuggestion}
+                      className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                    >
+                      ✓ Usar Esta Versión
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRejectSuggestion}
+                      className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
+                    >
+                      × Mantener Original
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Iniciativas */}
