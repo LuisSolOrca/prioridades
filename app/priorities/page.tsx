@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
+import CommentsSection from '@/components/CommentsSection';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 
@@ -774,6 +775,13 @@ export default function PrioritiesPage() {
                                 ></div>
                               </div>
                             </div>
+
+                            {/* Comments Section */}
+                            {priority._id && (
+                              <div className="pt-4 mt-4 border-t border-gray-200">
+                                <CommentsSection priorityId={priority._id} />
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -871,6 +879,13 @@ export default function PrioritiesPage() {
                                 ></div>
                               </div>
                             </div>
+
+                            {/* Comments Section */}
+                            {priority._id && (
+                              <div className="pt-4 mt-4 border-t border-gray-200">
+                                <CommentsSection priorityId={priority._id} />
+                              </div>
+                            )}
                           </div>
                         </div>
                       );

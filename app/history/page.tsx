@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
+import CommentsSection from '@/components/CommentsSection';
 import { getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 
@@ -555,6 +556,13 @@ export default function HistoryPage() {
                     />
                   </div>
                 </div>
+
+                {/* Comments Section */}
+                {editingPriority && (
+                  <div className="mb-6 pt-6 border-t border-gray-200">
+                    <CommentsSection priorityId={editingPriority._id} />
+                  </div>
+                )}
 
                 <div className="flex justify-end space-x-4 pt-4">
                   <button

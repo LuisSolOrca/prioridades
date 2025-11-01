@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
+import CommentsSection from '@/components/CommentsSection';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 import ReactMarkdown from 'react-markdown';
@@ -533,6 +534,11 @@ export default function DashboardPage() {
                     <span className="font-semibold text-gray-800">{selectedPriority.completionPercentage}%</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="mb-6">
+                <CommentsSection priorityId={selectedPriority._id} />
               </div>
 
               {/* Botón Cerrar */}
