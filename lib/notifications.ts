@@ -4,7 +4,21 @@ import User from '@/models/User';
 
 interface CreateNotificationParams {
   userId: string;
-  type: 'STATUS_CHANGE' | 'COMMENT' | 'MENTION' | 'WEEKEND_REMINDER' | 'PRIORITY_ASSIGNED';
+  type:
+    | 'STATUS_CHANGE'
+    | 'COMMENT'
+    | 'MENTION'
+    | 'WEEKEND_REMINDER'
+    | 'PRIORITY_ASSIGNED'
+    | 'PRIORITY_DUE_SOON'
+    | 'COMPLETION_MILESTONE'
+    | 'PRIORITY_INACTIVE'
+    | 'PRIORITY_UNBLOCKED'
+    | 'WEEKLY_SUMMARY'
+    | 'INITIATIVE_AT_RISK'
+    | 'WEEK_COMPLETED'
+    | 'WEEK_START_REMINDER'
+    | 'COMMENT_REPLY';
   title: string;
   message: string;
   priorityId?: string;
@@ -150,6 +164,142 @@ export async function notifyMention(
     type: 'MENTION',
     title: `${mentionerName} te mencionó en "${priorityTitle}"`,
     message: commentText.substring(0, 100) + (commentText.length > 100 ? '...' : ''),
+    priorityId,
+    commentId,
+    actionUrl: `/priorities`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Prioridad próxima a vencer
+export async function notifyPriorityDueSoon(
+  userId: string,
+  priorityTitle: string,
+  completionPercentage: number,
+  priorityId: string
+) {
+  await createNotification({
+    userId,
+    type: 'PRIORITY_DUE_SOON',
+    title: `⏰ Prioridad "${priorityTitle}" vence pronto`,
+    message: `Esta prioridad vence mañana y está al ${completionPercentage}% de completado. ¿Necesitas ayuda para terminarla?`,
+    priorityId,
+    actionUrl: `/priorities`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Hito de % completado alcanzado
+export async function notifyCompletionMilestone(
+  userId: string,
+  priorityTitle: string,
+  milestone: number,
+  priorityId: string
+) {
+  const emojis: Record<number, string> = {
+    25: '🎯',
+    50: '⚡',
+    75: '🚀',
+    100: '🎉'
+  };
+
+  await createNotification({
+    userId,
+    type: 'COMPLETION_MILESTONE',
+    title: `${emojis[milestone]} Prioridad "${priorityTitle}" alcanzó ${milestone}%`,
+    message: `¡Excelente progreso! Has completado el ${milestone}% de esta prioridad.`,
+    priorityId,
+    actionUrl: `/priorities`,
+    sendEmail: false // Solo in-app, no email
+  });
+}
+
+// Notificación: Prioridad sin actualizaciones
+export async function notifyPriorityInactive(
+  userId: string,
+  priorityTitle: string,
+  daysInactive: number,
+  priorityId: string
+) {
+  await createNotification({
+    userId,
+    type: 'PRIORITY_INACTIVE',
+    title: `🔔 Prioridad "${priorityTitle}" sin actividad`,
+    message: `Esta prioridad no ha tenido actualizaciones en ${daysInactive} días. ¿Está bloqueada o necesitas ayuda?`,
+    priorityId,
+    actionUrl: `/priorities`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Prioridad desbloqueada
+export async function notifyPriorityUnblocked(
+  userId: string,
+  priorityTitle: string,
+  newStatus: string,
+  priorityId: string
+) {
+  const statusLabels: Record<string, string> = {
+    'EN_TIEMPO': 'En Tiempo',
+    'EN_RIESGO': 'En Riesgo',
+    'COMPLETADO': 'Completado'
+  };
+
+  await createNotification({
+    userId,
+    type: 'PRIORITY_UNBLOCKED',
+    title: `✅ ¡Prioridad "${priorityTitle}" desbloqueada!`,
+    message: `La prioridad cambió de "Bloqueado" a "${statusLabels[newStatus]}". ¡Sigue adelante!`,
+    priorityId,
+    actionUrl: `/priorities`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Todas las prioridades de la semana completadas
+export async function notifyWeekCompleted(
+  userId: string,
+  weekStart: Date,
+  weekEnd: Date
+) {
+  const weekStr = `${weekStart.toLocaleDateString('es-MX')} - ${weekEnd.toLocaleDateString('es-MX')}`;
+
+  await createNotification({
+    userId,
+    type: 'WEEK_COMPLETED',
+    title: `🎉 ¡Felicitaciones! Completaste todas tus prioridades`,
+    message: `Has completado todas tus prioridades de la semana ${weekStr}. ¡Excelente trabajo!`,
+    actionUrl: `/analytics`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Recordatorio de inicio de semana
+export async function notifyWeekStartReminder(userId: string) {
+  await createNotification({
+    userId,
+    type: 'WEEK_START_REMINDER',
+    title: `📅 Nueva semana - Define tus prioridades`,
+    message: `Es lunes, momento perfecto para definir tus 5 prioridades de esta semana. ¡Comienza con el pie derecho!`,
+    actionUrl: `/priorities`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Respuesta a comentario
+export async function notifyCommentReply(
+  userId: string,
+  replierName: string,
+  priorityTitle: string,
+  replyText: string,
+  priorityId: string,
+  commentId: string
+) {
+  await createNotification({
+    userId,
+    type: 'COMMENT_REPLY',
+    title: `${replierName} respondió a tu comentario en "${priorityTitle}"`,
+    message: replyText.substring(0, 100) + (replyText.length > 100 ? '...' : ''),
     priorityId,
     commentId,
     actionUrl: `/priorities`,

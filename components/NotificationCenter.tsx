@@ -125,6 +125,24 @@ export default function NotificationCenter() {
         return '📅';
       case 'PRIORITY_ASSIGNED':
         return '📌';
+      case 'PRIORITY_DUE_SOON':
+        return '⏰';
+      case 'COMPLETION_MILESTONE':
+        return '🎯';
+      case 'PRIORITY_INACTIVE':
+        return '🔔';
+      case 'PRIORITY_UNBLOCKED':
+        return '✅';
+      case 'WEEKLY_SUMMARY':
+        return '📊';
+      case 'INITIATIVE_AT_RISK':
+        return '🚨';
+      case 'WEEK_COMPLETED':
+        return '🎉';
+      case 'WEEK_START_REMINDER':
+        return '📅';
+      case 'COMMENT_REPLY':
+        return '💬';
       default:
         return '🔔';
     }
@@ -133,15 +151,25 @@ export default function NotificationCenter() {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case 'STATUS_CHANGE':
+      case 'PRIORITY_DUE_SOON':
+      case 'INITIATIVE_AT_RISK':
         return 'border-red-200 bg-red-50';
       case 'COMMENT':
+      case 'COMMENT_REPLY':
+      case 'WEEK_START_REMINDER':
         return 'border-blue-200 bg-blue-50';
       case 'MENTION':
         return 'border-purple-200 bg-purple-50';
       case 'WEEKEND_REMINDER':
+      case 'PRIORITY_INACTIVE':
         return 'border-yellow-200 bg-yellow-50';
       case 'PRIORITY_ASSIGNED':
+      case 'PRIORITY_UNBLOCKED':
+      case 'WEEK_COMPLETED':
+      case 'COMPLETION_MILESTONE':
         return 'border-green-200 bg-green-50';
+      case 'WEEKLY_SUMMARY':
+        return 'border-indigo-200 bg-indigo-50';
       default:
         return 'border-gray-200 bg-gray-50';
     }

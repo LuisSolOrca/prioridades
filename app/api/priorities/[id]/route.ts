@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
-import { notifyStatusChange } from '@/lib/notifications';
+import { notifyStatusChange, notifyPriorityUnblocked, notifyCompletionMilestone, notifyWeekCompleted } from '@/lib/notifications';
 
 export async function GET(
   request: NextRequest,
@@ -66,6 +66,7 @@ export async function PUT(
 
     // Guardar estado anterior para detectar cambios
     const oldStatus = priority.status;
+    const oldCompletionPercentage = priority.completionPercentage;
 
     // Preparar datos para actualizar
     const updateData: any = {
@@ -90,19 +91,70 @@ export async function PUT(
       { new: true, runValidators: true }
     );
 
-    // Notificar si el estado cambió
-    if (body.status && body.status !== oldStatus) {
-      try {
-        await notifyStatusChange(
-          priority.userId.toString(),
-          priority.title,
-          oldStatus,
-          body.status,
-          id
-        );
-      } catch (notifyError) {
-        console.error('Error sending status change notification:', notifyError);
+    // Notificaciones basadas en cambios
+    try {
+      // 1. Notificar si el estado cambió
+      if (body.status && body.status !== oldStatus) {
+        // Notificar desbloqueo
+        if (oldStatus === 'BLOQUEADO' && body.status !== 'BLOQUEADO') {
+          await notifyPriorityUnblocked(
+            priority.userId.toString(),
+            priority.title,
+            body.status,
+            id
+          );
+        }
+        // Notificar cambios a EN_RIESGO o BLOQUEADO
+        else {
+          await notifyStatusChange(
+            priority.userId.toString(),
+            priority.title,
+            oldStatus,
+            body.status,
+            id
+          );
+        }
       }
+
+      // 2. Notificar hitos de % completado (25%, 50%, 75%, 100%)
+      if (body.completionPercentage !== undefined && body.completionPercentage !== oldCompletionPercentage) {
+        const milestones = [25, 50, 75, 100];
+        for (const milestone of milestones) {
+          if (oldCompletionPercentage < milestone && body.completionPercentage >= milestone) {
+            await notifyCompletionMilestone(
+              priority.userId.toString(),
+              priority.title,
+              milestone,
+              id
+            );
+          }
+        }
+
+        // 3. Verificar si completó todas las prioridades de la semana
+        if (body.completionPercentage === 100 || body.status === 'COMPLETADO') {
+          const allPriorities = await Priority.find({
+            userId: priority.userId,
+            weekStart: priority.weekStart,
+            weekEnd: priority.weekEnd
+          });
+
+          const allCompleted = allPriorities.every(p =>
+            p._id.toString() === id
+              ? (body.completionPercentage === 100 || body.status === 'COMPLETADO')
+              : (p.completionPercentage === 100 || p.status === 'COMPLETADO')
+          );
+
+          if (allCompleted && allPriorities.length > 0) {
+            await notifyWeekCompleted(
+              priority.userId.toString(),
+              new Date(priority.weekStart),
+              new Date(priority.weekEnd)
+            );
+          }
+        }
+      }
+    } catch (notifyError) {
+      console.error('Error sending notifications:', notifyError);
     }
 
     return NextResponse.json(updatedPriority);

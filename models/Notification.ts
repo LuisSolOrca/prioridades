@@ -3,7 +3,21 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface INotification extends Document {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
-  type: 'STATUS_CHANGE' | 'COMMENT' | 'MENTION' | 'WEEKEND_REMINDER' | 'PRIORITY_ASSIGNED';
+  type:
+    | 'STATUS_CHANGE'
+    | 'COMMENT'
+    | 'MENTION'
+    | 'WEEKEND_REMINDER'
+    | 'PRIORITY_ASSIGNED'
+    | 'PRIORITY_DUE_SOON'
+    | 'COMPLETION_MILESTONE'
+    | 'PRIORITY_INACTIVE'
+    | 'PRIORITY_UNBLOCKED'
+    | 'WEEKLY_SUMMARY'
+    | 'INITIATIVE_AT_RISK'
+    | 'WEEK_COMPLETED'
+    | 'WEEK_START_REMINDER'
+    | 'COMMENT_REPLY';
   title: string;
   message: string;
   priorityId?: mongoose.Types.ObjectId;
@@ -23,7 +37,22 @@ const NotificationSchema = new Schema<INotification>({
   },
   type: {
     type: String,
-    enum: ['STATUS_CHANGE', 'COMMENT', 'MENTION', 'WEEKEND_REMINDER', 'PRIORITY_ASSIGNED'],
+    enum: [
+      'STATUS_CHANGE',
+      'COMMENT',
+      'MENTION',
+      'WEEKEND_REMINDER',
+      'PRIORITY_ASSIGNED',
+      'PRIORITY_DUE_SOON',
+      'COMPLETION_MILESTONE',
+      'PRIORITY_INACTIVE',
+      'PRIORITY_UNBLOCKED',
+      'WEEKLY_SUMMARY',
+      'INITIATIVE_AT_RISK',
+      'WEEK_COMPLETED',
+      'WEEK_START_REMINDER',
+      'COMMENT_REPLY'
+    ],
     required: true
   },
   title: {
