@@ -329,7 +329,7 @@ export default function NotificationCenter() {
                   }}
                   className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  Ver todas las notificaciones
+                  Ver mis prioridades
                 </button>
               </div>
             )}
