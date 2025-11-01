@@ -115,16 +115,19 @@ export async function POST(request: NextRequest) {
           // Buscar usuarios mencionados por nombre (case-insensitive, coincidencia exacta o parcial)
           for (const username of usernames) {
             try {
+              // Escapar caracteres especiales de regex
+              const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
               // Primero intentar coincidencia exacta
               let mentionedUser = await User.findOne({
-                name: { $regex: new RegExp(`^${username}$`, 'i') },
+                name: { $regex: new RegExp(`^${escapedUsername}$`, 'i') },
                 isActive: true
               }).lean();
 
               // Si no encuentra, buscar por nombre que contenga el texto
               if (!mentionedUser) {
                 mentionedUser = await User.findOne({
-                  name: { $regex: new RegExp(username, 'i') },
+                  name: { $regex: new RegExp(escapedUsername, 'i') },
                   isActive: true
                 }).lean();
               }
