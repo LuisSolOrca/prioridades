@@ -358,18 +358,30 @@ export default function PrioritiesPage() {
                           </div>
                         </div>
                         <div className="flex space-x-2 ml-4">
-                          <button
-                            onClick={() => handleEdit(priority)}
-                            className="text-blue-600 hover:bg-blue-50 w-10 h-10 rounded-lg transition"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => handleDelete(priority._id!)}
-                            className="text-red-600 hover:bg-red-50 w-10 h-10 rounded-lg transition"
-                          >
-                            🗑️
-                          </button>
+                          {priority.status === 'COMPLETADO' ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-green-600 text-xs font-medium bg-green-50 px-3 py-2 rounded-lg">
+                                ✓ Completado (Solo lectura)
+                              </span>
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleEdit(priority)}
+                                className="text-blue-600 hover:bg-blue-50 w-10 h-10 rounded-lg transition"
+                                title="Editar prioridad"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => handleDelete(priority._id!)}
+                                className="text-red-600 hover:bg-red-50 w-10 h-10 rounded-lg transition"
+                                title="Eliminar prioridad"
+                              >
+                                🗑️
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
 
