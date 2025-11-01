@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, AlignmentType, TextRun } from 'docx';
+import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, AlignmentType, TextRun, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
 
 interface ReportData {
@@ -14,9 +14,36 @@ interface ReportData {
   }[];
 }
 
+// Función para cargar el logo
+const loadLogo = async (): Promise<string> => {
+  try {
+    const response = await fetch('/orca-logo.png');
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    return '';
+  }
+};
+
 // Generar reporte en PDF
-export const generatePDFReport = (data: ReportData, fileName: string = 'Reporte') => {
+export const generatePDFReport = async (data: ReportData, fileName: string = 'Reporte') => {
   const doc = new jsPDF();
+
+  // Cargar y agregar logo
+  const logoBase64 = await loadLogo();
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'PNG', 160, 10, 35, 35);
+    } catch (error) {
+      console.error('Error adding logo to PDF:', error);
+    }
+  }
 
   // Título
   doc.setFontSize(18);
@@ -108,16 +135,53 @@ export const generateDOCReport = async (data: ReportData, fileName: string = 'Re
     day: 'numeric'
   });
 
+  // Cargar logo
+  const logoBase64 = await loadLogo();
+
   // Crear secciones del documento
-  const sections: any[] = [
-    // Título
+  const sections: any[] = [];
+
+  // Logo (si existe)
+  if (logoBase64) {
+    try {
+      // Convertir base64 a Uint8Array
+      const base64Data = logoBase64.split(',')[1];
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      sections.push(
+        new Paragraph({
+          children: [
+            new ImageRun({
+              data: bytes,
+              transformation: {
+                width: 100,
+                height: 100
+              },
+              type: 'png'
+            } as any)
+          ],
+          alignment: AlignmentType.RIGHT,
+          spacing: { after: 200 }
+        })
+      );
+    } catch (error) {
+      console.error('Error adding logo to DOC:', error);
+    }
+  }
+
+  // Título
+  sections.push(
     new Paragraph({
       text: data.title,
       heading: 'Heading1',
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 }
     })
-  ];
+  );
 
   // Subtítulo
   if (data.subtitle) {
@@ -220,7 +284,7 @@ export const generateDOCReport = async (data: ReportData, fileName: string = 'Re
 };
 
 // Tipos de reportes predefinidos
-export const generatePrioritiesReport = (
+export const generatePrioritiesReport = async (
   priorities: any[],
   users: any[],
   initiatives: any[],
@@ -257,13 +321,13 @@ export const generatePrioritiesReport = (
   const fileName = `Reporte_Prioridades_${new Date().getTime()}`;
 
   if (format === 'pdf') {
-    generatePDFReport(data, fileName);
+    await generatePDFReport(data, fileName);
   } else {
-    generateDOCReport(data, fileName);
+    await generateDOCReport(data, fileName);
   }
 };
 
-export const generateUserPerformanceReport = (
+export const generateUserPerformanceReport = async (
   users: any[],
   priorities: any[],
   format: 'pdf' | 'doc',
@@ -310,13 +374,13 @@ export const generateUserPerformanceReport = (
   const fileName = `Reporte_Rendimiento_${new Date().getTime()}`;
 
   if (format === 'pdf') {
-    generatePDFReport(data, fileName);
+    await generatePDFReport(data, fileName);
   } else {
-    generateDOCReport(data, fileName);
+    await generateDOCReport(data, fileName);
   }
 };
 
-export const generateInitiativesReport = (
+export const generateInitiativesReport = async (
   initiatives: any[],
   priorities: any[],
   format: 'pdf' | 'doc',
@@ -361,8 +425,8 @@ export const generateInitiativesReport = (
   const fileName = `Reporte_Iniciativas_${new Date().getTime()}`;
 
   if (format === 'pdf') {
-    generatePDFReport(data, fileName);
+    await generatePDFReport(data, fileName);
   } else {
-    generateDOCReport(data, fileName);
+    await generateDOCReport(data, fileName);
   }
 };
