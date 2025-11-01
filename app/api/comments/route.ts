@@ -101,24 +101,36 @@ export async function POST(request: NextRequest) {
           ).catch(err => console.error('[NOTIFICATION] Error creating comment notification:', err));
         }
 
-        // Detectar menciones (@username) y crear notificaciones
-        const mentionRegex = /@(\w+)/g;
+        // Detectar menciones (@username o @NombreCompleto) y crear notificaciones
+        // Regex mejorado para capturar nombres con espacios: @NombreCompleto o @Nombre
+        const mentionRegex = /@([\w\s]+?)(?=\s|$|[^\w\s])/g;
         const mentions = text.match(mentionRegex);
 
         if (mentions && commentAuthor) {
           console.log('[NOTIFICATION] Mentions detected:', mentions);
 
-          // Extraer nombres de usuario únicos
-          const usernames = [...new Set(mentions.map((m: string) => m.substring(1)))];
+          // Extraer nombres de usuario únicos y limpiar
+          const usernames = [...new Set(mentions.map((m: string) => m.substring(1).trim()))];
 
-          // Buscar usuarios mencionados por nombre (case-insensitive)
+          // Buscar usuarios mencionados por nombre (case-insensitive, coincidencia exacta o parcial)
           for (const username of usernames) {
             try {
-              const mentionedUser = await User.findOne({
-                name: { $regex: new RegExp(`^${username}$`, 'i') }
+              // Primero intentar coincidencia exacta
+              let mentionedUser = await User.findOne({
+                name: { $regex: new RegExp(`^${username}$`, 'i') },
+                isActive: true
               }).lean();
 
+              // Si no encuentra, buscar por nombre que contenga el texto
+              if (!mentionedUser) {
+                mentionedUser = await User.findOne({
+                  name: { $regex: new RegExp(username, 'i') },
+                  isActive: true
+                }).lean();
+              }
+
               if (mentionedUser && mentionedUser._id.toString() !== commentAuthor._id.toString()) {
+                console.log(`[NOTIFICATION] Creating mention notification for user: ${mentionedUser.name}`);
                 await notifyMention(
                   mentionedUser._id.toString(),
                   commentAuthor.name,
@@ -127,6 +139,10 @@ export async function POST(request: NextRequest) {
                   priorityId,
                   comment._id.toString()
                 ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
+              } else if (!mentionedUser) {
+                console.log(`[NOTIFICATION] User not found for mention: @${username}`);
+              } else {
+                console.log(`[NOTIFICATION] Skipping self-mention for: ${mentionedUser.name}`);
               }
             } catch (err) {
               console.error(`[NOTIFICATION] Error finding user ${username}:`, err);
