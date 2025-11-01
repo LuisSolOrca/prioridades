@@ -40,6 +40,10 @@ export default function HistoryPage() {
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
+  const [includeAdmins, setIncludeAdmins] = useState(true);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -78,16 +82,43 @@ export default function HistoryPage() {
   const filteredPriorities = useMemo(() => {
     let filtered = priorities;
 
+    // Filtro por usuario
     if (selectedUser !== 'all') {
       filtered = filtered.filter(p => p.userId === selectedUser);
     }
 
+    // Filtro por rol de usuario (incluir/excluir admins)
+    if (!includeAdmins) {
+      const userIds = users.filter(u => u.role === 'USER').map(u => u._id);
+      filtered = filtered.filter(p => userIds.includes(p.userId));
+    }
+
+    // Filtro por iniciativa
     if (selectedInitiative !== 'all') {
       filtered = filtered.filter(p => p.initiativeId === selectedInitiative);
     }
 
+    // Filtro por rango de fechas
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      filtered = filtered.filter(p => new Date(p.weekStart) >= fromDate);
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999); // Incluir todo el día
+      filtered = filtered.filter(p => new Date(p.weekStart) <= toDate);
+    }
+
+    // Filtro por keywords
+    if (searchKeyword.trim()) {
+      const keyword = searchKeyword.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.title.toLowerCase().includes(keyword)
+      );
+    }
+
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative]);
+  }, [priorities, selectedUser, selectedInitiative, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
 
   const weekGroups = useMemo(() => {
     const groups: { [key: string]: Priority[] } = {};
@@ -143,7 +174,21 @@ export default function HistoryPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="mb-6">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  checked={includeAdmins}
+                  onChange={(e) => setIncludeAdmins(e.target.checked)}
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Incluir prioridades de administradores
+                </span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Filtrar por Usuario
@@ -154,9 +199,13 @@ export default function HistoryPage() {
                   onChange={(e) => setSelectedUser(e.target.value)}
                 >
                   <option value="all">Todos los usuarios</option>
-                  {users.filter(u => u.role === 'USER').map(user => (
-                    <option key={user._id} value={user._id}>{user.name}</option>
-                  ))}
+                  {users
+                    .filter(u => includeAdmins || u.role === 'USER')
+                    .map(user => (
+                      <option key={user._id} value={user._id}>
+                        {user.name} {user.role === 'ADMIN' ? '(Admin)' : ''}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
@@ -174,6 +223,62 @@ export default function HistoryPage() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Buscar por palabras clave
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Buscar en títulos..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha desde
+                </label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha hasta
+                </label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mb-6 pb-4 border-b">
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold text-gray-800">{filteredPriorities.length}</span> prioridades encontradas
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedUser('all');
+                  setSelectedInitiative('all');
+                  setIncludeAdmins(true);
+                  setDateFrom('');
+                  setDateTo('');
+                  setSearchKeyword('');
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                🔄 Limpiar todos los filtros
+              </button>
             </div>
 
             <div className="space-y-6">
