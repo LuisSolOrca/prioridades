@@ -1,6 +1,6 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
-export type PriorityStatus = 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
+export type PriorityStatus = 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
 
 export interface IChecklistItem {
   _id?: mongoose.Types.ObjectId;
@@ -63,7 +63,7 @@ const PrioritySchema = new Schema<IPriority>({
   },
   status: {
     type: String,
-    enum: ['EN_TIEMPO', 'EN_RIESGO', 'BLOQUEADO', 'COMPLETADO'],
+    enum: ['EN_TIEMPO', 'EN_RIESGO', 'BLOQUEADO', 'COMPLETADO', 'REPROGRAMADO'],
     default: 'EN_TIEMPO',
   },
   wasEdited: {

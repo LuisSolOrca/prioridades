@@ -31,9 +31,16 @@ export default function KanbanCard({ priority, index, onViewDetails }: KanbanCar
           `}
         >
           <div className="flex flex-col gap-2">
-            <h3 className="font-semibold text-sm text-gray-800 line-clamp-2">
-              {priority.title}
-            </h3>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-sm text-gray-800 line-clamp-2 flex-1">
+                {priority.title}
+              </h3>
+              {priority.isCarriedOver && (
+                <span className="bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded flex items-center flex-shrink-0" title="Traído de semana anterior">
+                  🔄
+                </span>
+              )}
+            </div>
 
             {priority.description && (
               <p className="text-xs text-gray-600 line-clamp-2">

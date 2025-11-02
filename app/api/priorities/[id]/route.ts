@@ -70,8 +70,52 @@ export async function PUT(
     const oldStatus = priority.status;
     const oldCompletionPercentage = priority.completionPercentage;
     const oldChecklistLength = priority.checklist?.length || 0;
+    const oldWeekStart = priority.weekStart.toISOString();
+    const oldWeekEnd = priority.weekEnd.toISOString();
 
-    // Preparar datos para actualizar
+    // Detectar si se cambió la semana
+    const weekChanged = body.weekStart && body.weekEnd && (
+      new Date(body.weekStart).toISOString() !== oldWeekStart ||
+      new Date(body.weekEnd).toISOString() !== oldWeekEnd
+    );
+
+    // Si se cambió la semana y la prioridad NO está completada ni reprogramada, crear copia y marcar original como REPROGRAMADO
+    if (weekChanged && priority.status !== 'COMPLETADO' && priority.status !== 'REPROGRAMADO') {
+      // Marcar la prioridad original como REPROGRAMADO
+      await Priority.findByIdAndUpdate(
+        id,
+        {
+          status: 'REPROGRAMADO',
+          wasEdited: true,
+          lastEditedAt: new Date(),
+          updatedAt: new Date()
+        },
+        { new: true, runValidators: true }
+      );
+
+      // Crear una copia para la nueva semana
+      const newPriority = new Priority({
+        title: priority.title,
+        description: priority.description,
+        weekStart: new Date(body.weekStart),
+        weekEnd: new Date(body.weekEnd),
+        completionPercentage: 0, // Resetear progreso
+        status: 'EN_TIEMPO',
+        userId: priority.userId,
+        initiativeIds: body.initiativeIds || priority.initiativeIds,
+        checklist: priority.checklist?.map(item => ({ text: item.text, completed: false })) || [],
+        evidenceLinks: [],
+        wasEdited: false,
+        isCarriedOver: true
+      });
+
+      const savedPriority = await newPriority.save();
+
+      // Retornar la nueva prioridad
+      return NextResponse.json(savedPriority);
+    }
+
+    // Preparar datos para actualizar (si no se cambió la semana)
     const updateData: any = {
       ...body,
       wasEdited: true,

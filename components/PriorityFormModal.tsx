@@ -16,7 +16,7 @@ interface PriorityFormData {
   description?: string;
   initiativeIds: string[];
   completionPercentage: number;
-  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
+  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   checklist: ChecklistItem[];
   evidenceLinks: EvidenceLink[];
   weekStart?: string;

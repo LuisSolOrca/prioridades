@@ -41,13 +41,14 @@ interface Priority {
   weekStart: string;
   weekEnd: string;
   completionPercentage: number;
-  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
+  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   wasEdited?: boolean;
+  isCarriedOver?: boolean;
 }
 
 interface Workflow {
@@ -231,6 +232,12 @@ export default function PrioritiesPage() {
   };
 
   const handleEdit = (priority: Priority) => {
+    // Prevenir edición de prioridades con estado final
+    if (priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO') {
+      alert('No se puede editar una prioridad con estado final (Completado o Reprogramado)');
+      return;
+    }
+
     // Compatibilidad: convertir initiativeId a initiativeIds si existe
     const editFormData = {
       ...priority,
@@ -287,6 +294,13 @@ export default function PrioritiesPage() {
   };
 
   const handleDelete = async (id: string) => {
+    // Buscar la prioridad para verificar su estado
+    const priority = priorities.find(p => p._id === id);
+    if (priority && (priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO')) {
+      alert('No se puede eliminar una prioridad con estado final (Completado o Reprogramado)');
+      return;
+    }
+
     if (!confirm('¿Estás seguro de eliminar esta prioridad?')) return;
 
     try {
@@ -377,7 +391,7 @@ export default function PrioritiesPage() {
     return pWeekStart >= nextWeek.monday && pWeekStart <= nextWeek.friday;
   });
 
-  const activePriorities = currentWeekPriorities.filter(p => p.status !== 'COMPLETADO');
+  const activePriorities = currentWeekPriorities.filter(p => p.status !== 'COMPLETADO' && p.status !== 'REPROGRAMADO');
   const hasMoreThanFive = activePriorities.length > 5;
   const currentWeekTotal = currentWeekPriorities.length;
   const nextWeekTotal = nextWeekPriorities.length;
@@ -387,7 +401,7 @@ export default function PrioritiesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-6">
+      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800">
@@ -505,6 +519,11 @@ export default function PrioritiesPage() {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
                                 <h3 className="text-lg font-semibold text-gray-800">{priority.title}</h3>
+                                {priority.isCarriedOver && (
+                                  <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded flex items-center gap-1">
+                                    🔄 Traído de semana anterior
+                                  </span>
+                                )}
                                 {priority.wasEdited && (
                                   <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
                                     ✏️ Editado
@@ -570,10 +589,14 @@ export default function PrioritiesPage() {
                                   </span>
                                 )}
                               </button>
-                              {priority.status === 'COMPLETADO' ? (
+                              {priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO' ? (
                                 <div className="flex items-center space-x-2">
-                                  <span className="text-green-600 text-xs font-medium bg-green-50 px-3 py-2 rounded-lg">
-                                    ✓ Completado (Solo lectura)
+                                  <span className={`text-xs font-medium px-3 py-2 rounded-lg ${
+                                    priority.status === 'COMPLETADO'
+                                      ? 'text-green-600 bg-green-50'
+                                      : 'text-gray-600 bg-gray-50'
+                                  }`}>
+                                    {priority.status === 'COMPLETADO' ? '✓ Completado' : '🔄 Reprogramado'} (Solo lectura)
                                   </span>
                                 </div>
                               ) : (
@@ -655,6 +678,11 @@ export default function PrioritiesPage() {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
                                 <h3 className="text-lg font-semibold text-gray-800">{priority.title}</h3>
+                                {priority.isCarriedOver && (
+                                  <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded flex items-center gap-1">
+                                    🔄 Traído de semana anterior
+                                  </span>
+                                )}
                                 {priority.wasEdited && (
                                   <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
                                     ✏️ Editado
@@ -720,20 +748,32 @@ export default function PrioritiesPage() {
                                   </span>
                                 )}
                               </button>
-                              <button
-                                onClick={() => handleEdit(priority)}
-                                className="text-blue-600 hover:bg-blue-50 w-10 h-10 rounded-lg transition"
-                                title="Editar prioridad"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => handleDelete(priority._id!)}
-                                className="text-red-600 hover:bg-red-50 w-10 h-10 rounded-lg transition"
-                                title="Eliminar prioridad"
-                              >
-                                🗑️
-                              </button>
+                              {priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO' ? (
+                                <span className={`text-xs font-medium px-3 py-2 rounded-lg ${
+                                  priority.status === 'COMPLETADO'
+                                    ? 'text-green-600 bg-green-50'
+                                    : 'text-gray-600 bg-gray-50'
+                                }`}>
+                                  {priority.status === 'COMPLETADO' ? '✓ Completado' : '🔄 Reprogramado'} (Solo lectura)
+                                </span>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleEdit(priority)}
+                                    className="text-blue-600 hover:bg-blue-50 w-10 h-10 rounded-lg transition"
+                                    title="Editar prioridad"
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(priority._id!)}
+                                    className="text-red-600 hover:bg-red-50 w-10 h-10 rounded-lg transition"
+                                    title="Eliminar prioridad"
+                                  >
+                                    🗑️
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
 

@@ -50,13 +50,14 @@ interface Priority {
   weekStart: string;
   weekEnd: string;
   completionPercentage: number;
-  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
+  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   wasEdited: boolean;
+  isCarriedOver?: boolean;
 }
 
 interface StatCardProps {
@@ -173,6 +174,11 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <div className="font-medium text-gray-800 text-sm">{priority.title}</div>
+                          {priority.isCarriedOver && (
+                            <span className="bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                              🔄
+                            </span>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -477,7 +483,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-6">
+      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6 fade-in">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800">

@@ -32,7 +32,7 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="pt-16 main-content container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-6">
           {/* Header */}
           <div className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 rounded-xl shadow-lg p-8 text-white">

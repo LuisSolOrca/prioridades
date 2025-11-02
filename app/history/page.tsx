@@ -30,10 +30,11 @@ interface Priority {
   weekStart: string;
   weekEnd: string;
   completionPercentage: number;
-  status: string;
+  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
+  isCarriedOver?: boolean;
 }
 
 export default function HistoryPage() {
@@ -150,6 +151,12 @@ export default function HistoryPage() {
   };
 
   const handleEdit = (priority: Priority) => {
+    // Prevenir edición de prioridades con estado final
+    if (priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO') {
+      alert('No se puede editar una prioridad con estado final (Completado o Reprogramado)');
+      return;
+    }
+
     // Compatibilidad: convertir initiativeId a initiativeIds si existe
     const editFormData = {
       ...priority,
@@ -218,7 +225,7 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-6">
+      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800">
@@ -351,7 +358,7 @@ export default function HistoryPage() {
                 weekGroups.map(week => {
                   const weekStats = {
                     total: week.priorities.length,
-                    completed: week.priorities.filter(p => p.status === 'COMPLETADO').length,
+                    completed: week.priorities.filter(p => p.status === 'COMPLETADO' || p.status === 'REPROGRAMADO').length,
                     avgCompletion: week.priorities.reduce((sum, p) => sum + p.completionPercentage, 0) / week.priorities.length
                   };
 
@@ -531,6 +538,7 @@ export default function HistoryPage() {
                       <option value="EN_RIESGO">En Riesgo</option>
                       <option value="BLOQUEADO">Bloqueado</option>
                       <option value="COMPLETADO">Completado</option>
+                      <option value="REPROGRAMADO">Reprogramado</option>
                     </select>
                   </div>
 

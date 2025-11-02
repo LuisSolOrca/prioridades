@@ -9,7 +9,8 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     'EN_TIEMPO': { label: 'En Tiempo', color: 'bg-green-500' },
     'EN_RIESGO': { label: 'En Riesgo', color: 'bg-yellow-500' },
     'BLOQUEADO': { label: 'Bloqueado', color: 'bg-red-500' },
-    'COMPLETADO': { label: 'Completado', color: 'bg-blue-500' }
+    'COMPLETADO': { label: 'Completado', color: 'bg-blue-500' },
+    'REPROGRAMADO': { label: 'Reprogramado', color: 'bg-gray-500' }
   };
 
   const { label, color } = config[status] || config['EN_TIEMPO'];

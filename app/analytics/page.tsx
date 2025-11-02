@@ -26,7 +26,7 @@ interface Priority {
   _id: string;
   title: string;
   description?: string;
-  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
+  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   completionPercentage: number;
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
@@ -156,7 +156,7 @@ export default function AnalyticsPage() {
 
   const userStats = users.map(user => {
     const userPriorities = priorities.filter(p => p.userId === user._id);
-    const completed = userPriorities.filter(p => p.status === 'COMPLETADO').length;
+    const completed = userPriorities.filter(p => p.status === 'COMPLETADO' || p.status === 'REPROGRAMADO').length;
     const avgCompletion = userPriorities.length > 0
       ? userPriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userPriorities.length
       : 0;
@@ -221,7 +221,7 @@ export default function AnalyticsPage() {
         return priorityInitiativeIds.includes(initiative._id);
       });
 
-      const completed = userInitiativePriorities.filter(p => p.status === 'COMPLETADO').length;
+      const completed = userInitiativePriorities.filter(p => p.status === 'COMPLETADO' || p.status === 'REPROGRAMADO').length;
       const avgCompletion = userInitiativePriorities.length > 0
         ? userInitiativePriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userInitiativePriorities.length
         : 0;
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
         const priorityInitiativeIds = p.initiativeIds || (p.initiativeId ? [p.initiativeId] : []);
         return priorityInitiativeIds.includes(initiativeId);
       });
-      const completed = userInitiativePriorities.filter(p => p.status === 'COMPLETADO').length;
+      const completed = userInitiativePriorities.filter(p => p.status === 'COMPLETADO' || p.status === 'REPROGRAMADO').length;
       const avgCompletion = userInitiativePriorities.length > 0
         ? userInitiativePriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userInitiativePriorities.length
         : 0;
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-6">
+      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <h1 className="text-3xl font-bold text-gray-800">
             📊 Analítica y Métricas
