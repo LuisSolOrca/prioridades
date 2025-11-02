@@ -61,7 +61,6 @@ export interface IWorkflow extends Document {
 
   // Configuración adicional
   executeOnce?: boolean;         // Ejecutar solo una vez por prioridad
-  priority: number;              // Orden de ejecución (menor = primero)
 
   // Estadísticas
   executionCount: number;        // Veces que se ha ejecutado
@@ -171,11 +170,6 @@ const WorkflowSchema = new Schema<IWorkflow>({
     type: Boolean,
     default: false
   },
-  priority: {
-    type: Number,
-    default: 100,
-    min: 0
-  },
   executionCount: {
     type: Number,
     default: 0
@@ -192,7 +186,6 @@ const WorkflowSchema = new Schema<IWorkflow>({
 
 // Índices para optimizar búsquedas
 WorkflowSchema.index({ isActive: 1, triggerType: 1 });
-WorkflowSchema.index({ priority: 1 });
 
 const Workflow = mongoose.models.Workflow || mongoose.model<IWorkflow>('Workflow', WorkflowSchema);
 

@@ -102,12 +102,12 @@ export default function Navbar() {
                 onClick={() => router.push('/reports')}
               />
               <NavButton
-                label="🏆 Leaderboard"
+                label="Leaderboard"
                 active={pathname === '/leaderboard'}
                 onClick={() => router.push('/leaderboard')}
               />
               <NavButton
-                label="Workflows"
+                label="Automatizaciones"
                 active={pathname?.startsWith('/workflows') || false}
                 onClick={() => router.push('/workflows')}
               />
@@ -201,13 +201,13 @@ export default function Navbar() {
                 mobile
               />
               <NavButton
-                label="🏆 Leaderboard"
+                label="Leaderboard"
                 active={pathname === '/leaderboard'}
                 onClick={() => handleNavigation('/leaderboard')}
                 mobile
               />
               <NavButton
-                label="Workflows"
+                label="Automatizaciones"
                 active={pathname?.startsWith('/workflows') || false}
                 onClick={() => handleNavigation('/workflows')}
                 mobile

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     const workflows = await Workflow.find(query)
       .populate('createdBy', 'name email')
-      .sort({ priority: 1, createdAt: -1 });
+      .sort({ createdAt: -1 });
 
     return NextResponse.json(workflows);
 
@@ -76,7 +76,6 @@ export async function POST(request: NextRequest) {
       conditions: body.conditions || [],
       actions: body.actions,
       executeOnce: body.executeOnce || false,
-      priority: body.priority || 100,
       createdBy: session.user.id
     });
 

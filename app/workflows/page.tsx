@@ -15,7 +15,6 @@ interface Workflow {
   conditions: any[];
   actions: any[];
   executeOnce: boolean;
-  priority: number;
   executionCount: number;
   lastExecuted?: string;
   createdBy: {
@@ -146,9 +145,9 @@ export default function WorkflowsPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mis Workflows Automatizados</h1>
+              <h1 className="text-3xl font-bold text-gray-900">⚡ Mis Automatizaciones</h1>
               <p className="mt-2 text-gray-600">
-                Configura reglas automatizadas para gestionar tus prioridades
+                Reglas automáticas que te ayudan a gestionar tus prioridades
               </p>
             </div>
             <button
@@ -156,7 +155,7 @@ export default function WorkflowsPage() {
               className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus size={20} />
-              <span>Nuevo Workflow</span>
+              <span>Nueva Automatización</span>
             </button>
           </div>
         </div>
@@ -171,12 +170,12 @@ export default function WorkflowsPage() {
         {/* Lista de workflows */}
         {workflows.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600 mb-4">No hay workflows configurados</p>
+            <p className="text-gray-600 mb-4">No hay automatizaciones configuradas</p>
             <button
               onClick={() => router.push('/workflows/new')}
               className="text-blue-600 hover:underline"
             >
-              Crear tu primer workflow →
+              Crear tu primera automatización →
             </button>
           </div>
         ) : (
@@ -205,7 +204,6 @@ export default function WorkflowsPage() {
                       <p className="text-gray-600 mb-2">{workflow.description}</p>
                     )}
                     <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span>Prioridad: {workflow.priority}</span>
                       <span>Ejecutado: {workflow.executionCount} veces</span>
                       {workflow.lastExecuted && (
                         <span>

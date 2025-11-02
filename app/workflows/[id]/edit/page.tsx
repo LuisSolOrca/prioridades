@@ -1,51 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter, useParams } from 'next/navigation';
+import { Save, X, Plus, Trash2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-
-type TriggerType =
-  | 'priority_status_change'
-  | 'priority_created'
-  | 'priority_overdue'
-  | 'completion_low';
-
-type ConditionType =
-  | 'status_equals'
-  | 'status_for_days'
-  | 'completion_less_than'
-  | 'completion_greater_than'
-  | 'day_of_week'
-  | 'days_until_deadline'
-  | 'user_equals'
-  | 'initiative_equals'
-  | 'title_contains'
-  | 'description_contains';
-
-type ActionType =
-  | 'send_notification'
-  | 'send_email'
-  | 'change_status'
-  | 'assign_to_user'
-  | 'add_comment';
-
-type PriorityStatus = 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
-
-interface Condition {
-  type: ConditionType;
-  value?: any;
-  days?: number;
-}
-
-interface Action {
-  type: ActionType;
-  message?: string;
-  emailSubject?: string;
-  targetUserId?: string;
-  targetRole?: 'OWNER' | 'ADMIN' | 'USER';
-  newStatus?: PriorityStatus;
-}
 
 interface User {
   _id: string;
@@ -59,77 +18,83 @@ interface Initiative {
 }
 
 export default function EditWorkflowPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
-  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [triggerType, setTriggerType] = useState<TriggerType>('priority_status_change');
-  const [conditions, setConditions] = useState<Condition[]>([]);
-  const [actions, setActions] = useState<Action[]>([]);
-  const [priority, setPriority] = useState(1);
-  const [executeOnce, setExecuteOnce] = useState(false);
-  const [isActive, setIsActive] = useState(true);
-
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+
+  // Form state
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [triggerType, setTriggerType] = useState('priority_status_change');
+  const [executeOnce, setExecuteOnce] = useState(false);
+  const [conditions, setConditions] = useState<any[]>([]);
+  const [actions, setActions] = useState<any[]>([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
-  }, [status, router]);
+  }, [session, status, router]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Cargar workflow
-        const workflowRes = await fetch(`/api/workflows/${params.id}`);
-        if (!workflowRes.ok) {
-          throw new Error('Error cargando workflow');
-        }
-        const workflow = await workflowRes.json();
-
-        setName(workflow.name);
-        setDescription(workflow.description || '');
-        setTriggerType(workflow.triggerType);
-        setConditions(workflow.conditions || []);
-        setActions(workflow.actions || []);
-        setPriority(workflow.priority || 1);
-        setExecuteOnce(workflow.executeOnce || false);
-        setIsActive(workflow.isActive !== undefined ? workflow.isActive : true);
-
-        // Cargar usuarios e iniciativas
-        const [usersRes, initiativesRes] = await Promise.all([
-          fetch('/api/users'),
-          fetch('/api/initiatives')
-        ]);
-
-        if (usersRes.ok) {
-          const usersData = await usersRes.json();
-          setUsers(usersData);
-        }
-
-        if (initiativesRes.ok) {
-          const initiativesData = await initiativesRes.json();
-          setInitiatives(initiativesData);
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error cargando datos del workflow');
-        router.push('/workflows');
-      }
-    };
-
-    if (params.id) {
-      fetchData();
+    if (session?.user && params.id) {
+      loadWorkflow();
+      loadUsers();
+      loadInitiatives();
     }
-  }, [params.id, router]);
+  }, [session, params.id]);
+
+  const loadWorkflow = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/workflows/${params.id}`);
+      if (!res.ok) throw new Error('Error cargando workflow');
+
+      const workflow = await res.json();
+
+      setName(workflow.name);
+      setDescription(workflow.description || '');
+      setIsActive(workflow.isActive !== undefined ? workflow.isActive : true);
+      setTriggerType(workflow.triggerType);
+      setExecuteOnce(workflow.executeOnce || false);
+      setConditions(workflow.conditions || []);
+      setActions(workflow.actions || []);
+    } catch (err: any) {
+      alert(err.message);
+      router.push('/workflows');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error('Error cargando usuarios:', err);
+    }
+  };
+
+  const loadInitiatives = async () => {
+    try {
+      const res = await fetch('/api/initiatives');
+      if (res.ok) {
+        const data = await res.json();
+        setInitiatives(data);
+      }
+    } catch (err) {
+      console.error('Error cargando iniciativas:', err);
+    }
+  };
 
   const addCondition = () => {
     setConditions([...conditions, { type: 'status_equals', value: 'EN_RIESGO' }]);
@@ -139,21 +104,21 @@ export default function EditWorkflowPage() {
     setConditions(conditions.filter((_, i) => i !== index));
   };
 
-  const updateCondition = (index: number, field: keyof Condition, value: any) => {
+  const updateCondition = (index: number, field: string, value: any) => {
     const updated = [...conditions];
     updated[index] = { ...updated[index], [field]: value };
     setConditions(updated);
   };
 
   const addAction = () => {
-    setActions([...actions, { type: 'send_notification', message: '', targetRole: 'OWNER' }]);
+    setActions([...actions, { type: 'send_notification', targetRole: 'OWNER', message: '' }]);
   };
 
   const removeAction = (index: number) => {
     setActions(actions.filter((_, i) => i !== index));
   };
 
-  const updateAction = (index: number, field: keyof Action, value: any) => {
+  const updateAction = (index: number, field: string, value: any) => {
     const updated = [...actions];
     updated[index] = { ...updated[index], [field]: value };
     setActions(updated);
@@ -161,6 +126,17 @@ export default function EditWorkflowPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!name.trim()) {
+      alert('Por favor ingresa un nombre para la automatización');
+      return;
+    }
+
+    if (actions.length === 0) {
+      alert('Debes agregar al menos una acción a realizar');
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -170,534 +146,562 @@ export default function EditWorkflowPage() {
         body: JSON.stringify({
           name,
           description,
+          isActive,
           triggerType,
-          conditions,
-          actions,
-          priority,
           executeOnce,
-          isActive
+          conditions,
+          actions
         })
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Error actualizando workflow');
+        const data = await res.json();
+        throw new Error(data.error || 'Error actualizando automatización');
       }
 
       router.push('/workflows');
-    } catch (error: any) {
-      alert(error.message);
+    } catch (err: any) {
+      alert(err.message);
       setSaving(false);
     }
   };
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto py-8 px-4">
-          <p>Cargando...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  const TRIGGER_INFO: Record<string, { title: string; description: string; emoji: string }> = {
+    priority_status_change: {
+      emoji: '📊',
+      title: 'Cuando una prioridad cambia de estado',
+      description: 'Se ejecuta cuando una prioridad pasa de EN_TIEMPO a EN_RIESGO, de BLOQUEADO a EN_TIEMPO, etc.'
+    },
+    priority_created: {
+      emoji: '✨',
+      title: 'Cuando se crea una nueva prioridad',
+      description: 'Se ejecuta automáticamente cada vez que tú o alguien crea una nueva prioridad'
+    },
+    priority_overdue: {
+      emoji: '⏰',
+      title: 'Cuando una prioridad está atrasada',
+      description: 'Se ejecuta cuando una prioridad no se completó antes del fin de semana'
+    },
+    completion_low: {
+      emoji: '⚠️',
+      title: 'Cuando el avance es bajo',
+      description: 'Se ejecuta cuando el porcentaje de completado baja de 50%'
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Editar Workflow</h1>
-          <p className="text-gray-600 mt-2">Modifica la configuración del workflow automatizado</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
-          {/* Información básica */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del Workflow *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              placeholder="Ej: Notificar prioridades en riesgo"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descripción
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              placeholder="Describe qué hace este workflow..."
-            />
-          </div>
-
-          {/* Disparador */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Disparador *
-            </label>
-            <select
-              value={triggerType}
-              onChange={(e) => setTriggerType(e.target.value as TriggerType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="priority_status_change">Cambio de estado de prioridad</option>
-              <option value="priority_created">Prioridad creada</option>
-              <option value="priority_overdue">Prioridad vencida</option>
-              <option value="completion_low">Completado bajo</option>
-            </select>
-          </div>
-
-          {/* Condiciones */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Condiciones (todas deben cumplirse)
-              </label>
-              <button
-                type="button"
-                onClick={addCondition}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                + Agregar condición
-              </button>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">✏️ Editar Automatización</h1>
+              <p className="text-gray-600 mt-1">Modifica la configuración de tu regla automática</p>
             </div>
-
-            <div className="space-y-3">
-              {conditions.map((condition, index) => (
-                <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded">
-                  <div className="flex-1 space-y-2">
-                    <select
-                      value={condition.type}
-                      onChange={(e) => updateCondition(index, 'type', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="status_equals">Estado igual a</option>
-                      <option value="status_for_days">Estado por N días</option>
-                      <option value="completion_less_than">% completado menor que</option>
-                      <option value="completion_greater_than">% completado mayor que</option>
-                      <option value="day_of_week">Día de la semana</option>
-                      <option value="days_until_deadline">Días hasta deadline</option>
-                      <option value="user_equals">Usuario igual a</option>
-                      <option value="initiative_equals">Iniciativa igual a</option>
-                      <option value="title_contains">Título contiene</option>
-                      <option value="description_contains">Descripción contiene</option>
-                    </select>
-
-                    {/* Campo valor según tipo de condición */}
-                    {condition.type === 'status_equals' && (
-                      <select
-                        value={condition.value || 'EN_RIESGO'}
-                        onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value="EN_TIEMPO">En Tiempo</option>
-                        <option value="EN_RIESGO">En Riesgo</option>
-                        <option value="BLOQUEADO">Bloqueado</option>
-                        <option value="COMPLETADO">Completado</option>
-                      </select>
-                    )}
-
-                    {condition.type === 'status_for_days' && (
-                      <div className="flex gap-2">
-                        <select
-                          value={condition.value || 'EN_RIESGO'}
-                          onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        >
-                          <option value="EN_TIEMPO">En Tiempo</option>
-                          <option value="EN_RIESGO">En Riesgo</option>
-                          <option value="BLOQUEADO">Bloqueado</option>
-                          <option value="COMPLETADO">Completado</option>
-                        </select>
-                        <input
-                          type="number"
-                          value={condition.days || 1}
-                          onChange={(e) => updateCondition(index, 'days', parseInt(e.target.value))}
-                          min="1"
-                          placeholder="Días"
-                          className="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        />
-                      </div>
-                    )}
-
-                    {(condition.type === 'completion_less_than' || condition.type === 'completion_greater_than') && (
-                      <input
-                        type="number"
-                        value={condition.value || 50}
-                        onChange={(e) => updateCondition(index, 'value', parseInt(e.target.value))}
-                        min="0"
-                        max="100"
-                        placeholder="Porcentaje"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    )}
-
-                    {condition.type === 'day_of_week' && (
-                      <select
-                        value={condition.value || 1}
-                        onChange={(e) => updateCondition(index, 'value', parseInt(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value={1}>Lunes</option>
-                        <option value={2}>Martes</option>
-                        <option value={3}>Miércoles</option>
-                        <option value={4}>Jueves</option>
-                        <option value={5}>Viernes</option>
-                        <option value={6}>Sábado</option>
-                        <option value={0}>Domingo</option>
-                      </select>
-                    )}
-
-                    {condition.type === 'days_until_deadline' && (
-                      <input
-                        type="number"
-                        value={condition.value || 1}
-                        onChange={(e) => updateCondition(index, 'value', parseInt(e.target.value))}
-                        min="0"
-                        placeholder="Días"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    )}
-
-                    {condition.type === 'user_equals' && users.length > 0 && (
-                      <select
-                        value={condition.value || ''}
-                        onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value="">Seleccionar usuario</option>
-                        {users.map(user => (
-                          <option key={user._id} value={user._id}>
-                            {user.name} ({user.email})
-                          </option>
-                        ))}
-                      </select>
-                    )}
-
-                    {condition.type === 'initiative_equals' && initiatives.length > 0 && (
-                      <select
-                        value={condition.value || ''}
-                        onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value="">Seleccionar iniciativa</option>
-                        {initiatives.map(initiative => (
-                          <option key={initiative._id} value={initiative._id}>
-                            {initiative.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-
-                    {(condition.type === 'title_contains' || condition.type === 'description_contains') && (
-                      <input
-                        type="text"
-                        value={condition.value || ''}
-                        onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                        placeholder="Texto a buscar..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      />
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removeCondition(index)}
-                    className="text-red-600 hover:text-red-700 text-sm"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-
-              {conditions.length === 0 && (
-                <p className="text-sm text-gray-500 italic">
-                  Sin condiciones - el workflow se ejecutará siempre que ocurra el disparador
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Acciones */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Acciones a ejecutar *
-              </label>
-              <button
-                type="button"
-                onClick={addAction}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                + Agregar acción
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {actions.map((action, index) => (
-                <div key={index} className="p-3 bg-blue-50 rounded space-y-2">
-                  <div className="flex gap-2 items-start">
-                    <select
-                      value={action.type}
-                      onChange={(e) => updateAction(index, 'type', e.target.value as ActionType)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="send_notification">Enviar notificación</option>
-                      <option value="send_email">Enviar email</option>
-                      <option value="change_status">Cambiar estado</option>
-                      <option value="assign_to_user">Reasignar usuario</option>
-                      <option value="add_comment">Agregar comentario</option>
-                    </select>
-
-                    <button
-                      type="button"
-                      onClick={() => removeAction(index)}
-                      className="text-red-600 hover:text-red-700 text-sm"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Configuración específica por tipo de acción */}
-                  {action.type === 'send_notification' && (
-                    <>
-                      <select
-                        value={action.targetRole || 'OWNER'}
-                        onChange={(e) => {
-                          const role = e.target.value;
-                          updateAction(index, 'targetRole', role);
-                          if (role !== 'USER') {
-                            updateAction(index, 'targetUserId', undefined);
-                          }
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value="OWNER">Dueño de la prioridad</option>
-                        <option value="ADMIN">Todos los administradores</option>
-                        <option value="USER">Usuario específico</option>
-                      </select>
-
-                      {action.targetRole === 'USER' && users.length > 0 && (
-                        <select
-                          value={action.targetUserId || ''}
-                          onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        >
-                          <option value="">Seleccionar usuario</option>
-                          {users.map(user => (
-                            <option key={user._id} value={user._id}>
-                              {user.name} ({user.email})
-                            </option>
-                          ))}
-                        </select>
-                      )}
-
-                      <div>
-                        <input
-                          type="text"
-                          value={action.message || ''}
-                          onChange={(e) => updateAction(index, 'message', e.target.value)}
-                          placeholder="Ej: La prioridad {{title}} está {{status}}"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Usa placeholders: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}, {'{{initiative}}'}
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {action.type === 'send_email' && (
-                    <>
-                      <select
-                        value={action.targetRole || 'OWNER'}
-                        onChange={(e) => {
-                          const role = e.target.value;
-                          updateAction(index, 'targetRole', role);
-                          if (role !== 'USER') {
-                            updateAction(index, 'targetUserId', undefined);
-                          }
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value="OWNER">Dueño de la prioridad</option>
-                        <option value="ADMIN">Todos los administradores</option>
-                        <option value="USER">Usuario específico</option>
-                      </select>
-
-                      {action.targetRole === 'USER' && users.length > 0 && (
-                        <select
-                          value={action.targetUserId || ''}
-                          onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        >
-                          <option value="">Seleccionar usuario</option>
-                          {users.map(user => (
-                            <option key={user._id} value={user._id}>
-                              {user.name} ({user.email})
-                            </option>
-                          ))}
-                        </select>
-                      )}
-
-                      <input
-                        type="text"
-                        value={action.emailSubject || ''}
-                        onChange={(e) => updateAction(index, 'emailSubject', e.target.value)}
-                        placeholder="Asunto del email"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      />
-
-                      <div>
-                        <textarea
-                          value={action.message || ''}
-                          onChange={(e) => updateAction(index, 'message', e.target.value)}
-                          placeholder="Mensaje del email"
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Usa placeholders: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}, {'{{initiative}}'}
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {action.type === 'change_status' && (
-                    <select
-                      value={action.newStatus || 'EN_RIESGO'}
-                      onChange={(e) => updateAction(index, 'newStatus', e.target.value as PriorityStatus)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="EN_TIEMPO">En Tiempo</option>
-                      <option value="EN_RIESGO">En Riesgo</option>
-                      <option value="BLOQUEADO">Bloqueado</option>
-                      <option value="COMPLETADO">Completado</option>
-                    </select>
-                  )}
-
-                  {action.type === 'assign_to_user' && users.length > 0 && (
-                    <select
-                      value={action.targetUserId || ''}
-                      onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="">Seleccionar usuario</option>
-                      {users.map(user => (
-                        <option key={user._id} value={user._id}>
-                          {user.name} ({user.email})
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
-                  {action.type === 'add_comment' && (
-                    <div>
-                      <input
-                        type="text"
-                        value={action.message || ''}
-                        onChange={(e) => updateAction(index, 'message', e.target.value)}
-                        placeholder="Ej: Comentario automático: {{title}} está {{status}}"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Usa placeholders: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}, {'{{initiative}}'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {actions.length === 0 && (
-                <p className="text-sm text-red-500">
-                  Debes agregar al menos una acción
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Configuración avanzada */}
-          <div className="border-t pt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Configuración Avanzada</h3>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prioridad de ejecución
-                </label>
-                <input
-                  type="number"
-                  value={priority}
-                  onChange={(e) => setPriority(parseInt(e.target.value))}
-                  min="1"
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-md"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Los workflows con menor prioridad se ejecutan primero
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="executeOnce"
-                  checked={executeOnce}
-                  onChange={(e) => setExecuteOnce(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="executeOnce" className="text-sm text-gray-700">
-                  Ejecutar solo una vez por prioridad
-                </label>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="isActive" className="text-sm text-gray-700">
-                  Workflow activo
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Botones */}
-          <div className="flex gap-3 pt-4">
             <button
-              type="submit"
-              disabled={saving || actions.length === 0}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {saving ? 'Guardando...' : 'Guardar Cambios'}
-            </button>
-            <button
-              type="button"
               onClick={() => router.push('/workflows')}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              className="text-gray-600 hover:text-gray-800"
+              title="Cerrar"
             >
-              Cancelar
+              <X size={24} />
             </button>
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Paso 1: Información básica */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">📝 Paso 1: ¿Cómo se llama?</h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre descriptivo *
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ejemplo: Notificarme si una prioridad lleva 2 días bloqueada"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Descripción (opcional)
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={2}
+                    placeholder="Explica para qué sirve esta automatización..."
+                  />
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Automatización activa</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={executeOnce}
+                      onChange={(e) => setExecuteOnce(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Ejecutar solo una vez por prioridad</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Paso 2: Cuándo ejecutar */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">⚡ Paso 2: ¿Cuándo debe ejecutarse?</h2>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {Object.entries(TRIGGER_INFO).map(([key, info]) => (
+                  <label
+                    key={key}
+                    className={`relative flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      triggerType === key
+                        ? 'border-purple-600 bg-purple-100'
+                        : 'border-gray-300 hover:border-purple-400 bg-white'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="trigger"
+                      value={key}
+                      checked={triggerType === key}
+                      onChange={(e) => setTriggerType(e.target.value)}
+                      className="mt-1 mr-3 text-purple-600 focus:ring-purple-500"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-2xl">{info.emoji}</span>
+                        <span className="font-medium text-gray-900">{info.title}</span>
+                      </div>
+                      <p className="text-sm text-gray-600">{info.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Paso 3: Condiciones (opcional) */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">🎯 Paso 3: ¿Hay alguna condición? (opcional)</h2>
+                  <p className="text-sm text-gray-600">
+                    Si agregas condiciones, la automatización solo se ejecutará cuando TODAS se cumplan.
+                    Si no agregas ninguna, siempre se ejecutará.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addCondition}
+                  className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors ml-4"
+                >
+                  <Plus size={16} />
+                  <span>Agregar condición</span>
+                </button>
+              </div>
+
+              {conditions.length === 0 ? (
+                <div className="text-center py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                  <p className="text-gray-500">Sin condiciones - la automatización siempre se ejecutará</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {conditions.map((condition, index) => (
+                    <div key={index} className="bg-white p-4 rounded-lg border border-yellow-300 shadow-sm">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-1 space-y-3">
+                          <select
+                            value={condition.type}
+                            onChange={(e) => updateCondition(index, 'type', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                          >
+                            <option value="status_equals">Si el estado es...</option>
+                            <option value="status_for_days">Si lleva varios días en un estado...</option>
+                            <option value="completion_less_than">Si el % completado es menor que...</option>
+                            <option value="completion_greater_than">Si el % completado es mayor que...</option>
+                            <option value="user_equals">Si la prioridad es de cierto usuario...</option>
+                            <option value="initiative_equals">Si la prioridad es de cierta iniciativa...</option>
+                            <option value="title_contains">Si el título contiene...</option>
+                            <option value="description_contains">Si la descripción contiene...</option>
+                          </select>
+
+                          {/* Campos específicos por tipo de condición */}
+                          {condition.type === 'status_equals' && (
+                            <select
+                              value={condition.value}
+                              onChange={(e) => updateCondition(index, 'value', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                            >
+                              <option value="EN_TIEMPO">EN_TIEMPO</option>
+                              <option value="EN_RIESGO">EN_RIESGO</option>
+                              <option value="BLOQUEADO">BLOQUEADO</option>
+                              <option value="COMPLETADO">COMPLETADO</option>
+                            </select>
+                          )}
+
+                          {condition.type === 'status_for_days' && (
+                            <div className="grid grid-cols-2 gap-3">
+                              <select
+                                value={condition.value}
+                                onChange={(e) => updateCondition(index, 'value', e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                              >
+                                <option value="EN_TIEMPO">EN_TIEMPO</option>
+                                <option value="EN_RIESGO">EN_RIESGO</option>
+                                <option value="BLOQUEADO">BLOQUEADO</option>
+                              </select>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="number"
+                                  value={condition.days || 1}
+                                  onChange={(e) => updateCondition(index, 'days', parseInt(e.target.value))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                  min="1"
+                                />
+                                <span className="text-sm text-gray-600">días</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {(condition.type === 'completion_less_than' || condition.type === 'completion_greater_than') && (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="number"
+                                value={condition.value || 0}
+                                onChange={(e) => updateCondition(index, 'value', parseInt(e.target.value))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                min="0"
+                                max="100"
+                              />
+                              <span className="text-sm text-gray-600">%</span>
+                            </div>
+                          )}
+
+                          {condition.type === 'user_equals' && (
+                            <select
+                              value={condition.value || ''}
+                              onChange={(e) => updateCondition(index, 'value', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                            >
+                              <option value="">Seleccionar usuario...</option>
+                              {users.map(user => (
+                                <option key={user._id} value={user._id}>
+                                  {user.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          {condition.type === 'initiative_equals' && (
+                            <select
+                              value={condition.value || ''}
+                              onChange={(e) => updateCondition(index, 'value', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                            >
+                              <option value="">Seleccionar iniciativa...</option>
+                              {initiatives.map(initiative => (
+                                <option key={initiative._id} value={initiative._id}>
+                                  {initiative.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          {(condition.type === 'title_contains' || condition.type === 'description_contains') && (
+                            <input
+                              type="text"
+                              value={condition.value || ''}
+                              onChange={(e) => updateCondition(index, 'value', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                              placeholder="Texto a buscar..."
+                            />
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeCondition(index)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Eliminar condición"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Paso 4: Acciones */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">🚀 Paso 4: ¿Qué debe hacer? *</h2>
+                  <p className="text-sm text-gray-600">
+                    Agrega al menos una acción. Puedes agregar varias para que se ejecuten todas.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addAction}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-4"
+                >
+                  <Plus size={16} />
+                  <span>Agregar acción</span>
+                </button>
+              </div>
+
+              {actions.length === 0 ? (
+                <div className="text-center py-8 bg-white rounded-lg border-2 border-dashed border-red-300">
+                  <p className="text-red-600 font-medium">⚠️ Debes agregar al menos una acción</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {actions.map((action, index) => (
+                    <div key={index} className="bg-white p-4 rounded-lg border border-green-300 shadow-sm">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-1 space-y-3">
+                          <select
+                            value={action.type}
+                            onChange={(e) => updateAction(index, 'type', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 font-medium"
+                          >
+                            <option value="send_notification">🔔 Enviar notificación</option>
+                            <option value="send_email">📧 Enviar email</option>
+                            <option value="change_status">🔄 Cambiar estado de la prioridad</option>
+                            <option value="assign_to_user">👤 Reasignar a otro usuario</option>
+                            <option value="add_comment">💬 Agregar comentario automático</option>
+                          </select>
+
+                          {/* Campos específicos por tipo de acción */}
+                          {action.type === 'send_notification' && (
+                            <>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">¿A quién?</label>
+                                <select
+                                  value={action.targetRole || 'OWNER'}
+                                  onChange={(e) => {
+                                    updateAction(index, 'targetRole', e.target.value);
+                                    if (e.target.value !== 'USER') {
+                                      updateAction(index, 'targetUserId', undefined);
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                >
+                                  <option value="OWNER">Al dueño de la prioridad</option>
+                                  <option value="ADMIN">A todos los administradores</option>
+                                  <option value="USER">A un usuario específico</option>
+                                </select>
+                              </div>
+
+                              {action.targetRole === 'USER' && (
+                                <select
+                                  value={action.targetUserId || ''}
+                                  onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                >
+                                  <option value="">Seleccionar usuario...</option>
+                                  {users.map(user => (
+                                    <option key={user._id} value={user._id}>
+                                      {user.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Mensaje</label>
+                                <input
+                                  type="text"
+                                  value={action.message || ''}
+                                  onChange={(e) => updateAction(index, 'message', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  placeholder="Tu prioridad {{title}} necesita atención"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
+                                </p>
+                              </div>
+                            </>
+                          )}
+
+                          {action.type === 'send_email' && (
+                            <>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">¿A quién?</label>
+                                <select
+                                  value={action.targetRole || 'OWNER'}
+                                  onChange={(e) => {
+                                    updateAction(index, 'targetRole', e.target.value);
+                                    if (e.target.value !== 'USER') {
+                                      updateAction(index, 'targetUserId', undefined);
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                >
+                                  <option value="OWNER">Al dueño de la prioridad</option>
+                                  <option value="ADMIN">A todos los administradores</option>
+                                  <option value="USER">A un usuario específico</option>
+                                </select>
+                              </div>
+
+                              {action.targetRole === 'USER' && (
+                                <select
+                                  value={action.targetUserId || ''}
+                                  onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                >
+                                  <option value="">Seleccionar usuario...</option>
+                                  {users.map(user => (
+                                    <option key={user._id} value={user._id}>
+                                      {user.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Asunto</label>
+                                <input
+                                  type="text"
+                                  value={action.emailSubject || ''}
+                                  onChange={(e) => updateAction(index, 'emailSubject', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  placeholder="Alerta: Tu prioridad {{title}} necesita atención"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Mensaje</label>
+                                <textarea
+                                  value={action.message || ''}
+                                  onChange={(e) => updateAction(index, 'message', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  rows={2}
+                                  placeholder="La prioridad {{title}} está {{status}}..."
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
+                                </p>
+                              </div>
+                            </>
+                          )}
+
+                          {action.type === 'change_status' && (
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Cambiar a:</label>
+                              <select
+                                value={action.newStatus || 'EN_RIESGO'}
+                                onChange={(e) => updateAction(index, 'newStatus', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                              >
+                                <option value="EN_TIEMPO">EN_TIEMPO</option>
+                                <option value="EN_RIESGO">EN_RIESGO</option>
+                                <option value="BLOQUEADO">BLOQUEADO</option>
+                                <option value="COMPLETADO">COMPLETADO</option>
+                              </select>
+                            </div>
+                          )}
+
+                          {action.type === 'assign_to_user' && (
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Asignar a:</label>
+                              <select
+                                value={action.targetUserId || ''}
+                                onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                              >
+                                <option value="">Seleccionar usuario...</option>
+                                {users.map(user => (
+                                  <option key={user._id} value={user._id}>
+                                    {user.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
+                          {action.type === 'add_comment' && (
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Comentario</label>
+                              <input
+                                type="text"
+                                value={action.message || ''}
+                                onChange={(e) => updateAction(index, 'message', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                placeholder="🤖 Actualización automática: {{completion}}% completado"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeAction(index)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Eliminar acción"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Submit */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => router.push('/workflows')}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={saving || actions.length === 0}
+                className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+              >
+                <Save size={20} />
+                <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
