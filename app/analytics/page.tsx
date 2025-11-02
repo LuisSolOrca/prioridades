@@ -47,6 +47,7 @@ export default function AnalyticsPage() {
   const [expandedUserInTable, setExpandedUserInTable] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [userGamification, setUserGamification] = useState<{ [userId: string]: any }>({});
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -74,6 +75,28 @@ export default function AnalyticsPage() {
       setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
       setAllPriorities(prioritiesData);
+
+      // Cargar datos de gamificación para cada usuario
+      const gamificationData: { [userId: string]: any } = {};
+      for (const user of usersData) {
+        try {
+          const userRes = await fetch(`/api/users/${user._id}`);
+          const userData = await userRes.json();
+          gamificationData[user._id] = userData.gamification || {
+            points: 0,
+            currentMonthPoints: 0,
+            totalPoints: 0
+          };
+        } catch (err) {
+          console.error(`Error loading gamification for user ${user._id}:`, err);
+          gamificationData[user._id] = {
+            points: 0,
+            currentMonthPoints: 0,
+            totalPoints: 0
+          };
+        }
+      }
+      setUserGamification(gamificationData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -322,6 +345,7 @@ export default function AnalyticsPage() {
                     <th className="text-center py-3 px-4">Completadas</th>
                     <th className="text-center py-3 px-4">Tasa Completado</th>
                     <th className="text-center py-3 px-4">% Promedio Avance</th>
+                    <th className="text-center py-3 px-4">🏆 Puntos del Mes</th>
                     <th className="text-center py-3 px-4">Acciones</th>
                   </tr>
                 </thead>
@@ -362,6 +386,14 @@ export default function AnalyticsPage() {
                             </div>
                           </td>
                           <td className="text-center py-3 px-4">
+                            <div className="inline-flex items-center bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg px-3 py-2">
+                              <span className="text-yellow-600 mr-1">🏆</span>
+                              <span className="font-bold text-yellow-700">
+                                {userGamification[stat.user._id]?.currentMonthPoints || 0}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="text-center py-3 px-4">
                             <button
                               onClick={() => toggleUserInTable(stat.user._id)}
                               className="text-blue-600 hover:text-blue-800 transition text-xl"
@@ -373,7 +405,7 @@ export default function AnalyticsPage() {
                         </tr>
                         {isExpanded && initiativeStats.length > 0 && (
                           <tr>
-                            <td colSpan={6} className="bg-gray-50 p-4 border-b">
+                            <td colSpan={7} className="bg-gray-50 p-4 border-b">
                               <h4 className="text-sm font-semibold text-gray-700 mb-3">
                                 📊 Desglose por Iniciativa Estratégica
                               </h4>
