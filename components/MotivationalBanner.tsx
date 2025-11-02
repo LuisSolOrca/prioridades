@@ -23,9 +23,9 @@ const motivationalMessages = [
     bgGradient: 'from-yellow-50 to-amber-50',
     borderColor: 'border-yellow-200',
     messages: [
-      '¡Sigue así! Cada prioridad completada suma 4 puntos',
+      '¡Sigue así! Cada prioridad completada suma +4 puntos',
       '¡Estás en camino a la cima del leaderboard!',
-      'Las prioridades completadas = más puntos para ti',
+      'Completa prioridades y mantén todo bajo control para ganar',
     ]
   },
   {
@@ -34,9 +34,9 @@ const motivationalMessages = [
     bgGradient: 'from-orange-50 to-red-50',
     borderColor: 'border-orange-200',
     messages: [
-      '5 semanas con 100% completado = Badge de Racha 🔥',
+      '5 semanas con 100% completado = Badge "Racha de Fuego" 🔥',
       'Mantén tu racha viva completando todas tus prioridades',
-      'Una racha sólida demuestra tu constancia y dedicación',
+      'Evita riesgos y bloqueos para mantener tu racha perfecta',
     ]
   },
   {
@@ -45,9 +45,9 @@ const motivationalMessages = [
     bgGradient: 'from-purple-50 to-pink-50',
     borderColor: 'border-purple-200',
     messages: [
-      '¡Colecciona badges! Comenta, menciona y registra tareas',
-      'Cada badge es un logro que te distingue',
-      '¿Ya obtuviste tu primer badge? ¡Es muy fácil!',
+      '¡24 badges disponibles! Usa todas las funcionalidades de la plataforma',
+      'Desbloquea badges con IA, exportaciones, Analytics y Kanban',
+      'Cada badge es un logro que demuestra tu dominio de la plataforma',
     ]
   },
   {
@@ -56,9 +56,9 @@ const motivationalMessages = [
     bgGradient: 'from-green-50 to-emerald-50',
     borderColor: 'border-green-200',
     messages: [
-      'Rescata tus prioridades en riesgo para perder menos puntos',
-      'Prioridades en riesgo te cuestan -6 puntos por semana',
-      'Mantén tus prioridades EN_TIEMPO para maximizar puntos',
+      'Reacciona rápido: Rescata en la misma semana = solo -2 puntos',
+      'Prioridades en riesgo/bloqueadas cuestan -6 puntos por semana',
+      'Mantén todo EN_TIEMPO para evitar penalizaciones',
     ]
   },
   {
@@ -67,9 +67,9 @@ const motivationalMessages = [
     bgGradient: 'from-blue-50 to-indigo-50',
     borderColor: 'border-blue-200',
     messages: [
-      '¡El ganador del mes recibe un correo de felicitación!',
-      'Administradores reconocen tu esfuerzo al final del mes',
-      'Compite sanamente y alcanza la cima del leaderboard',
+      '¡El ganador del mes recibe reconocimiento oficial!',
+      'Gana puntos con prioridades completadas y uso de la plataforma',
+      'Compite sanamente y demuestra tu excelencia operativa',
     ]
   },
   {
@@ -78,9 +78,9 @@ const motivationalMessages = [
     bgGradient: 'from-teal-50 to-cyan-50',
     borderColor: 'border-teal-200',
     messages: [
-      'Agrega tareas al checklist para organizarte mejor',
-      'Usa comentarios para colaborar con tu equipo',
-      'Menciona a otros con @ para obtener tu badge',
+      'Usa IA para mejorar textos y obtener análisis organizacionales',
+      'Exporta a PowerPoint, Excel y PDF para ganar badges',
+      'Colabora con comentarios y menciones (@usuario)',
     ]
   }
 ];
@@ -109,15 +109,19 @@ export default function MotivationalBanner({ userStats, compact = false }: Motiv
 
   if (userStats) {
     if (userStats.currentStreak >= 3 && userStats.currentStreak < 5) {
-      personalizedMessage = `¡Racha de ${userStats.currentStreak} semanas! Solo ${5 - userStats.currentStreak} más para tu badge 🔥`;
+      personalizedMessage = `🔥 ¡Racha de ${userStats.currentStreak} semanas! Solo ${5 - userStats.currentStreak} más para "Racha de Fuego"`;
     } else if (userStats.currentStreak >= 5) {
-      personalizedMessage = `¡Increíble! Racha de ${userStats.currentStreak} semanas. ¡Sigue así! 🔥`;
+      personalizedMessage = `🔥 ¡Increíble! Racha de ${userStats.currentStreak} semanas perfectas. ¡Eres imparable!`;
     } else if (userStats.points > 0 && userStats.rank && userStats.rank <= 3) {
-      personalizedMessage = `¡Estás en el TOP ${userStats.rank}! Mantén tu posición en el leaderboard 🏆`;
+      personalizedMessage = `🏆 ¡Estás en el TOP ${userStats.rank}! Sigue completando prioridades y usando la plataforma`;
     } else if (userStats.badges === 0) {
-      personalizedMessage = '¡Obtén tu primer badge! Agrega una tarea, comenta o menciona a alguien';
-    } else if (userStats.badges >= 1 && userStats.badges < 4) {
-      personalizedMessage = `Tienes ${userStats.badges} badge${userStats.badges > 1 ? 's' : ''}. ¡Colecciona los ${4 - userStats.badges} restantes!`;
+      personalizedMessage = '🎯 ¡Comienza tu colección! Completa tu primera prioridad para ganar tu primer badge';
+    } else if (userStats.badges >= 1 && userStats.badges < 10) {
+      personalizedMessage = `⭐ Tienes ${userStats.badges} badge${userStats.badges > 1 ? 's' : ''}. ¡Hay ${24 - userStats.badges} más para descubrir!`;
+    } else if (userStats.badges >= 10 && userStats.badges < 24) {
+      personalizedMessage = `🌟 ¡Excelente! ${userStats.badges} badges desbloqueados. ¡Vas camino a Power User!`;
+    } else if (userStats.badges === 24) {
+      personalizedMessage = `⚡ ¡POWER USER! Has desbloqueado los 24 badges. ¡Eres un maestro de la plataforma!`;
     }
   }
 
