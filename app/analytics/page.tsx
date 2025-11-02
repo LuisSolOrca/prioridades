@@ -14,6 +14,7 @@ interface User {
   _id: string;
   name: string;
   role: string;
+  area?: string;
 }
 
 interface Initiative {
@@ -170,6 +171,42 @@ export default function AnalyticsPage() {
       avgCompletion: avgCompletion.toFixed(1)
     };
   });
+
+  // Calcular estadísticas por área
+  const areaStats = (() => {
+    const areaMap = new Map<string, any>();
+
+    users.forEach(user => {
+      const area = user.area || 'Sin Área Asignada';
+      const userPriorities = priorities.filter(p => p.userId === user._id);
+      const completed = userPriorities.filter(p => p.status === 'COMPLETADO' || p.status === 'REPROGRAMADO').length;
+      const totalCompletion = userPriorities.reduce((sum, p) => sum + p.completionPercentage, 0);
+
+      if (!areaMap.has(area)) {
+        areaMap.set(area, {
+          area,
+          userCount: 0,
+          total: 0,
+          completed: 0,
+          totalCompletion: 0,
+          monthPoints: 0
+        });
+      }
+
+      const areaData = areaMap.get(area);
+      areaData.userCount += 1;
+      areaData.total += userPriorities.length;
+      areaData.completed += completed;
+      areaData.totalCompletion += totalCompletion;
+      areaData.monthPoints += userGamification[user._id]?.currentMonthPoints || 0;
+    });
+
+    return Array.from(areaMap.values()).map(area => ({
+      ...area,
+      completionRate: area.total > 0 ? (area.completed / area.total * 100).toFixed(1) : 0,
+      avgCompletion: area.total > 0 ? (area.totalCompletion / area.total).toFixed(1) : 0
+    })).sort((a, b) => b.total - a.total);
+  })();
 
   const initiativeStats = initiatives.map(initiative => {
     // Filtrar prioridades que incluyen esta iniciativa (compatibilidad con initiativeId e initiativeIds)
@@ -466,6 +503,80 @@ export default function AnalyticsPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Nueva sección: Rendimiento por Área */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">🏢 Rendimiento por Área</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4">Área</th>
+                    <th className="text-center py-3 px-4">Usuarios</th>
+                    <th className="text-center py-3 px-4">Total Prioridades</th>
+                    <th className="text-center py-3 px-4">Completadas</th>
+                    <th className="text-center py-3 px-4">Tasa Completado</th>
+                    <th className="text-center py-3 px-4">% Promedio Avance</th>
+                    <th className="text-center py-3 px-4">🏆 Puntos Totales</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {areaStats.map((stat, index) => (
+                    <tr key={stat.area} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2">
+                            {index + 1}
+                          </div>
+                          <span className="font-semibold text-gray-800">{stat.area}</span>
+                        </div>
+                      </td>
+                      <td className="text-center py-3 px-4">
+                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                          {stat.userCount}
+                        </span>
+                      </td>
+                      <td className="text-center py-3 px-4 font-semibold">{stat.total}</td>
+                      <td className="text-center py-3 px-4">
+                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                          {stat.completed}
+                        </span>
+                      </td>
+                      <td className="text-center py-3 px-4">
+                        <span className="font-bold text-blue-600">{stat.completionRate}%</span>
+                      </td>
+                      <td className="text-center py-3 px-4">
+                        <div className="flex items-center justify-center">
+                          <div className="w-24 bg-gray-200 rounded-full h-3 mr-2">
+                            <div
+                              className="bg-purple-600 h-3 rounded-full"
+                              style={{ width: `${stat.avgCompletion}%` }}
+                            ></div>
+                          </div>
+                          <span className="font-semibold">{stat.avgCompletion}%</span>
+                        </div>
+                      </td>
+                      <td className="text-center py-3 px-4">
+                        <div className="inline-flex items-center bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg px-3 py-2">
+                          <span className="text-yellow-600 mr-1">🏆</span>
+                          <span className="font-bold text-yellow-700">
+                            {stat.monthPoints}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {areaStats.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No hay datos de áreas disponibles
+                </div>
+              )}
             </div>
           </div>
 
