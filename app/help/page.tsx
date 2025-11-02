@@ -1,6 +1,7 @@
 'use client';
 
 import { Printer, BookOpen } from 'lucide-react';
+import Image from 'next/image';
 
 export default function HelpPage() {
   const handlePrint = () => {
@@ -13,7 +14,7 @@ export default function HelpPage() {
       <div className="print:hidden bg-blue-600 text-white p-6 sticky top-0 z-10 shadow-lg">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <BookOpen size={32} />
+            <Image src="/orca-logo.png" alt="Orca Logo" width={40} height={40} className="bg-white rounded-lg p-1" />
             <div>
               <h1 className="text-2xl font-bold">Manual de Usuario</h1>
               <p className="text-blue-100">Sistema de Gestión de Prioridades</p>
@@ -33,6 +34,15 @@ export default function HelpPage() {
       <div className="max-w-5xl mx-auto p-8 print:p-0">
         {/* Portada */}
         <div className="text-center mb-12 print:page-break-after">
+          <div className="mb-8">
+            <Image
+              src="/orca-logo.png"
+              alt="Orca Logo"
+              width={120}
+              height={120}
+              className="mx-auto"
+            />
+          </div>
           <h1 className="text-5xl font-bold text-blue-600 mb-4">Manual de Usuario</h1>
           <h2 className="text-3xl text-gray-700 mb-8">Sistema de Gestión de Prioridades Semanales</h2>
           <div className="text-gray-500 mt-12">
@@ -57,16 +67,21 @@ export default function HelpPage() {
             <div className="flex justify-between pl-4"><span>4.2 Editar prioridad</span><span>7</span></div>
             <div className="flex justify-between pl-4"><span>4.3 Estados de prioridad</span><span>7</span></div>
             <div className="flex justify-between pl-4"><span>4.4 Vista Kanban</span><span>8</span></div>
-            <div className="flex justify-between"><span>5. Analíticas y Reportes</span><span>9</span></div>
-            <div className="flex justify-between"><span>6. Gamificación</span><span>10</span></div>
-            <div className="flex justify-between pl-4"><span>6.1 Sistema de puntos</span><span>10</span></div>
-            <div className="flex justify-between pl-4"><span>6.2 Badges y logros</span><span>11</span></div>
-            <div className="flex justify-between pl-4"><span>6.3 Leaderboard</span><span>12</span></div>
-            <div className="flex justify-between"><span>7. Inteligencia Artificial</span><span>13</span></div>
-            <div className="flex justify-between"><span>8. Automatizaciones (Workflows)</span><span>14</span></div>
-            <div className="flex justify-between"><span>9. Funciones de Líder de Área</span><span>15</span></div>
-            <div className="flex justify-between"><span>10. Funciones de Administrador</span><span>16</span></div>
-            <div className="flex justify-between"><span>11. Preguntas Frecuentes</span><span>17</span></div>
+            <div className="flex justify-between"><span>5. Comentarios y Colaboración</span><span>9</span></div>
+            <div className="flex justify-between"><span>6. Notificaciones</span><span>10</span></div>
+            <div className="flex justify-between"><span>7. Historial</span><span>11</span></div>
+            <div className="flex justify-between"><span>8. Perfil de Usuario</span><span>12</span></div>
+            <div className="flex justify-between"><span>9. Analíticas y Reportes</span><span>13</span></div>
+            <div className="flex justify-between"><span>10. Dashboard por Área</span><span>14</span></div>
+            <div className="flex justify-between"><span>11. Gamificación</span><span>15</span></div>
+            <div className="flex justify-between pl-4"><span>11.1 Sistema de puntos</span><span>15</span></div>
+            <div className="flex justify-between pl-4"><span>11.2 Badges y logros</span><span>16</span></div>
+            <div className="flex justify-between pl-4"><span>11.3 Leaderboard</span><span>17</span></div>
+            <div className="flex justify-between"><span>12. Inteligencia Artificial</span><span>18</span></div>
+            <div className="flex justify-between"><span>13. Automatizaciones (Workflows)</span><span>19</span></div>
+            <div className="flex justify-between"><span>14. Funciones de Líder de Área</span><span>20</span></div>
+            <div className="flex justify-between"><span>15. Funciones de Administrador</span><span>21</span></div>
+            <div className="flex justify-between"><span>16. Preguntas Frecuentes</span><span>22</span></div>
           </div>
         </div>
 
@@ -95,6 +110,7 @@ export default function HelpPage() {
             <li><strong>Semana Laboral:</strong> Período de lunes a viernes en el que se trabajan las prioridades</li>
             <li><strong>Badge:</strong> Logro o reconocimiento otorgado por completar ciertos hitos</li>
             <li><strong>Puntos:</strong> Sistema de gamificación que recompensa el buen desempeño</li>
+            <li><strong>Área:</strong> Departamento o equipo organizacional al que pertenece un usuario</li>
           </ul>
         </section>
 
@@ -238,51 +254,318 @@ export default function HelpPage() {
           </ul>
         </section>
 
-        {/* 5. Analíticas y Reportes */}
+        {/* 5. Comentarios y Colaboración */}
         <section className="mb-12 print:page-break-before">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
-            5. Analíticas y Reportes
+            5. Comentarios y Colaboración
           </h2>
           <p className="text-gray-700 mb-4 leading-relaxed">
-            La sección de Analíticas te proporciona métricas detalladas sobre tu desempeño:
+            Cada prioridad tiene una sección de comentarios donde puedes documentar avances, obstáculos y colaborar con tu equipo.
           </p>
 
-          <h3 className="text-xl font-semibold text-gray-700 mb-3">Métricas disponibles:</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Agregar comentarios:</h3>
+          <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-6">
+            <li>Abre los detalles de una prioridad</li>
+            <li>Desplázate hacia abajo hasta la sección de comentarios</li>
+            <li>Escribe tu comentario en el campo de texto</li>
+            <li>Haz clic en "Publicar Comentario"</li>
+          </ol>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Menciones (@):</h3>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            Puedes mencionar a otros usuarios escribiendo @ seguido del nombre:
+          </p>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Escribe <code className="bg-gray-100 px-2 py-1 rounded">@nombre</code> en tu comentario</li>
+            <li>El usuario mencionado recibirá una notificación</li>
+            <li>Las menciones aparecen resaltadas en azul</li>
+            <li>Útil para solicitar ayuda o compartir información relevante</li>
+          </ul>
+
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-4">
+            <h4 className="font-semibold text-blue-800 mb-2">Buenas prácticas:</h4>
+            <ul className="list-disc list-inside space-y-1 text-gray-700">
+              <li>Documenta cambios importantes en los comentarios</li>
+              <li>Explica por qué una prioridad está bloqueada o en riesgo</li>
+              <li>Menciona a líderes o compañeros cuando necesites su input</li>
+              <li>Usa comentarios para celebrar logros del equipo</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* 6. Notificaciones */}
+        <section className="mb-12 print:page-break-before">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
+            6. Notificaciones
+          </h2>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            El sistema envía notificaciones para mantenerte informado de eventos importantes.
+          </p>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Acceder a notificaciones:</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Haz clic en el ícono de campana 🔔 en el menú superior</li>
+            <li>Se desplegará un panel con tus notificaciones recientes</li>
+            <li>Las notificaciones no leídas aparecen resaltadas</li>
+            <li>Haz clic en una notificación para ver más detalles</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Tipos de notificaciones:</h3>
+          <div className="space-y-3 mb-6">
+            <div className="border-l-4 border-blue-500 pl-4">
+              <h4 className="font-semibold text-gray-800">Cambios de estado</h4>
+              <p className="text-gray-700 text-sm">Te notifican cuando una de tus prioridades cambia de estado</p>
+            </div>
+            <div className="border-l-4 border-purple-500 pl-4">
+              <h4 className="font-semibold text-gray-800">Menciones</h4>
+              <p className="text-gray-700 text-sm">Te alertan cuando alguien te menciona en un comentario</p>
+            </div>
+            <div className="border-l-4 border-yellow-500 pl-4">
+              <h4 className="font-semibold text-gray-800">Hitos de progreso</h4>
+              <p className="text-gray-700 text-sm">Te felicitan al alcanzar 25%, 50%, 75% o 100% de completado</p>
+            </div>
+            <div className="border-l-4 border-green-500 pl-4">
+              <h4 className="font-semibold text-gray-800">Semana completada</h4>
+              <p className="text-gray-700 text-sm">Te notifican cuando completas todas tus prioridades de la semana</p>
+            </div>
+            <div className="border-l-4 border-orange-500 pl-4">
+              <h4 className="font-semibold text-gray-800">Automatizaciones</h4>
+              <p className="text-gray-700 text-sm">Te informan cuando se ejecutan workflows configurados</p>
+            </div>
+            <div className="border-l-4 border-red-500 pl-4">
+              <h4 className="font-semibold text-gray-800">Reasignaciones</h4>
+              <p className="text-gray-700 text-sm">Te avisan cuando un líder de área te asigna o reasigna una prioridad</p>
+            </div>
+          </div>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Gestionar notificaciones:</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Haz clic en "Marcar todas como leídas" para limpiar el contador</li>
+            <li>Elimina notificaciones individuales con el ícono de basura</li>
+            <li>Las notificaciones antiguas se eliminan automáticamente después de 30 días</li>
+          </ul>
+        </section>
+
+        {/* 7. Historial */}
+        <section className="mb-12 print:page-break-before">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
+            7. Historial
+          </h2>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            La página de Historial te permite revisar todas tus prioridades pasadas y analizar tu desempeño histórico.
+          </p>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Acceder al historial:</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Ve a "Historial" desde el menú lateral</li>
+            <li>Verás una lista de todas tus prioridades, organizadas cronológicamente</li>
+            <li>Las prioridades más recientes aparecen primero</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Filtros disponibles:</h3>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="border border-gray-200 rounded-lg p-3">
+              <h5 className="font-semibold text-gray-800 mb-2">Por usuario</h5>
+              <p className="text-sm text-gray-600">Filtra para ver prioridades de un usuario específico (admins)</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-3">
+              <h5 className="font-semibold text-gray-800 mb-2">Por estado</h5>
+              <p className="text-sm text-gray-600">Muestra solo prioridades con cierto estado</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-3">
+              <h5 className="font-semibold text-gray-800 mb-2">Por iniciativa</h5>
+              <p className="text-sm text-gray-600">Filtra por iniciativa estratégica</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-3">
+              <h5 className="font-semibold text-gray-800 mb-2">Por rango de fechas</h5>
+              <p className="text-sm text-gray-600">Selecciona un período específico</p>
+            </div>
+          </div>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Usos del historial:</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Revisar qué trabajaste en semanas pasadas</li>
+            <li>Analizar patrones de completado vs. reprogramado</li>
+            <li>Encontrar información o evidencia de proyectos anteriores</li>
+            <li>Preparar reportes de actividades para revisiones</li>
+            <li>Identificar áreas de mejora en tu gestión del tiempo</li>
+          </ul>
+        </section>
+
+        {/* 8. Perfil de Usuario */}
+        <section className="mb-12 print:page-break-before">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
+            8. Perfil de Usuario
+          </h2>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            En tu perfil puedes ver tu información personal y cambiar tu contraseña.
+          </p>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Acceder a tu perfil:</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Haz clic en el ícono de usuario 👤 en el menú lateral</li>
+            <li>Selecciona "Perfil" del menú desplegable</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Información del perfil:</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li><strong>Nombre:</strong> Tu nombre completo</li>
+            <li><strong>Email:</strong> Tu correo electrónico corporativo</li>
+            <li><strong>Rol:</strong> ADMIN o USER</li>
+            <li><strong>Área:</strong> Tu departamento o equipo (si aplica)</li>
+            <li><strong>Estado:</strong> Activo/Inactivo</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Cambiar contraseña:</h3>
+          <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-6">
+            <li>En tu perfil, busca la sección "Cambiar Contraseña"</li>
+            <li>Ingresa tu contraseña actual</li>
+            <li>Ingresa tu nueva contraseña (mínimo 6 caracteres)</li>
+            <li>Confirma la nueva contraseña</li>
+            <li>Haz clic en "Actualizar Contraseña"</li>
+          </ol>
+
+          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+            <h4 className="font-semibold text-yellow-800 mb-2">Seguridad:</h4>
+            <ul className="list-disc list-inside space-y-1 text-gray-700">
+              <li>Usa una contraseña fuerte y única</li>
+              <li>No compartas tu contraseña con nadie</li>
+              <li>Cambia tu contraseña regularmente</li>
+              <li>Si sospechas que tu cuenta fue comprometida, cambia tu contraseña inmediatamente</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* 9. Analíticas y Reportes */}
+        <section className="mb-12 print:page-break-before">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
+            9. Analíticas y Reportes
+          </h2>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            La sección de Analíticas te proporciona métricas detalladas sobre tu desempeño y el de tu organización.
+          </p>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Métricas personales:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
             <li><strong>Tasa de completado:</strong> Porcentaje de prioridades completadas vs. total</li>
             <li><strong>Distribución por estado:</strong> Gráfico circular de estados de prioridades</li>
             <li><strong>Distribución por iniciativa:</strong> Cuántas prioridades por iniciativa estratégica</li>
             <li><strong>Progreso promedio:</strong> Porcentaje de avance promedio de todas tus prioridades</li>
-            <li><strong>Rendimiento por área:</strong> Comparación de desempeño entre áreas (si aplica)</li>
+            <li><strong>Tendencia semanal:</strong> Evolución de tu desempeño en las últimas semanas</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Métricas organizacionales (Admins):</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
             <li><strong>Top performers:</strong> Usuarios con mejor desempeño del mes</li>
+            <li><strong>Rendimiento por área:</strong> Comparación de desempeño entre áreas</li>
+            <li><strong>Prioridades críticas:</strong> Prioridades bloqueadas o en riesgo que requieren atención</li>
+            <li><strong>Análisis de carga:</strong> Distribución de trabajo entre usuarios</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Análisis con IA:</h3>
           <p className="text-gray-700 mb-4 leading-relaxed">
-            Haz clic en "Obtener Análisis IA" para recibir un análisis inteligente de tu organización:
+            Haz clic en "Obtener Análisis IA" para recibir un análisis inteligente:
           </p>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Identifica patrones y tendencias</li>
-            <li>Detecta áreas de mejora</li>
-            <li>Recomienda acciones específicas</li>
-            <li>Compara con períodos anteriores</li>
+            <li>Identifica patrones y tendencias en tu organización</li>
+            <li>Detecta áreas de mejora y oportunidades</li>
+            <li>Recomienda acciones específicas basadas en datos</li>
+            <li>Compara con períodos anteriores para identificar cambios</li>
+            <li>Analiza correlaciones entre iniciativas y resultados</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Exportación de reportes:</h3>
+          <div className="space-y-3 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-semibold">Excel</div>
+              <p className="text-gray-700 flex-1">Tabla detallada con todas las prioridades, ideal para análisis adicional</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-orange-100 text-orange-800 px-3 py-1 rounded text-sm font-semibold">PowerPoint</div>
+              <p className="text-gray-700 flex-1">Presentación ejecutiva con gráficos e insights de IA automáticos</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-red-100 text-red-800 px-3 py-1 rounded text-sm font-semibold">PDF</div>
+              <p className="text-gray-700 flex-1">Reporte imprimible para archivo o distribución</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 10. Dashboard por Área */}
+        <section className="mb-12 print:page-break-before">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
+            10. Dashboard por Área
+          </h2>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            El Dashboard por Área proporciona una vista consolidada del desempeño de un departamento específico.
+          </p>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Acceso:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li><strong>Excel:</strong> Tabla detallada de todas las prioridades</li>
-            <li><strong>PowerPoint:</strong> Presentación ejecutiva con gráficos y insights de IA</li>
-            <li><strong>PDF:</strong> Reporte imprimible para archivo</li>
+            <li>Líderes de área: Automáticamente ven su área asignada</li>
+            <li>Administradores: Pueden seleccionar cualquier área desde un dropdown</li>
+            <li>Accede desde "Dashboard por Área" en el menú lateral</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Información mostrada:</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h5 className="font-semibold text-gray-800 mb-2">📊 Estadísticas del área</h5>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>Total de prioridades activas</li>
+                <li>Tasa de completado del área</li>
+                <li>Prioridades en riesgo o bloqueadas</li>
+                <li>Progreso promedio</li>
+              </ul>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h5 className="font-semibold text-gray-800 mb-2">👥 Miembros del equipo</h5>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>Lista de todos los miembros</li>
+                <li>Prioridades por persona</li>
+                <li>Estado de cada prioridad</li>
+                <li>Progreso individual</li>
+              </ul>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h5 className="font-semibold text-gray-800 mb-2">🎯 Distribución por iniciativa</h5>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>Gráfico de distribución</li>
+                <li>Prioridades por iniciativa estratégica</li>
+                <li>Alineación con objetivos</li>
+                <li>Balance de carga</li>
+              </ul>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h5 className="font-semibold text-gray-800 mb-2">📈 Tendencias</h5>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>Evolución semanal del área</li>
+                <li>Comparación con periodos anteriores</li>
+                <li>Identificación de patrones</li>
+                <li>Alertas de riesgo</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Exportación por área:</h3>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            Puedes exportar reportes específicos del área:
+          </p>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Los reportes incluyen solo datos del área seleccionada</li>
+            <li>PowerPoint genera insights de IA específicos del área</li>
+            <li>Excel exporta con filtros pre-aplicados</li>
+            <li>Útil para presentaciones a dirección o revisiones de equipo</li>
           </ul>
         </section>
 
-        {/* 6. Gamificación */}
+        {/* 11. Gamificación */}
         <section className="mb-12 print:page-break-before">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
-            6. Gamificación
+            11. Gamificación
           </h2>
 
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4">6.1 Sistema de puntos</h3>
+          <h3 className="text-2xl font-semibold text-gray-700 mb-4">11.1 Sistema de puntos</h3>
           <p className="text-gray-700 mb-4 leading-relaxed">
             El sistema recompensa el buen desempeño y penaliza los riesgos:
           </p>
@@ -314,11 +597,12 @@ export default function HelpPage() {
             <h4 className="font-semibold text-blue-800 mb-2">Nota importante:</h4>
             <p className="text-gray-700">
               Los puntos se calculan mensualmente (últimas 4 semanas). Al inicio de cada mes,
-              comienza un nuevo período de competencia.
+              comienza un nuevo período de competencia. Los puntos se recalculan dinámicamente,
+              así que si una prioridad te es reasignada, los puntos se ajustan automáticamente.
             </p>
           </div>
 
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4">6.2 Badges y logros</h3>
+          <h3 className="text-2xl font-semibold text-gray-700 mb-4">11.2 Badges y logros</h3>
           <p className="text-gray-700 mb-4 leading-relaxed">
             Desbloquea hasta 24 badges diferentes al usar las funcionalidades de la plataforma:
           </p>
@@ -348,13 +632,22 @@ export default function HelpPage() {
               <h5 className="font-semibold text-gray-800 mb-2">🎨 Maestro Kanban</h5>
               <p className="text-sm text-gray-600">Usa Kanban 20 veces</p>
             </div>
+            <div className="border border-gray-200 rounded-lg p-3">
+              <h5 className="font-semibold text-gray-800 mb-2">📈 Reportero</h5>
+              <p className="text-sm text-gray-600">Genera 10 reportes</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-3">
+              <h5 className="font-semibold text-gray-800 mb-2">💎 Power User</h5>
+              <p className="text-sm text-gray-600">Desbloquea los 24 badges</p>
+            </div>
           </div>
 
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-gray-700 leading-relaxed mb-6">
             Consulta tu colección completa de badges en la página del Leaderboard.
+            Los badges son permanentes y se mantienen incluso cuando cambia el mes.
           </p>
 
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4 mt-6">6.3 Leaderboard</h3>
+          <h3 className="text-2xl font-semibold text-gray-700 mb-4">11.3 Leaderboard</h3>
           <p className="text-gray-700 mb-4 leading-relaxed">
             El Leaderboard muestra el ranking mensual de todos los usuarios:
           </p>
@@ -362,15 +655,15 @@ export default function HelpPage() {
             <li>Top 10 usuarios con más puntos del mes actual</li>
             <li>Tu posición y puntos destacados</li>
             <li>Racha actual y más larga de cada usuario</li>
-            <li>Badges desbloqueados</li>
-            <li>Filtros por área (si aplica)</li>
+            <li>Badges desbloqueados por cada usuario</li>
+            <li>El ganador del mes recibe reconocimiento oficial</li>
           </ul>
         </section>
 
-        {/* 7. Inteligencia Artificial */}
+        {/* 12. Inteligencia Artificial */}
         <section className="mb-12 print:page-break-before">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
-            7. Inteligencia Artificial
+            12. Inteligencia Artificial
           </h2>
           <p className="text-gray-700 mb-4 leading-relaxed">
             El sistema incluye capacidades de IA para ayudarte a mejorar tu trabajo:
@@ -389,11 +682,11 @@ export default function HelpPage() {
             Desde la página de Analytics, solicita un análisis completo:
           </p>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Identifica patrones de desempeño</li>
-            <li>Detecta áreas críticas que requieren atención</li>
-            <li>Sugiere acciones correctivas específicas</li>
-            <li>Compara tendencias entre períodos</li>
-            <li>Analiza distribución de carga de trabajo</li>
+            <li>Identifica patrones de desempeño en la organización</li>
+            <li>Detecta áreas críticas que requieren atención inmediata</li>
+            <li>Sugiere acciones correctivas específicas y priorizadas</li>
+            <li>Compara tendencias entre períodos para identificar mejoras o deterioros</li>
+            <li>Analiza distribución de carga de trabajo y balance entre áreas</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Insights en presentaciones:</h3>
@@ -401,156 +694,219 @@ export default function HelpPage() {
             Al exportar a PowerPoint, la IA genera automáticamente:
           </p>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Resumen ejecutivo del período</li>
-            <li>Hallazgos clave y métricas destacadas</li>
-            <li>Recomendaciones estratégicas</li>
-            <li>Análisis por usuario o área</li>
+            <li>Resumen ejecutivo del período seleccionado</li>
+            <li>Hallazgos clave y métricas más destacadas</li>
+            <li>Recomendaciones estratégicas basadas en datos</li>
+            <li>Análisis por usuario o área (según el tipo de reporte)</li>
+            <li>Identificación de riesgos y oportunidades</li>
           </ul>
+
+          <div className="bg-purple-50 border-l-4 border-purple-600 p-4">
+            <h4 className="font-semibold text-purple-800 mb-2">Privacidad:</h4>
+            <p className="text-gray-700">
+              La IA procesa tu información únicamente para generar sugerencias y análisis.
+              Los datos no se comparten con terceros y permanecen en tu organización.
+            </p>
+          </div>
         </section>
 
-        {/* 8. Automatizaciones (Workflows) */}
+        {/* 13. Automatizaciones (Workflows) */}
         <section className="mb-12 print:page-break-before">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
-            8. Automatizaciones (Workflows)
+            13. Automatizaciones (Workflows)
           </h2>
           <p className="text-gray-700 mb-4 leading-relaxed">
-            Los workflows permiten automatizar acciones basadas en eventos:
+            Los workflows permiten automatizar acciones basadas en eventos del sistema.
           </p>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Disparadores (Triggers):</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-4">
-            <li>Cuando se crea una prioridad</li>
-            <li>Cuando se actualiza una prioridad</li>
-            <li>Cuando cambia el estado</li>
-            <li>Cuando está atrasada</li>
-            <li>Cuando el porcentaje es bajo</li>
-            <li>Cuando se reasigna a otro usuario</li>
+            <li><strong>Prioridad creada:</strong> Cuando se crea una nueva prioridad</li>
+            <li><strong>Prioridad actualizada:</strong> Cuando se edita una prioridad</li>
+            <li><strong>Cambio de estado:</strong> Cuando una prioridad cambia de estado</li>
+            <li><strong>Prioridad atrasada:</strong> Cuando no se completó a tiempo</li>
+            <li><strong>Porcentaje bajo:</strong> Cuando el avance cae por debajo de un umbral</li>
+            <li><strong>Prioridad reasignada:</strong> Cuando se asigna a otro usuario</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Condiciones:</h3>
           <p className="text-gray-700 mb-4 leading-relaxed">
-            Define cuándo debe ejecutarse el workflow:
+            Define cuándo debe ejecutarse el workflow con condiciones específicas:
           </p>
-          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-4">
-            <li>Si el estado es igual a...</li>
-            <li>Si el estado lleva X días...</li>
-            <li>Si el % completado es menor que...</li>
-            <li>Si el usuario es...</li>
-            <li>Si la iniciativa es...</li>
-            <li>Y muchas más condiciones</li>
-          </ul>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="text-sm text-gray-700">• Estado es igual a...</div>
+            <div className="text-sm text-gray-700">• Estado lleva X días...</div>
+            <div className="text-sm text-gray-700">• % completado menor que...</div>
+            <div className="text-sm text-gray-700">• % completado mayor que...</div>
+            <div className="text-sm text-gray-700">• Usuario es...</div>
+            <div className="text-sm text-gray-700">• Iniciativa es...</div>
+            <div className="text-sm text-gray-700">• Título contiene...</div>
+            <div className="text-sm text-gray-700">• Descripción contiene...</div>
+            <div className="text-sm text-gray-700">• Nuevo usuario es... (reasignación)</div>
+            <div className="text-sm text-gray-700">• Usuario anterior es... (reasignación)</div>
+          </div>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Acciones:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li><strong>Enviar notificación:</strong> Al dueño, admin o usuario específico</li>
-            <li><strong>Enviar email:</strong> Con mensaje personalizado</li>
-            <li><strong>Cambiar estado:</strong> Automáticamente</li>
-            <li><strong>Reasignar:</strong> A otro usuario</li>
+            <li><strong>Enviar notificación:</strong> Al dueño, admin, líder de área o usuario específico</li>
+            <li><strong>Enviar email:</strong> Con mensaje y asunto personalizados</li>
+            <li><strong>Cambiar estado:</strong> Automáticamente actualizar el estado</li>
+            <li><strong>Reasignar:</strong> Cambiar el responsable de la prioridad</li>
             <li><strong>Agregar comentario:</strong> Nota automática en la prioridad</li>
           </ul>
 
-          <div className="bg-purple-50 border-l-4 border-purple-600 p-4">
-            <h4 className="font-semibold text-purple-800 mb-2">Ejemplo de uso:</h4>
-            <p className="text-gray-700">
-              "Cuando una prioridad esté en estado BLOQUEADO por más de 2 días, enviar notificación
-              al admin con el mensaje: 'Prioridad bloqueada requiere atención urgente'"
-            </p>
+          <div className="bg-purple-50 border-l-4 border-purple-600 p-4 mb-6">
+            <h4 className="font-semibold text-purple-800 mb-2">Ejemplo práctico:</h4>
+            <p className="text-gray-700 mb-2"><strong>Escenario:</strong> "Alertar al líder de área cuando una prioridad crítica esté bloqueada"</p>
+            <ul className="text-sm text-gray-700 space-y-1">
+              <li><strong>Trigger:</strong> Cambio de estado</li>
+              <li><strong>Condición 1:</strong> Estado es igual a BLOQUEADO</li>
+              <li><strong>Condición 2:</strong> Iniciativa es igual a "Proyecto Crítico"</li>
+              <li><strong>Acción 1:</strong> Enviar notificación al líder de área</li>
+              <li><strong>Acción 2:</strong> Agregar comentario: "Requiere atención urgente del líder"</li>
+            </ul>
           </div>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Crear un workflow:</h3>
+          <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-6">
+            <li>Ve a "Automatizaciones" en el menú</li>
+            <li>Haz clic en "Nueva Automatización"</li>
+            <li>Selecciona el trigger (evento que lo activará)</li>
+            <li>Agrega condiciones (opcional pero recomendado)</li>
+            <li>Define las acciones a ejecutar</li>
+            <li>Activa o desactiva el workflow según necesites</li>
+            <li>Guarda y el workflow empezará a funcionar automáticamente</li>
+          </ol>
         </section>
 
-        {/* 9. Funciones de Líder de Área */}
+        {/* 14. Funciones de Líder de Área */}
         <section className="mb-12 print:page-break-before">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
-            9. Funciones de Líder de Área
+            14. Funciones de Líder de Área
           </h2>
           <p className="text-gray-700 mb-4 leading-relaxed">
-            Si tienes el rol de líder de área, tendrás acceso a funcionalidades adicionales:
+            Si tienes el rol de líder de área, tendrás acceso a funcionalidades adicionales para gestionar tu equipo.
           </p>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Gestión de Área (Drag & Drop):</h3>
+          <p className="text-gray-700 mb-4 leading-relaxed">
+            La herramienta más poderosa para líderes: reasignar prioridades de forma visual.
+          </p>
+          <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-6">
+            <li>Accede a "Gestión de Área" desde el menú lateral</li>
+            <li>Verás columnas con las prioridades de cada miembro del equipo</li>
+            <li>Cada columna representa a un usuario de tu área</li>
+            <li>Las prioridades muestran indicadores visuales:
+              <ul className="list-disc list-inside ml-6 mt-1">
+                <li>Borde azul = Semana actual</li>
+                <li>Borde morado = Próxima semana</li>
+              </ul>
+            </li>
+            <li>Arrastra una prioridad de una columna a otra para reasignarla</li>
+            <li>El cambio se guarda automáticamente</li>
+            <li>Se ejecutan workflows configurados para reasignaciones</li>
+            <li>Ambos usuarios (anterior y nuevo) reciben notificación</li>
+          </ol>
+
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 mb-6">
+            <h4 className="font-semibold text-blue-800 mb-2">Responsive Grid:</h4>
+            <p className="text-gray-700">
+              La vista se adapta a tu pantalla mostrando hasta 5 columnas por fila. En pantallas
+              pequeñas verás menos columnas, y puedes hacer scroll hacia abajo para ver más usuarios.
+            </p>
+          </div>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Dashboard por Área:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
             <li>Vista consolidada de todas las prioridades de tu área</li>
-            <li>Filtros por usuario y estado</li>
-            <li>Métricas agregadas del equipo</li>
-            <li>Exportación de reportes por área</li>
+            <li>Estadísticas agregadas del equipo</li>
+            <li>Identificación rápida de prioridades en riesgo</li>
+            <li>Distribución de carga de trabajo</li>
+            <li>Exportación de reportes específicos del área</li>
+            <li>Insights de IA para tu equipo</li>
           </ul>
 
-          <h3 className="text-xl font-semibold text-gray-700 mb-3">Gestión de Área (Drag & Drop):</h3>
-          <p className="text-gray-700 mb-4 leading-relaxed">
-            Reasigna prioridades entre miembros de tu área de forma visual:
-          </p>
-          <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-6">
-            <li>Accede a "Gestión de Área" desde el menú</li>
-            <li>Verás columnas con las prioridades de cada miembro del equipo</li>
-            <li>Arrastra una prioridad de una columna a otra para reasignarla</li>
-            <li>El cambio se guarda automáticamente</li>
-            <li>Se ejecutan workflows configurados para reasignaciones</li>
-          </ol>
-
-          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 mb-6">
-            <h4 className="font-semibold text-blue-800 mb-2">Vista de semanas:</h4>
-            <p className="text-gray-700">
-              La gestión de área muestra tanto la semana actual como la siguiente, con indicadores
-              visuales de color azul y morado para distinguirlas.
-            </p>
-          </div>
-
-          <h3 className="text-xl font-semibold text-gray-700 mb-3">Analíticas por área:</h3>
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Mejores prácticas:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Rendimiento comparativo de tu área vs. otras</li>
-            <li>Distribución de carga de trabajo</li>
-            <li>Identificación de miembros que necesitan apoyo</li>
-            <li>Tendencias y patrones del equipo</li>
+            <li>Revisa el Dashboard por Área al inicio de cada semana</li>
+            <li>Reasigna prioridades si detectas desbalance de carga</li>
+            <li>Comunica cambios importantes a tu equipo</li>
+            <li>Usa workflows para automatizar alertas de tu área</li>
+            <li>Exporta reportes semanales para seguimiento</li>
+            <li>Reconoce públicamente los logros del equipo</li>
           </ul>
         </section>
 
-        {/* 10. Funciones de Administrador */}
+        {/* 15. Funciones de Administrador */}
         <section className="mb-12 print:page-break-before">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
-            10. Funciones de Administrador
+            15. Funciones de Administrador
           </h2>
           <p className="text-gray-700 mb-4 leading-relaxed">
-            Los administradores tienen acceso completo al sistema:
+            Los administradores tienen acceso completo al sistema y responsabilidad sobre su configuración.
           </p>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Gestión de Usuarios:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Crear, editar y desactivar usuarios</li>
+            <li>Crear nuevos usuarios con email y contraseña inicial</li>
+            <li>Editar información de usuarios existentes</li>
             <li>Asignar roles (ADMIN o USER)</li>
             <li>Asignar áreas y designar líderes de área</li>
-            <li>Restablecer contraseñas</li>
-            <li>Ver historial de actividad</li>
+            <li>Activar/desactivar usuarios</li>
+            <li>Restablecer contraseñas cuando sea necesario</li>
+            <li>Ver historial de actividad de cualquier usuario</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Gestión de Iniciativas Estratégicas:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Crear y editar iniciativas</li>
-            <li>Asignar colores y orden de visualización</li>
-            <li>Activar/desactivar iniciativas</li>
-            <li>Ver métricas por iniciativa</li>
+            <li>Crear nuevas iniciativas alineadas a objetivos organizacionales</li>
+            <li>Editar nombre y descripción de iniciativas</li>
+            <li>Asignar colores identificativos a cada iniciativa</li>
+            <li>Definir orden de visualización</li>
+            <li>Activar/desactivar iniciativas sin eliminar datos históricos</li>
+            <li>Ver métricas de progreso por iniciativa</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Configuración de IA:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Personalizar prompts de IA para cada caso de uso</li>
+            <li>Personalizar prompts de IA para cada caso de uso:
+              <ul className="list-disc list-inside ml-6 mt-1">
+                <li>Mejora de títulos</li>
+                <li>Mejora de descripciones</li>
+                <li>Análisis organizacional</li>
+                <li>Insights para PowerPoint</li>
+                <li>Análisis por área</li>
+              </ul>
+            </li>
             <li>Ajustar el tono y estilo de las sugerencias</li>
-            <li>Configurar límites de uso</li>
+            <li>Definir contexto organizacional específico</li>
+            <li>Probar cambios antes de aplicarlos</li>
           </ul>
 
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Gestión de Workflows:</h3>
           <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-            <li>Crear workflows personalizados</li>
+            <li>Crear workflows personalizados para la organización</li>
             <li>Editar workflows existentes</li>
-            <li>Activar/desactivar workflows</li>
-            <li>Ver historial de ejecuciones</li>
-            <li>Monitorear errores</li>
+            <li>Activar/desactivar workflows sin eliminarlos</li>
+            <li>Ver historial completo de ejecuciones</li>
+            <li>Monitorear errores y problemas</li>
+            <li>Configurar notificaciones por email (además de in-app)</li>
+          </ul>
+
+          <h3 className="text-xl font-semibold text-gray-700 mb-3">Acceso global:</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
+            <li>Ver todas las prioridades de todos los usuarios</li>
+            <li>Acceder a dashboards por área de cualquier departamento</li>
+            <li>Generar reportes consolidados de toda la organización</li>
+            <li>Ver analíticas globales y comparativas entre áreas</li>
+            <li>Exportar datos completos para análisis externos</li>
           </ul>
         </section>
 
-        {/* 11. Preguntas Frecuentes */}
+        {/* 16. Preguntas Frecuentes */}
         <section className="mb-12 print:page-break-before">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-600 pb-2">
-            11. Preguntas Frecuentes
+            16. Preguntas Frecuentes
           </h2>
 
           <div className="space-y-6">
@@ -636,11 +992,41 @@ export default function HelpPage() {
                 datos se sincronizan en tiempo real con el servidor.
               </p>
             </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                ¿Qué pasa con mis puntos cuando me reasignan una prioridad?
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Los puntos se recalculan dinámicamente. Si un líder de área te reasigna una prioridad,
+                los puntos asociados a esa prioridad se transfieren automáticamente entre usuarios.
+                Esto asegura que los puntos siempre reflejen tu trabajo actual.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                ¿Puedo exportar datos personales?
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                Sí, puedes exportar tus prioridades a Excel, PowerPoint o PDF desde el Dashboard
+                o la página de Analíticas. Los administradores pueden exportar datos de toda la organización.
+              </p>
+            </div>
           </div>
         </section>
 
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm mt-12 pt-6 border-t">
+          <div className="mb-4">
+            <Image
+              src="/orca-logo.png"
+              alt="Orca Logo"
+              width={60}
+              height={60}
+              className="mx-auto opacity-50"
+            />
+          </div>
           <p>Sistema de Gestión de Prioridades • Versión 1.0</p>
           <p className="mt-2">Para soporte técnico, contacta a tu administrador del sistema</p>
         </div>
