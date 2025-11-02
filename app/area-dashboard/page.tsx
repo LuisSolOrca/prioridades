@@ -53,6 +53,7 @@ interface Priority {
   weekEnd: string;
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+  type?: 'ESTRATEGICA' | 'OPERATIVA';
   userId: string;
   initiativeId?: string;
   initiativeIds?: string[];
@@ -277,6 +278,7 @@ export default function AreaDashboardPage() {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
+  const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('ESTRATEGICA');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -341,6 +343,14 @@ export default function AreaDashboardPage() {
     }
   };
 
+  // Filtrar prioridades por tipo
+  const filteredPriorities = useMemo(() => {
+    if (priorityTypeFilter === 'TODAS') {
+      return priorities;
+    }
+    return priorities.filter(p => (p.type || 'ESTRATEGICA') === priorityTypeFilter);
+  }, [priorities, priorityTypeFilter]);
+
   const areaGroups = useMemo(() => {
     // Agrupar usuarios por área
     const areaMap = new Map<string, AreaData>();
@@ -364,8 +374,8 @@ export default function AreaDashboardPage() {
         areaData.leader = user;
       }
 
-      // Agregar las prioridades del usuario
-      const userPriorities = priorities.filter(p => p.userId === user._id);
+      // Agregar las prioridades filtradas del usuario
+      const userPriorities = filteredPriorities.filter(p => p.userId === user._id);
       areaData.priorities.push(...userPriorities);
     });
 
@@ -375,17 +385,17 @@ export default function AreaDashboardPage() {
       if (a.area && !b.area) return -1;
       return a.area.localeCompare(b.area);
     });
-  }, [users, priorities]);
+  }, [users, filteredPriorities]);
 
   const stats = useMemo(() => {
-    const total = priorities.length;
-    const completed = priorities.filter(p => p.status === 'COMPLETADO').length;
+    const total = filteredPriorities.length;
+    const completed = filteredPriorities.filter(p => p.status === 'COMPLETADO').length;
     const avgCompletion = total > 0
-      ? priorities.reduce((sum, p) => sum + p.completionPercentage, 0) / total
+      ? filteredPriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / total
       : 0;
 
     return { total, completed, avgCompletion: avgCompletion.toFixed(1) };
-  }, [priorities]);
+  }, [filteredPriorities]);
 
   const navigateWeek = (direction: number) => {
     const newMonday = new Date(currentWeek.monday);
@@ -398,8 +408,8 @@ export default function AreaDashboardPage() {
   };
 
   const handleExport = () => {
-    const fileName = `Dashboard_Areas_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}`;
-    exportPrioritiesByArea(priorities, users, initiatives, fileName);
+    const fileName = `Dashboard_Areas_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}_${priorityTypeFilter}`;
+    exportPrioritiesByArea(filteredPriorities, users, initiatives, fileName);
   };
 
   const handleExportPowerPoint = async () => {
@@ -580,6 +590,29 @@ export default function AreaDashboardPage() {
             </div>
           </div>
 
+          {/* Filtro de Tipo de Prioridad */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <label className="text-sm font-semibold text-gray-700">
+                  Filtrar por tipo:
+                </label>
+                <select
+                  value={priorityTypeFilter}
+                  onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium"
+                >
+                  <option value="ESTRATEGICA">Estratégicas</option>
+                  <option value="OPERATIVA">Operativas</option>
+                  <option value="TODAS">Todas</option>
+                </select>
+              </div>
+              <div className="text-sm text-gray-600">
+                Mostrando {filteredPriorities.length} de {priorities.length} prioridades
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard label="Total Prioridades" value={stats.total} color="blue" />
             <StatCard label="Completadas" value={stats.completed} color="green" />
@@ -605,18 +638,20 @@ export default function AreaDashboardPage() {
               </button>
             </div>
 
-            {areaGroups.map(areaData => (
-              <AreaPriorityCard
-                key={areaData.area || 'sin-area'}
-                areaData={areaData}
-                initiatives={initiatives}
-                isExpanded={expandedAreas.has(areaData.area)}
-                onToggle={() => toggleArea(areaData.area)}
-                onViewDetails={setSelectedPriority}
-                commentCounts={commentCounts}
-                allUsers={users}
-              />
-            ))}
+            {areaGroups
+              .filter(areaData => areaData.priorities.length > 0)
+              .map(areaData => (
+                <AreaPriorityCard
+                  key={areaData.area || 'sin-area'}
+                  areaData={areaData}
+                  initiatives={initiatives}
+                  isExpanded={expandedAreas.has(areaData.area)}
+                  onToggle={() => toggleArea(areaData.area)}
+                  onViewDetails={setSelectedPriority}
+                  commentCounts={commentCounts}
+                  allUsers={users}
+                />
+              ))}
           </div>
         </div>
       </div>

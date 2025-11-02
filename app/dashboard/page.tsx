@@ -51,6 +51,7 @@ interface Priority {
   weekEnd: string;
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+  type?: 'ESTRATEGICA' | 'OPERATIVA';
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
@@ -243,6 +244,7 @@ export default function DashboardPage() {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
+  const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('ESTRATEGICA');
   const [userStats, setUserStats] = useState<{
     points: number;
     currentStreak: number;
@@ -345,15 +347,23 @@ export default function DashboardPage() {
     }
   };
 
+  // Filtrar prioridades por tipo
+  const filteredPriorities = useMemo(() => {
+    if (priorityTypeFilter === 'TODAS') {
+      return priorities;
+    }
+    return priorities.filter(p => (p.type || 'ESTRATEGICA') === priorityTypeFilter);
+  }, [priorities, priorityTypeFilter]);
+
   const stats = useMemo(() => {
-    const total = priorities.length;
-    const completed = priorities.filter(p => p.status === 'COMPLETADO').length;
+    const total = filteredPriorities.length;
+    const completed = filteredPriorities.filter(p => p.status === 'COMPLETADO').length;
     const avgCompletion = total > 0
-      ? priorities.reduce((sum, p) => sum + p.completionPercentage, 0) / total
+      ? filteredPriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / total
       : 0;
 
     return { total, completed, avgCompletion: avgCompletion.toFixed(1) };
-  }, [priorities]);
+  }, [filteredPriorities]);
 
   const navigateWeek = (direction: number) => {
     const newMonday = new Date(currentWeek.monday);
@@ -366,8 +376,8 @@ export default function DashboardPage() {
   };
 
   const handleExport = () => {
-    const fileName = `Dashboard_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}`;
-    exportPriorities(priorities, users, initiatives, fileName);
+    const fileName = `Dashboard_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}_${priorityTypeFilter}`;
+    exportPriorities(filteredPriorities, users, initiatives, fileName);
   };
 
   const handleExportPowerPoint = async () => {
@@ -426,8 +436,8 @@ export default function DashboardPage() {
   };
 
   const handleAIAnalysis = async () => {
-    if (priorities.length === 0) {
-      alert('No hay prioridades para analizar en esta semana');
+    if (filteredPriorities.length === 0) {
+      alert('No hay prioridades para analizar con el filtro actual');
       return;
     }
 
@@ -537,6 +547,29 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Filtro de Tipo de Prioridad */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <label className="text-sm font-semibold text-gray-700">
+                  Filtrar por tipo:
+                </label>
+                <select
+                  value={priorityTypeFilter}
+                  onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium"
+                >
+                  <option value="ESTRATEGICA">Estratégicas</option>
+                  <option value="OPERATIVA">Operativas</option>
+                  <option value="TODAS">Todas</option>
+                </select>
+              </div>
+              <div className="text-sm text-gray-600">
+                Mostrando {filteredPriorities.length} de {priorities.length} prioridades
+              </div>
+            </div>
+          </div>
+
           {/* Motivational Banner */}
           {userStats && <MotivationalBanner userStats={userStats} />}
 
@@ -559,18 +592,24 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {users.map(user => (
-              <UserPriorityCard
-                key={user._id}
-                user={user}
-                priorities={priorities.filter(p => p.userId === user._id)}
-                initiatives={initiatives}
-                isExpanded={expandedUsers.has(user._id)}
-                onToggle={() => toggleUser(user._id)}
-                onViewDetails={handleViewDetails}
-                commentCounts={commentCounts}
-              />
-            ))}
+            {users.map(user => {
+              const userPriorities = filteredPriorities.filter(p => p.userId === user._id);
+              // Solo mostrar usuarios que tienen prioridades del tipo filtrado
+              if (userPriorities.length === 0) return null;
+
+              return (
+                <UserPriorityCard
+                  key={user._id}
+                  user={user}
+                  priorities={userPriorities}
+                  initiatives={initiatives}
+                  isExpanded={expandedUsers.has(user._id)}
+                  onToggle={() => toggleUser(user._id)}
+                  onViewDetails={handleViewDetails}
+                  commentCounts={commentCounts}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
