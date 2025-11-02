@@ -6,7 +6,8 @@ export type TriggerType =
   | 'priority_created'           // Cuando se crea una prioridad
   | 'priority_updated'           // Cuando se actualiza/edita una prioridad
   | 'priority_overdue'           // Cuando una prioridad está atrasada
-  | 'completion_low';            // Cuando % de completado es bajo
+  | 'completion_low'             // Cuando % de completado es bajo
+  | 'priority_reassigned';       // Cuando se reasigna una prioridad
 
 // Tipos de condiciones
 export type ConditionType =
@@ -19,7 +20,9 @@ export type ConditionType =
   | 'user_equals'                // Usuario = X
   | 'initiative_equals'          // Iniciativa = X
   | 'title_contains'             // Título contiene texto
-  | 'description_contains';      // Descripción contiene texto
+  | 'description_contains'       // Descripción contiene texto
+  | 'new_user_equals'            // Nuevo usuario = X (para reasignaciones)
+  | 'previous_user_equals';      // Usuario anterior = X (para reasignaciones)
 
 // Tipos de acciones
 export type ActionType =
@@ -86,7 +89,9 @@ const ConditionSchema = new Schema({
       'user_equals',
       'initiative_equals',
       'title_contains',
-      'description_contains'
+      'description_contains',
+      'new_user_equals',
+      'previous_user_equals'
     ],
     required: true
   },
@@ -150,7 +155,8 @@ const WorkflowSchema = new Schema<IWorkflow>({
       'priority_created',
       'priority_updated',
       'priority_overdue',
-      'completion_low'
+      'completion_low',
+      'priority_reassigned'
     ],
     required: true
   },

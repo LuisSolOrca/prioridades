@@ -36,14 +36,16 @@ export default function NewWorkflowPage() {
   // Obtener condiciones disponibles según el trigger seleccionado
   const getAvailableConditions = () => {
     const allConditions = [
-      { value: 'status_equals', label: 'Si el estado es...', types: ['priority_status_change', 'priority_updated', 'priority_overdue'] },
+      { value: 'status_equals', label: 'Si el estado es...', types: ['priority_status_change', 'priority_updated', 'priority_overdue', 'priority_reassigned'] },
       { value: 'status_for_days', label: 'Si lleva varios días en un estado...', types: ['priority_status_change', 'priority_updated'] },
-      { value: 'completion_less_than', label: 'Si el % completado es menor que...', types: ['priority_updated', 'priority_overdue', 'completion_low'] },
-      { value: 'completion_greater_than', label: 'Si el % completado es mayor que...', types: ['priority_updated', 'priority_overdue'] },
-      { value: 'user_equals', label: 'Si la prioridad es de cierto usuario...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] },
-      { value: 'initiative_equals', label: 'Si la prioridad es de cierta iniciativa...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] },
-      { value: 'title_contains', label: 'Si el título contiene...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] },
-      { value: 'description_contains', label: 'Si la descripción contiene...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] }
+      { value: 'completion_less_than', label: 'Si el % completado es menor que...', types: ['priority_updated', 'priority_overdue', 'completion_low', 'priority_reassigned'] },
+      { value: 'completion_greater_than', label: 'Si el % completado es mayor que...', types: ['priority_updated', 'priority_overdue', 'priority_reassigned'] },
+      { value: 'user_equals', label: 'Si la prioridad es de cierto usuario...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low', 'priority_reassigned'] },
+      { value: 'new_user_equals', label: 'Si se reasignó a cierto usuario...', types: ['priority_reassigned'] },
+      { value: 'previous_user_equals', label: 'Si se reasignó desde cierto usuario...', types: ['priority_reassigned'] },
+      { value: 'initiative_equals', label: 'Si la prioridad es de cierta iniciativa...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low', 'priority_reassigned'] },
+      { value: 'title_contains', label: 'Si el título contiene...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low', 'priority_reassigned'] },
+      { value: 'description_contains', label: 'Si la descripción contiene...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low', 'priority_reassigned'] }
     ];
 
     return allConditions.filter(condition => condition.types.includes(triggerType));
@@ -181,6 +183,11 @@ export default function NewWorkflowPage() {
       emoji: '✏️',
       title: 'Cuando se actualiza una prioridad',
       description: 'Se ejecuta cada vez que se edita o modifica cualquier campo de una prioridad'
+    },
+    priority_reassigned: {
+      emoji: '🔄',
+      title: 'Cuando se reasigna una prioridad',
+      description: 'Se ejecuta cuando un líder de área cambia el responsable de una prioridad'
     },
     priority_overdue: {
       emoji: '⏰',
@@ -404,6 +411,36 @@ export default function NewWorkflowPage() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                             >
                               <option value="">Seleccionar usuario...</option>
+                              {users.map(user => (
+                                <option key={user._id} value={user._id}>
+                                  {user.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          {condition.type === 'new_user_equals' && (
+                            <select
+                              value={condition.value || ''}
+                              onChange={(e) => updateCondition(index, 'value', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                            >
+                              <option value="">Seleccionar nuevo usuario...</option>
+                              {users.map(user => (
+                                <option key={user._id} value={user._id}>
+                                  {user.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          {condition.type === 'previous_user_equals' && (
+                            <select
+                              value={condition.value || ''}
+                              onChange={(e) => updateCondition(index, 'value', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                            >
+                              <option value="">Seleccionar usuario anterior...</option>
                               {users.map(user => (
                                 <option key={user._id} value={user._id}>
                                   {user.name}

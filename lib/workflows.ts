@@ -17,6 +17,10 @@ interface WorkflowContext {
   priority: any;
   previousStatus?: string;
   previousCompletion?: number;
+  previousUserId?: string;
+  newUserId?: string;
+  previousOwnerName?: string;
+  newOwnerName?: string;
 }
 
 /**
@@ -29,11 +33,13 @@ interface WorkflowContext {
  * - {{initiative}} - Nombre de la iniciativa
  * - {{weekStart}} - Fecha de inicio de semana
  * - {{weekEnd}} - Fecha de fin de semana
+ * - {{previousOwner}} - Nombre del dueño anterior (en reasignación)
+ * - {{newOwner}} - Nombre del nuevo dueño (en reasignación)
  */
 function replacePlaceholders(message: string, context: WorkflowContext): string {
   if (!message) return message;
 
-  const { priority } = context;
+  const { priority, previousUserId, newUserId } = context;
 
   let result = message;
 
@@ -68,6 +74,15 @@ function replacePlaceholders(message: string, context: WorkflowContext): string 
 
   if (context.previousCompletion !== undefined) {
     result = result.replace(/\{\{previousCompletion\}\}/g, String(context.previousCompletion));
+  }
+
+  // Reemplazar placeholders de reasignación (si están disponibles)
+  if (context.previousOwnerName) {
+    result = result.replace(/\{\{previousOwner\}\}/g, context.previousOwnerName);
+  }
+
+  if (context.newOwnerName) {
+    result = result.replace(/\{\{newOwner\}\}/g, context.newOwnerName);
   }
 
   return result;
@@ -133,6 +148,16 @@ async function evaluateCondition(
       const descriptionToCheck = priority.detailedDescription?.toLowerCase() || '';
       const descriptionSearchText = String(condition.value).toLowerCase();
       return descriptionToCheck.includes(descriptionSearchText);
+
+    case 'new_user_equals':
+      // Verificar si la prioridad fue reasignada al usuario especificado
+      if (!context.newUserId) return false;
+      return context.newUserId?.toString() === condition.value?.toString();
+
+    case 'previous_user_equals':
+      // Verificar si la prioridad fue reasignada desde el usuario especificado
+      if (!context.previousUserId) return false;
+      return context.previousUserId?.toString() === condition.value?.toString();
 
     default:
       console.warn(`Tipo de condición desconocido: ${condition.type}`);
@@ -462,9 +487,13 @@ async function wasExecutedBefore(
  */
 export async function executeWorkflowsForPriority(
   priorityId: string | mongoose.Types.ObjectId,
-  triggerType: 'priority_status_change' | 'priority_created' | 'priority_updated' | 'priority_overdue' | 'completion_low',
+  triggerType: 'priority_status_change' | 'priority_created' | 'priority_updated' | 'priority_overdue' | 'completion_low' | 'priority_reassigned',
   previousStatus?: string,
-  previousCompletion?: number
+  previousCompletion?: number,
+  previousUserId?: string,
+  newUserId?: string,
+  previousOwnerName?: string,
+  newOwnerName?: string
 ): Promise<{ executed: number; errors: number }> {
   await connectDB();
 
@@ -488,7 +517,11 @@ export async function executeWorkflowsForPriority(
     const context: WorkflowContext = {
       priority,
       previousStatus,
-      previousCompletion
+      previousCompletion,
+      previousUserId,
+      newUserId,
+      previousOwnerName,
+      newOwnerName
     };
 
     let executed = 0;
