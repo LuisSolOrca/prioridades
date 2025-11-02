@@ -199,7 +199,7 @@ function DroppableColumn({ userColumn }: { userColumn: UserColumn }) {
   return (
     <div
       ref={setNodeRef}
-      className={`bg-gray-50 rounded-lg p-4 min-w-[320px] max-w-[320px] flex-shrink-0 transition-colors ${
+      className={`bg-gray-50 rounded-lg p-4 transition-colors ${
         isOver ? 'bg-blue-50 border-2 border-blue-400 border-dashed' : 'border-2 border-transparent'
       }`}
     >
@@ -447,13 +447,13 @@ export default function AreaLeaderPage() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex gap-4 overflow-x-auto pb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {userColumns.map((userColumn) => (
                 <DroppableColumn key={userColumn.user._id} userColumn={userColumn} />
               ))}
 
               {userColumns.length === 0 && (
-                <div className="text-center w-full py-12">
+                <div className="col-span-full text-center w-full py-12">
                   <div className="text-6xl mb-4">👥</div>
                   <div className="text-xl text-gray-600">No hay usuarios en tu área</div>
                 </div>
