@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
+import MonthlyLeaderboard from '@/components/MonthlyLeaderboard';
 import { exportUserStats, exportInitiativeStats } from '@/lib/exportToExcel';
 
 interface User {
@@ -297,6 +298,9 @@ export default function AnalyticsPage() {
               </div>
             )}
           </div>
+
+          {/* Monthly Leaderboard */}
+          <MonthlyLeaderboard />
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
