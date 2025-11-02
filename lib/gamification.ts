@@ -449,6 +449,17 @@ export async function trackFeatureUsage(
       };
     }
 
+    // Verificar si esta acción ya fue trackeada recientemente (prevenir duplicados en React Strict Mode)
+    const lastAction = (user.gamification as any)[`last_${feature}`];
+    const now = new Date();
+    if (lastAction && (now.getTime() - new Date(lastAction).getTime()) < 5000) {
+      // Si se trackeó hace menos de 5 segundos, ignorar (probablemente duplicado)
+      return { user, newBadges: [] };
+    }
+
+    // Actualizar timestamp de última acción
+    (user.gamification as any)[`last_${feature}`] = now;
+
     // Incrementar contador
     user.gamification.featureUsage[feature] += 1;
     const count = user.gamification.featureUsage[feature];
