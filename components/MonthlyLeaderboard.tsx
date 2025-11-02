@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Trophy, Medal, Award } from 'lucide-react';
+import { Trophy, Medal, Award, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
@@ -16,6 +16,7 @@ export default function MonthlyLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showRestExpanded, setShowRestExpanded] = useState(false);
 
   useEffect(() => {
     loadLeaderboard();
@@ -33,8 +34,8 @@ export default function MonthlyLeaderboard() {
       }
 
       const data = await response.json();
-      // Mostrar solo top 3
-      setLeaderboard(Array.isArray(data) ? data.slice(0, 3) : []);
+      // Cargar top 10
+      setLeaderboard(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Error loading leaderboard:', err);
       setError(err.message || 'Error al cargar el leaderboard');
@@ -156,8 +157,9 @@ export default function MonthlyLeaderboard() {
         </button>
       </h2>
 
-      <div className="space-y-3">
-        {leaderboard.map((entry, index) => {
+      {/* Top 3 - Pódium con premios */}
+      <div className="space-y-3 mb-4">
+        {leaderboard.slice(0, 3).map((entry, index) => {
           const colors = getRankColor(entry.rank);
 
           return (
@@ -243,6 +245,51 @@ export default function MonthlyLeaderboard() {
           );
         })}
       </div>
+
+      {/* Rest of leaderboard (4-10) - Colapsable */}
+      {leaderboard.length > 3 && (
+        <div className="border-t pt-4">
+          <button
+            onClick={() => setShowRestExpanded(!showRestExpanded)}
+            className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition mb-3"
+          >
+            <span className="text-sm font-semibold text-gray-700">
+              Ver puestos 4-{leaderboard.length} ({leaderboard.length - 3} más)
+            </span>
+            {showRestExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+
+          {showRestExpanded && (
+            <div className="space-y-2">
+              {leaderboard.slice(3).map((entry) => (
+                <div
+                  key={entry.userId}
+                  className="bg-white border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-lg font-bold text-gray-500 w-8">#{entry.rank}</span>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 text-sm">{entry.name}</h4>
+                        <div className="flex items-center space-x-2 text-xs text-gray-600">
+                          <span>🏆 {entry.points} pts</span>
+                          {entry.currentStreak > 0 && (
+                            <span>🔥 {entry.currentStreak} semanas</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-gray-700">{entry.points}</div>
+                      <div className="text-xs text-gray-500">puntos</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Footer message */}
       <div className="mt-4 text-center text-sm text-gray-600">
