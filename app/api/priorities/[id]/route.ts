@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import { notifyStatusChange, notifyPriorityUnblocked, notifyCompletionMilestone, notifyWeekCompleted } from '@/lib/notifications';
+import { awardBadge } from '@/lib/gamification';
 
 export async function GET(
   request: NextRequest,
@@ -67,6 +68,7 @@ export async function PUT(
     // Guardar estado anterior para detectar cambios
     const oldStatus = priority.status;
     const oldCompletionPercentage = priority.completionPercentage;
+    const oldChecklistLength = priority.checklist?.length || 0;
 
     // Preparar datos para actualizar
     const updateData: any = {
@@ -90,6 +92,26 @@ export async function PUT(
       updateData,
       { new: true, runValidators: true }
     );
+
+    // Otorgar badge de FIRST_TASK si agregó su primera tarea
+    if (body.checklist && Array.isArray(body.checklist) && body.checklist.length > 0 && oldChecklistLength === 0) {
+      try {
+        // Verificar si el usuario tiene alguna tarea previa en todas sus prioridades
+        const previousPriorities = await Priority.find({
+          userId: priority.userId,
+          checklist: { $exists: true, $ne: [] }
+        }).lean();
+
+        // Si esta es la primera prioridad con checklist del usuario
+        if (previousPriorities.length === 1) { // Solo la que acabamos de actualizar
+          await awardBadge(priority.userId.toString(), 'FIRST_TASK').catch(err =>
+            console.error('[BADGE] Error awarding FIRST_TASK badge:', err)
+          );
+        }
+      } catch (badgeError) {
+        console.error('[BADGE] Error checking for FIRST_TASK badge:', badgeError);
+      }
+    }
 
     // Notificaciones basadas en cambios
     try {

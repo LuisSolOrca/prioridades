@@ -7,6 +7,7 @@ import Priority from '@/models/Priority';
 import User from '@/models/User';
 import { sendEmail, emailTemplates } from '@/lib/email';
 import { notifyComment, notifyMention } from '@/lib/notifications';
+import { awardBadge } from '@/lib/gamification';
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,6 +75,17 @@ export async function POST(request: NextRequest) {
       .populate('userId', 'name email')
       .lean();
 
+    // Otorgar badge de FIRST_COMMENT si es el primer comentario del usuario
+    if (!isSystemComment) {
+      const userId = (session.user as any).id;
+      const previousComments = await Comment.countDocuments({ userId, isSystemComment: false });
+      if (previousComments === 1) { // El que acabamos de crear
+        await awardBadge(userId, 'FIRST_COMMENT').catch(err =>
+          console.error('[BADGE] Error awarding FIRST_COMMENT badge:', err)
+        );
+      }
+    }
+
     // Crear notificaciones y enviar emails (solo para comentarios normales, no del sistema)
     if (!isSystemComment) {
       try {
@@ -112,6 +124,8 @@ export async function POST(request: NextRequest) {
           // Extraer nombres de usuario únicos y limpiar
           const usernames: string[] = [...new Set<string>(mentions.map((m: string) => m.substring(1).trim()))];
 
+          let mentionedSomeone = false;
+
           // Buscar usuarios mencionados por nombre (case-insensitive, coincidencia exacta o parcial)
           for (const username of usernames) {
             try {
@@ -142,6 +156,8 @@ export async function POST(request: NextRequest) {
                   priorityId,
                   comment._id.toString()
                 ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
+
+                mentionedSomeone = true;
               } else if (!mentionedUser) {
                 console.log(`[NOTIFICATION] User not found for mention: @${username}`);
               } else {
@@ -149,6 +165,21 @@ export async function POST(request: NextRequest) {
               }
             } catch (err) {
               console.error(`[NOTIFICATION] Error finding user ${username}:`, err);
+            }
+          }
+
+          // Otorgar badge FIRST_MENTION si es la primera vez que menciona a alguien
+          if (mentionedSomeone) {
+            const userId = commentAuthor._id.toString();
+            const previousMentions = await Comment.find({
+              userId,
+              text: { $regex: /@[\w\s]+/i }
+            }).countDocuments();
+
+            if (previousMentions === 1) { // El que acabamos de crear
+              await awardBadge(userId, 'FIRST_MENTION').catch(err =>
+                console.error('[BADGE] Error awarding FIRST_MENTION badge:', err)
+              );
             }
           }
         }
