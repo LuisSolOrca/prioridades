@@ -103,20 +103,10 @@ export async function POST(request: NextRequest) {
     // Otorgar badge de FIRST_TASK si es la primera tarea del usuario
     if (body.checklist && Array.isArray(body.checklist) && body.checklist.length > 0) {
       try {
-        // Verificar si el usuario tiene alguna tarea previa en todas sus prioridades
-        const previousPriorities = await Priority.find({
-          userId: body.userId,
-          checklist: { $exists: true, $ne: [] }
-        }).lean();
-
-        // Si esta es la primera prioridad con checklist del usuario
-        if (previousPriorities.length === 1) { // Solo la que acabamos de crear
-          await awardBadge(body.userId, 'FIRST_TASK').catch(err =>
-            console.error('[BADGE] Error awarding FIRST_TASK badge:', err)
-          );
-        }
+        // Badge FIRST_TASK removido - ya no existe en el nuevo sistema de badges
+        // El badge PRIMERA_VICTORIA se otorga automáticamente cuando se completa la primera prioridad
       } catch (badgeError) {
-        console.error('[BADGE] Error checking for FIRST_TASK badge:', badgeError);
+        console.error('[BADGE] Error checking for badges:', badgeError);
       }
     }
 

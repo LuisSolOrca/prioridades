@@ -282,30 +282,44 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Tips for earning badges */}
-                {badges.length < 4 && (
-                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start">
-                      <span className="text-xl mr-2">💡</span>
-                      <div className="text-sm text-blue-800">
-                        <strong>¿Cómo obtener más badges?</strong>
-                        <ul className="mt-2 space-y-1 list-disc list-inside">
-                          {!badges.find(b => b.type === 'FIRST_TASK') && (
-                            <li>Agrega tu primera tarea a una prioridad para obtener el badge "Primera Tarea" ✅</li>
-                          )}
-                          {!badges.find(b => b.type === 'FIRST_COMMENT') && (
-                            <li>Comenta en una prioridad para obtener el badge "Primer Comentario" 💬</li>
-                          )}
-                          {!badges.find(b => b.type === 'FIRST_MENTION') && (
-                            <li>Menciona a un compañero con @nombre para obtener el badge "Primera Mención" @️</li>
-                          )}
-                          {!badges.find(b => b.type === 'FIVE_WEEKS_STREAK') && (
-                            <li>Completa 5 semanas consecutivas al 100% para obtener el badge "Racha de 5 Semanas" 🔥</li>
-                          )}
-                        </ul>
+                <div className="mt-4 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <span className="text-2xl mr-3">🎮</span>
+                    <div className="text-sm text-gray-800">
+                      <strong className="text-lg">Sistema de Gamificación</strong>
+                      <p className="mt-2 mb-3 text-gray-700">
+                        ¡Desbloquea badges usando todas las funcionalidades de la plataforma y manteniendo tus prioridades bajo control!
+                      </p>
+
+                      <div className="space-y-3">
+                        <div>
+                          <strong className="text-blue-800">🎯 Gestión de Prioridades:</strong>
+                          <ul className="mt-1 ml-4 space-y-1 list-disc text-gray-700">
+                            <li>Completa prioridades y mantén rachas</li>
+                            <li>Evita y reacciona rápido a riesgos y bloqueos</li>
+                            <li>Mantén semanas perfectas al 100%</li>
+                          </ul>
+                        </div>
+
+                        <div>
+                          <strong className="text-purple-800">🤖 Uso de la Plataforma:</strong>
+                          <ul className="mt-1 ml-4 space-y-1 list-disc text-gray-700">
+                            <li>Usa IA para mejorar textos y análisis</li>
+                            <li>Exporta datos (Excel, PowerPoint, PDF)</li>
+                            <li>Explora Analytics y tablero Kanban</li>
+                            <li>Colabora con comentarios y menciones</li>
+                          </ul>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-blue-200">
+                          <p className="text-xs text-gray-600 italic">
+                            💡 Hay 24 badges diferentes para desbloquear. ¡Explora todas las funcionalidades para convertirte en Power User!
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </>
             )}
           </div>

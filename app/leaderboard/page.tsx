@@ -42,8 +42,11 @@ export default function LeaderboardPage() {
                 Leaderboard Mensual
                 <span className="ml-3">🏆</span>
               </h1>
-              <p className="text-lg opacity-90">
+              <p className="text-lg opacity-90 mb-2">
                 Los mejores colaboradores del mes según su desempeño
+              </p>
+              <p className="text-sm opacity-80">
+                Gana puntos completando prioridades, manteniendo todo bajo control y usando la plataforma
               </p>
             </div>
           </div>
@@ -88,33 +91,61 @@ export default function LeaderboardPage() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
               <span className="mr-2">💡</span>
-              ¿Cómo ganar el Leaderboard?
+              ¿Cómo ganar puntos y badges?
             </h2>
-            <div className="space-y-3 text-gray-700">
-              <div className="flex items-start">
-                <span className="text-xl mr-3 flex-shrink-0">1️⃣</span>
-                <div>
-                  <strong>Completa tus prioridades semanales:</strong> Cada prioridad completada suma 4 puntos a tu marcador mensual.
+
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="font-bold text-blue-900 mb-2">🎯 Gestiona tus Prioridades</h3>
+              <div className="space-y-2 text-gray-700 text-sm">
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">✅</span>
+                  <div><strong>Completa prioridades:</strong> +4 puntos por cada una</div>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">⚠️</span>
+                  <div><strong>Evita riesgos y bloqueos:</strong> -6 puntos por semana en ese estado</div>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">🔄</span>
+                  <div><strong>Reacciona rápido:</strong> Si rescatas en la misma semana, solo -2 puntos</div>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">🔥</span>
+                  <div><strong>Construye rachas:</strong> 5 semanas al 100% = badge especial</div>
                 </div>
               </div>
-              <div className="flex items-start">
-                <span className="text-xl mr-3 flex-shrink-0">2️⃣</span>
-                <div>
-                  <strong>Mantén tus prioridades EN_TIEMPO:</strong> Las prioridades en riesgo o bloqueadas te cuestan -6 puntos por cada semana que permanezcan en ese estado.
+            </div>
+
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <h3 className="font-bold text-purple-900 mb-2">🤖 Usa la Plataforma</h3>
+              <div className="space-y-2 text-gray-700 text-sm">
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">✨</span>
+                  <div><strong>IA:</strong> Mejora textos y genera análisis organizacionales</div>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">📊</span>
+                  <div><strong>Exporta:</strong> PowerPoint, Excel, PDF - cada export cuenta</div>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">📈</span>
+                  <div><strong>Analiza:</strong> Visita Analytics para insights de tu equipo</div>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">🗂️</span>
+                  <div><strong>Organiza:</strong> Usa el tablero Kanban para visualización</div>
+                </div>
+                <div className="flex items-start">
+                  <span className="mr-2 flex-shrink-0">💬</span>
+                  <div><strong>Colabora:</strong> Comenta y menciona a tu equipo</div>
                 </div>
               </div>
-              <div className="flex items-start">
-                <span className="text-xl mr-3 flex-shrink-0">3️⃣</span>
-                <div>
-                  <strong>Rescata rápido si algo sale mal:</strong> Si una prioridad cae en riesgo pero la rescatas en la misma semana, solo pierdes -2 puntos.
-                </div>
-              </div>
-              <div className="flex items-start">
-                <span className="text-xl mr-3 flex-shrink-0">4️⃣</span>
-                <div>
-                  <strong>Construye rachas:</strong> Completa 5 semanas consecutivas al 100% para obtener el badge especial de racha 🔥
-                </div>
-              </div>
+            </div>
+
+            <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border-2 border-yellow-300">
+              <p className="text-sm text-gray-800 text-center">
+                <strong>🌟 ¡24 badges disponibles!</strong> Desde "Primera Victoria" hasta "Power User" - explora todas las funcionalidades
+              </p>
             </div>
           </div>
 
