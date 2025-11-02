@@ -24,6 +24,7 @@ interface User {
   email: string;
   area?: string;
   isAreaLeader?: boolean;
+  isActive?: boolean;
 }
 
 interface Priority {
