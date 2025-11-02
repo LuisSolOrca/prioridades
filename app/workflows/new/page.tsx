@@ -33,6 +33,22 @@ export default function NewWorkflowPage() {
   const [conditions, setConditions] = useState<any[]>([]);
   const [actions, setActions] = useState<any[]>([]);
 
+  // Obtener condiciones disponibles según el trigger seleccionado
+  const getAvailableConditions = () => {
+    const allConditions = [
+      { value: 'status_equals', label: 'Si el estado es...', types: ['priority_status_change', 'priority_updated', 'priority_overdue'] },
+      { value: 'status_for_days', label: 'Si lleva varios días en un estado...', types: ['priority_status_change', 'priority_updated'] },
+      { value: 'completion_less_than', label: 'Si el % completado es menor que...', types: ['priority_updated', 'priority_overdue', 'completion_low'] },
+      { value: 'completion_greater_than', label: 'Si el % completado es mayor que...', types: ['priority_updated', 'priority_overdue'] },
+      { value: 'user_equals', label: 'Si la prioridad es de cierto usuario...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] },
+      { value: 'initiative_equals', label: 'Si la prioridad es de cierta iniciativa...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] },
+      { value: 'title_contains', label: 'Si el título contiene...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] },
+      { value: 'description_contains', label: 'Si la descripción contiene...', types: ['priority_status_change', 'priority_created', 'priority_updated', 'priority_overdue', 'completion_low'] }
+    ];
+
+    return allConditions.filter(condition => condition.types.includes(triggerType));
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -71,7 +87,9 @@ export default function NewWorkflowPage() {
   };
 
   const addCondition = () => {
-    setConditions([...conditions, { type: 'status_equals', value: 'EN_RIESGO' }]);
+    const availableConditions = getAvailableConditions();
+    const firstConditionType = availableConditions[0]?.value || 'user_equals';
+    setConditions([...conditions, { type: firstConditionType, value: '' }]);
   };
 
   const removeCondition = (index: number) => {
@@ -322,14 +340,9 @@ export default function NewWorkflowPage() {
                             onChange={(e) => updateCondition(index, 'type', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                           >
-                            <option value="status_equals">Si el estado es...</option>
-                            <option value="status_for_days">Si lleva varios días en un estado...</option>
-                            <option value="completion_less_than">Si el % completado es menor que...</option>
-                            <option value="completion_greater_than">Si el % completado es mayor que...</option>
-                            <option value="user_equals">Si la prioridad es de cierto usuario...</option>
-                            <option value="initiative_equals">Si la prioridad es de cierta iniciativa...</option>
-                            <option value="title_contains">Si el título contiene...</option>
-                            <option value="description_contains">Si la descripción contiene...</option>
+                            {getAvailableConditions().map(cond => (
+                              <option key={cond.value} value={cond.value}>{cond.label}</option>
+                            ))}
                           </select>
 
                           {/* Campos específicos por tipo de condición */}
