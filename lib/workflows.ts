@@ -462,7 +462,7 @@ async function wasExecutedBefore(
  */
 export async function executeWorkflowsForPriority(
   priorityId: string | mongoose.Types.ObjectId,
-  triggerType: 'priority_status_change' | 'priority_created' | 'priority_overdue' | 'completion_low',
+  triggerType: 'priority_status_change' | 'priority_created' | 'priority_updated' | 'priority_overdue' | 'completion_low',
   previousStatus?: string,
   previousCompletion?: number
 ): Promise<{ executed: number; errors: number }> {
