@@ -103,7 +103,7 @@ export default function LeaderboardPage() {
                 </div>
                 <div className="flex items-start">
                   <span className="mr-2 flex-shrink-0">⚠️</span>
-                  <div><strong>Evita riesgos y bloqueos:</strong> -6 puntos por semana en ese estado</div>
+                  <div><strong>Evita riesgos, bloqueos y reprogramaciones:</strong> -6 puntos por semana en ese estado</div>
                 </div>
                 <div className="flex items-start">
                   <span className="mr-2 flex-shrink-0">🔄</span>
