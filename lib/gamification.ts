@@ -382,22 +382,77 @@ export async function resetMonthlyPointsAndNotifyWinner() {
 }
 
 /**
+ * Calcula los puntos del mes actual para un usuario basándose en sus prioridades
+ * El "mes" va de lunes a lunes por períodos de aproximadamente 4 semanas
+ */
+export async function calculateCurrentMonthPoints(userId: string) {
+  try {
+    const now = new Date();
+
+    // Calcular el inicio del mes: hace aproximadamente 4 semanas, redondeando al lunes más cercano
+    const daysAgo = 28; // 4 semanas
+    const monthStartApprox = new Date(now);
+    monthStartApprox.setDate(monthStartApprox.getDate() - daysAgo);
+
+    // Ajustar al lunes más cercano (día 1 de la semana, donde domingo = 0)
+    const dayOfWeek = monthStartApprox.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 1 : (dayOfWeek === 1 ? 0 : (8 - dayOfWeek));
+    monthStartApprox.setDate(monthStartApprox.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monthStartApprox.setHours(0, 0, 0, 0);
+
+    // Buscar prioridades cuya semana empiece desde ese lunes
+    const priorities = await Priority.find({
+      userId,
+      weekStart: { $gte: monthStartApprox }
+    });
+
+    let points = 0;
+
+    // Prioridades completadas: +4 puntos cada una
+    const completedPriorities = priorities.filter(p => p.status === 'COMPLETADO');
+    points += completedPriorities.length * POINTS.PRIORITY_COMPLETED;
+
+    // Prioridades en riesgo, bloqueadas o reprogramadas: -6 puntos cada una
+    const atRiskPriorities = priorities.filter(
+      p => p.status === 'EN_RIESGO' || p.status === 'BLOQUEADO' || p.status === 'REPROGRAMADO'
+    );
+    points += atRiskPriorities.length * POINTS.PRIORITY_AT_RISK_PENALTY;
+
+    return points;
+  } catch (error) {
+    console.error('Error calculating current month points:', error);
+    return 0;
+  }
+}
+
+/**
  * Obtiene el leaderboard del mes actual
  */
 export async function getMonthlyLeaderboard() {
   try {
     const users = await User.find({ isActive: true })
-      .select('name email gamification')
-      .sort({ 'gamification.currentMonthPoints': -1 })
-      .limit(10);
+      .select('name email gamification');
 
-    return users.map((user, index) => ({
-      rank: index + 1,
-      userId: user._id,
-      name: user.name,
-      points: user.gamification?.currentMonthPoints || 0,
-      totalPoints: user.gamification?.totalPoints || 0,
-      currentStreak: user.gamification?.currentStreak || 0
+    // Calcular puntos del mes actual para cada usuario
+    const leaderboardData = await Promise.all(
+      users.map(async (user) => {
+        const currentMonthPoints = await calculateCurrentMonthPoints(user._id.toString());
+        return {
+          userId: user._id,
+          name: user.name,
+          points: currentMonthPoints,
+          totalPoints: user.gamification?.totalPoints || 0,
+          currentStreak: user.gamification?.currentStreak || 0
+        };
+      })
+    );
+
+    // Ordenar por puntos del mes actual y agregar rankings
+    leaderboardData.sort((a, b) => b.points - a.points);
+
+    return leaderboardData.slice(0, 10).map((entry, index) => ({
+      ...entry,
+      rank: index + 1
     }));
   } catch (error) {
     console.error('Error getting leaderboard:', error);

@@ -80,27 +80,28 @@ export default function AnalyticsPage() {
       setInitiatives(initiativesData);
       setAllPriorities(prioritiesData);
 
-      // Cargar datos de gamificación para cada usuario
-      const gamificationData: { [userId: string]: any } = {};
-      for (const user of usersData) {
-        try {
-          const userRes = await fetch(`/api/users/${user._id}`);
-          const userData = await userRes.json();
-          gamificationData[user._id] = userData.gamification || {
-            points: 0,
-            currentMonthPoints: 0,
-            totalPoints: 0
-          };
-        } catch (err) {
-          console.error(`Error loading gamification for user ${user._id}:`, err);
+      // Cargar puntos del mes actual calculados dinámicamente
+      try {
+        const monthPointsRes = await fetch('/api/analytics/month-points');
+        const monthPointsData = await monthPointsRes.json();
+
+        const gamificationData: { [userId: string]: any } = {};
+        for (const user of usersData) {
           gamificationData[user._id] = {
-            points: 0,
-            currentMonthPoints: 0,
-            totalPoints: 0
+            currentMonthPoints: monthPointsData[user._id] || 0
           };
         }
+        setUserGamification(gamificationData);
+      } catch (err) {
+        console.error('Error loading month points:', err);
+        const gamificationData: { [userId: string]: any } = {};
+        for (const user of usersData) {
+          gamificationData[user._id] = {
+            currentMonthPoints: 0
+          };
+        }
+        setUserGamification(gamificationData);
       }
-      setUserGamification(gamificationData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
