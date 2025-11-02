@@ -14,6 +14,14 @@ export interface IUser {
     priorityAssigned: boolean;
     statusChanges: boolean;
   };
+  gamification?: {
+    points: number;
+    currentMonthPoints: number;
+    totalPoints: number;
+    currentStreak: number;
+    longestStreak: number;
+    lastCompletedWeek?: Date;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,6 +71,23 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
       newComments: true,
       priorityAssigned: true,
       statusChanges: true,
+    },
+  },
+  gamification: {
+    type: {
+      points: { type: Number, default: 0 },
+      currentMonthPoints: { type: Number, default: 0 },
+      totalPoints: { type: Number, default: 0 },
+      currentStreak: { type: Number, default: 0 },
+      longestStreak: { type: Number, default: 0 },
+      lastCompletedWeek: { type: Date },
+    },
+    default: {
+      points: 0,
+      currentMonthPoints: 0,
+      totalPoints: 0,
+      currentStreak: 0,
+      longestStreak: 0,
     },
   },
 }, {
