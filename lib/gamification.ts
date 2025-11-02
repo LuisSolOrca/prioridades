@@ -185,9 +185,9 @@ export async function calculateWeeklyPoints(
     const completedPriorities = priorities.filter(p => p.status === 'COMPLETADO');
     points += completedPriorities.length * POINTS.PRIORITY_COMPLETED;
 
-    // Prioridades en riesgo o bloqueadas: -6 puntos cada una
+    // Prioridades en riesgo, bloqueadas o reprogramadas: -6 puntos cada una
     const atRiskPriorities = priorities.filter(
-      p => p.status === 'EN_RIESGO' || p.status === 'BLOQUEADO'
+      p => p.status === 'EN_RIESGO' || p.status === 'BLOQUEADO' || p.status === 'REPROGRAMADO'
     );
     points += atRiskPriorities.length * POINTS.PRIORITY_AT_RISK_PENALTY;
 

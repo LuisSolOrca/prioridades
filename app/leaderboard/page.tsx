@@ -68,7 +68,7 @@ export default function LeaderboardPage() {
                 <div className="text-3xl mr-3">⚠️</div>
                 <div>
                   <h3 className="font-bold text-gray-800 mb-1">Evita Riesgos</h3>
-                  <p className="text-sm text-gray-600">-6 puntos por prioridad en riesgo/bloqueada por semana</p>
+                  <p className="text-sm text-gray-600">-6 puntos por prioridad en riesgo/bloqueada/reprogramada por semana</p>
                 </div>
               </div>
             </div>
