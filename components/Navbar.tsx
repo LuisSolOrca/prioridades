@@ -20,7 +20,8 @@ import {
   X,
   User,
   ChevronDown,
-  Building2
+  Building2,
+  UserCog
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -272,6 +273,23 @@ export default function Navbar() {
                   <History size={22} />
                 </button>
 
+                {user.isAreaLeader && (
+                  <>
+                    <div className="pt-3 pb-2 border-t border-gray-200 mx-2" />
+                    <button
+                      onClick={() => handleNavigation('/area-leader')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/area-leader'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                      title="Gestión de Área"
+                    >
+                      <UserCog size={22} />
+                    </button>
+                  </>
+                )}
+
                 {user.role === 'ADMIN' && (
                   <>
                     <div className="pt-3 pb-2 border-t border-gray-200 mx-2" />
@@ -362,6 +380,22 @@ export default function Navbar() {
                   active={pathname === '/history'}
                   onClick={() => handleNavigation('/history')}
                 />
+
+                {user.isAreaLeader && (
+                  <>
+                    <div className="pt-4 pb-2">
+                      <p className="text-xs font-semibold text-purple-500 uppercase tracking-wider px-4">
+                        Líder de Área
+                      </p>
+                    </div>
+                    <NavButton
+                      icon={<UserCog size={20} />}
+                      label="Gestión de Área"
+                      active={pathname === '/area-leader'}
+                      onClick={() => handleNavigation('/area-leader')}
+                    />
+                  </>
+                )}
 
                 {user.role === 'ADMIN' && (
                   <>

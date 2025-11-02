@@ -39,6 +39,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          area: user.area,
+          isAreaLeader: user.isAreaLeader,
         };
       }
     })
@@ -48,6 +50,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.area = (user as any).area;
+        token.isAreaLeader = (user as any).isAreaLeader;
       }
       return token;
     },
@@ -55,6 +59,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).area = token.area;
+        (session.user as any).isAreaLeader = token.isAreaLeader;
       }
       return session;
     }
