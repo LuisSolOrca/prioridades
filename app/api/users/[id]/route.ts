@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import { calculateCurrentMonthPoints } from '@/lib/gamification';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,16 @@ export async function GET(
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    return NextResponse.json(user);
+    // Calcular puntos dinámicamente para reflejar cambios en tiempo real (como reasignaciones)
+    const currentPoints = await calculateCurrentMonthPoints(params.id);
+
+    // Convertir a objeto plano y actualizar puntos
+    const userObject = user.toObject();
+    if (userObject.gamification) {
+      userObject.gamification.currentMonthPoints = currentPoints;
+    }
+
+    return NextResponse.json(userObject);
   } catch (error: any) {
     console.error('Error fetching user:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
