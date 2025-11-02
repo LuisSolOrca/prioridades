@@ -140,8 +140,8 @@ export async function awardBadge(
   badgeType: keyof typeof BADGE_DEFINITIONS
 ) {
   try {
-    // Verificar si el badge ya existe (excepto FIVE_WEEKS_STREAK que puede repetirse)
-    if (badgeType !== 'FIVE_WEEKS_STREAK') {
+    // Verificar si el badge ya existe (excepto RACHA_FUEGO que puede repetirse)
+    if (badgeType !== 'RACHA_FUEGO') {
       const existing = await Badge.findOne({ userId, type: badgeType });
       if (existing) {
         return null; // Ya tiene este badge
@@ -280,7 +280,7 @@ export async function checkAndUpdateStreak(userId: string, weekEnd: Date) {
 
       // Otorgar badge si alcanza 5 semanas consecutivas
       if (user.gamification.currentStreak === 5) {
-        await awardBadge(userId.toString(), 'FIVE_WEEKS_STREAK');
+        await awardBadge(userId.toString(), 'RACHA_FUEGO');
       }
     } else {
       // Romper racha si no completó todas
