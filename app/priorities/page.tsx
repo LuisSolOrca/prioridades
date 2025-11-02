@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import CommentsSection from '@/components/CommentsSection';
 import PriorityFormModal from '@/components/PriorityFormModal';
+import MotivationalBanner from '@/components/MotivationalBanner';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 
@@ -73,6 +74,13 @@ export default function PrioritiesPage() {
   const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
   const [selectedPriorityForComments, setSelectedPriorityForComments] = useState<Priority | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
+  const [userStats, setUserStats] = useState<{
+    points: number;
+    currentStreak: number;
+    longestStreak: number;
+    badges: number;
+    rank?: number;
+  } | null>(null);
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -82,6 +90,7 @@ export default function PrioritiesPage() {
     }
     if (status === 'authenticated' && session) {
       loadData();
+      loadUserStats();
     }
   }, [status, session, router]);
 
@@ -136,6 +145,35 @@ export default function PrioritiesPage() {
     } catch (error) {
       console.error('Error loading comment counts:', error);
       setCommentCounts({});
+    }
+  };
+
+  const loadUserStats = async () => {
+    try {
+      if (!session?.user?.id) return;
+
+      // Obtener badges
+      const badgesRes = await fetch('/api/badges');
+      const badges = await badgesRes.json();
+
+      // Obtener datos del usuario (puntos y racha)
+      const userRes = await fetch(`/api/users/${(session.user as any).id}`);
+      const userData = await userRes.json();
+
+      // Obtener leaderboard para saber el rank
+      const leaderboardRes = await fetch('/api/leaderboard');
+      const leaderboard = await leaderboardRes.json();
+      const userRank = leaderboard.findIndex((entry: any) => entry.userId === (session.user as any).id) + 1;
+
+      setUserStats({
+        points: userData.gamification?.currentMonthPoints || 0,
+        currentStreak: userData.gamification?.currentStreak || 0,
+        longestStreak: userData.gamification?.longestStreak || 0,
+        badges: Array.isArray(badges) ? badges.length : 0,
+        rank: userRank > 0 ? userRank : undefined
+      });
+    } catch (error) {
+      console.error('Error loading user stats:', error);
     }
   };
 
@@ -311,6 +349,9 @@ export default function PrioritiesPage() {
               </button>
             </div>
           </div>
+
+          {/* Motivational Banner */}
+          {userStats && <MotivationalBanner userStats={userStats} compact />}
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center">

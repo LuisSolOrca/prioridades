@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import CommentsSection from '@/components/CommentsSection';
+import MotivationalBanner from '@/components/MotivationalBanner';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 import ReactMarkdown from 'react-markdown';
@@ -236,6 +237,13 @@ export default function DashboardPage() {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
+  const [userStats, setUserStats] = useState<{
+    points: number;
+    currentStreak: number;
+    longestStreak: number;
+    badges: number;
+    rank?: number;
+  } | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -246,6 +254,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === 'authenticated') {
       loadData();
+      loadUserStats();
     }
   }, [status, currentWeek]);
 
@@ -298,6 +307,35 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error loading comment counts:', error);
       setCommentCounts({});
+    }
+  };
+
+  const loadUserStats = async () => {
+    try {
+      if (!session?.user?.id) return;
+
+      // Obtener badges
+      const badgesRes = await fetch('/api/badges');
+      const badges = await badgesRes.json();
+
+      // Obtener datos del usuario (puntos y racha)
+      const userRes = await fetch(`/api/users/${(session.user as any).id}`);
+      const userData = await userRes.json();
+
+      // Obtener leaderboard para saber el rank
+      const leaderboardRes = await fetch('/api/leaderboard');
+      const leaderboard = await leaderboardRes.json();
+      const userRank = leaderboard.findIndex((entry: any) => entry.userId === (session.user as any).id) + 1;
+
+      setUserStats({
+        points: userData.gamification?.currentMonthPoints || 0,
+        currentStreak: userData.gamification?.currentStreak || 0,
+        longestStreak: userData.gamification?.longestStreak || 0,
+        badges: Array.isArray(badges) ? badges.length : 0,
+        rank: userRank > 0 ? userRank : undefined
+      });
+    } catch (error) {
+      console.error('Error loading user stats:', error);
     }
   };
 
@@ -492,6 +530,9 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+
+          {/* Motivational Banner */}
+          {userStats && <MotivationalBanner userStats={userStats} />}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard
