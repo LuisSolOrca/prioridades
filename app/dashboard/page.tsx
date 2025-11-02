@@ -594,8 +594,6 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {users.map(user => {
               const userPriorities = filteredPriorities.filter(p => p.userId === user._id);
-              // Solo mostrar usuarios que tienen prioridades del tipo filtrado
-              if (userPriorities.length === 0) return null;
 
               return (
                 <UserPriorityCard

@@ -638,20 +638,18 @@ export default function AreaDashboardPage() {
               </button>
             </div>
 
-            {areaGroups
-              .filter(areaData => areaData.priorities.length > 0)
-              .map(areaData => (
-                <AreaPriorityCard
-                  key={areaData.area || 'sin-area'}
-                  areaData={areaData}
-                  initiatives={initiatives}
-                  isExpanded={expandedAreas.has(areaData.area)}
-                  onToggle={() => toggleArea(areaData.area)}
-                  onViewDetails={setSelectedPriority}
-                  commentCounts={commentCounts}
-                  allUsers={users}
-                />
-              ))}
+            {areaGroups.map(areaData => (
+              <AreaPriorityCard
+                key={areaData.area || 'sin-area'}
+                areaData={areaData}
+                initiatives={initiatives}
+                isExpanded={expandedAreas.has(areaData.area)}
+                onToggle={() => toggleArea(areaData.area)}
+                onViewDetails={setSelectedPriority}
+                commentCounts={commentCounts}
+                allUsers={users}
+              />
+            ))}
           </div>
         </div>
       </div>
