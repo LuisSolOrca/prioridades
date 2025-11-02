@@ -24,11 +24,15 @@ export default function ProfilePage() {
   });
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [prefsMessage, setPrefsMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [badges, setBadges] = useState<any[]>([]);
+  const [userStats, setUserStats] = useState<any>(null);
+  const [loadingGamification, setLoadingGamification] = useState(true);
 
-  // Load notification preferences
+  // Load notification preferences and gamification data
   useEffect(() => {
     if (status === 'authenticated') {
       loadNotificationPreferences();
+      loadGamificationData();
     }
   }, [status]);
 
@@ -41,6 +45,34 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error('Error loading notification preferences:', error);
+    }
+  };
+
+  const loadGamificationData = async () => {
+    try {
+      setLoadingGamification(true);
+
+      // Cargar badges
+      const badgesRes = await fetch('/api/badges');
+      const badgesData = await badgesRes.json();
+      setBadges(Array.isArray(badgesData) ? badgesData : []);
+
+      // Cargar estadísticas del usuario
+      if (session?.user?.id) {
+        const userRes = await fetch(`/api/users/${(session.user as any).id}`);
+        const userData = await userRes.json();
+        setUserStats(userData.gamification || {
+          points: 0,
+          currentMonthPoints: 0,
+          totalPoints: 0,
+          currentStreak: 0,
+          longestStreak: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error loading gamification data:', error);
+    } finally {
+      setLoadingGamification(false);
     }
   };
 
@@ -170,6 +202,112 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Gamification Section */}
+          <div className="border-b border-gray-200 pb-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">🏆 Gamificación y Logros</h2>
+
+            {loadingGamification ? (
+              <div className="text-center py-8 text-gray-500">
+                <div className="text-2xl mb-2">⏳</div>
+                <div>Cargando estadísticas...</div>
+              </div>
+            ) : (
+              <>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    <div className="text-2xl mb-1">🏆</div>
+                    <div className="text-2xl font-bold text-yellow-700">{userStats?.currentMonthPoints || 0}</div>
+                    <div className="text-xs text-yellow-600 font-medium">Puntos del Mes</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4 text-center">
+                    <div className="text-2xl mb-1">⭐</div>
+                    <div className="text-2xl font-bold text-purple-700">{userStats?.totalPoints || 0}</div>
+                    <div className="text-xs text-purple-600 font-medium">Puntos Totales</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-lg p-4 text-center">
+                    <div className="text-2xl mb-1">🔥</div>
+                    <div className="text-2xl font-bold text-orange-700">{userStats?.currentStreak || 0}</div>
+                    <div className="text-xs text-orange-600 font-medium">Racha Actual</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 text-center">
+                    <div className="text-2xl mb-1">🎖️</div>
+                    <div className="text-2xl font-bold text-blue-700">{badges.length}</div>
+                    <div className="text-xs text-blue-600 font-medium">Badges Obtenidos</div>
+                  </div>
+                </div>
+
+                {/* Badges Display */}
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                    <span className="mr-2">🎖️</span>
+                    Mis Badges {badges.length > 0 && `(${badges.length})`}
+                  </h3>
+
+                  {badges.length === 0 ? (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                      <div className="text-4xl mb-2">🎯</div>
+                      <div className="text-gray-600 font-medium mb-1">¡Aún no tienes badges!</div>
+                      <div className="text-sm text-gray-500">
+                        Completa tareas, comenta y menciona a otros para obtener tus primeros logros
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {badges.map((badge: any) => (
+                        <div
+                          key={badge._id}
+                          className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300 rounded-lg p-4"
+                        >
+                          <div className="flex items-start">
+                            <div className="text-4xl mr-3">{badge.icon}</div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-purple-900 mb-1">{badge.name}</h4>
+                              <p className="text-sm text-purple-700 mb-2">{badge.description}</p>
+                              <div className="text-xs text-purple-600">
+                                Obtenido: {new Date(badge.earnedAt).toLocaleDateString('es-MX', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Tips for earning badges */}
+                {badges.length < 4 && (
+                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <span className="text-xl mr-2">💡</span>
+                      <div className="text-sm text-blue-800">
+                        <strong>¿Cómo obtener más badges?</strong>
+                        <ul className="mt-2 space-y-1 list-disc list-inside">
+                          {!badges.find(b => b.type === 'FIRST_TASK') && (
+                            <li>Agrega tu primera tarea a una prioridad para obtener el badge "Primera Tarea" ✅</li>
+                          )}
+                          {!badges.find(b => b.type === 'FIRST_COMMENT') && (
+                            <li>Comenta en una prioridad para obtener el badge "Primer Comentario" 💬</li>
+                          )}
+                          {!badges.find(b => b.type === 'FIRST_MENTION') && (
+                            <li>Menciona a un compañero con @nombre para obtener el badge "Primera Mención" @️</li>
+                          )}
+                          {!badges.find(b => b.type === 'FIVE_WEEKS_STREAK') && (
+                            <li>Completa 5 semanas consecutivas al 100% para obtener el badge "Racha de 5 Semanas" 🔥</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Email Notifications Section */}
