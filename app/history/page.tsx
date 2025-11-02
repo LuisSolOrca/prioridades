@@ -31,6 +31,7 @@ interface Priority {
   weekEnd: string;
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+  type?: 'ESTRATEGICA' | 'OPERATIVA';
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
@@ -49,6 +50,7 @@ export default function HistoryPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
   const [loading, setLoading] = useState(true);
   const [editingPriority, setEditingPriority] = useState<Priority | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -106,6 +108,11 @@ export default function HistoryPage() {
       filtered = filtered.filter(p => p.initiativeId === selectedInitiative);
     }
 
+    // Filtro por tipo de prioridad
+    if (priorityTypeFilter !== 'TODAS') {
+      filtered = filtered.filter(p => (p.type || 'ESTRATEGICA') === priorityTypeFilter);
+    }
+
     // Filtro por rango de fechas
     if (dateFrom) {
       const fromDate = new Date(dateFrom);
@@ -126,7 +133,7 @@ export default function HistoryPage() {
     }
 
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
+  }, [priorities, selectedUser, selectedInitiative, priorityTypeFilter, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
 
   const weekGroups = useMemo(() => {
     const groups: { [key: string]: Priority[] } = {};
@@ -255,7 +262,7 @@ export default function HistoryPage() {
               </label>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Filtrar por Usuario
@@ -288,6 +295,20 @@ export default function HistoryPage() {
                   {initiatives.map(initiative => (
                     <option key={initiative._id} value={initiative._id}>{initiative.name}</option>
                   ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Prioridad
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={priorityTypeFilter}
+                  onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
+                >
+                  <option value="TODAS">Todas</option>
+                  <option value="ESTRATEGICA">Estratégicas</option>
+                  <option value="OPERATIVA">Operativas</option>
                 </select>
               </div>
               <div>
@@ -341,6 +362,7 @@ export default function HistoryPage() {
                   setDateFrom('');
                   setDateTo('');
                   setSearchKeyword('');
+                  setPriorityTypeFilter('TODAS');
                 }}
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium"
               >
@@ -389,8 +411,17 @@ export default function HistoryPage() {
                             <div key={priority._id} className="bg-gray-50 rounded-lg p-4 border" style={{ borderLeftColor: primaryInitiative?.color || '#ccc', borderLeftWidth: '3px' }}>
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
-                                  <div className="font-semibold text-gray-800 text-sm">{priority.title}</div>
-                                  <div className="text-xs text-gray-600 mt-1 flex flex-wrap gap-1 items-center">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="font-semibold text-gray-800 text-sm">{priority.title}</div>
+                                    <span className={`text-xs px-2 py-0.5 rounded ${
+                                      (priority.type || 'ESTRATEGICA') === 'ESTRATEGICA'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      {(priority.type || 'ESTRATEGICA') === 'ESTRATEGICA' ? 'Estratégica' : 'Operativa'}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-gray-600 flex flex-wrap gap-1 items-center">
                                     <span>{user?.name}</span>
                                     {priorityInitiatives.map((initiative, idx) => initiative && (
                                       <span key={initiative._id}>

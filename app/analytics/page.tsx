@@ -28,6 +28,7 @@ interface Priority {
   title: string;
   description?: string;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+  type?: 'ESTRATEGICA' | 'OPERATIVA';
   completionPercentage: number;
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
@@ -48,6 +49,7 @@ export default function AnalyticsPage() {
   const [expandedUserInTable, setExpandedUserInTable] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
   const [userGamification, setUserGamification] = useState<{ [userId: string]: any }>({});
 
   useEffect(() => {
@@ -110,8 +112,15 @@ export default function AnalyticsPage() {
     }
   };
 
-  // Filtrar prioridades por rango de fechas
+  // Filtrar prioridades por rango de fechas y tipo
   const priorities = allPriorities.filter(priority => {
+    // Filtro por tipo
+    if (priorityTypeFilter !== 'TODAS') {
+      const priorityType = priority.type || 'ESTRATEGICA';
+      if (priorityType !== priorityTypeFilter) return false;
+    }
+
+    // Filtro por fecha
     if (!dateFrom && !dateTo) return true;
 
     const priorityStart = new Date(priority.weekStart);
@@ -141,6 +150,7 @@ export default function AnalyticsPage() {
   const handleClearFilters = () => {
     setDateFrom('');
     setDateTo('');
+    setPriorityTypeFilter('TODAS');
   };
 
   if (status === 'loading' || loading) {
@@ -316,10 +326,10 @@ export default function AnalyticsPage() {
             📊 Analítica y Métricas
           </h1>
 
-          {/* Filtros de Rango de Tiempo */}
+          {/* Filtros de Rango de Tiempo y Tipo */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">🗓️ Filtros de Tiempo</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">🔍 Filtros</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Desde
@@ -343,6 +353,20 @@ export default function AnalyticsPage() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Prioridad
+                </label>
+                <select
+                  value={priorityTypeFilter}
+                  onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="TODAS">Todas</option>
+                  <option value="ESTRATEGICA">Estratégicas</option>
+                  <option value="OPERATIVA">Operativas</option>
+                </select>
+              </div>
+              <div>
                 <button
                   onClick={handleClearFilters}
                   className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
@@ -351,13 +375,14 @@ export default function AnalyticsPage() {
                 </button>
               </div>
             </div>
-            {(dateFrom || dateTo) && (
+            {(dateFrom || dateTo || priorityTypeFilter !== 'TODAS') && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
                   📊 Mostrando datos filtrados:
                   {dateFrom && ` desde ${new Date(dateFrom).toLocaleDateString('es-MX')}`}
                   {dateFrom && dateTo && ' '}
                   {dateTo && ` hasta ${new Date(dateTo).toLocaleDateString('es-MX')}`}
+                  {priorityTypeFilter !== 'TODAS' && ` • Tipo: ${priorityTypeFilter === 'ESTRATEGICA' ? 'Estratégicas' : 'Operativas'}`}
                   {' '}• {priorities.length} prioridades
                 </p>
               </div>
@@ -697,9 +722,18 @@ export default function AnalyticsPage() {
                                       >
                                         <div className="flex items-start justify-between mb-2">
                                           <div className="flex-1">
-                                            <h5 className="font-semibold text-gray-800 text-sm mb-1">
-                                              {priority.title}
-                                            </h5>
+                                            <div className="flex items-center gap-2 mb-1">
+                                              <h5 className="font-semibold text-gray-800 text-sm">
+                                                {priority.title}
+                                              </h5>
+                                              <span className={`text-xs px-2 py-0.5 rounded ${
+                                                (priority.type || 'ESTRATEGICA') === 'ESTRATEGICA'
+                                                  ? 'bg-blue-100 text-blue-700'
+                                                  : 'bg-green-100 text-green-700'
+                                              }`}>
+                                                {(priority.type || 'ESTRATEGICA') === 'ESTRATEGICA' ? 'Estratégica' : 'Operativa'}
+                                              </span>
+                                            </div>
                                             {priority.description && (
                                               <p className="text-xs text-gray-600 line-clamp-2">
                                                 {priority.description}

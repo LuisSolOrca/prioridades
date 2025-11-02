@@ -34,6 +34,7 @@ interface Priority {
   weekStart: string;
   completionPercentage: number;
   status: string;
+  type?: 'ESTRATEGICA' | 'OPERATIVA';
   userId: string;
   initiativeId: string;
 }
@@ -56,6 +57,7 @@ export default function ReportsPage() {
   const [dateTo, setDateTo] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [reportType, setReportType] = useState<ReportType>('priorities');
+  const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -123,8 +125,13 @@ export default function ReportsPage() {
       );
     }
 
+    // Filtro por tipo de prioridad
+    if (priorityTypeFilter !== 'TODAS') {
+      filtered = filtered.filter(p => (p.type || 'ESTRATEGICA') === priorityTypeFilter);
+    }
+
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
+  }, [priorities, selectedUser, selectedInitiative, includeAdmins, dateFrom, dateTo, searchKeyword, priorityTypeFilter, users]);
 
   const filteredUsers = useMemo(() => {
     if (includeAdmins) return users;
@@ -200,6 +207,7 @@ export default function ReportsPage() {
     setDateFrom('');
     setDateTo('');
     setSearchKeyword('');
+    setPriorityTypeFilter('TODAS');
   };
 
   if (status === 'loading' || loading) {
@@ -308,7 +316,7 @@ export default function ReportsPage() {
               </label>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Filtrar por Usuario
@@ -342,6 +350,21 @@ export default function ReportsPage() {
                   {initiatives.map(initiative => (
                     <option key={initiative._id} value={initiative._id}>{initiative.name}</option>
                   ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Prioridad
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={priorityTypeFilter}
+                  onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
+                >
+                  <option value="TODAS">Todas</option>
+                  <option value="ESTRATEGICA">Estratégicas</option>
+                  <option value="OPERATIVA">Operativas</option>
                 </select>
               </div>
 
