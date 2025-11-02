@@ -14,6 +14,8 @@ interface User {
   email: string;
   role: 'ADMIN' | 'USER';
   isActive: boolean;
+  area?: string;
+  isAreaLeader?: boolean;
   password?: string;
 }
 
@@ -28,6 +30,8 @@ export default function AdminUsersPage() {
     email: '',
     role: 'USER',
     isActive: true,
+    area: '',
+    isAreaLeader: false,
     password: ''
   });
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -66,6 +70,8 @@ export default function AdminUsersPage() {
       email: '',
       role: 'USER',
       isActive: true,
+      area: '',
+      isAreaLeader: false,
       password: ''
     });
     setConfirmPassword('');
@@ -291,6 +297,35 @@ export default function AdminUsersPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Área
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      value={formData.area || ''}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                      placeholder="Ej: Tecnología, Ventas, Marketing"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rol
+                    </label>
+                    <select
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'USER' })}
+                    >
+                      <option value="USER">Usuario</option>
+                      <option value="ADMIN">Administrador</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {editingUser ? 'Nueva Contraseña (dejar vacío para no cambiar)' : 'Contraseña *'}
                     </label>
                     <input
@@ -320,25 +355,11 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Rol
-                    </label>
-                    <select
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'USER' })}
-                    >
-                      <option value="USER">Usuario</option>
-                      <option value="ADMIN">Administrador</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Estado
-                    </label>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Estado
+                  </label>
+                  <div className="space-y-3">
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -349,6 +370,18 @@ export default function AdminUsersPage() {
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                       <span className="ml-3 text-sm font-medium text-gray-700">
                         {formData.isActive ? 'Usuario activo' : 'Usuario inactivo'}
+                      </span>
+                    </label>
+
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isAreaLeader || false}
+                        onChange={(e) => setFormData({ ...formData, isAreaLeader: e.target.checked })}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="ml-3 text-sm font-medium text-gray-700">
+                        Líder de área
                       </span>
                     </label>
                   </div>
@@ -382,6 +415,7 @@ export default function AdminUsersPage() {
                     <tr>
                       <th className="text-left py-4 px-6 font-semibold text-gray-700">Usuario</th>
                       <th className="text-left py-4 px-6 font-semibold text-gray-700">Email</th>
+                      <th className="text-left py-4 px-6 font-semibold text-gray-700">Área</th>
                       <th className="text-center py-4 px-6 font-semibold text-gray-700">Rol</th>
                       <th className="text-center py-4 px-6 font-semibold text-gray-700">Estado</th>
                       <th className="text-center py-4 px-6 font-semibold text-gray-700">Acciones</th>
@@ -399,6 +433,22 @@ export default function AdminUsersPage() {
                           </div>
                         </td>
                         <td className="py-4 px-6 text-gray-600">{user.email}</td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-2">
+                            {user.area ? (
+                              <>
+                                <span className="text-gray-700">{user.area}</span>
+                                {user.isAreaLeader && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
+                                    Líder
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-gray-400 text-sm">Sin área</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-4 px-6 text-center">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'

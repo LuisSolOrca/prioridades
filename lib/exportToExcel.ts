@@ -133,3 +133,70 @@ export const exportInitiatives = (
 
   return exportToExcel(data, fileName, 'Iniciativas Estratégicas');
 };
+
+// Función para exportar prioridades agrupadas por área
+export const exportPrioritiesByArea = (
+  priorities: any[],
+  users: any[],
+  initiatives: any[],
+  fileName: string = 'Prioridades_Por_Area'
+) => {
+  // Agrupar usuarios por área
+  const areaMap = new Map<string, { leader: any; users: any[] }>();
+
+  users.forEach(user => {
+    const areaKey = user.area || 'Sin Área Asignada';
+    if (!areaMap.has(areaKey)) {
+      areaMap.set(areaKey, { leader: null, users: [] });
+    }
+    const areaData = areaMap.get(areaKey)!;
+    areaData.users.push(user);
+    if (user.isAreaLeader) {
+      areaData.leader = user;
+    }
+  });
+
+  // Crear datos para exportación
+  const data = priorities.map(priority => {
+    const user = users.find(u => u._id === priority.userId);
+    const userArea = user?.area || 'Sin Área Asignada';
+    const areaData = areaMap.get(userArea);
+    const leader = areaData?.leader;
+
+    // Obtener iniciativas (soportar múltiples iniciativas)
+    const priorityInitiativeIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
+    const priorityInitiatives = priorityInitiativeIds
+      .map((id: string) => initiatives.find(i => i._id === id))
+      .filter((init: any) => init !== undefined);
+    const initiativeNames = priorityInitiatives.map((i: any) => i.name).join(', ') || 'N/A';
+
+    return {
+      'Área': userArea,
+      'Líder de Área': leader?.name || 'Sin líder',
+      'Usuario': user?.name || 'N/A',
+      'Título': priority.title,
+      'Descripción': priority.description || '',
+      'Iniciativa(s)': initiativeNames,
+      'Estado': priority.status,
+      '% Completado': priority.completionPercentage,
+      'Semana Inicio': new Date(priority.weekStart).toLocaleDateString('es-MX'),
+      'Semana Fin': new Date(priority.weekEnd).toLocaleDateString('es-MX'),
+      'Reprogramada': priority.isCarriedOver ? 'Sí' : 'No',
+      'Editado': priority.wasEdited ? 'Sí' : 'No',
+      'Fecha Creación': new Date(priority.createdAt || priority.weekStart).toLocaleDateString('es-MX')
+    };
+  });
+
+  // Ordenar por área, luego por usuario
+  data.sort((a, b) => {
+    if (a['Área'] === b['Área']) {
+      return a['Usuario'].localeCompare(b['Usuario']);
+    }
+    // "Sin Área Asignada" al final
+    if (a['Área'] === 'Sin Área Asignada') return 1;
+    if (b['Área'] === 'Sin Área Asignada') return -1;
+    return a['Área'].localeCompare(b['Área']);
+  });
+
+  return exportToExcel(data, fileName, 'Prioridades por Área');
+};

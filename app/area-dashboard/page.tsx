@@ -1,0 +1,731 @@
+'use client';
+
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import StatusBadge from '@/components/StatusBadge';
+import CommentsSection from '@/components/CommentsSection';
+import MotivationalBanner from '@/components/MotivationalBanner';
+import { getWeekDates, getWeekLabel } from '@/lib/utils';
+import { exportPrioritiesByArea } from '@/lib/exportToExcel';
+import ReactMarkdown from 'react-markdown';
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  area?: string;
+  isAreaLeader?: boolean;
+}
+
+interface Initiative {
+  _id: string;
+  name: string;
+  color: string;
+  order: number;
+  isActive: boolean;
+}
+
+interface ChecklistItem {
+  _id?: string;
+  text: string;
+  completed: boolean;
+  createdAt?: string;
+}
+
+interface EvidenceLink {
+  _id?: string;
+  title: string;
+  url: string;
+  createdAt?: string;
+}
+
+interface Priority {
+  _id: string;
+  title: string;
+  description?: string;
+  weekStart: string;
+  weekEnd: string;
+  completionPercentage: number;
+  status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+  userId: string;
+  initiativeId?: string;
+  initiativeIds?: string[];
+  checklist?: ChecklistItem[];
+  evidenceLinks?: EvidenceLink[];
+  wasEdited: boolean;
+  isCarriedOver?: boolean;
+}
+
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  color: 'blue' | 'green' | 'purple';
+}
+
+function StatCard({ label, value, color }: StatCardProps) {
+  const colors = {
+    blue: 'bg-blue-500',
+    green: 'bg-green-500',
+    purple: 'bg-purple-500'
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-sm text-gray-600 mb-1">{label}</div>
+          <div className="text-3xl font-bold text-gray-800">{value}</div>
+        </div>
+        <div className={`${colors[color]} text-white w-14 h-14 rounded-full flex items-center justify-center`}>
+          📊
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface AreaData {
+  area: string;
+  leader: User | null;
+  users: User[];
+  priorities: Priority[];
+}
+
+interface AreaPriorityCardProps {
+  areaData: AreaData;
+  initiatives: Initiative[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  onViewDetails: (priority: Priority) => void;
+  commentCounts: { [key: string]: number };
+  allUsers: User[];
+}
+
+function AreaPriorityCard({
+  areaData,
+  initiatives,
+  isExpanded,
+  onToggle,
+  onViewDetails,
+  commentCounts,
+  allUsers
+}: AreaPriorityCardProps) {
+  const avgCompletion = areaData.priorities.length > 0
+    ? areaData.priorities.reduce((sum, p) => sum + p.completionPercentage, 0) / areaData.priorities.length
+    : 0;
+
+  const completed = areaData.priorities.filter(p => p.status === 'COMPLETADO').length;
+  const completionRate = areaData.priorities.length > 0 ? (completed / areaData.priorities.length * 100).toFixed(0) : 0;
+
+  const blocked = areaData.priorities.filter(p => p.status === 'BLOQUEADO').length;
+  const atRisk = areaData.priorities.filter(p => p.status === 'EN_RIESGO').length;
+  const hasRisks = blocked > 0 || atRisk > 0;
+
+  return (
+    <div className={`bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow ${hasRisks ? 'border-l-4 border-l-red-500' : ''}`}>
+      <div
+        className="p-6 cursor-pointer"
+        onClick={onToggle}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center flex-1">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 text-white rounded-lg flex items-center justify-center font-bold mr-3 shadow-md">
+              {areaData.area ? areaData.area.substring(0, 2).toUpperCase() : 'SA'}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <div className="font-bold text-gray-800 text-lg">
+                  {areaData.area || 'Sin Área Asignada'}
+                </div>
+                {areaData.leader && (
+                  <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-semibold flex items-center gap-1">
+                    👑 Líder: {areaData.leader.name}
+                  </span>
+                )}
+                {hasRisks && (
+                  <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-semibold flex items-center">
+                    ⚠️ {blocked > 0 && `${blocked} bloqueada${blocked > 1 ? 's' : ''}`}
+                    {blocked > 0 && atRisk > 0 && ' • '}
+                    {atRisk > 0 && `${atRisk} en riesgo`}
+                  </span>
+                )}
+                <span className="ml-2 text-sm text-gray-400">
+                  {isExpanded ? '▼' : '▶'}
+                </span>
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                {areaData.users.length} {areaData.users.length === 1 ? 'persona' : 'personas'} • {areaData.priorities.length} prioridades • {completed} completadas
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-6">
+            <div className="text-right">
+              <div className="text-xs text-gray-500 mb-1">Tasa Completado</div>
+              <div className="text-lg font-bold text-blue-600">{completionRate}%</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-gray-500 mb-1">Promedio Avance</div>
+              <div className="text-2xl font-bold text-gray-800">{avgCompletion.toFixed(0)}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="px-6 pb-6 pt-0 border-t">
+          <div className="mt-4 space-y-3">
+            {areaData.priorities.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                <div className="text-4xl mb-2">📋</div>
+                <div>Sin prioridades esta semana</div>
+              </div>
+            ) : (
+              areaData.priorities.map(priority => {
+                const priorityUser = allUsers.find(u => u._id === priority.userId);
+                const priorityInitiativeIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
+                const priorityInitiatives = priorityInitiativeIds
+                  .map(id => initiatives.find(i => i._id === id))
+                  .filter((init): init is Initiative => init !== undefined);
+                const primaryInitiative = priorityInitiatives[0];
+
+                return (
+                  <div key={priority._id} className="border-l-4 pl-3 py-2 bg-gray-50 rounded" style={{ borderColor: primaryInitiative?.color || '#ccc' }}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-gray-800 text-sm">{priority.title}</div>
+                          {priority.isCarriedOver && (
+                            <span className="bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                              🔄
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewDetails(priority);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 transition relative"
+                            title="Ver descripción detallada"
+                          >
+                            🔍
+                            {commentCounts[priority._id] > 0 && (
+                              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center" style={{ zIndex: 10 }}>
+                                {commentCounts[priority._id]}
+                              </span>
+                            )}
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1 flex items-center gap-2">
+                          <span className="font-semibold">
+                            👤 {priorityUser?.name || 'Usuario desconocido'}
+                          </span>
+                          {priorityInitiatives.length > 0 && (
+                            <span className="text-gray-400">•</span>
+                          )}
+                          <div className="flex flex-wrap gap-1">
+                            {priorityInitiatives.map((initiative, idx) => initiative && (
+                              <span key={initiative._id}>
+                                <span style={{ color: initiative.color }}>●</span> {initiative.name}
+                                {idx < priorityInitiatives.length - 1 ? ' • ' : ''}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <StatusBadge status={priority.status} />
+                    </div>
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>Avance</span>
+                        <span className="font-semibold">{priority.completionPercentage}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          style={{ width: `${priority.completionPercentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AreaDashboardPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [users, setUsers] = useState<User[]>([]);
+  const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [currentWeek, setCurrentWeek] = useState(getWeekDates());
+  const [loading, setLoading] = useState(true);
+  const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set());
+  const [selectedPriority, setSelectedPriority] = useState<Priority | null>(null);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadData();
+    }
+  }, [status, currentWeek]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+
+      const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
+        fetch('/api/users?activeOnly=true'),
+        fetch('/api/initiatives?activeOnly=true'),
+        fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`)
+      ]);
+
+      const [usersData, initiativesData, prioritiesData] = await Promise.all([
+        usersRes.json(),
+        initiativesRes.json(),
+        prioritiesRes.json()
+      ]);
+
+      setUsers(usersData);
+      setInitiatives(initiativesData);
+      setPriorities(prioritiesData);
+
+      await loadCommentCounts(prioritiesData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCommentCounts = async (prioritiesToLoad: Priority[]) => {
+    try {
+      const priorityIds = prioritiesToLoad
+        .filter(p => p._id)
+        .map(p => p._id!)
+        .join(',');
+
+      if (!priorityIds) {
+        setCommentCounts({});
+        return;
+      }
+
+      const response = await fetch(`/api/comments/counts?priorityIds=${priorityIds}`);
+      if (!response.ok) throw new Error('Error loading comment counts');
+
+      const counts = await response.json();
+      setCommentCounts(counts);
+    } catch (error) {
+      console.error('Error loading comment counts:', error);
+      setCommentCounts({});
+    }
+  };
+
+  const areaGroups = useMemo(() => {
+    // Agrupar usuarios por área
+    const areaMap = new Map<string, AreaData>();
+
+    users.forEach(user => {
+      const areaKey = user.area || '';
+
+      if (!areaMap.has(areaKey)) {
+        areaMap.set(areaKey, {
+          area: user.area || '',
+          leader: null,
+          users: [],
+          priorities: []
+        });
+      }
+
+      const areaData = areaMap.get(areaKey)!;
+      areaData.users.push(user);
+
+      if (user.isAreaLeader) {
+        areaData.leader = user;
+      }
+
+      // Agregar las prioridades del usuario
+      const userPriorities = priorities.filter(p => p.userId === user._id);
+      areaData.priorities.push(...userPriorities);
+    });
+
+    // Convertir a array y ordenar (áreas con nombre primero, luego "Sin Área")
+    return Array.from(areaMap.values()).sort((a, b) => {
+      if (!a.area && b.area) return 1;
+      if (a.area && !b.area) return -1;
+      return a.area.localeCompare(b.area);
+    });
+  }, [users, priorities]);
+
+  const stats = useMemo(() => {
+    const total = priorities.length;
+    const completed = priorities.filter(p => p.status === 'COMPLETADO').length;
+    const avgCompletion = total > 0
+      ? priorities.reduce((sum, p) => sum + p.completionPercentage, 0) / total
+      : 0;
+
+    return { total, completed, avgCompletion: avgCompletion.toFixed(1) };
+  }, [priorities]);
+
+  const navigateWeek = (direction: number) => {
+    const newMonday = new Date(currentWeek.monday);
+    newMonday.setDate(newMonday.getDate() + (direction * 7));
+    setCurrentWeek(getWeekDates(newMonday));
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeek(getWeekDates());
+  };
+
+  const handleExport = () => {
+    const fileName = `Dashboard_Areas_${getWeekLabel(currentWeek.monday).replace(/\s/g, '_')}`;
+    exportPrioritiesByArea(priorities, users, initiatives, fileName);
+  };
+
+  const handleExportPowerPoint = async () => {
+    try {
+      const weekLabel = getWeekLabel(currentWeek.monday);
+
+      const response = await fetch('/api/export/powerpoint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStart: currentWeek.monday.toISOString(),
+          weekEnd: currentWeek.friday.toISOString(),
+          weekLabel,
+          groupByArea: true, // Indicar que debe agrupar por área
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar el reporte');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_Prioridades_Areas_${weekLabel.replace(/\s/g, '_')}.pptx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      // Track feature usage
+      await fetch('/api/gamification/track-feature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feature: 'powerpointExports' })
+      });
+    } catch (error) {
+      console.error('Error exporting PowerPoint:', error);
+      alert('Error al exportar a PowerPoint');
+    }
+  };
+
+  const handleAnalyze = async () => {
+    try {
+      setAnalysisLoading(true);
+      setShowAnalysisModal(true);
+      setAiAnalysis('');
+
+      const response = await fetch('/api/ai/analyze-by-area', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weekStart: currentWeek.monday.toISOString(),
+          weekEnd: currentWeek.friday.toISOString(),
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al analizar');
+      }
+
+      const data = await response.json();
+      setAiAnalysis(data.analysis);
+
+      // Track feature usage
+      await fetch('/api/gamification/track-feature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feature: 'aiOrgAnalysis' })
+      });
+    } catch (error) {
+      console.error('Error analyzing:', error);
+      setAiAnalysis('Error al generar el análisis. Por favor intenta nuevamente.');
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  const toggleArea = (area: string) => {
+    const newExpanded = new Set(expandedAreas);
+    if (newExpanded.has(area)) {
+      newExpanded.delete(area);
+    } else {
+      newExpanded.add(area);
+    }
+    setExpandedAreas(newExpanded);
+  };
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <div className="text-gray-600">Cargando dashboard por área...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  const isCurrentWeek =
+    currentWeek.monday.toDateString() === getWeekDates().monday.toDateString();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
+        <div className="space-y-6 fade-in">
+          <MotivationalBanner />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">📊 Dashboard por Área</h1>
+              <p className="text-gray-600 mt-1">Vista organizada por áreas y equipos</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleAnalyze}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-md flex items-center gap-2"
+                title="Analizar con IA"
+              >
+                🤖 Analizar
+              </button>
+              <button
+                onClick={handleExportPowerPoint}
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-700 transition shadow-md flex items-center gap-2"
+                title="Exportar a PowerPoint"
+              >
+                📊 PowerPoint
+              </button>
+              <button
+                onClick={handleExport}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition shadow-md"
+                title="Exportar a Excel"
+              >
+                📥 Exportar
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => navigateWeek(-1)}
+                className="text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition font-semibold"
+              >
+                ← Anterior
+              </button>
+
+              <div className="text-center">
+                <div className="text-lg font-bold text-gray-800">
+                  {getWeekLabel(currentWeek.monday)}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {currentWeek.monday.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                  {' - '}
+                  {currentWeek.friday.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {!isCurrentWeek && (
+                  <button
+                    onClick={goToCurrentWeek}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                  >
+                    Semana Actual
+                  </button>
+                )}
+                <button
+                  onClick={() => navigateWeek(1)}
+                  className="text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition font-semibold"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatCard label="Total Prioridades" value={stats.total} color="blue" />
+            <StatCard label="Completadas" value={stats.completed} color="green" />
+            <StatCard label="Promedio Avance" value={`${stats.avgCompletion}%`} color="purple" />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800">
+                Áreas ({areaGroups.length})
+              </h2>
+              <button
+                onClick={() => {
+                  if (expandedAreas.size === areaGroups.length) {
+                    setExpandedAreas(new Set());
+                  } else {
+                    setExpandedAreas(new Set(areaGroups.map(a => a.area)));
+                  }
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
+              >
+                {expandedAreas.size === areaGroups.length ? 'Colapsar todos' : 'Expandir todos'}
+              </button>
+            </div>
+
+            {areaGroups.map(areaData => (
+              <AreaPriorityCard
+                key={areaData.area || 'sin-area'}
+                areaData={areaData}
+                initiatives={initiatives}
+                isExpanded={expandedAreas.has(areaData.area)}
+                onToggle={() => toggleArea(areaData.area)}
+                onViewDetails={setSelectedPriority}
+                commentCounts={commentCounts}
+                allUsers={users}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {selectedPriority && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold text-gray-800">
+                {selectedPriority.title}
+              </h2>
+              <button
+                onClick={() => setSelectedPriority(null)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Descripción</h3>
+                {selectedPriority.description ? (
+                  <div className="prose prose-sm max-w-none text-gray-600">
+                    <ReactMarkdown>{selectedPriority.description}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic">Sin descripción</p>
+                )}
+              </div>
+
+              {selectedPriority.checklist && selectedPriority.checklist.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Checklist</h3>
+                  <div className="space-y-2">
+                    {selectedPriority.checklist.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={item.completed}
+                          disabled
+                          className="rounded"
+                        />
+                        <span className={item.completed ? 'line-through text-gray-500' : 'text-gray-700'}>
+                          {item.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedPriority.evidenceLinks && selectedPriority.evidenceLinks.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Enlaces de Evidencia</h3>
+                  <div className="space-y-2">
+                    {selectedPriority.evidenceLinks.map((link, idx) => (
+                      <a
+                        key={idx}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        🔗 {link.title}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t pt-4">
+                <CommentsSection priorityId={selectedPriority._id} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAnalysisModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                🤖 Análisis con IA
+              </h2>
+              <button
+                onClick={() => setShowAnalysisModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              {analysisLoading ? (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">⏳</div>
+                  <div className="text-gray-600">Analizando prioridades...</div>
+                </div>
+              ) : (
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

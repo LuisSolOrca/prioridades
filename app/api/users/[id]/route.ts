@@ -82,10 +82,12 @@ export async function PUT(
     if (body.name) user.name = body.name;
     if (body.email) user.email = body.email;
 
-    // Solo admins pueden cambiar el rol y estado
+    // Solo admins pueden cambiar el rol, estado, área y líder de área
     if ((session.user as any).role === 'ADMIN') {
       if (body.role) user.role = body.role;
       if (body.isActive !== undefined) user.isActive = body.isActive;
+      if (body.area !== undefined) user.area = body.area;
+      if (body.isAreaLeader !== undefined) user.isAreaLeader = body.isAreaLeader;
     }
 
     // Si se está cambiando la contraseña

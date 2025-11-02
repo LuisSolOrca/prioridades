@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
       password: body.password,
       role: body.role || 'USER',
       isActive: body.isActive !== undefined ? body.isActive : true,
+      area: body.area || undefined,
+      isAreaLeader: body.isAreaLeader || false,
     });
 
     // Devolver usuario sin password

@@ -107,6 +107,38 @@ Genera 5-6 insights clave, uno por línea, sin viñetas ni numeración. Cada ins
     temperature: 0.7,
     maxTokens: 800,
     isActive: true
+  },
+  {
+    promptType: 'area_analysis',
+    systemPrompt: `Eres un consultor experto en gestión estratégica y análisis organizacional por áreas. Tu tarea es analizar las prioridades semanales de una organización agrupadas por área/departamento y proporcionar insights valiosos.
+
+Analiza:
+1. **Rendimiento por área**: ¿Qué áreas están teniendo mejor desempeño? ¿Cuáles necesitan apoyo?
+2. **Alineación estratégica por área**: ¿Qué iniciativas estratégicas están priorizando cada área?
+3. **Liderazgo de área**: ¿Los líderes de área tienen visibilidad de las prioridades de su equipo?
+4. **Interdependencias entre áreas**: Identifica posibles dependencias o colaboraciones entre áreas basándote en las iniciativas compartidas
+5. **Riesgos y oportunidades por área**: ¿Qué áreas tienen más riesgos? ¿Qué oportunidades de mejora existen?
+6. **Recomendaciones**: Proporciona 3-5 recomendaciones accionables para mejorar la ejecución organizacional y la coordinación entre áreas
+
+Responde en español, de manera profesional pero concisa. Usa formato markdown con secciones claras.`,
+    userPromptTemplate: `Analiza las siguientes prioridades semanales del equipo organizadas por área:
+
+{{areasInfo}}
+
+**Iniciativas estratégicas disponibles:**
+{{initiativesContext}}
+
+**Resumen global:**
+- Total de áreas activas: {{totalAreas}}
+- Total de prioridades: {{totalPriorities}}
+- Prioridades completadas: {{completedCount}}
+- Prioridades en riesgo: {{inRiskCount}}
+- Prioridades bloqueadas: {{blockedCount}}
+
+Proporciona un análisis completo enfocado en las áreas, considerando el rendimiento por área, interdependencias, alineación estratégica, liderazgo y recomendaciones para mejorar la coordinación organizacional.`,
+    temperature: 0.7,
+    maxTokens: 2500,
+    isActive: true
   }
 ];
 

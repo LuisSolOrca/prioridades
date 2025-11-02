@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { weekStart, weekEnd, weekLabel } = body;
+    const { weekStart, weekEnd, weekLabel, groupByArea = false } = body;
 
     // Fetch data
     const [users, initiatives, priorities] = await Promise.all([
@@ -42,60 +42,171 @@ export async function POST(request: NextRequest) {
       const apiKey = process.env.GROQ_API_KEY;
 
       if (apiKey) {
-        // Prepare context for AI
-        const prioritiesContext = priorities.map((p: any) => ({
-          usuario: users.find((u: any) => u._id.toString() === p.userId.toString())?.name || 'Desconocido',
-          titulo: p.title,
-          descripcion: p.description || '',
-          estado: p.status,
-          porcentajeCompletado: p.completionPercentage
-        }));
-
         const completedCount = priorities.filter((p: any) => p.status === 'COMPLETADO').length;
         const inRiskCount = priorities.filter((p: any) => p.status === 'EN_RIESGO').length;
         const blockedCount = priorities.filter((p: any) => p.status === 'BLOQUEADO').length;
         const onTimeCount = priorities.filter((p: any) => p.status === 'EN_TIEMPO').length;
 
-        // Get AI prompt configuration
-        const config = await AIPromptConfig.findOne({ promptType: 'ppt_insights', isActive: true });
+        let systemPrompt: string;
+        let userPrompt: string;
 
-        if (config) {
-          const userPrompt = config.userPromptTemplate
-            .replace('{{prioritiesContext}}', JSON.stringify(prioritiesContext, null, 2))
-            .replace('{{initiativesContext}}', initiatives.map((init: any) => `- ${init.name}: ${init.description || 'Sin descripción'}`).join('\n'))
-            .replace('{{totalPriorities}}', priorities.length.toString())
-            .replace('{{completedCount}}', completedCount.toString())
-            .replace('{{inRiskCount}}', inRiskCount.toString())
-            .replace('{{blockedCount}}', blockedCount.toString())
-            .replace('{{onTimeCount}}', onTimeCount.toString());
+        if (groupByArea) {
+          // Prepare context grouped by area
+          const areaMap = new Map<string, any>();
 
-          // Call Groq API
-          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'llama-3.3-70b-versatile',
-              messages: [
-                { role: 'system', content: config.systemPrompt },
-                { role: 'user', content: userPrompt }
-              ],
-              temperature: config.temperature,
-              max_tokens: config.maxTokens,
-            }),
+          users.forEach((user: any) => {
+            const areaKey = user.area || 'Sin Área Asignada';
+            if (!areaMap.has(areaKey)) {
+              areaMap.set(areaKey, {
+                area: areaKey,
+                leader: null,
+                users: [],
+                priorities: [],
+                stats: {
+                  total: 0,
+                  completed: 0,
+                  inRisk: 0,
+                  blocked: 0,
+                  onTime: 0
+                }
+              });
+            }
+            const areaData = areaMap.get(areaKey)!;
+            areaData.users.push(user.name);
+            if (user.isAreaLeader) {
+              areaData.leader = user.name;
+            }
           });
 
-          if (response.ok) {
-            const data = await response.json();
-            const insightsText = data.choices[0]?.message?.content?.trim() || '';
-            // Split insights by newlines and filter out empty lines
-            aiInsights = insightsText
-              .split('\n')
-              .map((line: string) => line.trim())
-              .filter((line: string) => line.length > 0 && !line.match(/^[0-9.-]+\s*$/));
+          // Add priorities to each area
+          priorities.forEach((p: any) => {
+            const user = users.find((u: any) => u._id.toString() === p.userId.toString());
+            const userArea = user?.area || 'Sin Área Asignada';
+            const areaData = areaMap.get(userArea);
+
+            if (areaData) {
+              // Get initiative names
+              let initiativeNames = 'Sin iniciativa';
+              const pInitIds = p.initiativeIds || (p.initiativeId ? [p.initiativeId] : []);
+              if (pInitIds.length > 0) {
+                const pInitiatives = pInitIds
+                  .map((id: any) => initiatives.find((i: any) => i._id.toString() === id.toString()))
+                  .filter((i: any) => i !== undefined);
+                if (pInitiatives.length > 0) {
+                  initiativeNames = pInitiatives.map((i: any) => i.name).join(', ');
+                }
+              }
+
+              areaData.priorities.push({
+                usuario: user?.name || 'Usuario desconocido',
+                titulo: p.title,
+                descripcion: p.description || '',
+                iniciativas: initiativeNames,
+                estado: p.status,
+                porcentajeCompletado: p.completionPercentage
+              });
+
+              // Update stats
+              areaData.stats.total++;
+              if (p.status === 'COMPLETADO') areaData.stats.completed++;
+              if (p.status === 'EN_RIESGO') areaData.stats.inRisk++;
+              if (p.status === 'BLOQUEADO') areaData.stats.blocked++;
+              if (p.status === 'EN_TIEMPO') areaData.stats.onTime++;
+            }
+          });
+
+          // Convert to array and sort
+          const areasContext = Array.from(areaMap.values())
+            .filter(area => area.priorities.length > 0)
+            .sort((a, b) => {
+              if (a.area === 'Sin Área Asignada') return 1;
+              if (b.area === 'Sin Área Asignada') return -1;
+              return a.area.localeCompare(b.area);
+            });
+
+          systemPrompt = `Eres un consultor experto en gestión estratégica y análisis organizacional por áreas. Tu tarea es generar 5 insights clave sobre las prioridades semanales de una organización agrupadas por área/departamento.
+
+Analiza brevemente:
+1. Rendimiento por área (qué áreas destacan o necesitan apoyo)
+2. Alineación estratégica por área (iniciativas priorizadas)
+3. Liderazgo de área (visibilidad de líderes)
+4. Interdependencias entre áreas
+5. Riesgos y oportunidades organizacionales
+
+Cada insight debe ser:
+- Una sola línea (máximo 150 caracteres)
+- Conciso y accionable
+- Enfocado en áreas, no en usuarios individuales
+- Sin numeración ni formato markdown
+
+Responde en español con exactamente 5 insights, uno por línea.`;
+
+          let areasInfo = '';
+          areasContext.forEach(area => {
+            areasInfo += `\n## Área: ${area.area}\n`;
+            areasInfo += `- Líder: ${area.leader || 'Sin líder asignado'}\n`;
+            areasInfo += `- Miembros: ${area.users.length} personas\n`;
+            areasInfo += `- Prioridades: ${area.stats.total} (${area.stats.completed} completadas, ${area.stats.inRisk} en riesgo, ${area.stats.blocked} bloqueadas)\n`;
+          });
+
+          userPrompt = `Analiza las siguientes prioridades semanales organizadas por área:\n\n${areasInfo}\n\n**Iniciativas estratégicas disponibles:**\n${initiatives.map((init: any) => `- ${init.name}: ${init.description || 'Sin descripción'}`).join('\n')}\n\n**Resumen global:**\n- Total de áreas: ${areasContext.length}\n- Total de prioridades: ${priorities.length}\n- Completadas: ${completedCount} | En riesgo: ${inRiskCount} | Bloqueadas: ${blockedCount}\n\nGenera 5 insights clave enfocados en las áreas y la coordinación organizacional.`;
+
+        } else {
+          // Prepare context by user (original behavior)
+          const prioritiesContext = priorities.map((p: any) => ({
+            usuario: users.find((u: any) => u._id.toString() === p.userId.toString())?.name || 'Desconocido',
+            titulo: p.title,
+            descripcion: p.description || '',
+            estado: p.status,
+            porcentajeCompletado: p.completionPercentage
+          }));
+
+          // Get AI prompt configuration
+          const config = await AIPromptConfig.findOne({ promptType: 'ppt_insights', isActive: true });
+
+          if (config) {
+            systemPrompt = config.systemPrompt;
+            userPrompt = config.userPromptTemplate
+              .replace('{{prioritiesContext}}', JSON.stringify(prioritiesContext, null, 2))
+              .replace('{{initiativesContext}}', initiatives.map((init: any) => `- ${init.name}: ${init.description || 'Sin descripción'}`).join('\n'))
+              .replace('{{totalPriorities}}', priorities.length.toString())
+              .replace('{{completedCount}}', completedCount.toString())
+              .replace('{{inRiskCount}}', inRiskCount.toString())
+              .replace('{{blockedCount}}', blockedCount.toString())
+              .replace('{{onTimeCount}}', onTimeCount.toString());
+          } else {
+            // Fallback if no config found
+            systemPrompt = 'Eres un consultor experto en gestión de proyectos y productividad.';
+            userPrompt = `Analiza estas prioridades: ${JSON.stringify(prioritiesContext, null, 2)}`;
           }
+        }
+
+        // Call Groq API
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 1000,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const insightsText = data.choices[0]?.message?.content?.trim() || '';
+          // Split insights by newlines and filter out empty lines
+          aiInsights = insightsText
+            .split('\n')
+            .map((line: string) => line.trim())
+            .filter((line: string) => line.length > 0 && !line.match(/^[0-9.-]+\s*$/));
         }
       }
     } catch (error) {
@@ -309,31 +420,73 @@ export async function POST(request: NextRequest) {
       legendFontSize: 9,
     });
 
-    // User priorities chart
-    const userPriorityCounts = users.map((user: any) => ({
-      name: user.name,
-      count: priorities.filter((p: any) => p.userId.toString() === user._id.toString()).length,
-    }));
+    // User/Area priorities chart
+    let secondChartData: any;
+    let secondChartTitle: string;
+    let secondChartMaxVal: number;
 
-    const userChartData = [
-      {
-        name: 'Prioridades',
-        labels: userPriorityCounts.map((u: any) => u.name),
-        values: userPriorityCounts.map((u: any) => u.count),
-      },
-    ];
+    if (groupByArea) {
+      // Group by area
+      const areaMap = new Map<string, number>();
+      users.forEach((user: any) => {
+        const areaKey = user.area || 'Sin Área Asignada';
+        if (!areaMap.has(areaKey)) {
+          areaMap.set(areaKey, 0);
+        }
+      });
 
-    slide2.addChart('bar' as any, userChartData, {
+      priorities.forEach((p: any) => {
+        const user = users.find((u: any) => u._id.toString() === p.userId.toString());
+        const areaKey = user?.area || 'Sin Área Asignada';
+        areaMap.set(areaKey, (areaMap.get(areaKey) || 0) + 1);
+      });
+
+      const areaCounts = Array.from(areaMap.entries())
+        .map(([area, count]) => ({ name: area, count }))
+        .sort((a, b) => {
+          if (a.name === 'Sin Área Asignada') return 1;
+          if (b.name === 'Sin Área Asignada') return -1;
+          return a.name.localeCompare(b.name);
+        });
+
+      secondChartData = [
+        {
+          name: 'Prioridades',
+          labels: areaCounts.map((a: any) => a.name),
+          values: areaCounts.map((a: any) => a.count),
+        },
+      ];
+      secondChartTitle = 'Prioridades por Área';
+      secondChartMaxVal = Math.max(...areaCounts.map((a: any) => a.count)) + 2;
+    } else {
+      // Group by user
+      const userPriorityCounts = users.map((user: any) => ({
+        name: user.name,
+        count: priorities.filter((p: any) => p.userId.toString() === user._id.toString()).length,
+      }));
+
+      secondChartData = [
+        {
+          name: 'Prioridades',
+          labels: userPriorityCounts.map((u: any) => u.name),
+          values: userPriorityCounts.map((u: any) => u.count),
+        },
+      ];
+      secondChartTitle = 'Prioridades por Usuario';
+      secondChartMaxVal = Math.max(...userPriorityCounts.map((u: any) => u.count)) + 2;
+    }
+
+    slide2.addChart('bar' as any, secondChartData, {
       x: MARGIN_H + chartWidth + CHART_GAP,
       y: CONTENT_Y,
       w: chartWidth,
       h: CONTENT_H,
-      title: 'Prioridades por Usuario',
+      title: secondChartTitle,
       titleFontSize: 13,
       chartColors: [colors.primary],
       barDir: 'bar',
       showValue: true,
-      valAxisMaxVal: Math.max(...userPriorityCounts.map((u: any) => u.count)) + 2,
+      valAxisMaxVal: secondChartMaxVal,
       catAxisLabelFontSize: 9,
       showValAxisTitle: false,
       showCatAxisTitle: false,
@@ -389,99 +542,234 @@ export async function POST(request: NextRequest) {
     });
 
     // ==========================================
-    // User Detail Slides
+    // Detail Slides (User or Area based)
     // ==========================================
-    for (const user of users) {
-      const userPriorities = priorities.filter((p: any) => p.userId.toString() === (user as any)._id.toString());
-
-      if (userPriorities.length === 0) continue;
-
-      const slide = pptx.addSlide();
-      slide.background = { fill: colors.white };
-      addLogoToSlide(slide);
-
-      slide.addShape('rect', {
-        x: 0,
-        y: 0,
-        w: '100%',
-        h: 1,
-        fill: { color: colors.primary, transparency: 10 },
+    if (groupByArea) {
+      // Area Detail Slides
+      // Group users by area
+      const areaMap = new Map<string, any>();
+      users.forEach((user: any) => {
+        const areaKey = user.area || 'Sin Área Asignada';
+        if (!areaMap.has(areaKey)) {
+          areaMap.set(areaKey, {
+            area: areaKey,
+            leader: null,
+            users: [],
+            priorities: []
+          });
+        }
+        const areaData = areaMap.get(areaKey)!;
+        areaData.users.push(user);
+        if (user.isAreaLeader) {
+          areaData.leader = user;
+        }
       });
 
-      slide.addText((user as any).name, {
-        x: MARGIN_H,
-        y: 0.2,
-        w: 10 - (2 * MARGIN_H),
-        h: 0.5,
-        fontSize: 26,
-        bold: true,
-        color: colors.dark,
+      // Add priorities to each area
+      priorities.forEach((p: any) => {
+        const user = users.find((u: any) => u._id.toString() === p.userId.toString());
+        const areaKey = user?.area || 'Sin Área Asignada';
+        const areaData = areaMap.get(areaKey);
+        if (areaData) {
+          areaData.priorities.push({ ...p, userName: user?.name || 'Desconocido' });
+        }
       });
 
-      const userCompleted = userPriorities.filter((p: any) => p.status === 'COMPLETADO').length;
-      const userAvg = userPriorities.length > 0
-        ? (userPriorities.reduce((sum: number, p: any) => sum + p.completionPercentage, 0) / userPriorities.length).toFixed(0)
-        : 0;
-
-      slide.addText(`${userPriorities.length} Prioridades | ${userCompleted} Completadas | ${userAvg}% Avance Promedio`, {
-        x: MARGIN_H,
-        y: 0.7,
-        w: 10 - (2 * MARGIN_H),
-        h: 0.3,
-        fontSize: 12,
-        color: '6b7280',
+      // Sort areas
+      const areasArray = Array.from(areaMap.values()).sort((a, b) => {
+        if (a.area === 'Sin Área Asignada') return 1;
+        if (b.area === 'Sin Área Asignada') return -1;
+        return a.area.localeCompare(b.area);
       });
 
-      const tableData: any[][] = [];
-      tableData.push([
-        { text: 'Prioridad', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
-        { text: 'Estado', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
-        { text: 'Avance', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
-        { text: 'Iniciativa', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
-      ]);
+      // Create a slide for each area
+      for (const areaData of areasArray) {
+        if (areaData.priorities.length === 0) continue;
 
-      userPriorities.forEach((priority: any) => {
-        const statusColors: any = {
-          EN_TIEMPO: colors.success,
-          EN_RIESGO: colors.warning,
-          BLOQUEADO: colors.danger,
-          COMPLETADO: colors.info,
-        };
+        const slide = pptx.addSlide();
+        slide.background = { fill: colors.white };
+        addLogoToSlide(slide);
 
-        const statusLabels: any = {
-          EN_TIEMPO: 'En Tiempo',
-          EN_RIESGO: 'En Riesgo',
-          BLOQUEADO: 'Bloqueado',
-          COMPLETADO: 'Completado',
-        };
+        slide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: '100%',
+          h: 1,
+          fill: { color: colors.secondary, transparency: 10 },
+        });
 
-        const pInitIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
-        const pInitiatives = pInitIds
-          .map((id: any) => initiatives.find((i: any) => i._id.toString() === id.toString()))
-          .filter((i: any) => i !== undefined);
-        const initiativeNames = pInitiatives.map((i: any) => i.name).join(', ');
+        slide.addText(areaData.area, {
+          x: MARGIN_H,
+          y: 0.2,
+          w: 10 - (2 * MARGIN_H),
+          h: 0.5,
+          fontSize: 26,
+          bold: true,
+          color: colors.dark,
+        });
 
+        const areaCompleted = areaData.priorities.filter((p: any) => p.status === 'COMPLETADO').length;
+        const areaAvg = areaData.priorities.length > 0
+          ? (areaData.priorities.reduce((sum: number, p: any) => sum + p.completionPercentage, 0) / areaData.priorities.length).toFixed(0)
+          : 0;
+
+        const leaderText = areaData.leader ? ` | Líder: ${areaData.leader.name}` : '';
+        slide.addText(`${areaData.priorities.length} Prioridades | ${areaCompleted} Completadas | ${areaAvg}% Avance Promedio${leaderText}`, {
+          x: MARGIN_H,
+          y: 0.7,
+          w: 10 - (2 * MARGIN_H),
+          h: 0.3,
+          fontSize: 12,
+          color: '6b7280',
+        });
+
+        const tableData: any[][] = [];
         tableData.push([
-          { text: priority.title.substring(0, 50) + (priority.title.length > 50 ? '...' : ''), options: { fontSize: 10 } },
-          { text: statusLabels[priority.status], options: { fontSize: 10, fill: statusColors[priority.status], color: colors.white, bold: true } },
-          { text: `${priority.completionPercentage}%`, options: { fontSize: 10, align: 'center' } },
-          { text: initiativeNames.substring(0, 30), options: { fontSize: 9 } },
+          { text: 'Prioridad', options: { bold: true, fill: colors.secondary, color: colors.white, fontSize: 12 } },
+          { text: 'Responsable', options: { bold: true, fill: colors.secondary, color: colors.white, fontSize: 11 } },
+          { text: 'Estado', options: { bold: true, fill: colors.secondary, color: colors.white, fontSize: 12 } },
+          { text: 'Avance', options: { bold: true, fill: colors.secondary, color: colors.white, fontSize: 12 } },
+          { text: 'Iniciativa', options: { bold: true, fill: colors.secondary, color: colors.white, fontSize: 11 } },
         ]);
-      });
 
-      const TABLE_Y = 1.2;
-      const TABLE_H = 5.625 - TABLE_Y - 0.3;
+        areaData.priorities.forEach((priority: any) => {
+          const statusColors: any = {
+            EN_TIEMPO: colors.success,
+            EN_RIESGO: colors.warning,
+            BLOQUEADO: colors.danger,
+            COMPLETADO: colors.info,
+          };
 
-      slide.addTable(tableData, {
-        x: MARGIN_H,
-        y: TABLE_Y,
-        w: 10 - (2 * MARGIN_H),
-        h: TABLE_H,
-        colW: [4.5, 1.8, 1.2, 1.5],
-        border: { type: 'solid', color: 'e5e7eb', pt: 1 },
-        autoPage: false,
-        fontSize: 9,
-      });
+          const statusLabels: any = {
+            EN_TIEMPO: 'En Tiempo',
+            EN_RIESGO: 'En Riesgo',
+            BLOQUEADO: 'Bloqueado',
+            COMPLETADO: 'Completado',
+          };
+
+          const pInitIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
+          const pInitiatives = pInitIds
+            .map((id: any) => initiatives.find((i: any) => i._id.toString() === id.toString()))
+            .filter((i: any) => i !== undefined);
+          const initiativeNames = pInitiatives.map((i: any) => i.name).join(', ');
+
+          tableData.push([
+            { text: priority.title.substring(0, 40) + (priority.title.length > 40 ? '...' : ''), options: { fontSize: 9 } },
+            { text: priority.userName.substring(0, 20), options: { fontSize: 9 } },
+            { text: statusLabels[priority.status], options: { fontSize: 9, fill: statusColors[priority.status], color: colors.white, bold: true } },
+            { text: `${priority.completionPercentage}%`, options: { fontSize: 9, align: 'center' } },
+            { text: initiativeNames.substring(0, 25), options: { fontSize: 8 } },
+          ]);
+        });
+
+        const TABLE_Y = 1.2;
+        const TABLE_H = 5.625 - TABLE_Y - 0.3;
+
+        slide.addTable(tableData, {
+          x: MARGIN_H,
+          y: TABLE_Y,
+          w: 10 - (2 * MARGIN_H),
+          h: TABLE_H,
+          colW: [3.2, 1.5, 1.5, 0.9, 1.9],
+          border: { type: 'solid', color: 'e5e7eb', pt: 1 },
+          autoPage: false,
+          fontSize: 9,
+        });
+      }
+    } else {
+      // User Detail Slides
+      for (const user of users) {
+        const userPriorities = priorities.filter((p: any) => p.userId.toString() === (user as any)._id.toString());
+
+        if (userPriorities.length === 0) continue;
+
+        const slide = pptx.addSlide();
+        slide.background = { fill: colors.white };
+        addLogoToSlide(slide);
+
+        slide.addShape('rect', {
+          x: 0,
+          y: 0,
+          w: '100%',
+          h: 1,
+          fill: { color: colors.primary, transparency: 10 },
+        });
+
+        slide.addText((user as any).name, {
+          x: MARGIN_H,
+          y: 0.2,
+          w: 10 - (2 * MARGIN_H),
+          h: 0.5,
+          fontSize: 26,
+          bold: true,
+          color: colors.dark,
+        });
+
+        const userCompleted = userPriorities.filter((p: any) => p.status === 'COMPLETADO').length;
+        const userAvg = userPriorities.length > 0
+          ? (userPriorities.reduce((sum: number, p: any) => sum + p.completionPercentage, 0) / userPriorities.length).toFixed(0)
+          : 0;
+
+        slide.addText(`${userPriorities.length} Prioridades | ${userCompleted} Completadas | ${userAvg}% Avance Promedio`, {
+          x: MARGIN_H,
+          y: 0.7,
+          w: 10 - (2 * MARGIN_H),
+          h: 0.3,
+          fontSize: 12,
+          color: '6b7280',
+        });
+
+        const tableData: any[][] = [];
+        tableData.push([
+          { text: 'Prioridad', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
+          { text: 'Estado', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
+          { text: 'Avance', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
+          { text: 'Iniciativa', options: { bold: true, fill: colors.primary, color: colors.white, fontSize: 12 } },
+        ]);
+
+        userPriorities.forEach((priority: any) => {
+          const statusColors: any = {
+            EN_TIEMPO: colors.success,
+            EN_RIESGO: colors.warning,
+            BLOQUEADO: colors.danger,
+            COMPLETADO: colors.info,
+          };
+
+          const statusLabels: any = {
+            EN_TIEMPO: 'En Tiempo',
+            EN_RIESGO: 'En Riesgo',
+            BLOQUEADO: 'Bloqueado',
+            COMPLETADO: 'Completado',
+          };
+
+          const pInitIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
+          const pInitiatives = pInitIds
+            .map((id: any) => initiatives.find((i: any) => i._id.toString() === id.toString()))
+            .filter((i: any) => i !== undefined);
+          const initiativeNames = pInitiatives.map((i: any) => i.name).join(', ');
+
+          tableData.push([
+            { text: priority.title.substring(0, 50) + (priority.title.length > 50 ? '...' : ''), options: { fontSize: 10 } },
+            { text: statusLabels[priority.status], options: { fontSize: 10, fill: statusColors[priority.status], color: colors.white, bold: true } },
+            { text: `${priority.completionPercentage}%`, options: { fontSize: 10, align: 'center' } },
+            { text: initiativeNames.substring(0, 30), options: { fontSize: 9 } },
+          ]);
+        });
+
+        const TABLE_Y = 1.2;
+        const TABLE_H = 5.625 - TABLE_Y - 0.3;
+
+        slide.addTable(tableData, {
+          x: MARGIN_H,
+          y: TABLE_Y,
+          w: 10 - (2 * MARGIN_H),
+          h: TABLE_H,
+          colW: [4.5, 1.8, 1.2, 1.5],
+          border: { type: 'solid', color: 'e5e7eb', pt: 1 },
+          autoPage: false,
+          fontSize: 9,
+        });
+      }
     }
 
     // ==========================================

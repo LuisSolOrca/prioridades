@@ -9,7 +9,7 @@ import Navbar from '@/components/Navbar';
 
 interface AIPromptConfig {
   _id: string;
-  promptType: 'title' | 'description' | 'organization_analysis';
+  promptType: 'title' | 'description' | 'organization_analysis' | 'ppt_insights' | 'area_analysis';
   systemPrompt: string;
   userPromptTemplate: string;
   temperature: number;
@@ -20,13 +20,17 @@ interface AIPromptConfig {
 const promptTypeLabels = {
   title: 'Mejora de Títulos',
   description: 'Mejora de Descripciones',
-  organization_analysis: 'Análisis Organizacional'
+  organization_analysis: 'Análisis Organizacional',
+  ppt_insights: 'Insights para PowerPoint (por Usuario)',
+  area_analysis: 'Análisis por Área'
 };
 
 const promptTypeDescriptions = {
   title: 'Prompt utilizado para mejorar los títulos de las prioridades',
   description: 'Prompt utilizado para mejorar las descripciones de las prioridades',
-  organization_analysis: 'Prompt utilizado para el análisis organizacional en el dashboard'
+  organization_analysis: 'Prompt utilizado para el análisis organizacional en el dashboard',
+  ppt_insights: 'Prompt utilizado para generar insights en reportes PowerPoint cuando se agrupa por usuario',
+  area_analysis: 'Prompt utilizado para el análisis organizacional por área en el dashboard de áreas'
 };
 
 export default function AIConfigPage() {

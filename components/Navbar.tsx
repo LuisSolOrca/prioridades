@@ -19,7 +19,8 @@ import {
   Menu,
   X,
   User,
-  ChevronDown
+  ChevronDown,
+  Building2
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -194,6 +195,17 @@ export default function Navbar() {
                   <LayoutDashboard size={22} />
                 </button>
                 <button
+                  onClick={() => handleNavigation('/area-dashboard')}
+                  className={`w-full flex justify-center p-3 rounded-lg transition ${
+                    pathname === '/area-dashboard'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                  title="Dashboard por Área"
+                >
+                  <Building2 size={22} />
+                </button>
+                <button
                   onClick={() => handleNavigation('/priorities')}
                   className={`w-full flex justify-center p-3 rounded-lg transition ${
                     pathname === '/priorities'
@@ -307,6 +319,12 @@ export default function Navbar() {
                   label="Dashboard"
                   active={pathname === '/dashboard'}
                   onClick={() => handleNavigation('/dashboard')}
+                />
+                <NavButton
+                  icon={<Building2 size={20} />}
+                  label="Dashboard por Área"
+                  active={pathname === '/area-dashboard'}
+                  onClick={() => handleNavigation('/area-dashboard')}
                 />
                 <NavButton
                   icon={<ListTodo size={20} />}

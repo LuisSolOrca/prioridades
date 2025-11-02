@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAIPromptConfig extends Document {
-  promptType: 'title' | 'description' | 'organization_analysis' | 'ppt_insights';
+  promptType: 'title' | 'description' | 'organization_analysis' | 'ppt_insights' | 'area_analysis';
   systemPrompt: string;
   userPromptTemplate: string;
   temperature: number;
@@ -15,7 +15,7 @@ const AIPromptConfigSchema = new Schema<IAIPromptConfig>({
   promptType: {
     type: String,
     required: true,
-    enum: ['title', 'description', 'organization_analysis', 'ppt_insights'],
+    enum: ['title', 'description', 'organization_analysis', 'ppt_insights', 'area_analysis'],
     unique: true
   },
   systemPrompt: {

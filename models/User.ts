@@ -8,6 +8,8 @@ export interface IUser {
   password: string;
   role: 'ADMIN' | 'USER';
   isActive: boolean;
+  area?: string;
+  isAreaLeader?: boolean;
   emailNotifications?: {
     enabled: boolean;
     newComments: boolean;
@@ -72,6 +74,14 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
   isActive: {
     type: Boolean,
     default: true,
+  },
+  area: {
+    type: String,
+    trim: true,
+  },
+  isAreaLeader: {
+    type: Boolean,
+    default: false,
   },
   emailNotifications: {
     type: {
