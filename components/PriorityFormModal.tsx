@@ -17,6 +17,7 @@ interface PriorityFormData {
   initiativeIds: string[];
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+  type: 'ESTRATEGICA' | 'OPERATIVA';
   checklist: ChecklistItem[];
   evidenceLinks: EvidenceLink[];
   weekStart?: string;
@@ -375,6 +376,21 @@ export default function PriorityFormModal({
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Tipo de Prioridad */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de Prioridad *
+            </label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as 'ESTRATEGICA' | 'OPERATIVA' })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ESTRATEGICA">Estratégica</option>
+              <option value="OPERATIVA">Operativa</option>
+            </select>
           </div>
 
           {/* Estado */}

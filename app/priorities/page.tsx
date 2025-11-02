@@ -42,6 +42,7 @@ interface Priority {
   weekEnd: string;
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+  type?: 'ESTRATEGICA' | 'OPERATIVA';
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
@@ -71,6 +72,7 @@ export default function PrioritiesPage() {
     initiativeIds: [],
     completionPercentage: 0,
     status: 'EN_TIEMPO',
+    type: 'ESTRATEGICA',
     userId: '',
     weekStart: '',
     weekEnd: '',
@@ -220,6 +222,7 @@ export default function PrioritiesPage() {
       initiativeIds: [],
       completionPercentage: 0,
       status: 'EN_TIEMPO',
+      type: 'ESTRATEGICA',
       userId: (session!.user as any).id,
       weekStart: nextWeek.monday.toISOString(),
       weekEnd: nextWeek.friday.toISOString(),
@@ -239,9 +242,11 @@ export default function PrioritiesPage() {
     }
 
     // Compatibilidad: convertir initiativeId a initiativeIds si existe
+    // y agregar type por defecto si no existe (compatibilidad con prioridades antiguas)
     const editFormData = {
       ...priority,
-      initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : [])
+      initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []),
+      type: priority.type || 'ESTRATEGICA'
     };
     setFormData(editFormData);
     setEditingPriority(priority);
@@ -816,6 +821,7 @@ export default function PrioritiesPage() {
           initiativeIds: formData.initiativeIds || [],
           completionPercentage: formData.completionPercentage,
           status: formData.status,
+          type: formData.type || 'ESTRATEGICA',
           checklist: formData.checklist || [],
           evidenceLinks: formData.evidenceLinks || [],
           weekStart: formData.weekStart,
