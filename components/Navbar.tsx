@@ -106,6 +106,11 @@ export default function Navbar() {
                 active={pathname === '/leaderboard'}
                 onClick={() => router.push('/leaderboard')}
               />
+              <NavButton
+                label="Workflows"
+                active={pathname?.startsWith('/workflows') || false}
+                onClick={() => router.push('/workflows')}
+              />
               {user.role === 'ADMIN' && (
                 <>
                   <NavButton
@@ -199,6 +204,12 @@ export default function Navbar() {
                 label="🏆 Leaderboard"
                 active={pathname === '/leaderboard'}
                 onClick={() => handleNavigation('/leaderboard')}
+                mobile
+              />
+              <NavButton
+                label="Workflows"
+                active={pathname?.startsWith('/workflows') || false}
+                onClick={() => handleNavigation('/workflows')}
                 mobile
               />
               {user.role === 'ADMIN' && (

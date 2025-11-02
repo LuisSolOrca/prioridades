@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import { awardBadge } from '@/lib/gamification';
+import { executeWorkflowsForPriority } from '@/lib/workflows';
 
 export async function GET(request: NextRequest) {
   try {
@@ -108,6 +109,16 @@ export async function POST(request: NextRequest) {
       } catch (badgeError) {
         console.error('[BADGE] Error checking for badges:', badgeError);
       }
+    }
+
+    // Ejecutar workflows basados en evento de creación
+    try {
+      await executeWorkflowsForPriority(
+        priority._id.toString(),
+        'priority_created'
+      );
+    } catch (workflowError) {
+      console.error('Error ejecutando workflows:', workflowError);
     }
 
     return NextResponse.json(priority, { status: 201 });

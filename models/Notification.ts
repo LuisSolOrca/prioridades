@@ -17,7 +17,8 @@ export interface INotification extends Document {
     | 'INITIATIVE_AT_RISK'
     | 'WEEK_COMPLETED'
     | 'WEEK_START_REMINDER'
-    | 'COMMENT_REPLY';
+    | 'COMMENT_REPLY'
+    | 'WORKFLOW_NOTIFICATION';
   title: string;
   message: string;
   priorityId?: mongoose.Types.ObjectId;
@@ -51,7 +52,8 @@ const NotificationSchema = new Schema<INotification>({
       'INITIATIVE_AT_RISK',
       'WEEK_COMPLETED',
       'WEEK_START_REMINDER',
-      'COMMENT_REPLY'
+      'COMMENT_REPLY',
+      'WORKFLOW_NOTIFICATION'
     ],
     required: true
   },

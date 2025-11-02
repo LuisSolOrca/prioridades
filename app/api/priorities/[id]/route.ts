@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import { notifyStatusChange, notifyPriorityUnblocked, notifyCompletionMilestone, notifyWeekCompleted } from '@/lib/notifications';
 import { awardBadge } from '@/lib/gamification';
+import { executeWorkflowsForPriority } from '@/lib/workflows';
 
 export async function GET(
   request: NextRequest,
@@ -168,6 +169,45 @@ export async function PUT(
       }
     } catch (notifyError) {
       console.error('Error sending notifications:', notifyError);
+    }
+
+    // Ejecutar workflows basados en eventos
+    try {
+      // Disparar workflows por cambio de estado
+      if (body.status && body.status !== oldStatus) {
+        await executeWorkflowsForPriority(
+          id,
+          'priority_status_change',
+          oldStatus,
+          oldCompletionPercentage
+        );
+      }
+
+      // Disparar workflows por % completado bajo
+      if (body.completionPercentage !== undefined &&
+          body.completionPercentage < 50 &&
+          oldCompletionPercentage >= 50) {
+        await executeWorkflowsForPriority(
+          id,
+          'completion_low',
+          oldStatus,
+          oldCompletionPercentage
+        );
+      }
+
+      // Disparar workflows por prioridad atrasada
+      const now = new Date();
+      const weekEnd = new Date(priority.weekEnd);
+      if (now > weekEnd && body.status !== 'COMPLETADO') {
+        await executeWorkflowsForPriority(
+          id,
+          'priority_overdue',
+          oldStatus,
+          oldCompletionPercentage
+        );
+      }
+    } catch (workflowError) {
+      console.error('Error ejecutando workflows:', workflowError);
     }
 
     return NextResponse.json(updatedPriority);

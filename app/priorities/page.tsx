@@ -50,6 +50,13 @@ interface Priority {
   wasEdited?: boolean;
 }
 
+interface Workflow {
+  _id: string;
+  name: string;
+  triggerType: string;
+  isActive: boolean;
+}
+
 export default function PrioritiesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -81,6 +88,8 @@ export default function PrioritiesPage() {
     badges: number;
     rank?: number;
   } | null>(null);
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [showWorkflowMenu, setShowWorkflowMenu] = useState<string | null>(null);
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -94,27 +103,53 @@ export default function PrioritiesPage() {
     }
   }, [status, session, router]);
 
+  // Cerrar menú de workflows al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showWorkflowMenu && !target.closest('.relative')) {
+        setShowWorkflowMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showWorkflowMenu]);
+
   const loadData = async () => {
     try {
       setLoading(true);
 
       // Cargar prioridades de la semana actual y la siguiente
-      const [initiativesRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes] = await Promise.all([
+      const [initiativesRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes, workflowsRes] = await Promise.all([
         fetch('/api/initiatives?activeOnly=true'),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`),
-        fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${nextWeek.monday.toISOString()}&weekEnd=${nextWeek.friday.toISOString()}`)
+        fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${nextWeek.monday.toISOString()}&weekEnd=${nextWeek.friday.toISOString()}`),
+        fetch('/api/workflows')
       ]);
 
-      const [initiativesData, currentWeekPriorities, nextWeekPriorities] = await Promise.all([
+      const [initiativesData, currentWeekPriorities, nextWeekPriorities, workflowsData] = await Promise.all([
         initiativesRes.json(),
         currentWeekPrioritiesRes.json(),
-        nextWeekPrioritiesRes.json()
+        nextWeekPrioritiesRes.json(),
+        workflowsRes.json()
       ]);
 
-      setInitiatives(initiativesData);
+      setInitiatives(Array.isArray(initiativesData) ? initiativesData : []);
       // Combinar prioridades de ambas semanas
-      const allPriorities = [...currentWeekPriorities, ...nextWeekPriorities];
+      const allPriorities = [
+        ...(Array.isArray(currentWeekPriorities) ? currentWeekPriorities : []),
+        ...(Array.isArray(nextWeekPriorities) ? nextWeekPriorities : [])
+      ];
       setPriorities(allPriorities);
+
+      // Filtrar solo workflows activos
+      if (Array.isArray(workflowsData)) {
+        const activeWorkflows = workflowsData.filter((w: Workflow) => w.isActive);
+        setWorkflows(activeWorkflows);
+      } else {
+        setWorkflows([]);
+      }
 
       // Cargar conteos de comentarios
       await loadCommentCounts(allPriorities);
@@ -265,6 +300,36 @@ export default function PrioritiesPage() {
     } catch (error) {
       console.error('Error deleting priority:', error);
       alert('Error al eliminar la prioridad');
+    }
+  };
+
+  const executeWorkflow = async (workflowId: string, workflowName: string, priorityId: string) => {
+    try {
+      const res = await fetch(`/api/workflows/${workflowId}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priorityId })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error ejecutando workflow');
+      }
+
+      const data = await res.json();
+      const successActions = data.actionsExecuted.filter((a: any) => a.success).length;
+      const failedActions = data.actionsExecuted.filter((a: any) => !a.success).length;
+
+      alert(
+        `✅ Workflow "${workflowName}" ejecutado\n\n` +
+        `✓ Acciones exitosas: ${successActions}\n` +
+        `${failedActions > 0 ? `✗ Acciones fallidas: ${failedActions}\n` : ''}`
+      );
+
+      setShowWorkflowMenu(null);
+      await loadData();
+    } catch (error: any) {
+      alert(`Error ejecutando workflow: ${error.message}`);
     }
   };
 
@@ -462,6 +527,37 @@ export default function PrioritiesPage() {
                               </div>
                             </div>
                             <div className="flex space-x-2 ml-4">
+                              {/* Botón de workflows */}
+                              {workflows.length > 0 && priority.status !== 'COMPLETADO' && (
+                                <div className="relative">
+                                  <button
+                                    onClick={() => setShowWorkflowMenu(showWorkflowMenu === priority._id ? null : priority._id!)}
+                                    className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition"
+                                    title="Ejecutar workflow"
+                                  >
+                                    ⚡
+                                  </button>
+                                  {showWorkflowMenu === priority._id && (
+                                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                      <div className="p-2">
+                                        <div className="text-xs font-semibold text-gray-500 px-2 py-1">
+                                          Ejecutar workflow:
+                                        </div>
+                                        {workflows.map((workflow) => (
+                                          <button
+                                            key={workflow._id}
+                                            onClick={() => executeWorkflow(workflow._id, workflow.name, priority._id!)}
+                                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                          >
+                                            {workflow.name}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
                               <button
                                 onClick={() => setSelectedPriorityForComments(priority)}
                                 className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition relative"
@@ -581,6 +677,37 @@ export default function PrioritiesPage() {
                               </div>
                             </div>
                             <div className="flex space-x-2 ml-4">
+                              {/* Botón de workflows */}
+                              {workflows.length > 0 && priority.status !== 'COMPLETADO' && (
+                                <div className="relative">
+                                  <button
+                                    onClick={() => setShowWorkflowMenu(showWorkflowMenu === priority._id ? null : priority._id!)}
+                                    className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition"
+                                    title="Ejecutar workflow"
+                                  >
+                                    ⚡
+                                  </button>
+                                  {showWorkflowMenu === priority._id && (
+                                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                      <div className="p-2">
+                                        <div className="text-xs font-semibold text-gray-500 px-2 py-1">
+                                          Ejecutar workflow:
+                                        </div>
+                                        {workflows.map((workflow) => (
+                                          <button
+                                            key={workflow._id}
+                                            onClick={() => executeWorkflow(workflow._id, workflow.name, priority._id!)}
+                                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded transition"
+                                          >
+                                            {workflow.name}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
                               <button
                                 onClick={() => setSelectedPriorityForComments(priority)}
                                 className="text-purple-600 hover:bg-purple-50 w-10 h-10 rounded-lg transition relative"
