@@ -123,6 +123,11 @@ export async function PUT(
       updatedAt: new Date()
     };
 
+    // Si se marca como COMPLETADO, automáticamente completar al 100%
+    if (body.status === 'COMPLETADO' && body.completionPercentage !== 100) {
+      updateData.completionPercentage = 100;
+    }
+
     // Solo manejar initiativeIds si viene en el body
     if (body.initiativeIds !== undefined || body.initiativeId !== undefined) {
       let initiativeIds = body.initiativeIds || [];
