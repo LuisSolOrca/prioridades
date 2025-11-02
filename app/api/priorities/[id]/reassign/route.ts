@@ -48,8 +48,8 @@ export async function PUT(
       );
     }
 
-    // Obtener la prioridad
-    const priority = await Priority.findById(params.id).populate('userId');
+    // Obtener la prioridad (sin populate para evitar problemas de validación)
+    const priority = await Priority.findById(params.id);
 
     if (!priority) {
       return NextResponse.json(
@@ -88,17 +88,18 @@ export async function PUT(
     const previousOwnerName = currentPriorityUser.name;
     const newOwnerName = newUser.name;
 
-    // Reasignar la prioridad
-    priority.userId = newUserId;
-    await priority.save();
-
-    // Poblar para retornar datos completos
-    await priority.populate('userId', 'name email area');
-    await priority.populate('initiativeIds', 'name color');
+    // Reasignar la prioridad usando findByIdAndUpdate para evitar problemas de validación
+    const updatedPriority = await Priority.findByIdAndUpdate(
+      params.id,
+      { userId: newUserId },
+      { new: true, runValidators: false } // No ejecutar validadores para evitar problemas con initiativeIds
+    )
+      .populate('userId', 'name email area')
+      .populate('initiativeIds', 'name color');
 
     // Ejecutar workflows de reasignación (asíncrono, no bloquea la respuesta)
     executeWorkflowsForPriority(
-      priority._id,
+      updatedPriority!._id,
       'priority_reassigned',
       undefined, // previousStatus
       undefined, // previousCompletion
@@ -112,7 +113,7 @@ export async function PUT(
 
     return NextResponse.json({
       message: 'Prioridad reasignada exitosamente',
-      priority
+      priority: updatedPriority
     });
   } catch (error: any) {
     console.error('Error reassigning priority:', error);
