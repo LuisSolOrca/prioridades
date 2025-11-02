@@ -27,6 +27,7 @@ interface Workflow {
 const TRIGGER_LABELS: Record<string, string> = {
   priority_status_change: '📊 Cambio de estado',
   priority_created: '✨ Prioridad creada',
+  priority_updated: '✏️ Prioridad actualizada',
   priority_overdue: '⏰ Prioridad atrasada',
   completion_low: '⚠️ % completado bajo'
 };

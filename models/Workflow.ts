@@ -4,6 +4,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export type TriggerType =
   | 'priority_status_change'    // Cuando cambia el estado de una prioridad
   | 'priority_created'           // Cuando se crea una prioridad
+  | 'priority_updated'           // Cuando se actualiza/edita una prioridad
   | 'priority_overdue'           // Cuando una prioridad está atrasada
   | 'completion_low';            // Cuando % de completado es bajo
 
@@ -147,6 +148,7 @@ const WorkflowSchema = new Schema<IWorkflow>({
     enum: [
       'priority_status_change',
       'priority_created',
+      'priority_updated',
       'priority_overdue',
       'completion_low'
     ],

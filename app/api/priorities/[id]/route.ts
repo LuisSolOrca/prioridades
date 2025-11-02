@@ -173,6 +173,14 @@ export async function PUT(
 
     // Ejecutar workflows basados en eventos
     try {
+      // Disparar workflow general de actualización (se ejecuta siempre que se edita)
+      await executeWorkflowsForPriority(
+        id,
+        'priority_updated',
+        oldStatus,
+        oldCompletionPercentage
+      );
+
       // Disparar workflows por cambio de estado
       if (body.status && body.status !== oldStatus) {
         await executeWorkflowsForPriority(

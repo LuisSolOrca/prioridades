@@ -159,6 +159,11 @@ export default function NewWorkflowPage() {
       title: 'Cuando se crea una nueva prioridad',
       description: 'Se ejecuta automáticamente cada vez que tú o alguien crea una nueva prioridad'
     },
+    priority_updated: {
+      emoji: '✏️',
+      title: 'Cuando se actualiza una prioridad',
+      description: 'Se ejecuta cada vez que se edita o modifica cualquier campo de una prioridad'
+    },
     priority_overdue: {
       emoji: '⏰',
       title: 'Cuando una prioridad está atrasada',
