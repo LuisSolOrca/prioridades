@@ -9,6 +9,7 @@ import AIPromptConfig from '@/models/AIPromptConfig';
 import pptxgen from 'pptxgenjs';
 import * as fs from 'fs';
 import * as path from 'path';
+import { trackFeatureUsage } from '@/lib/gamification';
 
 export const dynamic = 'force-dynamic';
 
@@ -600,6 +601,11 @@ export async function POST(request: NextRequest) {
 
     // Generate file as base64
     const pptxData = await pptx.write({ outputType: 'base64' });
+
+    // Trackear uso de exportación de PowerPoint y otorgar badges
+    if (session.user?.id) {
+      await trackFeatureUsage(session.user.id, 'powerpointExports');
+    }
 
     // Return as downloadable response
     const buffer = Buffer.from(pptxData as string, 'base64');

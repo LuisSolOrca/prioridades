@@ -101,6 +101,11 @@ export default function Navbar() {
                 active={pathname === '/reports'}
                 onClick={() => router.push('/reports')}
               />
+              <NavButton
+                label="🏆 Leaderboard"
+                active={pathname === '/leaderboard'}
+                onClick={() => router.push('/leaderboard')}
+              />
               {user.role === 'ADMIN' && (
                 <>
                   <NavButton
@@ -188,6 +193,12 @@ export default function Navbar() {
                 label="Reportes"
                 active={pathname === '/reports'}
                 onClick={() => handleNavigation('/reports')}
+                mobile
+              />
+              <NavButton
+                label="🏆 Leaderboard"
+                active={pathname === '/leaderboard'}
+                onClick={() => handleNavigation('/leaderboard')}
                 mobile
               />
               {user.role === 'ADMIN' && (

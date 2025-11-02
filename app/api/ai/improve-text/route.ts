@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import AIPromptConfig from '@/models/AIPromptConfig';
+import { trackFeatureUsage } from '@/lib/gamification';
 
 export async function POST(request: NextRequest) {
   try {
@@ -119,6 +120,11 @@ Devuelve SOLO la descripción mejorada, sin títulos ni explicaciones adicionale
       return NextResponse.json({
         error: 'No se pudo generar una mejora'
       }, { status: 500 });
+    }
+
+    // Trackear uso de IA y otorgar badges
+    if (session.user?.id) {
+      await trackFeatureUsage(session.user.id, 'aiTextImprovements');
     }
 
     return NextResponse.json({

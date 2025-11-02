@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, AlignmentType, TextRun, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
+import { trackFeature } from './trackFeature';
 
 interface ReportData {
   title: string;
@@ -125,6 +126,11 @@ export const generatePDFReport = async (data: ReportData, fileName: string = 'Re
 
   // Guardar
   doc.save(`${fileName}.pdf`);
+
+  // Trackear la generación del reporte
+  trackFeature('reportsGenerated').catch(err =>
+    console.error('Error tracking report generation:', err)
+  );
 };
 
 // Generar reporte en DOC
@@ -281,6 +287,11 @@ export const generateDOCReport = async (data: ReportData, fileName: string = 'Re
   // Generar y guardar
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${fileName}.docx`);
+
+  // Trackear la generación del reporte
+  trackFeature('reportsGenerated').catch(err =>
+    console.error('Error tracking report generation:', err)
+  );
 };
 
 // Tipos de reportes predefinidos

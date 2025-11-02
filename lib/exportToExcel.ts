@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { trackFeature } from './trackFeature';
 
 export const exportToExcel = (data: any[], fileName: string, sheetName: string = 'Datos') => {
   try {
@@ -24,6 +25,11 @@ export const exportToExcel = (data: any[], fileName: string, sheetName: string =
 
     // Generar el archivo y descargarlo
     XLSX.writeFile(workbook, `${fileName}.xlsx`);
+
+    // Trackear la exportación de Excel
+    trackFeature('excelExports').catch(err =>
+      console.error('Error tracking Excel export:', err)
+    );
 
     return true;
   } catch (error) {

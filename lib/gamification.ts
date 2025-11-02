@@ -5,25 +5,123 @@ import { sendEmail, emailTemplates } from './email';
 
 // Definición de badges
 export const BADGE_DEFINITIONS = {
-  FIRST_TASK: {
-    name: 'Primera Tarea',
-    description: 'Registró su primera tarea en el checklist',
-    icon: '✅'
+  // Badges de prioridades y tareas
+  PRIMERA_VICTORIA: {
+    name: 'Primera Victoria',
+    description: 'Completó su primera prioridad',
+    icon: '🎯'
   },
-  FIRST_COMMENT: {
+  PERFECCIONISTA: {
+    name: 'Perfeccionista',
+    description: 'Completó una semana al 100%',
+    icon: '💯'
+  },
+  RACHA_FUEGO: {
+    name: 'Racha de Fuego',
+    description: '5 semanas consecutivas al 100%',
+    icon: '🔥'
+  },
+  VETERANO: {
+    name: 'Veterano',
+    description: '20 prioridades completadas',
+    icon: '⭐'
+  },
+  IMPARABLE: {
+    name: 'Imparable',
+    description: '10 prioridades completadas en un mes',
+    icon: '🚀'
+  },
+
+  // Badges de colaboración
+  PRIMER_COMENTARIO: {
     name: 'Primer Comentario',
     description: 'Agregó su primer comentario',
     icon: '💬'
   },
-  FIRST_MENTION: {
+  PRIMERA_MENCION: {
     name: 'Primera Mención',
     description: 'Mencionó a otro usuario por primera vez',
     icon: '@️'
   },
-  FIVE_WEEKS_STREAK: {
-    name: 'Racha de 5 Semanas',
-    description: '5 semanas consecutivas con 100% de prioridades completadas',
-    icon: '🔥'
+  CONVERSADOR: {
+    name: 'Conversador',
+    description: 'Realizó 10 comentarios',
+    icon: '💭'
+  },
+
+  // Badges de IA
+  ASISTENTE_IA: {
+    name: 'Asistente IA',
+    description: 'Usó la mejora de texto con IA por primera vez',
+    icon: '🤖'
+  },
+  POTENCIADO_IA: {
+    name: 'Potenciado por IA',
+    description: 'Usó la mejora de texto con IA 5 veces',
+    icon: '✨'
+  },
+  ESTRATEGA_IA: {
+    name: 'Estratega IA',
+    description: 'Generó su primer análisis organizacional con IA',
+    icon: '🧠'
+  },
+
+  // Badges de reportes y exportación
+  REPORTERO: {
+    name: 'Reportero',
+    description: 'Generó su primer reporte',
+    icon: '📄'
+  },
+  PRESENTADOR: {
+    name: 'Presentador',
+    description: 'Exportó su primera presentación de PowerPoint',
+    icon: '📊'
+  },
+  ANALISTA_DATOS: {
+    name: 'Analista de Datos',
+    description: 'Exportó datos a Excel por primera vez',
+    icon: '📈'
+  },
+  EXPORTADOR_PRO: {
+    name: 'Exportador Pro',
+    description: 'Realizó 10 exportaciones (Excel, PowerPoint, PDF)',
+    icon: '💾'
+  },
+
+  // Badges de analytics
+  CURIOSO: {
+    name: 'Curioso',
+    description: 'Visitó la página de Analytics por primera vez',
+    icon: '🔍'
+  },
+  ANALISTA: {
+    name: 'Analista',
+    description: 'Visitó Analytics 10 veces',
+    icon: '📉'
+  },
+
+  // Badges de visualización
+  ORGANIZADOR_VISUAL: {
+    name: 'Organizador Visual',
+    description: 'Usó el tablero Kanban por primera vez',
+    icon: '🗂️'
+  },
+  MAESTRO_KANBAN: {
+    name: 'Maestro Kanban',
+    description: 'Usó el tablero Kanban 20 veces',
+    icon: '🎴'
+  },
+
+  // Badges especiales
+  EXPLORADOR: {
+    name: 'Explorador',
+    description: 'Usó todas las funcionalidades del sistema',
+    icon: '🌟'
+  },
+  POWER_USER: {
+    name: 'Power User',
+    description: 'Usuario avanzado: más de 50 acciones en funcionalidades premium',
+    icon: '⚡'
   }
 };
 
@@ -308,10 +406,190 @@ export async function getMonthlyLeaderboard() {
 }
 
 /**
+ * Trackea el uso de una funcionalidad y otorga badges correspondientes
+ */
+export async function trackFeatureUsage(
+  userId: string,
+  feature: 'aiTextImprovements' | 'aiOrgAnalysis' | 'powerpointExports' | 'analyticsVisits' | 'reportsGenerated' | 'excelExports' | 'kanbanViews'
+) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return null;
+
+    // Inicializar gamification si no existe
+    if (!user.gamification) {
+      user.gamification = {
+        points: 0,
+        currentMonthPoints: 0,
+        totalPoints: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        badges: [],
+        featureUsage: {
+          aiTextImprovements: 0,
+          aiOrgAnalysis: 0,
+          powerpointExports: 0,
+          analyticsVisits: 0,
+          reportsGenerated: 0,
+          excelExports: 0,
+          kanbanViews: 0,
+        }
+      };
+    }
+
+    if (!user.gamification.featureUsage) {
+      user.gamification.featureUsage = {
+        aiTextImprovements: 0,
+        aiOrgAnalysis: 0,
+        powerpointExports: 0,
+        analyticsVisits: 0,
+        reportsGenerated: 0,
+        excelExports: 0,
+        kanbanViews: 0,
+      };
+    }
+
+    // Incrementar contador
+    user.gamification.featureUsage[feature] += 1;
+    const count = user.gamification.featureUsage[feature];
+
+    // Determinar y otorgar badges según la funcionalidad y el contador
+    const newBadges: string[] = [];
+
+    switch (feature) {
+      case 'aiTextImprovements':
+        if (count === 1) newBadges.push('ASISTENTE_IA');
+        if (count === 5) newBadges.push('POTENCIADO_IA');
+        break;
+
+      case 'aiOrgAnalysis':
+        if (count === 1) newBadges.push('ESTRATEGA_IA');
+        break;
+
+      case 'powerpointExports':
+        if (count === 1) newBadges.push('PRESENTADOR');
+        break;
+
+      case 'reportsGenerated':
+        if (count === 1) newBadges.push('REPORTERO');
+        break;
+
+      case 'excelExports':
+        if (count === 1) newBadges.push('ANALISTA_DATOS');
+        break;
+
+      case 'analyticsVisits':
+        if (count === 1) newBadges.push('CURIOSO');
+        if (count === 10) newBadges.push('ANALISTA');
+        break;
+
+      case 'kanbanViews':
+        if (count === 1) newBadges.push('ORGANIZADOR_VISUAL');
+        if (count === 20) newBadges.push('MAESTRO_KANBAN');
+        break;
+    }
+
+    // Badge de exportador pro (10 exportaciones combinadas)
+    const totalExports =
+      (user.gamification.featureUsage.powerpointExports || 0) +
+      (user.gamification.featureUsage.reportsGenerated || 0) +
+      (user.gamification.featureUsage.excelExports || 0);
+
+    if (totalExports === 10) {
+      newBadges.push('EXPORTADOR_PRO');
+    }
+
+    // Badge de explorador (usó todas las funcionalidades al menos una vez)
+    const allFeatures = Object.values(user.gamification.featureUsage || {});
+    if (allFeatures.every(v => v > 0)) {
+      newBadges.push('EXPLORADOR');
+    }
+
+    // Badge de power user (más de 50 acciones en total)
+    const totalActions = allFeatures.reduce((sum, v) => sum + v, 0);
+    if (totalActions >= 50) {
+      newBadges.push('POWER_USER');
+    }
+
+    // Otorgar badges nuevos
+    for (const badgeId of newBadges) {
+      const alreadyHas = user.gamification.badges?.some(b => b.badgeId === badgeId);
+      if (!alreadyHas) {
+        if (!user.gamification.badges) user.gamification.badges = [];
+        user.gamification.badges.push({
+          badgeId,
+          earnedAt: new Date()
+        });
+      }
+    }
+
+    await user.save();
+    return { user, newBadges };
+  } catch (error) {
+    console.error('Error tracking feature usage:', error);
+    return null;
+  }
+}
+
+/**
+ * Trackea comentarios y otorga badges correspondientes
+ */
+export async function trackCommentBadges(userId: string, hasMention: boolean = false) {
+  try {
+    const Comment = (await import('@/models/Comment')).default;
+
+    const userComments = await Comment.countDocuments({
+      userId,
+      isSystemComment: false
+    });
+
+    const newBadges: string[] = [];
+
+    if (userComments === 1) {
+      await awardBadge(userId, 'PRIMER_COMENTARIO');
+      newBadges.push('PRIMER_COMENTARIO');
+    }
+
+    if (userComments === 10) {
+      await awardBadge(userId, 'CONVERSADOR');
+      newBadges.push('CONVERSADOR');
+    }
+
+    if (hasMention) {
+      const user = await User.findById(userId);
+      const alreadyHasMention = user?.gamification?.badges?.some(b => b.badgeId === 'PRIMERA_MENCION');
+      if (!alreadyHasMention) {
+        await awardBadge(userId, 'PRIMERA_MENCION');
+        newBadges.push('PRIMERA_MENCION');
+      }
+    }
+
+    return newBadges;
+  } catch (error) {
+    console.error('Error tracking comment badges:', error);
+    return [];
+  }
+}
+
+/**
  * Obtiene los badges de un usuario
  */
 export async function getUserBadges(userId: string) {
   try {
+    // Primero intentar obtener desde user.gamification.badges
+    const user = await User.findById(userId).select('gamification.badges');
+    if (user?.gamification?.badges && user.gamification.badges.length > 0) {
+      // Mapear badges del usuario a un formato más completo
+      const badgeDefinitions: any = BADGE_DEFINITIONS;
+
+      return user.gamification.badges.map((badge: any) => ({
+        ...badgeDefinitions[badge.badgeId],
+        badgeId: badge.badgeId,
+        earnedAt: badge.earnedAt
+      }));
+    }
+
+    // Fallback: buscar en la tabla de badges (legacy)
     const badges = await Badge.find({ userId }).sort({ earnedAt: -1 });
     return badges;
   } catch (error) {

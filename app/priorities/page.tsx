@@ -297,7 +297,9 @@ export default function PrioritiesPage() {
     );
   }
 
-  if (!session) return null;
+  if (!session) {
+    return null;
+  }
 
   // Separar prioridades por semana
   const currentWeekPriorities = priorities.filter(p => {

@@ -7,8 +7,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
-import MonthlyLeaderboard from '@/components/MonthlyLeaderboard';
 import { exportUserStats, exportInitiativeStats } from '@/lib/exportToExcel';
+import { trackFeature } from '@/lib/trackFeature';
 
 interface User {
   _id: string;
@@ -55,6 +55,10 @@ export default function AnalyticsPage() {
     }
     if (status === 'authenticated') {
       loadData();
+      // Trackear visita a Analytics
+      trackFeature('analyticsVisits').catch(err =>
+        console.error('Error tracking analytics visit:', err)
+      );
     }
   }, [status, router]);
 
@@ -321,9 +325,6 @@ export default function AnalyticsPage() {
               </div>
             )}
           </div>
-
-          {/* Monthly Leaderboard */}
-          <MonthlyLeaderboard />
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">

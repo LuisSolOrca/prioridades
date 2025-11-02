@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import KanbanCard from '@/components/KanbanCard';
 import CommentsSection from '@/components/CommentsSection';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
+import { trackFeature } from '@/lib/trackFeature';
 
 interface Initiative {
   _id: string;
@@ -48,6 +49,10 @@ export default function PrioritiesKanbanPage() {
     }
     if (status === 'authenticated' && session) {
       loadData();
+      // Trackear visita al tablero Kanban
+      trackFeature('kanbanViews').catch(err =>
+        console.error('Error tracking kanban view:', err)
+      );
     }
   }, [status, session, router]);
 

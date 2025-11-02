@@ -21,6 +21,20 @@ export interface IUser {
     currentStreak: number;
     longestStreak: number;
     lastCompletedWeek?: Date;
+    lastStreakUpdate?: Date;
+    badges?: Array<{
+      badgeId: string;
+      earnedAt: Date;
+    }>;
+    featureUsage?: {
+      aiTextImprovements: number;
+      aiOrgAnalysis: number;
+      powerpointExports: number;
+      analyticsVisits: number;
+      reportsGenerated: number;
+      excelExports: number;
+      kanbanViews: number;
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -81,6 +95,31 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
       currentStreak: { type: Number, default: 0 },
       longestStreak: { type: Number, default: 0 },
       lastCompletedWeek: { type: Date },
+      lastStreakUpdate: { type: Date },
+      badges: [{
+        badgeId: { type: String },
+        earnedAt: { type: Date, default: Date.now }
+      }],
+      featureUsage: {
+        type: {
+          aiTextImprovements: { type: Number, default: 0 },
+          aiOrgAnalysis: { type: Number, default: 0 },
+          powerpointExports: { type: Number, default: 0 },
+          analyticsVisits: { type: Number, default: 0 },
+          reportsGenerated: { type: Number, default: 0 },
+          excelExports: { type: Number, default: 0 },
+          kanbanViews: { type: Number, default: 0 },
+        },
+        default: {
+          aiTextImprovements: 0,
+          aiOrgAnalysis: 0,
+          powerpointExports: 0,
+          analyticsVisits: 0,
+          reportsGenerated: 0,
+          excelExports: 0,
+          kanbanViews: 0,
+        },
+      },
     },
     default: {
       points: 0,
@@ -88,6 +127,16 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
       totalPoints: 0,
       currentStreak: 0,
       longestStreak: 0,
+      badges: [],
+      featureUsage: {
+        aiTextImprovements: 0,
+        aiOrgAnalysis: 0,
+        powerpointExports: 0,
+        analyticsVisits: 0,
+        reportsGenerated: 0,
+        excelExports: 0,
+        kanbanViews: 0,
+      },
     },
   },
 }, {

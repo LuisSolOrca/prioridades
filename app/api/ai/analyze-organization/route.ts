@@ -6,6 +6,7 @@ import Priority from '@/models/Priority';
 import User from '@/models/User';
 import StrategicInitiative from '@/models/StrategicInitiative';
 import AIPromptConfig from '@/models/AIPromptConfig';
+import { trackFeatureUsage } from '@/lib/gamification';
 
 export async function POST(request: NextRequest) {
   try {
@@ -164,6 +165,11 @@ Proporciona un análisis completo considerando dependencias, alineación estrat�
       return NextResponse.json({
         error: 'No se pudo generar el análisis'
       }, { status: 500 });
+    }
+
+    // Trackear uso de análisis organizacional y otorgar badges
+    if (session.user?.id) {
+      await trackFeatureUsage(session.user.id, 'aiOrgAnalysis');
     }
 
     return NextResponse.json({

@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * API endpoint para buscar usuarios por nombre
  * Usado para autocompletar menciones en comentarios
