@@ -400,7 +400,15 @@ export default function PriorityFormModal({
             </label>
             <select
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              onChange={(e) => {
+                const newStatus = e.target.value as any;
+                // Si cambia a COMPLETADO, actualizar porcentaje a 100%
+                if (newStatus === 'COMPLETADO') {
+                  setFormData({ ...formData, status: newStatus, completionPercentage: 100 });
+                } else {
+                  setFormData({ ...formData, status: newStatus });
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="EN_TIEMPO">En Tiempo</option>
@@ -421,7 +429,15 @@ export default function PriorityFormModal({
               max="100"
               step="5"
               value={formData.completionPercentage}
-              onChange={(e) => setFormData({ ...formData, completionPercentage: parseInt(e.target.value) })}
+              onChange={(e) => {
+                const newPercentage = parseInt(e.target.value);
+                // Si el estado es COMPLETADO y el porcentaje cambia a menos de 100, cambiar estado
+                if (formData.status === 'COMPLETADO' && newPercentage < 100) {
+                  setFormData({ ...formData, completionPercentage: newPercentage, status: 'EN_TIEMPO' });
+                } else {
+                  setFormData({ ...formData, completionPercentage: newPercentage });
+                }
+              }}
               className="w-full"
             />
           </div>
