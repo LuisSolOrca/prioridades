@@ -1,6 +1,7 @@
 import Notification from '@/models/Notification';
 import { sendEmail, emailTemplates } from './email';
 import User from '@/models/User';
+import Priority from '@/models/Priority';
 
 interface CreateNotificationParams {
   userId: string;
@@ -22,6 +23,7 @@ interface CreateNotificationParams {
   title: string;
   message: string;
   priorityId?: string;
+  priorityTitle?: string; // Título de la prioridad para usar en emails
   commentId?: string;
   actionUrl?: string;
   sendEmail?: boolean;
@@ -29,6 +31,15 @@ interface CreateNotificationParams {
 
 export async function createNotification(params: CreateNotificationParams) {
   try {
+    // Si hay priorityId pero no priorityTitle, buscar el título
+    let priorityTitle = params.priorityTitle;
+    if (params.priorityId && !priorityTitle) {
+      const priority = await Priority.findById(params.priorityId).select('title').lean();
+      if (priority) {
+        priorityTitle = priority.title;
+      }
+    }
+
     const notification = await Notification.create({
       userId: params.userId,
       type: params.type,
@@ -55,7 +66,7 @@ export async function createNotification(params: CreateNotificationParams) {
               const oldStatus = statusMatch ? statusMatch[1] : 'Estado anterior';
               const newStatus = statusMatch ? statusMatch[2] : 'Nuevo estado';
               emailContent = emailTemplates.statusChange({
-                priorityTitle: params.title.replace(/^Prioridad "(.+)" cambió a .+$/, '$1'),
+                priorityTitle: priorityTitle || 'Prioridad',
                 oldStatus,
                 newStatus,
                 priorityUrl
@@ -67,9 +78,8 @@ export async function createNotification(params: CreateNotificationParams) {
             if (user.emailNotifications.newComments) {
               // Extraer nombre del comentarista del título
               const commenterName = params.title.split(' comentó en ')[0];
-              const priorityTitle = params.title.split('" comentó en "')[1]?.replace('"', '') || 'Prioridad';
               emailContent = emailTemplates.newComment({
-                priorityTitle,
+                priorityTitle: priorityTitle || 'Prioridad',
                 commentAuthor: commenterName,
                 commentText: params.message,
                 priorityUrl
@@ -81,10 +91,9 @@ export async function createNotification(params: CreateNotificationParams) {
             if (user.emailNotifications.newComments) {
               // Extraer nombre del mencionador del título
               const mentionerName = params.title.split(' te mencionó en ')[0];
-              const priorityTitle = params.title.split('" te mencionó en "')[1]?.replace('"', '') || 'Prioridad';
               emailContent = emailTemplates.mention({
                 mentionerName,
-                priorityTitle,
+                priorityTitle: priorityTitle || 'Prioridad',
                 commentText: params.message,
                 priorityUrl
               });
@@ -94,10 +103,9 @@ export async function createNotification(params: CreateNotificationParams) {
           case 'COMMENT_REPLY':
             if (user.emailNotifications.newComments) {
               const replierName = params.title.split(' respondió a tu comentario en ')[0];
-              const priorityTitle = params.title.split('" respondió a tu comentario en "')[1]?.replace('"', '') || 'Prioridad';
               emailContent = emailTemplates.commentReply({
                 replierName,
-                priorityTitle,
+                priorityTitle: priorityTitle || 'Prioridad',
                 replyText: params.message,
                 priorityUrl
               });
@@ -106,7 +114,7 @@ export async function createNotification(params: CreateNotificationParams) {
 
           case 'PRIORITY_DUE_SOON':
             emailContent = emailTemplates.priorityDueSoon({
-              priorityTitle: params.title.replace(/^⏰ Prioridad "(.+)" vence pronto$/, '$1'),
+              priorityTitle: priorityTitle || 'Prioridad',
               completionPercentage: parseInt(params.message.match(/(\d+)%/)?.[1] || '0'),
               priorityUrl
             });
@@ -114,7 +122,7 @@ export async function createNotification(params: CreateNotificationParams) {
 
           case 'COMPLETION_MILESTONE':
             emailContent = emailTemplates.completionMilestone({
-              priorityTitle: params.title.match(/"(.+)" alcanzó/)?.[1] || 'Prioridad',
+              priorityTitle: priorityTitle || 'Prioridad',
               milestone: parseInt(params.title.match(/(\d+)%/)?.[1] || '0'),
               priorityUrl
             });
@@ -122,17 +130,16 @@ export async function createNotification(params: CreateNotificationParams) {
 
           case 'PRIORITY_INACTIVE':
             emailContent = emailTemplates.priorityInactive({
-              priorityTitle: params.title.replace(/^🔔 Prioridad "(.+)" sin actividad$/, '$1'),
+              priorityTitle: priorityTitle || 'Prioridad',
               daysInactive: parseInt(params.message.match(/(\d+) días/)?.[1] || '0'),
               priorityUrl
             });
             break;
 
           case 'PRIORITY_UNBLOCKED':
-            const unblockedTitle = params.title.replace(/^✅ ¡Prioridad "(.+)" desbloqueada!$/, '$1');
             const unblockedStatus = params.message.match(/"Bloqueado" a "([^"]+)"/)?.[1] || 'En Tiempo';
             emailContent = emailTemplates.priorityUnblocked({
-              priorityTitle: unblockedTitle,
+              priorityTitle: priorityTitle || 'Prioridad',
               newStatus: unblockedStatus,
               priorityUrl
             });
