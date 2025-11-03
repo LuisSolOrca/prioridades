@@ -244,7 +244,7 @@ export default function DashboardPage() {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
-  const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('ESTRATEGICA');
+  const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
   const [userStats, setUserStats] = useState<{
     points: number;
     currentStreak: number;
@@ -557,11 +557,12 @@ export default function DashboardPage() {
                 <select
                   value={priorityTypeFilter}
                   onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium bg-gray-100 cursor-not-allowed"
+                  disabled
                 >
+                  <option value="TODAS">Todas</option>
                   <option value="ESTRATEGICA">Estratégicas</option>
                   <option value="OPERATIVA">Operativas</option>
-                  <option value="TODAS">Todas</option>
                 </select>
               </div>
               <div className="text-sm text-gray-600">
