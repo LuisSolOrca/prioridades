@@ -38,11 +38,17 @@ export async function GET(request: NextRequest) {
       query.userId = userId;
     }
 
-    // Filtrar por rango de semana
-    if (weekStart && weekEnd) {
+    // Filtrar por semana exacta
+    // Usamos solo weekStart porque cada prioridad pertenece a una semana específica
+    if (weekStart) {
+      const weekStartDate = new Date(weekStart);
+      // Crear rango de 1 día para comparación (mismo día, cualquier hora)
+      const nextDay = new Date(weekStartDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
       query.weekStart = {
-        $gte: new Date(weekStart),
-        $lte: new Date(weekEnd)
+        $gte: weekStartDate,
+        $lt: nextDay
       };
     }
 
