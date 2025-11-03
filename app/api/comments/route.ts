@@ -5,7 +5,6 @@ import connectDB from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import Priority from '@/models/Priority';
 import User from '@/models/User';
-import { sendEmail, emailTemplates } from '@/lib/email';
 import { notifyComment, notifyMention } from '@/lib/notifications';
 import { trackCommentBadges } from '@/lib/gamification';
 
@@ -78,14 +77,14 @@ export async function POST(request: NextRequest) {
     // Variable para trackear si hubo mención
     let hasMention = false;
 
-    // Crear notificaciones y enviar emails (solo para comentarios normales, no del sistema)
+    // Crear notificaciones (solo para comentarios normales, no del sistema)
     if (!isSystemComment) {
       try {
-        console.log('[EMAIL] Starting notification process for comment');
+        console.log('[NOTIFICATION] Starting notification process for comment');
         const priority = await Priority.findById(priorityId).lean();
 
         if (!priority) {
-          console.log('[EMAIL] Priority not found');
+          console.log('[NOTIFICATION] Priority not found');
           return NextResponse.json(populatedComment, { status: 201 });
         }
 
@@ -166,62 +165,14 @@ export async function POST(request: NextRequest) {
           }
         }
 
-      console.log('[EMAIL] Priority owner:', priorityOwner?.email);
-      console.log('[EMAIL] Comment author:', commentAuthor?.email);
-      console.log('[EMAIL] Email notifications enabled:', priorityOwner?.emailNotifications?.enabled);
-      console.log('[EMAIL] New comments enabled:', priorityOwner?.emailNotifications?.newComments);
-      console.log('[EMAIL] EMAIL_USERNAME set:', !!process.env.EMAIL_USERNAME);
-      console.log('[EMAIL] EMAIL_PASSWORD set:', !!process.env.EMAIL_PASSWORD);
-
-      // Enviar email SIEMPRE, tanto si es del dueño como si no (para tener registro)
-      if (
-        priorityOwner &&
-        commentAuthor &&
-        priorityOwner.emailNotifications?.enabled &&
-        priorityOwner.emailNotifications?.newComments
-      ) {
-        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-
-        // Determinar si es propio comentario o de otro usuario
-        const isOwnComment = priorityOwner._id.toString() === commentAuthor._id.toString();
-
-        console.log('[EMAIL] Is own comment:', isOwnComment);
-        console.log('[EMAIL] Sending to:', priorityOwner.email);
-
-        const emailContent = emailTemplates.newComment({
-          priorityTitle: priority.title,
-          commentAuthor: isOwnComment ? `${commentAuthor.name} (tú)` : commentAuthor.name,
-          commentText: text.trim(),
-          priorityUrl: `${baseUrl}/priorities`,
-        });
-
-        // Enviar email de forma asíncrona sin bloquear la respuesta
-        sendEmail({
-          to: priorityOwner.email,
-          subject: isOwnComment
-            ? `📝 Registro de tu comentario: ${priority.title}`
-            : emailContent.subject,
-          html: emailContent.html,
-        })
-          .then((result) => {
-            console.log('[EMAIL] Email sent successfully:', result);
-          })
-          .catch(err => {
-            console.error('[EMAIL] Error sending notification email:', err);
-          });
-      } else {
-        console.log('[EMAIL] Email not sent - conditions not met');
-        if (!priorityOwner) console.log('[EMAIL] - No priority owner');
-        if (!commentAuthor) console.log('[EMAIL] - No comment author');
-        if (!priorityOwner?.emailNotifications?.enabled) console.log('[EMAIL] - Notifications disabled');
-        if (!priorityOwner?.emailNotifications?.newComments) console.log('[EMAIL] - New comments notifications disabled');
-      }
-      } catch (emailError) {
-        // No fallar la creación del comentario si el email falla
-        console.error('[EMAIL] Error in email notification process:', emailError);
+        // NOTA: No enviar emails aquí porque las funciones notifyComment() y notifyMention()
+        // ya se encargan de crear las notificaciones Y enviar los emails correspondientes.
+      } catch (notificationError) {
+        // No fallar la creación del comentario si las notificaciones fallan
+        console.error('[NOTIFICATION] Error in notification process:', notificationError);
       }
     } else {
-      console.log('[EMAIL] Skipping email notification for system comment');
+      console.log('[NOTIFICATION] Skipping notifications for system comment');
     }
 
     // Trackear badges de comentarios al final (fuera del bloque try para notificaciones)
