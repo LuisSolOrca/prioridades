@@ -35,10 +35,10 @@ export async function GET(
       );
     }
 
-    // Verificar que el usuario pueda ver este workflow
-    if (session.user.role !== 'ADMIN' && workflow.createdBy._id.toString() !== session.user.id) {
+    // Verificar que el usuario sea el creador del workflow
+    if (workflow.createdBy._id.toString() !== session.user.id) {
       return NextResponse.json(
-        { error: 'No tienes permiso para ver este workflow' },
+        { error: 'Solo puedes ver tus propios workflows' },
         { status: 403 }
       );
     }
@@ -85,8 +85,8 @@ export async function PUT(
       );
     }
 
-    // Verificar que el usuario pueda actualizar este workflow
-    if (session.user.role !== 'ADMIN' && workflow.createdBy.toString() !== session.user.id) {
+    // Verificar que el usuario sea el creador del workflow
+    if (workflow.createdBy.toString() !== session.user.id) {
       return NextResponse.json(
         { error: 'Solo puedes actualizar tus propios workflows' },
         { status: 403 }
@@ -145,8 +145,8 @@ export async function DELETE(
       );
     }
 
-    // Verificar que el usuario pueda eliminar este workflow
-    if (session.user.role !== 'ADMIN' && workflow.createdBy.toString() !== session.user.id) {
+    // Verificar que el usuario sea el creador del workflow
+    if (workflow.createdBy.toString() !== session.user.id) {
       return NextResponse.json(
         { error: 'Solo puedes eliminar tus propios workflows' },
         { status: 403 }

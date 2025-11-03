@@ -21,10 +21,8 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
-    // ADMIN puede ver todos los workflows, usuarios normales solo los suyos
-    const query = session.user.role === 'ADMIN'
-      ? {}
-      : { createdBy: session.user.id };
+    // Todos los usuarios (incluyendo ADMIN) solo pueden ver sus propios workflows
+    const query = { createdBy: session.user.id };
 
     const workflows = await Workflow.find(query)
       .populate('createdBy', 'name email')

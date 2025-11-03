@@ -36,7 +36,8 @@ export async function POST(
       );
     }
 
-    if (session.user.role !== 'ADMIN' && workflow.createdBy.toString() !== session.user.id) {
+    // Verificar que el usuario sea el creador del workflow
+    if (workflow.createdBy.toString() !== session.user.id) {
       return NextResponse.json(
         { error: 'Solo puedes ejecutar tus propios workflows' },
         { status: 403 }
@@ -52,7 +53,7 @@ export async function POST(
       );
     }
 
-    // Verificar que la prioridad pertenece al usuario (a menos que sea admin)
+    // Verificar que la prioridad existe y pertenece al usuario
     const priority = await Priority.findById(body.priorityId);
     if (!priority) {
       return NextResponse.json(
@@ -61,7 +62,8 @@ export async function POST(
       );
     }
 
-    if (session.user.role !== 'ADMIN' && priority.userId.toString() !== session.user.id) {
+    // Solo se pueden ejecutar workflows en prioridades propias
+    if (priority.userId.toString() !== session.user.id) {
       return NextResponse.json(
         { error: 'Solo puedes ejecutar workflows en tus propias prioridades' },
         { status: 403 }
