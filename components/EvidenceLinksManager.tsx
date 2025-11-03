@@ -59,6 +59,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
         </h4>
         {!disabled && !isAdding && (
           <button
+            type="button"
             onClick={() => setIsAdding(true)}
             className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
           >
@@ -91,6 +92,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
             </div>
             {!disabled && (
               <button
+                type="button"
                 onClick={() => handleDeleteLink(index)}
                 className="text-red-600 hover:text-red-800 flex-shrink-0"
                 title="Eliminar enlace"
@@ -140,6 +142,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
           />
           <div className="flex items-center justify-end space-x-2">
             <button
+              type="button"
               onClick={() => {
                 setIsAdding(false);
                 setNewLinkTitle('');
@@ -150,6 +153,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
               Cancelar
             </button>
             <button
+              type="button"
               onClick={handleAddLink}
               disabled={!newLinkTitle.trim() || !newLinkUrl.trim()}
               className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-1"

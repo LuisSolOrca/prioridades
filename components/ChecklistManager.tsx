@@ -61,6 +61,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
         </h4>
         {!disabled && !isAdding && (
           <button
+            type="button"
             onClick={() => setIsAdding(true)}
             className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
           >
@@ -92,6 +93,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
             }`}
           >
             <button
+              type="button"
               onClick={() => handleToggleItem(index)}
               disabled={disabled}
               className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition ${
@@ -113,6 +115,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
             </span>
             {!disabled && (
               <button
+                type="button"
                 onClick={() => handleDeleteItem(index)}
                 className="text-red-600 hover:text-red-800 flex-shrink-0"
                 title="Eliminar tarea"
@@ -144,6 +147,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
             autoFocus
           />
           <button
+            type="button"
             onClick={handleAddItem}
             disabled={!newItemText.trim()}
             className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -152,6 +156,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
             <Check size={16} />
           </button>
           <button
+            type="button"
             onClick={() => {
               setIsAdding(false);
               setNewItemText('');
