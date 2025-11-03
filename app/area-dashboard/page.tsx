@@ -682,42 +682,78 @@ export default function AreaDashboardPage() {
                 )}
               </div>
 
+              {/* Lista de Tareas */}
               {selectedPriority.checklist && selectedPriority.checklist.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Checklist</h3>
-                  <div className="space-y-2">
-                    {selectedPriority.checklist.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={item.completed}
-                          disabled
-                          className="rounded"
-                        />
-                        <span className={item.completed ? 'line-through text-gray-500' : 'text-gray-700'}>
-                          {item.text}
-                        </span>
-                      </div>
-                    ))}
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    ✓ Lista de Tareas
+                    <span className="text-xs text-gray-500">
+                      ({selectedPriority.checklist.filter(item => item.completed).length}/{selectedPriority.checklist.length})
+                    </span>
+                  </h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="space-y-2">
+                      {selectedPriority.checklist.map((item, index) => (
+                        <div
+                          key={item._id || index}
+                          className={`flex items-start gap-3 p-2 rounded ${
+                            item.completed ? 'bg-green-50 border border-green-200' : 'bg-white border border-gray-200'
+                          }`}
+                        >
+                          <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            item.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                          }`}>
+                            {item.completed && (
+                              <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                <path d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            )}
+                          </div>
+                          <span className={`flex-1 text-sm ${
+                            item.completed ? 'line-through text-gray-500' : 'text-gray-800'
+                          }`}>
+                            {item.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
+              {/* Enlaces de Evidencia */}
               {selectedPriority.evidenceLinks && selectedPriority.evidenceLinks.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Enlaces de Evidencia</h3>
-                  <div className="space-y-2">
-                    {selectedPriority.evidenceLinks.map((link, idx) => (
-                      <a
-                        key={idx}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        🔗 {link.title}
-                      </a>
-                    ))}
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    🔗 Enlaces de Evidencia
+                    <span className="text-xs text-gray-500">
+                      ({selectedPriority.evidenceLinks.length})
+                    </span>
+                  </h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="space-y-2">
+                      {selectedPriority.evidenceLinks.map((link, index) => (
+                        <a
+                          key={link._id || index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm text-gray-800 group-hover:text-blue-700 truncate">
+                              {link.title}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate mt-0.5">
+                              {link.url}
+                            </div>
+                          </div>
+                          <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                          </svg>
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
