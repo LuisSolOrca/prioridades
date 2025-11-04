@@ -449,6 +449,25 @@ export const generateChecklistReport = async (
   format: 'pdf' | 'doc',
   filters?: string
 ) => {
+  // Función para limpiar caracteres especiales y normalizar texto
+  const cleanText = (text: string): string => {
+    if (!text) return '';
+
+    // Normalizar caracteres Unicode (descomponer y recomponer)
+    let cleaned = text.normalize('NFC');
+
+    // Eliminar caracteres de control y caracteres no imprimibles
+    cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+
+    // Reemplazar múltiples espacios con un solo espacio
+    cleaned = cleaned.replace(/\s+/g, ' ');
+
+    // Trim espacios al inicio y final
+    cleaned = cleaned.trim();
+
+    return cleaned;
+  };
+
   // Filtrar solo prioridades que tienen checklist
   const prioritiesWithChecklist = priorities.filter(p => p.checklist && p.checklist.length > 0);
 
@@ -463,9 +482,9 @@ export const generateChecklistReport = async (
     const completedItems = priority.checklist.filter((item: any) => item.completed).length;
     const checklistProgress = totalItems > 0 ? ((completedItems / totalItems) * 100).toFixed(1) : '0';
 
-    // Fila principal con la prioridad
+    // Fila principal con la prioridad (con texto limpio)
     rows.push([
-      priority.title,
+      cleanText(priority.title),
       user?.name || 'N/A',
       initiative?.name || 'N/A',
       weekStart,
@@ -473,10 +492,10 @@ export const generateChecklistReport = async (
       `${checklistProgress}%`
     ]);
 
-    // Filas con los items del checklist (indentadas)
+    // Filas con los items del checklist (indentadas, con texto limpio)
     priority.checklist.forEach((item: any) => {
       rows.push([
-        `  → ${item.text}`,
+        `  → ${cleanText(item.text)}`,
         '',
         '',
         '',
