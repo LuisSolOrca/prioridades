@@ -17,6 +17,7 @@ interface User {
   name: string;
   role: string;
   email: string;
+  area?: string;
 }
 
 interface Initiative {
@@ -52,12 +53,14 @@ export default function ReportsPage() {
   // Filtros
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
+  const [selectedArea, setSelectedArea] = useState('all');
   const [includeAdmins, setIncludeAdmins] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [reportType, setReportType] = useState<ReportType>('priorities');
   const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -70,21 +73,26 @@ export default function ReportsPage() {
 
   const loadData = async () => {
     try {
-      const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
+      const currentUserId = (session?.user as any)?.id;
+
+      const [usersRes, initiativesRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
-        fetch('/api/priorities?forDashboard=true')
+        fetch('/api/priorities?forDashboard=true'),
+        currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, prioritiesData] = await Promise.all([
+      const [usersData, initiativesData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
-        prioritiesRes.json()
+        prioritiesRes.json(),
+        currentUserRes ? currentUserRes.json() : null
       ]);
 
       setUsers(usersData);
       setInitiatives(initiativesData);
       setPriorities(prioritiesData);
+      setCurrentUser(currentUserData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -102,6 +110,12 @@ export default function ReportsPage() {
     if (!includeAdmins) {
       const userIds = users.filter(u => u.role === 'USER').map(u => u._id);
       filtered = filtered.filter(p => userIds.includes(p.userId));
+    }
+
+    // Filtro por área
+    if (selectedArea !== 'all') {
+      const areaUserIds = users.filter(u => u.area === selectedArea).map(u => u._id);
+      filtered = filtered.filter(p => areaUserIds.includes(p.userId));
     }
 
     if (selectedInitiative !== 'all') {
@@ -131,12 +145,20 @@ export default function ReportsPage() {
     }
 
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative, includeAdmins, dateFrom, dateTo, searchKeyword, priorityTypeFilter, users]);
+  }, [priorities, selectedUser, selectedInitiative, selectedArea, includeAdmins, dateFrom, dateTo, searchKeyword, priorityTypeFilter, users]);
 
   const filteredUsers = useMemo(() => {
     if (includeAdmins) return users;
     return users.filter(u => u.role === 'USER');
   }, [users, includeAdmins]);
+
+  // Obtener áreas únicas
+  const uniqueAreas = useMemo(() => {
+    const areas = users
+      .filter(u => u.area)
+      .map(u => u.area as string);
+    return Array.from(new Set(areas)).sort();
+  }, [users]);
 
   const getFilterDescription = () => {
     const parts: string[] = [];
@@ -146,6 +168,10 @@ export default function ReportsPage() {
       parts.push(`Usuario: ${user?.name}`);
     } else if (!includeAdmins) {
       parts.push('Solo usuarios (sin administradores)');
+    }
+
+    if (selectedArea !== 'all') {
+      parts.push(`Área: ${selectedArea}`);
     }
 
     if (selectedInitiative !== 'all') {
@@ -203,6 +229,7 @@ export default function ReportsPage() {
   const clearFilters = () => {
     setSelectedUser('all');
     setSelectedInitiative('all');
+    setSelectedArea('all');
     setIncludeAdmins(true);
     setDateFrom('');
     setDateTo('');
@@ -368,6 +395,24 @@ export default function ReportsPage() {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filtrar por Área
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={selectedArea}
+                  onChange={(e) => setSelectedArea(e.target.value)}
+                >
+                  <option value="all">Todas las áreas</option>
+                  {uniqueAreas.map(area => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Buscar por palabras clave

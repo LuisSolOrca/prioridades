@@ -101,6 +101,24 @@ export const exportInitiativeStats = (
   return exportToExcel(data, fileName, 'Distribución Iniciativas');
 };
 
+// Función para exportar estadísticas de áreas
+export const exportAreaStats = (
+  areaStats: any[],
+  fileName: string = 'Analitica_Areas'
+) => {
+  const data = areaStats.map(stat => ({
+    'Área': stat.area,
+    'Usuarios': stat.userCount,
+    'Total Prioridades': stat.total,
+    'Completadas': stat.completed,
+    'Tasa Completado (%)': stat.completionRate,
+    'Promedio Avance (%)': stat.avgCompletion,
+    'Puntos Totales': stat.monthPoints
+  }));
+
+  return exportToExcel(data, fileName, 'Rendimiento por Área');
+};
+
 // Función para exportar usuarios
 export const exportUsers = (
   users: any[],

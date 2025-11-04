@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
-import { exportUserStats, exportInitiativeStats } from '@/lib/exportToExcel';
+import { exportUserStats, exportInitiativeStats, exportAreaStats } from '@/lib/exportToExcel';
 import { trackFeature } from '@/lib/trackFeature';
 
 interface User {
@@ -237,6 +237,10 @@ export default function AnalyticsPage() {
 
   const handleExportInitiativeStats = () => {
     exportInitiativeStats(initiativeStats, 'Analitica_Iniciativas');
+  };
+
+  const handleExportAreaStats = () => {
+    exportAreaStats(areaStats, 'Analitica_Areas');
   };
 
   const toggleInitiativeDrillDown = (initiativeId: string) => {
@@ -535,6 +539,13 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800">🏢 Rendimiento por Área</h2>
+              <button
+                onClick={handleExportAreaStats}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold text-sm"
+                title="Exportar a Excel"
+              >
+                📥 Exportar a Excel
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
