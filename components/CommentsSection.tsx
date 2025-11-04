@@ -43,9 +43,60 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // LocalStorage keys
+  const NEW_COMMENT_KEY = `comment_new_${priorityId}`;
+  const getEditCommentKey = (commentId: string) => `comment_edit_${commentId}`;
+
   useEffect(() => {
     loadComments();
   }, [priorityId]);
+
+  // Restaurar borrador de nuevo comentario al montar
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(NEW_COMMENT_KEY);
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        const timeDiff = Date.now() - draft.timestamp;
+
+        // Restaurar si tiene menos de 1 hora
+        if (timeDiff < 3600000 && draft.text) {
+          setNewComment(draft.text);
+        } else {
+          localStorage.removeItem(NEW_COMMENT_KEY);
+        }
+      }
+    } catch (error) {
+      console.error('Error restaurando borrador de comentario:', error);
+      localStorage.removeItem(NEW_COMMENT_KEY);
+    }
+  }, [priorityId]);
+
+  // Auto-guardar borrador de nuevo comentario
+  useEffect(() => {
+    if (newComment.trim()) {
+      const draft = {
+        text: newComment,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(NEW_COMMENT_KEY, JSON.stringify(draft));
+    } else {
+      localStorage.removeItem(NEW_COMMENT_KEY);
+    }
+  }, [newComment, priorityId]);
+
+  // Auto-guardar borrador de edición de comentario
+  useEffect(() => {
+    if (editingId && editText.trim()) {
+      const draft = {
+        text: editText,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(getEditCommentKey(editingId), JSON.stringify(draft));
+    } else if (editingId) {
+      localStorage.removeItem(getEditCommentKey(editingId));
+    }
+  }, [editText, editingId]);
 
   const loadComments = async () => {
     try {
@@ -165,6 +216,8 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
       const comment = await res.json();
       setComments([...comments, comment]);
       setNewComment('');
+      // Limpiar borrador del localStorage
+      localStorage.removeItem(NEW_COMMENT_KEY);
     } catch (error) {
       console.error('Error creating comment:', error);
       alert('Error al crear el comentario');
@@ -192,10 +245,36 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
 
   const startEdit = (comment: Comment) => {
     setEditingId(comment._id);
+
+    // Intentar restaurar borrador si existe
+    try {
+      const savedDraft = localStorage.getItem(getEditCommentKey(comment._id));
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        const timeDiff = Date.now() - draft.timestamp;
+
+        // Restaurar si tiene menos de 1 hora
+        if (timeDiff < 3600000 && draft.text) {
+          setEditText(draft.text);
+          return;
+        } else {
+          localStorage.removeItem(getEditCommentKey(comment._id));
+        }
+      }
+    } catch (error) {
+      console.error('Error restaurando borrador de edición:', error);
+      localStorage.removeItem(getEditCommentKey(comment._id));
+    }
+
+    // Si no hay borrador, usar texto original
     setEditText(comment.text);
   };
 
   const cancelEdit = () => {
+    if (editingId) {
+      // Limpiar borrador del localStorage
+      localStorage.removeItem(getEditCommentKey(editingId));
+    }
     setEditingId(null);
     setEditText('');
   };
@@ -214,6 +293,8 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
 
       const updatedComment = await res.json();
       setComments(comments.map(c => c._id === commentId ? updatedComment : c));
+      // Limpiar borrador del localStorage
+      localStorage.removeItem(getEditCommentKey(commentId));
       setEditingId(null);
       setEditText('');
     } catch (error) {
