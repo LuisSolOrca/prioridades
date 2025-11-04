@@ -449,54 +449,6 @@ export const generateChecklistReport = async (
   format: 'pdf' | 'doc',
   filters?: string
 ) => {
-  // Función para limpiar caracteres especiales y normalizar texto
-  const cleanText = (text: string): string => {
-    if (!text) return '';
-
-    // Convertir a string por si acaso
-    let cleaned = String(text);
-
-    // Primero, eliminar TODOS los caracteres nulos y de control
-    // Esto incluye \x00 (null bytes) que pueden estar separando caracteres
-    cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F-\x9F]/g, '');
-
-    // Normalizar Unicode a forma canónica compuesta (NFC)
-    cleaned = cleaned.normalize('NFC');
-
-    // Filtrar solo caracteres válidos: letras, números, espacios, puntuación común española
-    // Mantener: letras (incluye acentos), números, espacios, puntuación básica
-    cleaned = cleaned.split('').filter(char => {
-      const code = char.charCodeAt(0);
-      // Letras básicas, números, espacios (32-126)
-      // Letras con acentos y caracteres especiales españoles (160-255)
-      // Más caracteres Unicode comunes (128-...)
-      return (
-        (code >= 32 && code <= 126) ||  // ASCII imprimible
-        (code >= 160 && code <= 255) || // Caracteres latinos extendidos
-        code === 9 ||                    // Tab
-        code === 10 ||                   // Line feed
-        code === 13 ||                   // Carriage return
-        /[\u0100-\u017F]/.test(char) ||  // Letras latinas extendidas
-        /[\u2010-\u2027]/.test(char) ||  // Puntuación general
-        /[\u00A0-\u00BF]/.test(char)     // Símbolos latinos-1
-      );
-    }).join('');
-
-    // Reemplazar múltiples espacios con un solo espacio
-    cleaned = cleaned.replace(/\s+/g, ' ');
-
-    // Trim espacios al inicio y final
-    cleaned = cleaned.trim();
-
-    // Si después de todo la limpieza queda vacío, retornar el original truncado
-    if (!cleaned && text) {
-      // Último recurso: tomar solo caracteres alfanuméricos básicos
-      cleaned = text.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑüÜ\s.,;:¿?¡!()\-]/g, '').trim();
-    }
-
-    return cleaned || text.substring(0, 100); // Fallback: primeros 100 caracteres del original
-  };
-
   // Filtrar solo prioridades que tienen checklist
   const prioritiesWithChecklist = priorities.filter(p => p.checklist && p.checklist.length > 0);
 
@@ -511,9 +463,9 @@ export const generateChecklistReport = async (
     const completedItems = priority.checklist.filter((item: any) => item.completed).length;
     const checklistProgress = totalItems > 0 ? ((completedItems / totalItems) * 100).toFixed(1) : '0';
 
-    // Fila principal con la prioridad (con texto limpio)
+    // Fila principal con la prioridad
     rows.push([
-      cleanText(priority.title),
+      priority.title || '',
       user?.name || 'N/A',
       initiative?.name || 'N/A',
       weekStart,
@@ -521,14 +473,14 @@ export const generateChecklistReport = async (
       `${checklistProgress}%`
     ]);
 
-    // Filas con los items del checklist (indentadas, con texto limpio)
+    // Filas con los items del checklist (indentadas)
     priority.checklist.forEach((item: any) => {
       rows.push([
-        `  → ${cleanText(item.text)}`,
+        `  - ${item.text || ''}`,
         '',
         '',
         '',
-        item.completed ? '✓ Completado' : '○ Pendiente',
+        item.completed ? 'Completado' : 'Pendiente',
         ''
       ]);
     });
