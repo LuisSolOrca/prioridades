@@ -356,9 +356,9 @@ export default function DashboardPage() {
     }
   };
 
-  // Filtrar usuarios por área (si es líder de área y el filtro está activo)
+  // Filtrar usuarios por área (si el usuario tiene área asignada y el filtro está activo)
   const filteredUsers = useMemo(() => {
-    if (!filterByMyArea || !currentUser?.isAreaLeader || !currentUser?.area) {
+    if (!filterByMyArea || !currentUser?.area) {
       return users;
     }
     return users.filter(u => u.area === currentUser.area);
@@ -374,7 +374,7 @@ export default function DashboardPage() {
     }
 
     // Filtrar por área (solo usuarios del área filtrada)
-    if (filterByMyArea && currentUser?.isAreaLeader && currentUser?.area) {
+    if (filterByMyArea && currentUser?.area) {
       const areaUserIds = filteredUsers.map(u => u._id);
       filtered = filtered.filter(p => areaUserIds.includes(p.userId));
     }
@@ -576,8 +576,8 @@ export default function DashboardPage() {
 
           {/* Filtros */}
           <div className="bg-white rounded-lg shadow-md p-4 space-y-4">
-            {/* Filtro por área (solo para líderes de área) */}
-            {currentUser?.isAreaLeader && currentUser?.area && (
+            {/* Filtro por área (para usuarios con área asignada) */}
+            {currentUser?.area && (
               <div className="flex items-center pb-4 border-b border-gray-200">
                 <label className="flex items-center cursor-pointer group">
                   <input
@@ -587,7 +587,7 @@ export default function DashboardPage() {
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-blue-700 transition">
-                    📍 Mostrar solo prioridades de mi área ({currentUser.area})
+                    📍 Filtrar solo por mi área ({currentUser.area})
                   </span>
                 </label>
               </div>
