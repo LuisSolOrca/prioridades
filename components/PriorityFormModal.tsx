@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import ChecklistManager, { ChecklistItem } from './ChecklistManager';
 import EvidenceLinksManager, { EvidenceLink } from './EvidenceLinksManager';
@@ -70,6 +70,64 @@ export default function PriorityFormModal({
 }: PriorityFormModalProps) {
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
+  const DRAFT_KEY = 'priority_form_draft';
+
+  // Guardar borrador en localStorage cuando formData cambia (solo si el modal está abierto)
+  useEffect(() => {
+    if (isOpen && formData.title) {
+      // Guardar solo si hay contenido para evitar sobrescribir con datos vacíos
+      const draft = {
+        formData,
+        selectedUserId: selectedUserId || undefined, // Incluir selectedUserId si existe (para history/reasignación)
+        timestamp: Date.now(),
+        isEditing
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }
+  }, [formData, selectedUserId, isOpen, isEditing]);
+
+  // Limpiar borrador cuando se cierra el modal
+  const handleClose = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    onClose();
+  };
+
+  // Intentar restaurar borrador al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if (savedDraft) {
+          const draft = JSON.parse(savedDraft);
+          const timeDiff = Date.now() - draft.timestamp;
+
+          // Si el borrador tiene menos de 1 hora y coincide el modo (edición/creación)
+          if (timeDiff < 3600000 && draft.isEditing === isEditing) {
+            // Verificar si el formData actual está vacío o es el inicial
+            if (!formData.title || formData.title === '') {
+              setFormData(draft.formData);
+              // Restaurar selectedUserId si existe y hay callback para cambiarlo
+              if (draft.selectedUserId && onUserChange) {
+                onUserChange(draft.selectedUserId);
+              }
+            }
+          } else {
+            // Borrador muy antiguo, eliminarlo
+            localStorage.removeItem(DRAFT_KEY);
+          }
+        }
+      } catch (error) {
+        console.error('Error restaurando borrador:', error);
+        localStorage.removeItem(DRAFT_KEY);
+      }
+    }
+  }, [isOpen]);
+
+  // Limpiar borrador cuando se envía el formulario
+  const handleFormSubmit = (e: React.FormEvent) => {
+    localStorage.removeItem(DRAFT_KEY);
+    handleSubmit(e);
+  };
 
   const handleImproveWithAI = async (type: 'title' | 'description') => {
     const text = type === 'title' ? formData.title : formData.description;
@@ -136,7 +194,7 @@ export default function PriorityFormModal({
             {isEditing ? 'Editar Prioridad' : 'Nueva Prioridad'} - {weekLabel}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700"
           >
             <X size={24} />
@@ -144,7 +202,7 @@ export default function PriorityFormModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleFormSubmit} className="p-6 space-y-6">
           {/* Selector de Semana (solo cuando se crea) */}
           {!isEditing && currentWeek && nextWeek && setSelectedWeekOffset && (
             <div>
@@ -502,7 +560,7 @@ export default function PriorityFormModal({
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
             >
               Cancelar
