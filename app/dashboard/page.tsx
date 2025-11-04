@@ -19,6 +19,8 @@ interface User {
   email: string;
   role: string;
   isActive: boolean;
+  area?: string;
+  isAreaLeader?: boolean;
 }
 
 interface Initiative {
@@ -245,6 +247,7 @@ export default function DashboardPage() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
   const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
+  const [filterByMyArea, setFilterByMyArea] = useState(false);
   const [userStats, setUserStats] = useState<{
     points: number;
     currentStreak: number;
@@ -252,6 +255,7 @@ export default function DashboardPage() {
     badges: number;
     rank?: number;
   } | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -270,21 +274,26 @@ export default function DashboardPage() {
     try {
       setLoading(true);
 
-      const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
+      const currentUserId = (session?.user as any)?.id;
+
+      const [usersRes, initiativesRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users?activeOnly=true'),
         fetch('/api/initiatives?activeOnly=true'),
-        fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`)
+        fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`),
+        currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, prioritiesData] = await Promise.all([
+      const [usersData, initiativesData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
-        prioritiesRes.json()
+        prioritiesRes.json(),
+        currentUserRes ? currentUserRes.json() : null
       ]);
 
       setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
       setPriorities(prioritiesData);
+      setCurrentUser(currentUserData);
 
       // Cargar conteos de comentarios
       await loadCommentCounts(prioritiesData);
@@ -347,13 +356,31 @@ export default function DashboardPage() {
     }
   };
 
-  // Filtrar prioridades por tipo
-  const filteredPriorities = useMemo(() => {
-    if (priorityTypeFilter === 'TODAS') {
-      return priorities;
+  // Filtrar usuarios por área (si es líder de área y el filtro está activo)
+  const filteredUsers = useMemo(() => {
+    if (!filterByMyArea || !currentUser?.isAreaLeader || !currentUser?.area) {
+      return users;
     }
-    return priorities.filter(p => (p.type || 'ESTRATEGICA') === priorityTypeFilter);
-  }, [priorities, priorityTypeFilter]);
+    return users.filter(u => u.area === currentUser.area);
+  }, [users, filterByMyArea, currentUser]);
+
+  // Filtrar prioridades por tipo y por área
+  const filteredPriorities = useMemo(() => {
+    let filtered = priorities;
+
+    // Filtrar por tipo
+    if (priorityTypeFilter !== 'TODAS') {
+      filtered = filtered.filter(p => (p.type || 'ESTRATEGICA') === priorityTypeFilter);
+    }
+
+    // Filtrar por área (solo usuarios del área filtrada)
+    if (filterByMyArea && currentUser?.isAreaLeader && currentUser?.area) {
+      const areaUserIds = filteredUsers.map(u => u._id);
+      filtered = filtered.filter(p => areaUserIds.includes(p.userId));
+    }
+
+    return filtered;
+  }, [priorities, priorityTypeFilter, filterByMyArea, currentUser, filteredUsers]);
 
   const stats = useMemo(() => {
     const total = filteredPriorities.length;
@@ -547,8 +574,26 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Filtro de Tipo de Prioridad */}
-          <div className="bg-white rounded-lg shadow-md p-4">
+          {/* Filtros */}
+          <div className="bg-white rounded-lg shadow-md p-4 space-y-4">
+            {/* Filtro por área (solo para líderes de área) */}
+            {currentUser?.isAreaLeader && currentUser?.area && (
+              <div className="flex items-center pb-4 border-b border-gray-200">
+                <label className="flex items-center cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={filterByMyArea}
+                    onChange={(e) => setFilterByMyArea(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-blue-700 transition">
+                    📍 Mostrar solo prioridades de mi área ({currentUser.area})
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {/* Filtro de Tipo de Prioridad */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <label className="text-sm font-semibold text-gray-700">
@@ -567,6 +612,11 @@ export default function DashboardPage() {
               </div>
               <div className="text-sm text-gray-600">
                 Mostrando {filteredPriorities.length} de {priorities.length} prioridades
+                {filterByMyArea && currentUser?.area && (
+                  <span className="ml-1 text-blue-600 font-medium">
+                    • {filteredUsers.length} usuarios en {currentUser.area}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -593,7 +643,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {users.map(user => {
+            {filteredUsers.map(user => {
               const userPriorities = filteredPriorities.filter(p => p.userId === user._id);
 
               return (
