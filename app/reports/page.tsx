@@ -9,7 +9,8 @@ import Navbar from '@/components/Navbar';
 import {
   generatePrioritiesReport,
   generateUserPerformanceReport,
-  generateInitiativesReport
+  generateInitiativesReport,
+  generateChecklistReport
 } from '@/lib/generateReports';
 
 interface User {
@@ -28,6 +29,13 @@ interface Initiative {
   isActive: boolean;
 }
 
+interface ChecklistItem {
+  _id?: string;
+  text: string;
+  completed: boolean;
+  createdAt?: string;
+}
+
 interface Priority {
   _id: string;
   title: string;
@@ -38,9 +46,10 @@ interface Priority {
   type?: 'ESTRATEGICA' | 'OPERATIVA';
   userId: string;
   initiativeId: string;
+  checklist?: ChecklistItem[];
 }
 
-type ReportType = 'priorities' | 'performance' | 'initiatives';
+type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -223,6 +232,15 @@ export default function ReportsPage() {
           filterDescription
         );
         break;
+      case 'checklist':
+        generateChecklistReport(
+          filteredPriorities,
+          users,
+          initiatives,
+          format,
+          filterDescription
+        );
+        break;
     }
   };
 
@@ -277,7 +295,7 @@ export default function ReportsPage() {
           {/* Tipo de Reporte */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Tipo de Reporte</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <button
                 onClick={() => setReportType('priorities')}
                 className={`p-4 rounded-lg border-2 transition ${
@@ -320,6 +338,21 @@ export default function ReportsPage() {
                 <div className="font-semibold text-gray-800">Iniciativas Estratégicas</div>
                 <div className="text-sm text-gray-600 mt-1">
                   Distribución de prioridades por iniciativa
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType('checklist')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'checklist'
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                <div className="text-3xl mb-2">✅</div>
+                <div className="font-semibold text-gray-800">Tareas de Checklist</div>
+                <div className="text-sm text-gray-600 mt-1">
+                  Avance detallado de tareas en checklists de prioridades
                 </div>
               </button>
             </div>

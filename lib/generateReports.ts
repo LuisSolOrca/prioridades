@@ -441,3 +441,83 @@ export const generateInitiativesReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+export const generateChecklistReport = async (
+  priorities: any[],
+  users: any[],
+  initiatives: any[],
+  format: 'pdf' | 'doc',
+  filters?: string
+) => {
+  // Filtrar solo prioridades que tienen checklist
+  const prioritiesWithChecklist = priorities.filter(p => p.checklist && p.checklist.length > 0);
+
+  const rows: (string | number)[][] = [];
+
+  prioritiesWithChecklist.forEach(priority => {
+    const user = users.find(u => u._id === priority.userId);
+    const initiative = initiatives.find(i => i._id === priority.initiativeId);
+    const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
+
+    const totalItems = priority.checklist.length;
+    const completedItems = priority.checklist.filter((item: any) => item.completed).length;
+    const checklistProgress = totalItems > 0 ? ((completedItems / totalItems) * 100).toFixed(1) : '0';
+
+    // Fila principal con la prioridad
+    rows.push([
+      priority.title,
+      user?.name || 'N/A',
+      initiative?.name || 'N/A',
+      weekStart,
+      `${completedItems}/${totalItems}`,
+      `${checklistProgress}%`
+    ]);
+
+    // Filas con los items del checklist (indentadas)
+    priority.checklist.forEach((item: any) => {
+      rows.push([
+        `  → ${item.text}`,
+        '',
+        '',
+        '',
+        item.completed ? '✓ Completado' : '○ Pendiente',
+        ''
+      ]);
+    });
+
+    // Fila separadora
+    rows.push(['', '', '', '', '', '']);
+  });
+
+  const totalPrioritiesWithChecklist = prioritiesWithChecklist.length;
+  const totalChecklistItems = prioritiesWithChecklist.reduce((sum, p) => sum + (p.checklist?.length || 0), 0);
+  const totalCompletedItems = prioritiesWithChecklist.reduce(
+    (sum, p) => sum + (p.checklist?.filter((item: any) => item.completed).length || 0),
+    0
+  );
+  const overallProgress = totalChecklistItems > 0
+    ? ((totalCompletedItems / totalChecklistItems) * 100).toFixed(1)
+    : '0';
+
+  const data: ReportData = {
+    title: 'Reporte de Checklists de Prioridades',
+    subtitle: filters || 'Avance detallado de tareas en checklists',
+    headers: ['Prioridad / Tarea', 'Usuario', 'Iniciativa', 'Semana', 'Progreso', '% Checklist'],
+    rows: rows,
+    summary: [
+      { label: 'Prioridades con Checklist', value: totalPrioritiesWithChecklist },
+      { label: 'Total de Tareas', value: totalChecklistItems },
+      { label: 'Tareas Completadas', value: totalCompletedItems },
+      { label: 'Tareas Pendientes', value: totalChecklistItems - totalCompletedItems },
+      { label: 'Avance General', value: `${overallProgress}%` }
+    ]
+  };
+
+  const fileName = `Reporte_Checklists_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};
