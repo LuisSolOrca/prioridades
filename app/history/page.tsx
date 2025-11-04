@@ -16,6 +16,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  area?: string;
 }
 
 interface Initiative {
@@ -63,6 +64,7 @@ export default function HistoryPage() {
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
+  const [selectedArea, setSelectedArea] = useState('all');
   const [includeAdmins, setIncludeAdmins] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -73,6 +75,7 @@ export default function HistoryPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [formData, setFormData] = useState<any>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -85,21 +88,26 @@ export default function HistoryPage() {
 
   const loadData = async () => {
     try {
-      const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
+      const currentUserId = (session?.user as any)?.id;
+
+      const [usersRes, initiativesRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
-        fetch('/api/priorities?forDashboard=true')
+        fetch('/api/priorities?forDashboard=true'),
+        currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, prioritiesData] = await Promise.all([
+      const [usersData, initiativesData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
-        prioritiesRes.json()
+        prioritiesRes.json(),
+        currentUserRes ? currentUserRes.json() : null
       ]);
 
       setUsers(usersData);
       setInitiatives(initiativesData);
       setPriorities(prioritiesData);
+      setCurrentUser(currentUserData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -119,6 +127,12 @@ export default function HistoryPage() {
     if (!includeAdmins) {
       const userIds = users.filter(u => u.role === 'USER').map(u => u._id);
       filtered = filtered.filter(p => userIds.includes(p.userId));
+    }
+
+    // Filtro por área
+    if (selectedArea !== 'all') {
+      const areaUserIds = users.filter(u => u.area === selectedArea).map(u => u._id);
+      filtered = filtered.filter(p => areaUserIds.includes(p.userId));
     }
 
     // Filtro por iniciativa
@@ -151,7 +165,15 @@ export default function HistoryPage() {
     }
 
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative, priorityTypeFilter, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
+  }, [priorities, selectedUser, selectedInitiative, selectedArea, priorityTypeFilter, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
+
+  // Obtener áreas únicas
+  const uniqueAreas = useMemo(() => {
+    const areas = users
+      .filter(u => u.area)
+      .map(u => u.area as string);
+    return Array.from(new Set(areas)).sort();
+  }, [users]);
 
   const weekGroups = useMemo(() => {
     const groups: { [key: string]: Priority[] } = {};
@@ -340,6 +362,24 @@ export default function HistoryPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filtrar por Área
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={selectedArea}
+                  onChange={(e) => setSelectedArea(e.target.value)}
+                >
+                  <option value="all">Todas las áreas</option>
+                  {uniqueAreas.map(area => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Buscar por palabras clave
                 </label>
                 <input
@@ -385,6 +425,7 @@ export default function HistoryPage() {
                 onClick={() => {
                   setSelectedUser('all');
                   setSelectedInitiative('all');
+                  setSelectedArea('all');
                   setIncludeAdmins(true);
                   setDateFrom('');
                   setDateTo('');
