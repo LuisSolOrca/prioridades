@@ -115,8 +115,8 @@ const PrioritySchema = new Schema<IPriority>({
   },
   evidenceLinks: {
     type: [{
-      title: { type: String, required: true, trim: true },
-      url: { type: String, required: true, trim: true },
+      title: { type: String, required: true, trim: true, maxlength: 200 },
+      url: { type: String, required: true, trim: true, maxlength: 2000 },
       createdAt: { type: Date, default: Date.now }
     }],
     default: []

@@ -20,13 +20,26 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
   const [isAdding, setIsAdding] = useState(false);
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
 
   const handleAddLink = () => {
     if (newLinkTitle.trim() && newLinkUrl.trim()) {
+      // Validar longitud del título
+      if (newLinkTitle.trim().length > 200) {
+        setUrlError('El título no puede exceder 200 caracteres');
+        return;
+      }
+
       // Agregar https:// si no tiene protocolo
       let finalUrl = newLinkUrl.trim();
       if (!finalUrl.match(/^https?:\/\//i)) {
         finalUrl = 'https://' + finalUrl;
+      }
+
+      // Validar longitud de la URL
+      if (finalUrl.length > 2000) {
+        setUrlError('La URL no puede exceder 2000 caracteres');
+        return;
       }
 
       const newLink: EvidenceLink = {
@@ -37,6 +50,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
       onChange([...evidenceLinks, newLink]);
       setNewLinkTitle('');
       setNewLinkUrl('');
+      setUrlError('');
       setIsAdding(false);
     }
   };
@@ -107,39 +121,63 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
       {/* Add new link form */}
       {isAdding && (
         <div className="space-y-2 p-3 border border-blue-200 rounded-lg bg-blue-50">
-          <input
-            type="text"
-            value={newLinkTitle}
-            onChange={(e) => setNewLinkTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleAddLink();
-              } else if (e.key === 'Escape') {
-                setIsAdding(false);
-                setNewLinkTitle('');
-                setNewLinkUrl('');
-              }
-            }}
-            placeholder="Título del enlace (ej: Documento final, Presentación)"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            autoFocus
-          />
-          <input
-            type="url"
-            value={newLinkUrl}
-            onChange={(e) => setNewLinkUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleAddLink();
-              } else if (e.key === 'Escape') {
-                setIsAdding(false);
-                setNewLinkTitle('');
-                setNewLinkUrl('');
-              }
-            }}
-            placeholder="URL (ej: https://drive.google.com/...)"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          <div>
+            <input
+              type="text"
+              value={newLinkTitle}
+              onChange={(e) => {
+                setNewLinkTitle(e.target.value);
+                setUrlError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddLink();
+                } else if (e.key === 'Escape') {
+                  setIsAdding(false);
+                  setNewLinkTitle('');
+                  setNewLinkUrl('');
+                  setUrlError('');
+                }
+              }}
+              placeholder="Título del enlace (ej: Documento final, Presentación)"
+              maxLength={200}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              autoFocus
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              {newLinkTitle.length}/200 caracteres
+            </div>
+          </div>
+          <div>
+            <input
+              type="text"
+              value={newLinkUrl}
+              onChange={(e) => {
+                setNewLinkUrl(e.target.value);
+                setUrlError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddLink();
+                } else if (e.key === 'Escape') {
+                  setIsAdding(false);
+                  setNewLinkTitle('');
+                  setNewLinkUrl('');
+                  setUrlError('');
+                }
+              }}
+              placeholder="URL (ej: https://drive.google.com/... o https://sharepoint.com/...)"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              {newLinkUrl.length}/2000 caracteres {newLinkUrl.length > 0 && '• Soporta enlaces largos de SharePoint'}
+            </div>
+          </div>
+          {urlError && (
+            <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+              {urlError}
+            </div>
+          )}
           <div className="flex items-center justify-end space-x-2">
             <button
               type="button"
@@ -147,6 +185,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
                 setIsAdding(false);
                 setNewLinkTitle('');
                 setNewLinkUrl('');
+                setUrlError('');
               }}
               className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
             >

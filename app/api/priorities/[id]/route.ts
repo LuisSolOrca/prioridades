@@ -137,6 +137,11 @@ export async function PUT(
       updateData.initiativeIds = initiativeIds;
     }
 
+    // Permitir reasignación de usuario solo para admins
+    if (body.userId && (session.user as any).role === 'ADMIN') {
+      updateData.userId = body.userId;
+    }
+
     const updatedPriority = await Priority.findByIdAndUpdate(
       id,
       updateData,

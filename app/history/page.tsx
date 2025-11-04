@@ -7,13 +7,14 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
-import CommentsSection from '@/components/CommentsSection';
+import PriorityFormModal from '@/components/PriorityFormModal';
 import { getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 
 interface User {
   _id: string;
   name: string;
+  email: string;
   role: string;
 }
 
@@ -21,6 +22,20 @@ interface Initiative {
   _id: string;
   name: string;
   color: string;
+}
+
+interface ChecklistItem {
+  _id?: string;
+  text: string;
+  completed: boolean;
+  createdAt?: string;
+}
+
+interface EvidenceLink {
+  _id?: string;
+  title: string;
+  url: string;
+  createdAt?: string;
 }
 
 interface Priority {
@@ -36,6 +51,8 @@ interface Priority {
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   isCarriedOver?: boolean;
+  checklist?: ChecklistItem[];
+  evidenceLinks?: EvidenceLink[];
 }
 
 export default function HistoryPage() {
@@ -54,7 +71,8 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [editingPriority, setEditingPriority] = useState<Priority | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [formData, setFormData] = useState<Priority | null>(null);
+  const [formData, setFormData] = useState<any>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -158,19 +176,22 @@ export default function HistoryPage() {
   };
 
   const handleEdit = (priority: Priority) => {
-    // Prevenir edición de prioridades con estado final
-    if (priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO') {
-      alert('No se puede editar una prioridad con estado final (Completado o Reprogramado)');
-      return;
-    }
-
     // Compatibilidad: convertir initiativeId a initiativeIds si existe
     const editFormData = {
-      ...priority,
-      initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : [])
+      title: priority.title,
+      description: priority.description || '',
+      initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []),
+      completionPercentage: priority.completionPercentage,
+      status: priority.status,
+      type: (priority.type || 'ESTRATEGICA') as 'ESTRATEGICA' | 'OPERATIVA',
+      checklist: priority.checklist || [],
+      evidenceLinks: priority.evidenceLinks || [],
+      weekStart: priority.weekStart,
+      weekEnd: priority.weekEnd
     };
     setEditingPriority(priority);
     setFormData(editFormData);
+    setSelectedUserId(priority.userId);
     setShowEditForm(true);
   };
 
@@ -179,10 +200,15 @@ export default function HistoryPage() {
     if (!formData || !editingPriority) return;
 
     try {
+      const updateData = {
+        ...formData,
+        userId: selectedUserId // Incluir el userId para reasignación
+      };
+
       const res = await fetch(`/api/priorities/${editingPriority._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(updateData)
       });
 
       if (!res.ok) throw new Error('Error updating priority');
@@ -191,6 +217,7 @@ export default function HistoryPage() {
       setShowEditForm(false);
       setEditingPriority(null);
       setFormData(null);
+      setSelectedUserId('');
     } catch (error) {
       console.error('Error saving priority:', error);
       alert('Error al guardar la prioridad');
@@ -474,159 +501,35 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* Modal de Edición */}
-      {showEditForm && formData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Editar Prioridad</h2>
-              <form onSubmit={handleSave} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Título de la Prioridad *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={150}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción Detallada
-                  </label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  ></textarea>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Iniciativas Estratégicas * (selecciona una o más)
-                  </label>
-                  <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto space-y-2">
-                    {initiatives.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No hay iniciativas disponibles</p>
-                    ) : (
-                      initiatives.map(initiative => (
-                        <label
-                          key={initiative._id}
-                          className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            checked={(formData.initiativeIds || []).includes(initiative._id)}
-                            onChange={(e) => {
-                              const currentIds = formData.initiativeIds || [];
-                              const newIds = e.target.checked
-                                ? [...currentIds, initiative._id]
-                                : currentIds.filter(id => id !== initiative._id);
-                              setFormData({ ...formData, initiativeIds: newIds });
-                            }}
-                          />
-                          <div className="flex items-center space-x-2 flex-1">
-                            <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: initiative.color }}
-                            ></div>
-                            <span className="text-gray-800">{initiative.name}</span>
-                          </div>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                  {(!formData.initiativeIds || formData.initiativeIds.length === 0) && (
-                    <p className="text-red-500 text-xs mt-1">Debes seleccionar al menos una iniciativa</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Estado
-                    </label>
-                    <select
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      value={formData.status}
-                      onChange={(e) => {
-                        const newStatus = e.target.value as Priority['status'];
-                        setFormData({
-                          ...formData,
-                          status: newStatus,
-                          completionPercentage: newStatus === 'COMPLETADO' ? 100 : formData.completionPercentage
-                        });
-                      }}
-                    >
-                      <option value="EN_TIEMPO">En Tiempo</option>
-                      <option value="EN_RIESGO">En Riesgo</option>
-                      <option value="BLOQUEADO">Bloqueado</option>
-                      <option value="COMPLETADO">Completado</option>
-                      <option value="REPROGRAMADO">Reprogramado</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Porcentaje Completado: {formData.completionPercentage}%
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      className="w-full"
-                      value={formData.completionPercentage}
-                      onChange={(e) => {
-                        const percentage = parseInt(e.target.value);
-                        setFormData({
-                          ...formData,
-                          completionPercentage: percentage,
-                          status: percentage === 100 ? 'COMPLETADO' : formData.status
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Comments Section */}
-                {editingPriority && (
-                  <div className="mb-6 pt-6 border-t border-gray-200">
-                    <CommentsSection priorityId={editingPriority._id} />
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEditForm(false);
-                      setEditingPriority(null);
-                      setFormData(null);
-                    }}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    💾 Guardar Cambios
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de Edición con PriorityFormModal */}
+      <PriorityFormModal
+        isOpen={showEditForm}
+        onClose={() => {
+          setShowEditForm(false);
+          setEditingPriority(null);
+          setFormData(null);
+          setSelectedUserId('');
+        }}
+        formData={formData || {
+          title: '',
+          description: '',
+          initiativeIds: [],
+          completionPercentage: 0,
+          status: 'EN_TIEMPO',
+          type: 'ESTRATEGICA',
+          checklist: [],
+          evidenceLinks: []
+        }}
+        setFormData={setFormData}
+        handleSubmit={handleSave}
+        initiatives={initiatives}
+        isEditing={true}
+        weekLabel={editingPriority ? getWeekLabel(new Date(editingPriority.weekStart)) : ''}
+        allowUserReassignment={isAdmin}
+        users={users}
+        selectedUserId={selectedUserId}
+        onUserChange={setSelectedUserId}
+      />
     </div>
   );
 }

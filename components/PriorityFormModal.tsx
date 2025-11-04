@@ -24,6 +24,13 @@ interface PriorityFormData {
   weekEnd?: string;
 }
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 interface PriorityFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,6 +44,10 @@ interface PriorityFormModalProps {
   nextWeek?: any;
   selectedWeekOffset?: number;
   setSelectedWeekOffset?: (offset: number) => void;
+  allowUserReassignment?: boolean; // Nueva prop para permitir reasignar usuario
+  users?: User[]; // Lista de usuarios para reasignar
+  selectedUserId?: string; // Usuario actual seleccionado
+  onUserChange?: (userId: string) => void; // Callback para cambiar usuario
 }
 
 export default function PriorityFormModal({
@@ -51,7 +62,11 @@ export default function PriorityFormModal({
   currentWeek,
   nextWeek,
   selectedWeekOffset = 0,
-  setSelectedWeekOffset
+  setSelectedWeekOffset,
+  allowUserReassignment = false,
+  users = [],
+  selectedUserId,
+  onUserChange
 }: PriorityFormModalProps) {
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
@@ -345,6 +360,29 @@ export default function PriorityFormModal({
               </div>
             )}
           </div>
+
+          {/* Reasignación de Usuario (solo para admins en /history) */}
+          {allowUserReassignment && users.length > 0 && selectedUserId && onUserChange && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                👤 Reasignar a otro usuario
+              </label>
+              <select
+                value={selectedUserId}
+                onChange={(e) => onUserChange(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {users.map((user) => (
+                  <option key={user._id} value={user._id}>
+                    {user.name} ({user.email}) - {user.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-600 mt-2">
+                Esta prioridad se reasignará al usuario seleccionado.
+              </p>
+            </div>
+          )}
 
           {/* Iniciativas */}
           <div>
