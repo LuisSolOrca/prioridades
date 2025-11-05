@@ -31,7 +31,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { direction = 'both' } = body; // 'both', 'from-ado', 'to-ado'
+    const { direction = 'both', selectedItems = [], taskHours = {} } = body;
+    // direction: 'both', 'from-ado', 'to-ado'
+    // selectedItems: array de workItemIds para sincronizar (vacío = todos)
+    // taskHours: { [taskId]: hours } - horas por tarea completada
 
     await connectDB();
 
@@ -68,9 +71,14 @@ export async function POST(request: NextRequest) {
     };
 
     // Obtener todos los vínculos del usuario
-    const workItemLinks = await AzureDevOpsWorkItem.find({
+    let workItemLinks = await AzureDevOpsWorkItem.find({
       userId: (session.user as any).id
     });
+
+    // Filtrar por selectedItems si se especificaron
+    if (selectedItems.length > 0) {
+      workItemLinks = workItemLinks.filter(link => selectedItems.includes(link.workItemId));
+    }
 
     // Sincronización desde Azure DevOps hacia la app
     if (direction === 'both' || direction === 'from-ado') {
@@ -128,6 +136,36 @@ export async function POST(request: NextRequest) {
 
           if (!priority) {
             continue;
+          }
+
+          // Sincronizar tareas completadas del checklist
+          if (priority.checklist && priority.checklist.length > 0) {
+            // Obtener child tasks de Azure DevOps
+            const childTasks = await client.getChildTasks(link.workItemId);
+
+            for (const checklistItem of priority.checklist) {
+              if (checklistItem.completed) {
+                // Buscar la tarea correspondiente en Azure DevOps
+                const correspondingTask = childTasks.find(task =>
+                  task.fields['System.Title'] === (checklistItem as any).text
+                );
+
+                if (correspondingTask) {
+                  const taskState = correspondingTask.fields['System.State'];
+
+                  // Si la tarea no está cerrada en Azure DevOps
+                  if (taskState !== 'Done' && taskState !== 'Closed') {
+                    // Obtener horas de taskHours o usar 0 por defecto
+                    const hours = taskHours[correspondingTask.id] || 0;
+
+                    // Cerrar tarea con horas
+                    await client.closeTaskWithHours(correspondingTask.id, hours);
+
+                    syncResults.toAzureDevOps.updated++;
+                  }
+                }
+              }
+            }
           }
 
           // Mapear estado de la app a Azure DevOps

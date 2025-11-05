@@ -273,6 +273,81 @@ export class AzureDevOpsClient {
   }
 
   /**
+   * Cierra una tarea con horas completadas
+   */
+  async closeTaskWithHours(taskId: number, completedHours: number): Promise<void> {
+    try {
+      const patchDocument = [
+        {
+          op: 'add',
+          path: '/fields/System.State',
+          value: 'Closed'
+        },
+        {
+          op: 'add',
+          path: '/fields/Microsoft.VSTS.Scheduling.CompletedWork',
+          value: completedHours
+        }
+      ];
+
+      const response = await fetch(
+        `${this.baseUrl}/wit/workitems/${taskId}?api-version=7.0`,
+        {
+          method: 'PATCH',
+          headers: {
+            ...this.headers,
+            'Content-Type': 'application/json-patch+json'
+          },
+          body: JSON.stringify(patchDocument)
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error closing task ${taskId}: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error(`Error closing task ${taskId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reabre una tarea (cambia estado a Active)
+   */
+  async reopenTask(taskId: number): Promise<void> {
+    try {
+      const patchDocument = [
+        {
+          op: 'add',
+          path: '/fields/System.State',
+          value: 'Active'
+        }
+      ];
+
+      const response = await fetch(
+        `${this.baseUrl}/wit/workitems/${taskId}?api-version=7.0`,
+        {
+          method: 'PATCH',
+          headers: {
+            ...this.headers,
+            'Content-Type': 'application/json-patch+json'
+          },
+          body: JSON.stringify(patchDocument)
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error reopening task ${taskId}: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error(`Error reopening task ${taskId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Verifica la conexión y las credenciales
    */
   async testConnection(): Promise<boolean> {
@@ -303,7 +378,9 @@ export function mapAzureDevOpsStateToAppState(
     'New': 'EN_TIEMPO',
     'Active': 'EN_TIEMPO',
     'Committed': 'EN_TIEMPO',
-    'Resolved': 'COMPLETADO',
+    'Review': 'EN_TIEMPO',
+    'In Review': 'EN_TIEMPO',
+    'Resolved': 'EN_TIEMPO',
     'Closed': 'COMPLETADO',
     'Done': 'COMPLETADO',
     'Removed': 'BLOQUEADO'

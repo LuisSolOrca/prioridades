@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
+import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
+import AzureDevOpsConfig from '@/models/AzureDevOpsConfig';
+import { AzureDevOpsClient, mapAppStateToAzureDevOpsState } from '@/lib/azureDevOps';
 import { notifyStatusChange, notifyPriorityUnblocked, notifyCompletionMilestone, notifyWeekCompleted } from '@/lib/notifications';
 import { awardBadge } from '@/lib/gamification';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
@@ -225,6 +228,104 @@ export async function PUT(
       console.error('Error sending notifications:', notifyError);
     }
 
+    // Sincronización automática con Azure DevOps
+    try {
+      // Solo sincronizar si el estado cambió o el checklist cambió
+      if (body.status && body.status !== oldStatus || body.checklist) {
+        // Verificar si hay vínculo con Azure DevOps
+        const adoLink = await AzureDevOpsWorkItem.findOne({ priorityId: id });
+
+        if (adoLink) {
+          // Obtener configuración de Azure DevOps
+          const adoConfig = await AzureDevOpsConfig.findOne({
+            userId: priority.userId,
+            isActive: true
+          });
+
+          if (adoConfig && adoConfig.syncEnabled) {
+            const client = new AzureDevOpsClient({
+              organization: adoConfig.organization,
+              project: adoConfig.project,
+              personalAccessToken: adoConfig.personalAccessToken
+            });
+
+            // Sincronizar estado si cambió
+            if (body.status && body.status !== oldStatus) {
+              const newAdoState = mapAppStateToAzureDevOpsState(body.status);
+
+              try {
+                await client.updateWorkItemState(adoLink.workItemId, newAdoState);
+
+                // Actualizar último estado sincronizado
+                adoLink.lastSyncedState = newAdoState;
+                adoLink.lastSyncDate = new Date();
+                await adoLink.save();
+
+                console.log(`🔄 [Azure DevOps] Sincronizado estado de WI ${adoLink.workItemId}: ${body.status} → ${newAdoState}`);
+              } catch (adoSyncError) {
+                console.error(`Error sincronizando estado a Azure DevOps:`, adoSyncError);
+
+                // Registrar error en el vínculo
+                adoLink.syncErrors.push({
+                  error: adoSyncError instanceof Error ? adoSyncError.message : 'Error desconocido',
+                  date: new Date()
+                });
+                await adoLink.save();
+              }
+            }
+
+            // Sincronizar reapertura de tareas (automático, no requiere horas)
+            // El cierre de tareas requiere horas y se hace manualmente vía "⬆️ Actualizar DevOps"
+            if (body.checklist && Array.isArray(body.checklist)) {
+              try {
+                const childTasks = await client.getChildTasks(adoLink.workItemId);
+                let tasksReopenedCount = 0;
+
+                for (const checklistItem of body.checklist) {
+                  // Solo reabrir tareas que fueron desmarcadas localmente
+                  if (!checklistItem.completed) {
+                    // Buscar tarea correspondiente en Azure DevOps
+                    const correspondingTask = childTasks.find(task =>
+                      task.fields['System.Title'] === (checklistItem as any).text
+                    );
+
+                    if (correspondingTask) {
+                      const taskState = correspondingTask.fields['System.State'];
+                      const taskIsClosed = taskState === 'Done' || taskState === 'Closed';
+
+                      // Si NO está completada localmente pero SÍ está cerrada en Azure DevOps, reabrirla
+                      if (taskIsClosed) {
+                        await client.reopenTask(correspondingTask.id);
+                        console.log(`🔄 [Azure DevOps] Tarea reabierta automáticamente: ${correspondingTask.id} - ${correspondingTask.fields['System.Title']}`);
+                        tasksReopenedCount++;
+                      }
+                    }
+                  }
+                }
+
+                // Si se reabrió alguna tarea, reabrir también la historia principal si está cerrada
+                if (tasksReopenedCount > 0) {
+                  const currentWorkItem = await client.getWorkItem(adoLink.workItemId);
+                  const workItemState = currentWorkItem.fields['System.State'];
+                  const workItemIsClosed = workItemState === 'Done' || workItemState === 'Closed' || workItemState === 'Resolved';
+
+                  if (workItemIsClosed) {
+                    await client.updateWorkItemState(adoLink.workItemId, 'Active');
+                    console.log(`🔄 [Azure DevOps] Historia reabierta automáticamente: ${adoLink.workItemId} (${workItemState} → Active)`);
+                  }
+                }
+              } catch (adoTaskError) {
+                console.error('Error reabriendo tareas en Azure DevOps:', adoTaskError);
+              }
+            }
+          }
+        }
+      }
+    } catch (adoError) {
+      console.error('Error en sincronización con Azure DevOps:', adoError);
+      // No fallar la actualización de la prioridad si falla la sincronización
+    }
+
     // Ejecutar workflows basados en eventos
     try {
       // Disparar workflow general de actualización (se ejecuta siempre que se edita)
@@ -302,6 +403,17 @@ export async function DELETE(
     // Verificar que el usuario solo elimine sus propias prioridades (a menos que sea admin)
     if ((session.user as any).role !== 'ADMIN' && priority.userId.toString() !== (session.user as any).id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+
+    // Eliminar vínculos de Azure DevOps si existen
+    try {
+      const deletedLinks = await AzureDevOpsWorkItem.deleteMany({ priorityId: id });
+      if (deletedLinks.deletedCount > 0) {
+        console.log(`🔗 Eliminados ${deletedLinks.deletedCount} vínculos de Azure DevOps para la prioridad ${id}`);
+      }
+    } catch (adoError) {
+      console.error('Error eliminando vínculos de Azure DevOps:', adoError);
+      // No fallar la eliminación de la prioridad si falla la limpieza de vínculos
     }
 
     await Priority.findByIdAndDelete(id);

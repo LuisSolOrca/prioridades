@@ -54,6 +54,18 @@ export default function AzureDevOpsImportPage() {
   const [selectedInitiatives, setSelectedInitiatives] = useState<Map<number, string[]>>(new Map());
   const [importResults, setImportResults] = useState<any>(null);
 
+  // Estado para sincronización
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncItems, setSyncItems] = useState<any[]>([]);
+  const [loadingSync, setLoadingSync] = useState(false);
+  const [selectedSyncItems, setSelectedSyncItems] = useState<Set<number>>(new Set());
+  const [taskHours, setTaskHours] = useState<Map<number, number>>(new Map());
+  const [loadingAutoSync, setLoadingAutoSync] = useState(false);
+  const [lastSyncDate, setLastSyncDate] = useState<Date | null>(null);
+  const [showFromAdoModal, setShowFromAdoModal] = useState(false);
+  const [fromAdoItems, setFromAdoItems] = useState<any[]>([]);
+  const [selectedFromAdoItems, setSelectedFromAdoItems] = useState<Set<number>>(new Set());
+
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -241,15 +253,54 @@ export default function AzureDevOpsImportPage() {
     }
   };
 
-  const handleSync = async () => {
+  const handleShowSyncModal = async () => {
+    setLoadingSync(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch('/api/azure-devops/sync-preview');
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al obtener preview de sincronización');
+      }
+
+      setSyncItems(data.items || []);
+      setShowSyncModal(true);
+
+      // Pre-seleccionar items con cambios
+      const itemsWithChanges = data.items.filter((item: any) => item.changes?.hasChanges);
+      setSelectedSyncItems(new Set(itemsWithChanges.map((item: any) => item.workItemId)));
+
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Error al cargar sincronización'
+      });
+    } finally {
+      setLoadingSync(false);
+    }
+  };
+
+  const handleConfirmSync = async () => {
     setImporting(true);
     setMessage(null);
 
     try {
+      // Convertir taskHours Map a objeto
+      const taskHoursObj: any = {};
+      taskHours.forEach((hours, taskId) => {
+        taskHoursObj[taskId] = hours;
+      });
+
       const res = await fetch('/api/azure-devops/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ direction: 'both' })
+        body: JSON.stringify({
+          direction: 'both',
+          selectedItems: Array.from(selectedSyncItems),
+          taskHours: taskHoursObj
+        })
       });
 
       const data = await res.json();
@@ -266,10 +317,101 @@ export default function AzureDevOpsImportPage() {
         type: 'success',
         text: `✅ Sincronización completada: ${fromAdo} actualizados desde Azure DevOps, ${toAdo} actualizados hacia Azure DevOps`
       });
+
+      // Actualizar fecha de última sincronización
+      setLastSyncDate(new Date());
+
+      // Cerrar modal y limpiar
+      setShowSyncModal(false);
+      setSelectedSyncItems(new Set());
+      setTaskHours(new Map());
     } catch (error) {
       setMessage({
         type: 'error',
         text: error instanceof Error ? error.message : 'Error al sincronizar'
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Mostrar preview de sincronización desde Azure DevOps
+  const handleShowFromAdoModal = async () => {
+    setLoadingAutoSync(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch('/api/azure-devops/sync-preview');
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al obtener preview');
+      }
+
+      // Filtrar items con cualquier tipo de cambio (estado o tareas)
+      const itemsWithChanges = data.items.filter((item: any) => item.changes?.hasChanges);
+
+      if (itemsWithChanges.length === 0) {
+        setMessage({
+          type: 'success',
+          text: '✅ No hay cambios pendientes de sincronización'
+        });
+        setLoadingAutoSync(false);
+        return;
+      }
+
+      setFromAdoItems(itemsWithChanges);
+      setSelectedFromAdoItems(new Set(itemsWithChanges.map((item: any) => item.workItemId)));
+      setShowFromAdoModal(true);
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Error al obtener preview'
+      });
+    } finally {
+      setLoadingAutoSync(false);
+    }
+  };
+
+  // Confirmar sincronización desde Azure DevOps
+  const handleConfirmFromAdo = async () => {
+    setImporting(true);
+    setMessage(null);
+
+    try {
+      // Llamar directamente al endpoint auto-sync que solo sincroniza desde ADO hacia la app
+      const res = await fetch('/api/azure-devops/auto-sync');
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al sincronizar');
+      }
+
+      const { results } = data;
+      const updated = results.updated;
+
+      setMessage({
+        type: 'success',
+        text: `✅ Sincronización completada: ${updated} prioridades actualizadas desde Azure DevOps`
+      });
+
+      // Actualizar fecha de última sincronización
+      setLastSyncDate(new Date());
+
+      // Cerrar modal y limpiar
+      setShowFromAdoModal(false);
+      setSelectedFromAdoItems(new Set());
+
+      // Refrescar work items
+      const workItemsRes = await fetch('/api/azure-devops/work-items');
+      if (workItemsRes.ok) {
+        const workItemsData = await workItemsRes.json();
+        setWorkItems(workItemsData.workItems || []);
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Error al sincronizar desde Azure DevOps'
       });
     } finally {
       setImporting(false);
@@ -504,7 +646,7 @@ export default function AzureDevOpsImportPage() {
                 {selectedIds.size} seleccionados
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
               <button
                 onClick={handleSelectAll}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm"
@@ -512,11 +654,20 @@ export default function AzureDevOpsImportPage() {
                 {selectedIds.size === workItems.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
               </button>
               <button
-                onClick={handleSync}
-                disabled={importing}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleShowFromAdoModal}
+                disabled={loadingAutoSync}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Sincronizar cambios desde Azure DevOps hacia Prioridades"
               >
-                🔄 Sincronizar Estados
+                {loadingAutoSync ? 'Cargando...' : '⬇️ Desde Azure DevOps'}
+              </button>
+              <button
+                onClick={handleShowSyncModal}
+                disabled={loadingSync}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Actualizar cambios locales hacia Azure DevOps"
+              >
+                {loadingSync ? 'Cargando...' : '⬆️ Actualizar DevOps'}
               </button>
               <button
                 onClick={handleShowPreview}
@@ -525,6 +676,11 @@ export default function AzureDevOpsImportPage() {
               >
                 {loadingPreview ? 'Cargando preview...' : `Vista Previa (${selectedIds.size})`}
               </button>
+              {lastSyncDate && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                  Última sync: {lastSyncDate.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </div>
           </div>
 
@@ -787,6 +943,363 @@ export default function AzureDevOpsImportPage() {
                 >
                   {importing ? 'Importando...' : `✓ Confirmar Importación`}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Sincronización Interactiva */}
+      {showSyncModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
+          onClick={() => !importing && setShowSyncModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                    🔄 Sincronización Bidireccional
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400 mt-2">
+                    {syncItems.length} prioridades vinculadas con Azure DevOps
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                    Selecciona las prioridades que deseas sincronizar e ingresa las horas trabajadas en tareas completadas
+                  </p>
+                </div>
+                {!importing && (
+                  <button
+                    onClick={() => setShowSyncModal(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {/* Lista de items de sincronización */}
+              {syncItems.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📭</div>
+                  <p className="text-gray-600 dark:text-gray-400 text-lg">
+                    No hay prioridades vinculadas con Azure DevOps
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4 mb-6">
+                  {syncItems.map((item) => (
+                    <div
+                      key={item.workItemId}
+                      className={`border rounded-lg p-4 ${
+                        selectedSyncItems.has(item.workItemId)
+                          ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700/50'
+                      }`}
+                    >
+                      {item.error ? (
+                        <div className="text-red-600 dark:text-red-400">
+                          ❌ Error: {item.error}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-start gap-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedSyncItems.has(item.workItemId)}
+                              onChange={() => {
+                                const newSelected = new Set(selectedSyncItems);
+                                if (newSelected.has(item.workItemId)) {
+                                  newSelected.delete(item.workItemId);
+                                } else {
+                                  newSelected.add(item.workItemId);
+                                }
+                                setSelectedSyncItems(newSelected);
+                              }}
+                              className="mt-1 w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-mono text-gray-500 dark:text-gray-400">
+                                  #{item.workItemId}
+                                </span>
+                                <span className="px-2 py-1 rounded text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                  {item.workItemType}
+                                </span>
+                              </div>
+
+                              <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-2">
+                                {item.title}
+                              </h3>
+
+                              {/* Mostrar cambios detectados */}
+                              {item.changes && item.changes.hasChanges && (
+                                <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-300 dark:border-yellow-700">
+                                  <h4 className="text-sm font-semibold text-yellow-900 dark:text-yellow-200 mb-2">
+                                    ⚠️ Cambios Detectados
+                                  </h4>
+                                  <ul className="space-y-1 text-sm">
+                                    {item.changes.details.map((detail: any, idx: number) => (
+                                      <li key={idx} className="text-yellow-800 dark:text-yellow-300">
+                                        {detail.type === 'estado' && (
+                                          <>Estado: {detail.local} (Local) → {detail.remoto} (Azure)</>
+                                        )}
+                                        {detail.type === 'tarea_completada' && (
+                                          <>
+                                            Tarea "{detail.taskTitle}": Completada localmente, pendiente en Azure ({detail.remoteStatus})
+                                          </>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* Tareas con input de horas */}
+                              {item.childTasks && item.childTasks.length > 0 && (
+                                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    📋 Tareas ({item.childTasks.length})
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {item.childTasks.map((task: any) => (
+                                      <div key={task.id} className="flex items-center gap-3">
+                                        <span className={`text-sm ${
+                                          task.localCompleted
+                                            ? 'text-green-600 dark:text-green-400'
+                                            : 'text-gray-600 dark:text-gray-400'
+                                        }`}>
+                                          {task.localCompleted ? '✓' : '○'}
+                                        </span>
+                                        <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">
+                                          {task.title}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                          {task.state}
+                                        </span>
+                                        {task.localCompleted && (task.state !== 'Done' && task.state !== 'Closed') && (
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            step="0.5"
+                                            placeholder="Horas"
+                                            value={taskHours.get(task.id) || ''}
+                                            onChange={(e) => {
+                                              const newHours = new Map(taskHours);
+                                              const value = parseFloat(e.target.value);
+                                              if (value > 0) {
+                                                newHours.set(task.id, value);
+                                              } else {
+                                                newHours.delete(task.id);
+                                              }
+                                              setTaskHours(newHours);
+                                            }}
+                                            className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                          />
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Botones de acción */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setShowSyncModal(false)}
+                  disabled={importing}
+                  className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmSync}
+                  disabled={importing || selectedSyncItems.size === 0}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {importing ? 'Sincronizando...' : `✓ Sincronizar (${selectedSyncItems.size})`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Sincronización desde Azure DevOps */}
+      {showFromAdoModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    🔄 Preview de Sincronización
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Se detectaron cambios pendientes. Selecciona las prioridades que deseas sincronizar.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowFromAdoModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                {fromAdoItems.map((item) => (
+                  <div
+                    key={item.workItemId}
+                    className={`border rounded-lg p-4 ${
+                      selectedFromAdoItems.has(item.workItemId)
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedFromAdoItems.has(item.workItemId)}
+                        onChange={(e) => {
+                          const newSet = new Set(selectedFromAdoItems);
+                          if (e.target.checked) {
+                            newSet.add(item.workItemId);
+                          } else {
+                            newSet.delete(item.workItemId);
+                          }
+                          setSelectedFromAdoItems(newSet);
+                        }}
+                        className="mt-1 h-5 w-5 text-indigo-600 rounded"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                            WI #{item.workItemId}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${getStateColor(item.workItemType)}`}>
+                            {item.workItemType}
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                          {item.title}
+                        </h3>
+
+                        {/* Cambio de estado */}
+                        {item.changes.stateChanged && (
+                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-2">
+                            <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-200 mb-1">
+                              🔄 Cambio de estado detectado
+                            </p>
+                            <div className="flex items-center gap-3 text-sm">
+                              <div>
+                                <span className="text-gray-600 dark:text-gray-400">Local: </span>
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getStateColor(item.localStatus)}`}>
+                                  {item.localStatus}
+                                </span>
+                              </div>
+                              <span className="text-gray-400">→</span>
+                              <div>
+                                <span className="text-gray-600 dark:text-gray-400">Azure DevOps: </span>
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getStateColor(item.remoteStatus)}`}>
+                                  {item.remoteStatus}
+                                </span>
+                                <span className="text-gray-400 mx-1">→</span>
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getStateColor(item.remoteStatusMapped)}`}>
+                                  {item.remoteStatusMapped}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tareas completadas remotamente (desde Azure DevOps) */}
+                        {item.changes.details?.filter((d: any) => d.direction === 'from-ado').length > 0 && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-2">
+                            <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                              ⬇️ Tareas completadas en Azure DevOps
+                            </p>
+                            <div className="space-y-1">
+                              {item.changes.details
+                                .filter((d: any) => d.direction === 'from-ado')
+                                .map((detail: any, idx: number) => (
+                                  <div key={idx} className="flex items-center gap-2 text-sm">
+                                    <span className="text-blue-600 dark:text-blue-400">✓</span>
+                                    <span className="text-gray-700 dark:text-gray-300">{detail.taskTitle}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      ({detail.remoteStatus})
+                                    </span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tareas completadas localmente (hacia Azure DevOps) */}
+                        {item.changes.details?.filter((d: any) => d.direction === 'to-ado').length > 0 && (
+                          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-2">
+                            <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
+                              ⬆️ Tareas completadas localmente
+                            </p>
+                            <div className="space-y-1">
+                              {item.changes.details
+                                .filter((d: any) => d.direction === 'to-ado')
+                                .map((detail: any, idx: number) => (
+                                  <div key={idx} className="flex items-center gap-2 text-sm">
+                                    <span className="text-green-600 dark:text-green-400">✓</span>
+                                    <span className="text-gray-700 dark:text-gray-300">{detail.taskTitle}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      (pendiente en ADO: {detail.remoteStatus})
+                                    </span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedFromAdoItems.size} de {fromAdoItems.length} seleccionados
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowFromAdoModal(false)}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleConfirmFromAdo}
+                    disabled={importing || selectedFromAdoItems.size === 0}
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {importing ? 'Sincronizando...' : `Sincronizar ${selectedFromAdoItems.size} prioridades`}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
