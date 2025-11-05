@@ -267,10 +267,10 @@ export default function HistoryPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -279,12 +279,12 @@ export default function HistoryPage() {
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
               📅 Histórico de Prioridades
             </h1>
             <button
@@ -296,16 +296,16 @@ export default function HistoryPage() {
             </button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="mb-6">
               <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:bg-gray-700"
                   checked={includeAdmins}
                   onChange={(e) => setIncludeAdmins(e.target.checked)}
                 />
-                <span className="ml-2 text-sm font-medium text-gray-700">
+                <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Incluir prioridades de administradores
                 </span>
               </label>
@@ -313,11 +313,11 @@ export default function HistoryPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filtrar por Usuario
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
                 >
@@ -332,11 +332,11 @@ export default function HistoryPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filtrar por Iniciativa
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={selectedInitiative}
                   onChange={(e) => setSelectedInitiative(e.target.value)}
                 >
@@ -347,11 +347,11 @@ export default function HistoryPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Tipo de Prioridad
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={priorityTypeFilter}
                   onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
                 >
@@ -361,11 +361,11 @@ export default function HistoryPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filtrar por Área
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={selectedArea}
                   onChange={(e) => setSelectedArea(e.target.value)}
                 >
@@ -379,12 +379,12 @@ export default function HistoryPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Buscar por palabras clave
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Buscar en títulos..."
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
@@ -394,23 +394,23 @@ export default function HistoryPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fecha desde
                 </label>
                 <input
                   type="date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fecha hasta
                 </label>
                 <input
                   type="date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                 />
@@ -418,8 +418,8 @@ export default function HistoryPage() {
             </div>
 
             <div className="flex items-center justify-between mb-6 pb-4 border-b">
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-800">{filteredPriorities.length}</span> prioridades encontradas
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.length}</span> prioridades encontradas
               </div>
               <button
                 onClick={() => {
@@ -432,7 +432,7 @@ export default function HistoryPage() {
                   setSearchKeyword('');
                   setPriorityTypeFilter('TODAS');
                 }}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
               >
                 🔄 Limpiar todos los filtros
               </button>
@@ -442,7 +442,7 @@ export default function HistoryPage() {
               {weekGroups.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📅</div>
-                  <p className="text-gray-500">No hay datos históricos con los filtros seleccionados</p>
+                  <p className="text-gray-500 dark:text-gray-400">No hay datos históricos con los filtros seleccionados</p>
                 </div>
               ) : (
                 weekGroups.map(week => {
@@ -456,10 +456,10 @@ export default function HistoryPage() {
                     <div key={week.weekStart.toISOString()} className="border-l-4 border-blue-500 pl-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-gray-800">
+                          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
                             {getWeekLabel(week.weekStart)}
                           </h3>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
                             {weekStats.total} prioridades - {weekStats.completed} completadas -
                             Promedio: {weekStats.avgCompletion.toFixed(1)}%
                           </div>
@@ -476,20 +476,20 @@ export default function HistoryPage() {
                           const primaryInitiative = priorityInitiatives[0];
 
                           return (
-                            <div key={priority._id} className="bg-gray-50 rounded-lg p-4 border" style={{ borderLeftColor: primaryInitiative?.color || '#ccc', borderLeftWidth: '3px' }}>
+                            <div key={priority._id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700" style={{ borderLeftColor: primaryInitiative?.color || '#ccc', borderLeftWidth: '3px' }}>
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <div className="font-semibold text-gray-800 text-sm">{priority.title}</div>
+                                    <div className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{priority.title}</div>
                                     <span className={`text-xs px-2 py-0.5 rounded ${
                                       (priority.type || 'ESTRATEGICA') === 'ESTRATEGICA'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : 'bg-green-100 text-green-700'
+                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200'
+                                        : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200'
                                     }`}>
                                       {(priority.type || 'ESTRATEGICA') === 'ESTRATEGICA' ? 'Estratégica' : 'Operativa'}
                                     </span>
                                   </div>
-                                  <div className="text-xs text-gray-600 flex flex-wrap gap-1 items-center">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-1 items-center">
                                     <span>{user?.name}</span>
                                     {priorityInitiatives.map((initiative, idx) => initiative && (
                                       <span key={initiative._id}>
@@ -504,14 +504,14 @@ export default function HistoryPage() {
                                     <div className="flex space-x-1">
                                       <button
                                         onClick={() => handleEdit(priority)}
-                                        className="text-blue-600 hover:bg-blue-50 w-8 h-8 rounded transition text-xs"
+                                        className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 w-8 h-8 rounded transition text-xs"
                                         title="Editar prioridad"
                                       >
                                         ✏️
                                       </button>
                                       <button
                                         onClick={() => handleDelete(priority._id)}
-                                        className="text-red-600 hover:bg-red-50 w-8 h-8 rounded transition text-xs"
+                                        className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 w-8 h-8 rounded transition text-xs"
                                         title="Eliminar prioridad"
                                       >
                                         🗑️
@@ -521,13 +521,13 @@ export default function HistoryPage() {
                                 </div>
                               </div>
                               <div className="flex items-center justify-between text-xs">
-                                <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
                                   <div
                                     className="bg-blue-600 h-2 rounded-full"
                                     style={{ width: `${priority.completionPercentage}%` }}
                                   ></div>
                                 </div>
-                                <span className="font-bold text-gray-700">{priority.completionPercentage}%</span>
+                                <span className="font-bold text-gray-700 dark:text-gray-300">{priority.completionPercentage}%</span>
                               </div>
                             </div>
                           );

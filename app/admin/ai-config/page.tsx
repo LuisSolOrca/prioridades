@@ -124,10 +124,10 @@ export default function AIConfigPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -136,12 +136,12 @@ export default function AIConfigPage() {
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
               🤖 Configuración de IA
             </h1>
           </div>
@@ -152,8 +152,8 @@ export default function AIConfigPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <p className="text-gray-600 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Aquí puedes configurar los prompts que utiliza la IA para mejorar títulos, descripciones y realizar análisis organizacionales.
               Los cambios se aplican inmediatamente a todas las funciones de IA.
             </p>
@@ -162,29 +162,29 @@ export default function AIConfigPage() {
               {configs.map(config => (
                 <div
                   key={config._id}
-                  className="border rounded-lg p-5 hover:shadow-md transition-shadow"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow bg-white dark:bg-gray-800"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-gray-800">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
                           {promptTypeLabels[config.promptType]}
                         </h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${config.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${config.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                           {config.isActive ? '✓ Activo' : '✗ Inactivo'}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                         {promptTypeDescriptions[config.promptType]}
                       </p>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <span className="font-medium text-gray-700">Temperature:</span>
-                          <span className="ml-2 text-gray-600">{config.temperature}</span>
+                          <span className="font-medium text-gray-700 dark:text-gray-300">Temperature:</span>
+                          <span className="ml-2 text-gray-600 dark:text-gray-400">{config.temperature}</span>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">Max Tokens:</span>
-                          <span className="ml-2 text-gray-600">{config.maxTokens}</span>
+                          <span className="font-medium text-gray-700 dark:text-gray-300">Max Tokens:</span>
+                          <span className="ml-2 text-gray-600 dark:text-gray-400">{config.maxTokens}</span>
                         </div>
                       </div>
                     </div>
@@ -205,47 +205,47 @@ export default function AIConfigPage() {
       {/* Modal de Edición */}
       {showEditForm && editingConfig && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
           onClick={handleCancel}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
                 Editar Configuración: {promptTypeLabels[editingConfig.promptType]}
               </h2>
 
               <div className="space-y-6">
                 {/* System Prompt */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     System Prompt
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     Define el rol y comportamiento de la IA. Este prompt establece el contexto general.
                   </p>
                   <textarea
                     value={formData.systemPrompt || ''}
                     onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     rows={10}
                   />
                 </div>
 
                 {/* User Prompt Template */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     User Prompt Template
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     Template del prompt del usuario. Usa variables como {'{{text}}'}, {'{{prioritiesContext}}'}, etc.
                   </p>
                   <textarea
                     value={formData.userPromptTemplate || ''}
                     onChange={(e) => setFormData({ ...formData, userPromptTemplate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     rows={8}
                   />
                 </div>
@@ -253,10 +253,10 @@ export default function AIConfigPage() {
                 {/* Parámetros */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Temperature (0-2)
                     </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Controla la creatividad. Valores bajos = más determinista, valores altos = más creativo.
                     </p>
                     <input
@@ -266,15 +266,15 @@ export default function AIConfigPage() {
                       step="0.1"
                       value={formData.temperature || 0.7}
                       onChange={(e) => setFormData({ ...formData, temperature: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Max Tokens (50-4000)
                     </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                       Longitud máxima de la respuesta de la IA.
                     </p>
                     <input
@@ -284,7 +284,7 @@ export default function AIConfigPage() {
                       step="50"
                       value={formData.maxTokens || 500}
                       onChange={(e) => setFormData({ ...formData, maxTokens: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
@@ -296,23 +296,23 @@ export default function AIConfigPage() {
                       type="checkbox"
                       checked={formData.isActive !== false}
                       onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="w-5 h-5 text-blue-600"
+                      className="w-5 h-5 text-blue-600 dark:bg-gray-700"
                     />
-                    <span className="text-sm font-semibold text-gray-700">
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Configuración activa
                     </span>
                   </label>
-                  <p className="text-xs text-gray-500 mt-1 ml-7">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">
                     Si está desactivada, esta configuración no se utilizará.
                   </p>
                 </div>
               </div>
 
               {/* Botones */}
-              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t">
+              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={handleCancel}
-                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-semibold"
+                  className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-semibold"
                   disabled={saving}
                 >
                   Cancelar

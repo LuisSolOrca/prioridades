@@ -20,17 +20,17 @@ export default function LeaderboardPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-6">
@@ -53,32 +53,32 @@ export default function LeaderboardPage() {
 
           {/* Info Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-green-500">
               <div className="flex items-start">
                 <div className="text-3xl mr-3">✅</div>
                 <div>
-                  <h3 className="font-bold text-gray-800 mb-1">Completa Prioridades</h3>
-                  <p className="text-sm text-gray-600">+4 puntos por cada prioridad completada</p>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-1">Completa Prioridades</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">+4 puntos por cada prioridad completada</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-red-500">
               <div className="flex items-start">
                 <div className="text-3xl mr-3">⚠️</div>
                 <div>
-                  <h3 className="font-bold text-gray-800 mb-1">Evita Riesgos</h3>
-                  <p className="text-sm text-gray-600">-6 puntos por prioridad en riesgo/bloqueada/reprogramada por semana</p>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-1">Evita Riesgos</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">-6 puntos por prioridad en riesgo/bloqueada/reprogramada por semana</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-blue-500">
               <div className="flex items-start">
                 <div className="text-3xl mr-3">🔄</div>
                 <div>
-                  <h3 className="font-bold text-gray-800 mb-1">Rescata a Tiempo</h3>
-                  <p className="text-sm text-gray-600">-2 puntos si rescatas en la semana actual</p>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-1">Rescata a Tiempo</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">-2 puntos si rescatas en la semana actual</p>
                 </div>
               </div>
             </div>
@@ -88,15 +88,15 @@ export default function LeaderboardPage() {
           <MonthlyLeaderboard />
 
           {/* How to Win Section */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center">
               <span className="mr-2">💡</span>
               ¿Cómo ganar puntos y badges?
             </h2>
 
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="font-bold text-blue-900 mb-2">🎯 Gestiona tus Prioridades</h3>
-              <div className="space-y-2 text-gray-700 text-sm">
+            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">🎯 Gestiona tus Prioridades</h3>
+              <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                 <div className="flex items-start">
                   <span className="mr-2 flex-shrink-0">✅</span>
                   <div><strong>Completa prioridades:</strong> +4 puntos por cada una</div>
@@ -116,9 +116,9 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <h3 className="font-bold text-purple-900 mb-2">🤖 Usa la Plataforma</h3>
-              <div className="space-y-2 text-gray-700 text-sm">
+            <div className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800">
+              <h3 className="font-bold text-purple-900 dark:text-purple-200 mb-2">🤖 Usa la Plataforma</h3>
+              <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                 <div className="flex items-start">
                   <span className="mr-2 flex-shrink-0">✨</span>
                   <div><strong>IA:</strong> Mejora textos y genera análisis organizacionales</div>
@@ -142,23 +142,23 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border-2 border-yellow-300">
-              <p className="text-sm text-gray-800 text-center">
+            <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-lg border-2 border-yellow-300 dark:border-yellow-700">
+              <p className="text-sm text-gray-800 dark:text-gray-200 text-center">
                 <strong>🌟 ¡24 badges disponibles!</strong> Desde "Primera Victoria" hasta "Power User" - explora todas las funcionalidades
               </p>
             </div>
           </div>
 
           {/* Rewards Section */}
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-purple-900 mb-3 flex items-center">
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-2 border-purple-200 dark:border-purple-700 rounded-lg p-6">
+            <h2 className="text-xl font-bold text-purple-900 dark:text-purple-200 mb-3 flex items-center">
               <span className="mr-2">🎁</span>
               Reconocimiento para el Ganador
             </h2>
-            <p className="text-purple-800 mb-3">
+            <p className="text-purple-800 dark:text-purple-200 mb-3">
               Al finalizar el mes, el colaborador con más puntos recibe:
             </p>
-            <ul className="space-y-2 text-purple-700">
+            <ul className="space-y-2 text-purple-700 dark:text-purple-300">
               <li className="flex items-center">
                 <span className="mr-2">📧</span>
                 Correo de felicitación personalizado

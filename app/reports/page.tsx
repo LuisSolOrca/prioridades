@@ -257,10 +257,10 @@ export default function ReportsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -269,20 +269,20 @@ export default function ReportsPage() {
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
               📄 Generador de Reportes Profesionales
             </h1>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-start">
               <span className="text-2xl mr-3">ℹ️</span>
-              <div className="text-sm text-blue-800">
+              <div className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Genera reportes profesionales en PDF o Word</strong>
                 <p className="mt-1">
                   Aplica filtros personalizados y genera reportes con tablas automáticas, resúmenes y estadísticas.
@@ -293,20 +293,20 @@ export default function ReportsPage() {
           </div>
 
           {/* Tipo de Reporte */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Tipo de Reporte</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Tipo de Reporte</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <button
                 onClick={() => setReportType('priorities')}
                 className={`p-4 rounded-lg border-2 transition ${
                   reportType === 'priorities'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
                 }`}
               >
                 <div className="text-3xl mb-2">📋</div>
-                <div className="font-semibold text-gray-800">Reporte de Prioridades</div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Reporte de Prioridades</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Listado detallado de prioridades con estado y porcentaje
                 </div>
               </button>
@@ -315,13 +315,13 @@ export default function ReportsPage() {
                 onClick={() => setReportType('performance')}
                 className={`p-4 rounded-lg border-2 transition ${
                   reportType === 'performance'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
                 }`}
               >
                 <div className="text-3xl mb-2">👥</div>
-                <div className="font-semibold text-gray-800">Rendimiento de Usuarios</div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Rendimiento de Usuarios</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Análisis de rendimiento y métricas por usuario
                 </div>
               </button>
@@ -330,13 +330,13 @@ export default function ReportsPage() {
                 onClick={() => setReportType('initiatives')}
                 className={`p-4 rounded-lg border-2 transition ${
                   reportType === 'initiatives'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
                 }`}
               >
                 <div className="text-3xl mb-2">💡</div>
-                <div className="font-semibold text-gray-800">Iniciativas Estratégicas</div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Iniciativas Estratégicas</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Distribución de prioridades por iniciativa
                 </div>
               </button>
@@ -345,13 +345,13 @@ export default function ReportsPage() {
                 onClick={() => setReportType('checklist')}
                 className={`p-4 rounded-lg border-2 transition ${
                   reportType === 'checklist'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
                 }`}
               >
                 <div className="text-3xl mb-2">✅</div>
-                <div className="font-semibold text-gray-800">Tareas de Checklist</div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Tareas de Checklist</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Avance detallado de tareas en checklists de prioridades
                 </div>
               </button>
@@ -359,18 +359,18 @@ export default function ReportsPage() {
           </div>
 
           {/* Filtros */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Filtros del Reporte</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Filtros del Reporte</h2>
 
             <div className="mb-6">
               <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:bg-gray-700"
                   checked={includeAdmins}
                   onChange={(e) => setIncludeAdmins(e.target.checked)}
                 />
-                <span className="ml-2 text-sm font-medium text-gray-700">
+                <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Incluir prioridades de administradores
                 </span>
               </label>
@@ -378,11 +378,11 @@ export default function ReportsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filtrar por Usuario
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
                 >
@@ -398,11 +398,11 @@ export default function ReportsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filtrar por Iniciativa
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={selectedInitiative}
                   onChange={(e) => setSelectedInitiative(e.target.value)}
                 >
@@ -414,11 +414,11 @@ export default function ReportsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Tipo de Prioridad
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={priorityTypeFilter}
                   onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
                 >
@@ -429,11 +429,11 @@ export default function ReportsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filtrar por Área
                 </label>
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={selectedArea}
                   onChange={(e) => setSelectedArea(e.target.value)}
                 >
@@ -447,12 +447,12 @@ export default function ReportsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Buscar por palabras clave
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="Buscar en títulos..."
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
@@ -462,50 +462,50 @@ export default function ReportsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fecha desde
                 </label>
                 <input
                   type="date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fecha hasta
                 </label>
                 <input
                   type="date"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between pb-4 border-b">
-              <div className="text-sm text-gray-600">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 {reportType === 'priorities' && (
                   <>
-                    <span className="font-semibold text-gray-800">{filteredPriorities.length}</span> prioridades serán incluidas en el reporte
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.length}</span> prioridades serán incluidas en el reporte
                   </>
                 )}
                 {reportType === 'performance' && (
                   <>
-                    <span className="font-semibold text-gray-800">{filteredUsers.length}</span> usuarios serán incluidos en el reporte
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredUsers.length}</span> usuarios serán incluidos en el reporte
                   </>
                 )}
                 {reportType === 'initiatives' && (
                   <>
-                    <span className="font-semibold text-gray-800">{initiatives.length}</span> iniciativas serán incluidas en el reporte
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{initiatives.length}</span> iniciativas serán incluidas en el reporte
                   </>
                 )}
               </div>
               <button
                 onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
               >
                 🔄 Limpiar filtros
               </button>
@@ -514,17 +514,17 @@ export default function ReportsPage() {
 
           {/* Vista Previa */}
           {getFilterDescription() && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-3">Filtros Aplicados</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-700">{getFilterDescription()}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">Filtros Aplicados</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">{getFilterDescription()}</p>
               </div>
             </div>
           )}
 
           {/* Botones de Generación */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Generar Reporte</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Generar Reporte</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 onClick={() => handleGenerateReport('pdf')}
@@ -543,8 +543,8 @@ export default function ReportsPage() {
               </button>
             </div>
 
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="text-sm text-gray-600 dark:text-gray-300">
                 <p className="font-semibold mb-2">💡 Información:</p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Los reportes se generarán con los filtros aplicados actualmente</li>

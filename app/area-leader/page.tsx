@@ -84,28 +84,28 @@ function DraggablePriorityCard({ priority }: { priority: Priority }) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`bg-white p-4 rounded-lg shadow-sm border-2 hover:shadow-md transition cursor-grab active:cursor-grabbing ${
+      className={`bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm border-2 hover:shadow-md transition cursor-grab active:cursor-grabbing ${
         isDragging ? 'opacity-50' : ''
       } ${isCurrentWeek ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-purple-500'}`}
     >
       <div className="flex items-center justify-between mb-2">
         <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-          isCurrentWeek ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+          isCurrentWeek ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200'
         }`}>
           {isCurrentWeek ? '📅 Esta Semana' : '📆 Próxima Semana'}
         </span>
       </div>
 
-      <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2">{priority.title}</h4>
+      <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">{priority.title}</h4>
       {priority.description && (
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{priority.description}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{priority.description}</p>
       )}
 
       <div className="flex items-center justify-between">
         <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColors[priority.status]}`}>
           {statusLabels[priority.status]}
         </span>
-        <span className="text-sm font-bold text-gray-700">{priority.completionPercentage}%</span>
+        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{priority.completionPercentage}%</span>
       </div>
 
       {priority.initiativeIds && priority.initiativeIds.length > 0 && (
@@ -150,25 +150,25 @@ function PriorityCard({ priority }: { priority: Priority }) {
   const isCurrentWeek = priorityWeekStart.getTime() === currentMonday.getTime();
 
   return (
-    <div className={`bg-white p-4 rounded-lg shadow-sm border-2 ${isCurrentWeek ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-purple-500'}`}>
+    <div className={`bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm border-2 ${isCurrentWeek ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-purple-500'}`}>
       <div className="flex items-center justify-between mb-2">
         <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-          isCurrentWeek ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+          isCurrentWeek ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200'
         }`}>
           {isCurrentWeek ? '📅 Esta Semana' : '📆 Próxima Semana'}
         </span>
       </div>
 
-      <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2">{priority.title}</h4>
+      <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">{priority.title}</h4>
       {priority.description && (
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{priority.description}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{priority.description}</p>
       )}
 
       <div className="flex items-center justify-between">
         <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColors[priority.status]}`}>
           {statusLabels[priority.status]}
         </span>
-        <span className="text-sm font-bold text-gray-700">{priority.completionPercentage}%</span>
+        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{priority.completionPercentage}%</span>
       </div>
 
       {priority.initiativeIds && priority.initiativeIds.length > 0 && (
@@ -199,23 +199,23 @@ function DroppableColumn({ userColumn }: { userColumn: UserColumn }) {
   return (
     <div
       ref={setNodeRef}
-      className={`bg-gray-50 rounded-lg p-4 transition-colors ${
-        isOver ? 'bg-blue-50 border-2 border-blue-400 border-dashed' : 'border-2 border-transparent'
+      className={`bg-gray-50 dark:bg-gray-800 rounded-lg p-4 transition-colors ${
+        isOver ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-400 dark:border-blue-600 border-dashed' : 'border-2 border-transparent'
       }`}
     >
-      <div className="sticky top-0 bg-gray-50 pb-3 mb-3 border-b-2 border-gray-200 z-10">
+      <div className="sticky top-0 bg-gray-50 dark:bg-gray-800 pb-3 mb-3 border-b-2 border-gray-200 dark:border-gray-700 z-10">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
             {userColumn.user.name.charAt(0).toUpperCase()}
           </div>
-          <h3 className="font-bold text-gray-800">{userColumn.user.name}</h3>
+          <h3 className="font-bold text-gray-800 dark:text-gray-100">{userColumn.user.name}</h3>
         </div>
-        <p className="text-xs text-gray-500">{userColumn.priorities.length} prioridades</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{userColumn.priorities.length} prioridades</p>
       </div>
 
       <div className="space-y-3 min-h-[200px]">
         {userColumn.priorities.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
+          <div className="text-center text-gray-400 dark:text-gray-500 py-8">
             <div className="text-3xl mb-2">📋</div>
             <div className="text-sm">Sin prioridades</div>
             <div className="text-xs mt-1">Arrastra prioridades aquí</div>
@@ -388,10 +388,10 @@ export default function AreaLeaderPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -400,7 +400,7 @@ export default function AreaLeaderPage() {
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content">
         <div className="px-6 py-6">
@@ -408,20 +408,20 @@ export default function AreaLeaderPage() {
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
               <UsersIcon size={32} className="text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-800">Gestión de Área</h1>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Gestión de Área</h1>
             </div>
-            <p className="text-gray-600 mb-2">
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
               Arrastra y suelta prioridades para reasignarlas a los miembros de tu área:{' '}
-              <span className="font-bold text-blue-600">{currentArea}</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400">{currentArea}</span>
             </p>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                <span className="text-gray-600">📅 Esta Semana</span>
+                <span className="text-gray-600 dark:text-gray-400">📅 Esta Semana</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-purple-500 rounded"></div>
-                <span className="text-gray-600">📆 Próxima Semana</span>
+                <span className="text-gray-600 dark:text-gray-400">📆 Próxima Semana</span>
               </div>
             </div>
           </div>
@@ -431,8 +431,8 @@ export default function AreaLeaderPage() {
             <div
               className={`mb-4 p-4 rounded-lg flex items-center gap-2 ${
                 message.type === 'success'
-                  ? 'bg-green-100 text-green-800 border border-green-300'
-                  : 'bg-red-100 text-red-800 border border-red-300'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-800'
+                  : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border border-red-300 dark:border-red-800'
               }`}
             >
               {message.type === 'error' && <AlertCircle size={20} />}
@@ -455,7 +455,7 @@ export default function AreaLeaderPage() {
               {userColumns.length === 0 && (
                 <div className="col-span-full text-center w-full py-12">
                   <div className="text-6xl mb-4">👥</div>
-                  <div className="text-xl text-gray-600">No hay usuarios en tu área</div>
+                  <div className="text-xl text-gray-600 dark:text-gray-400">No hay usuarios en tu área</div>
                 </div>
               )}
             </div>

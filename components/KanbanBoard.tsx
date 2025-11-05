@@ -14,25 +14,25 @@ const columns = [
   {
     id: 'EN_TIEMPO',
     title: 'En Tiempo',
-    color: 'bg-green-100',
+    color: 'bg-green-100 dark:bg-green-900/30',
     headerColor: 'bg-green-600',
   },
   {
     id: 'EN_RIESGO',
     title: 'En Riesgo',
-    color: 'bg-yellow-100',
+    color: 'bg-yellow-100 dark:bg-yellow-900/30',
     headerColor: 'bg-yellow-600',
   },
   {
     id: 'BLOQUEADO',
     title: 'Bloqueado',
-    color: 'bg-red-100',
+    color: 'bg-red-100 dark:bg-red-900/30',
     headerColor: 'bg-red-600',
   },
   {
     id: 'COMPLETADO',
     title: 'Completado',
-    color: 'bg-blue-100',
+    color: 'bg-blue-100 dark:bg-blue-900/30',
     headerColor: 'bg-blue-600',
   },
 ];
@@ -132,7 +132,7 @@ export default function KanbanBoard({ priorities, onStatusChange, onViewDetails,
                     {provided.placeholder}
 
                     {columnPriorities.length === 0 && (
-                      <div className="text-center text-gray-400 text-sm mt-8">
+                      <div className="text-center text-gray-400 dark:text-gray-500 text-sm mt-8">
                         No hay prioridades
                       </div>
                     )}

@@ -191,10 +191,10 @@ export default function AdminInitiativesPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -205,16 +205,16 @@ export default function AdminInitiativesPage() {
   const activeCount = initiatives.filter(i => i.isActive).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
                 💡 Gestión de Iniciativas Estratégicas
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
                 {activeCount} iniciativas activas • {initiatives.length} total
               </p>
             </div>
@@ -235,10 +235,10 @@ export default function AdminInitiativesPage() {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-start">
               <span className="text-2xl mr-3">ℹ️</span>
-              <div className="text-sm text-blue-800">
+              <div className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>¿Qué son las iniciativas estratégicas?</strong>
                 <p className="mt-1">
                   Son los ejes de acción principales de la empresa. Todas las prioridades deben estar
@@ -250,20 +250,20 @@ export default function AdminInitiativesPage() {
           </div>
 
           {showForm ? (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
                 {editingInitiative ? 'Editar Iniciativa' : 'Nueva Iniciativa Estratégica'}
               </h2>
               <form onSubmit={handleSave} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nombre de la Iniciativa *
                   </label>
                   <input
                     type="text"
                     required
                     maxLength={100}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Ej: Generación de ingresos"
@@ -271,13 +271,13 @@ export default function AdminInitiativesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Descripción
                   </label>
                   <textarea
                     rows={3}
                     maxLength={500}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Describe el objetivo y alcance..."
@@ -285,7 +285,7 @@ export default function AdminInitiativesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Color Identificador
                   </label>
                   <div className="grid grid-cols-8 gap-3">
@@ -321,14 +321,14 @@ export default function AdminInitiativesPage() {
                   </label>
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4 border-t">
+                <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     type="button"
                     onClick={() => {
                       setShowForm(false);
                       setEditingInitiative(null);
                     }}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                    className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   >
                     Cancelar
                   </button>
@@ -346,7 +346,7 @@ export default function AdminInitiativesPage() {
               {initiatives.map((initiative, index) => (
                 <div
                   key={initiative._id}
-                  className="bg-white rounded-lg shadow-md p-6 border-l-4"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4"
                   style={{ borderColor: initiative.color }}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -357,10 +357,10 @@ export default function AdminInitiativesPage() {
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: initiative.color }}
                           ></div>
-                          <h3 className="text-lg font-bold text-gray-800">{initiative.name}</h3>
+                          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{initiative.name}</h3>
                         </div>
                         {initiative.description && (
-                          <p className="text-sm text-gray-600 mt-2">{initiative.description}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{initiative.description}</p>
                         )}
                       </div>
 
@@ -368,8 +368,8 @@ export default function AdminInitiativesPage() {
                         onClick={() => toggleActive(initiative)}
                         className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ml-3 ${
                           initiative.isActive
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                         }`}
                       >
                         {initiative.isActive ? 'Activa' : 'Inactiva'}
@@ -377,16 +377,16 @@ export default function AdminInitiativesPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-2 pt-3 border-t">
+                  <div className="flex justify-end space-x-2 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => handleEdit(initiative)}
-                      className="text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition"
+                      className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-4 py-2 rounded-lg transition"
                     >
                       ✏️ Editar
                     </button>
                     <button
                       onClick={() => handleDelete(initiative)}
-                      className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition"
+                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 px-4 py-2 rounded-lg transition"
                     >
                       🗑️ Eliminar
                     </button>

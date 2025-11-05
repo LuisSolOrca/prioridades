@@ -51,10 +51,10 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-gray-800 flex items-center space-x-2">
+        <h4 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center space-x-2">
           <span>✓ Lista de Tareas</span>
           {totalCount > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               ({completedCount}/{totalCount} - {completionPercentage}%)
             </span>
           )}
@@ -63,7 +63,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
           <button
             type="button"
             onClick={() => setIsAdding(true)}
-            className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm flex items-center space-x-1"
           >
             <Plus size={16} />
             <span>Agregar tarea</span>
@@ -73,7 +73,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
 
       {/* Progress bar */}
       {totalCount > 0 && (
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div
             className="bg-green-500 h-2 rounded-full transition-all duration-300"
             style={{ width: `${completionPercentage}%` }}
@@ -88,8 +88,8 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
             key={item._id || index}
             className={`flex items-start space-x-2 p-2 rounded border ${
               item.completed
-                ? 'bg-green-50 border-green-200'
-                : 'bg-white border-gray-200'
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
             }`}
           >
             <button
@@ -99,7 +99,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
               className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition ${
                 item.completed
                   ? 'bg-green-500 border-green-500'
-                  : 'border-gray-300 hover:border-green-500'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
               } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
             >
               {item.completed && <Check size={14} className="text-white" />}
@@ -107,8 +107,8 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
             <span
               className={`flex-1 text-sm ${
                 item.completed
-                  ? 'line-through text-gray-500'
-                  : 'text-gray-800'
+                  ? 'line-through text-gray-500 dark:text-gray-400'
+                  : 'text-gray-800 dark:text-gray-200'
               }`}
             >
               {item.text}
@@ -117,7 +117,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
               <button
                 type="button"
                 onClick={() => handleDeleteItem(index)}
-                className="text-red-600 hover:text-red-800 flex-shrink-0"
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 flex-shrink-0"
                 title="Eliminar tarea"
               >
                 <Trash2 size={14} />
@@ -143,7 +143,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
               }
             }}
             placeholder="Escribe una tarea..."
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             autoFocus
           />
           <button
@@ -161,7 +161,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
               setIsAdding(false);
               setNewItemText('');
             }}
-            className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
             title="Cancelar"
           >
             <X size={16} />
@@ -170,7 +170,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
       )}
 
       {checklist.length === 0 && !isAdding && (
-        <p className="text-sm text-gray-400 text-center py-4">
+        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
           No hay tareas en la lista. Agrega una para comenzar.
         </p>
       )}

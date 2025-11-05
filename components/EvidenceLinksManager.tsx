@@ -63,10 +63,10 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-gray-800 flex items-center space-x-2">
+        <h4 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center space-x-2">
           <span>🔗 Enlaces de Evidencia</span>
           {evidenceLinks.length > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               ({evidenceLinks.length})
             </span>
           )}
@@ -75,7 +75,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
           <button
             type="button"
             onClick={() => setIsAdding(true)}
-            className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm flex items-center space-x-1"
           >
             <Plus size={16} />
             <span>Agregar enlace</span>
@@ -88,17 +88,17 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
         {evidenceLinks.map((link, index) => (
           <div
             key={link._id || index}
-            className="flex items-center space-x-2 p-3 rounded border border-gray-200 bg-white hover:bg-gray-50 transition"
+            className="flex items-center space-x-2 p-3 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition"
           >
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm text-gray-800 truncate">
+              <div className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">
                 {link.title}
               </div>
               <a
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center space-x-1 truncate"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline flex items-center space-x-1 truncate"
               >
                 <span className="truncate">{link.url}</span>
                 <ExternalLink size={12} className="flex-shrink-0" />
@@ -108,7 +108,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
               <button
                 type="button"
                 onClick={() => handleDeleteLink(index)}
-                className="text-red-600 hover:text-red-800 flex-shrink-0"
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 flex-shrink-0"
                 title="Eliminar enlace"
               >
                 <Trash2 size={16} />
@@ -120,7 +120,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
 
       {/* Add new link form */}
       {isAdding && (
-        <div className="space-y-2 p-3 border border-blue-200 rounded-lg bg-blue-50">
+        <div className="space-y-2 p-3 border border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20">
           <div>
             <input
               type="text"
@@ -141,10 +141,10 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
               }}
               placeholder="Título del enlace (ej: Documento final, Presentación)"
               maxLength={200}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               autoFocus
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {newLinkTitle.length}/200 caracteres
             </div>
           </div>
@@ -167,14 +167,14 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
                 }
               }}
               placeholder="URL (ej: https://drive.google.com/... o https://sharepoint.com/...)"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {newLinkUrl.length}/2000 caracteres {newLinkUrl.length > 0 && '• Soporta enlaces largos de SharePoint'}
             </div>
           </div>
           {urlError && (
-            <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg border border-red-200 dark:border-red-700">
               {urlError}
             </div>
           )}
@@ -187,7 +187,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
                 setNewLinkUrl('');
                 setUrlError('');
               }}
-              className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
             >
               Cancelar
             </button>
@@ -205,7 +205,7 @@ export default function EvidenceLinksManager({ evidenceLinks, onChange, disabled
       )}
 
       {evidenceLinks.length === 0 && !isAdding && (
-        <p className="text-sm text-gray-400 text-center py-4">
+        <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
           No hay enlaces de evidencia. Agrega uno para documentar entregables.
         </p>
       )}

@@ -9,10 +9,10 @@ interface KanbanCardProps {
 }
 
 const statusColors = {
-  EN_TIEMPO: 'bg-green-50 border-green-200',
-  EN_RIESGO: 'bg-yellow-50 border-yellow-200',
-  BLOQUEADO: 'bg-red-50 border-red-200',
-  COMPLETADO: 'bg-blue-50 border-blue-200',
+  EN_TIEMPO: 'bg-green-50 dark:bg-green-900/50 border-green-200 dark:border-green-700',
+  EN_RIESGO: 'bg-yellow-50 dark:bg-yellow-900/50 border-yellow-200 dark:border-yellow-700',
+  BLOQUEADO: 'bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-700',
+  COMPLETADO: 'bg-blue-50 dark:bg-blue-900/50 border-blue-200 dark:border-blue-700',
 };
 
 export default function KanbanCard({ priority, index, onViewDetails }: KanbanCardProps) {
@@ -24,7 +24,7 @@ export default function KanbanCard({ priority, index, onViewDetails }: KanbanCar
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className={`
-            bg-white rounded-lg border-2 p-3 mb-2 shadow-sm cursor-move
+            bg-white dark:bg-gray-800 rounded-lg border-2 p-3 mb-2 shadow-sm cursor-move
             ${statusColors[priority.status as keyof typeof statusColors]}
             ${snapshot.isDragging ? 'shadow-lg scale-105 rotate-2' : ''}
             transition-all duration-200
@@ -32,25 +32,25 @@ export default function KanbanCard({ priority, index, onViewDetails }: KanbanCar
         >
           <div className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-sm text-gray-800 line-clamp-2 flex-1">
+              <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 line-clamp-2 flex-1">
                 {priority.title}
               </h3>
               {priority.isCarriedOver && (
-                <span className="bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded flex items-center flex-shrink-0" title="Traído de semana anterior">
+                <span className="bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-xs px-1.5 py-0.5 rounded flex items-center flex-shrink-0" title="Traído de semana anterior">
                   🔄
                 </span>
               )}
             </div>
 
             {priority.description && (
-              <p className="text-xs text-gray-600 line-clamp-2">
+              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                 {priority.description}
               </p>
             )}
 
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">
+                <span className="px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-medium">
                   {priority.completionPercentage}%
                 </span>
                 {priority.initiatives && priority.initiatives.length > 0 && (
@@ -68,7 +68,7 @@ export default function KanbanCard({ priority, index, onViewDetails }: KanbanCar
               </div>
               <button
                 onClick={() => onViewDetails(priority)}
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
               >
                 Ver
               </button>

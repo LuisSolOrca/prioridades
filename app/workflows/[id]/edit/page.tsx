@@ -221,19 +221,19 @@ export default function EditWorkflowPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 md:p-8">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">✏️ Editar Automatización</h1>
-              <p className="text-gray-600 mt-1">Modifica la configuración de tu regla automática</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">✏️ Editar Automatización</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">Modifica la configuración de tu regla automática</p>
             </div>
             <button
               onClick={() => router.push('/workflows')}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
               title="Cerrar"
             >
               <X size={24} />
@@ -242,32 +242,32 @@ export default function EditWorkflowPage() {
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Paso 1: Información básica */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">📝 Paso 1: ¿Cómo se llama?</h2>
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">📝 Paso 1: ¿Cómo se llama?</h2>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nombre descriptivo *
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Ejemplo: Notificarme si una prioridad lleva 2 días bloqueada"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Descripción (opcional)
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     rows={2}
                     placeholder="Explica para qué sirve esta automatización..."
                   />
@@ -281,7 +281,7 @@ export default function EditWorkflowPage() {
                       onChange={(e) => setIsActive(e.target.checked)}
                       className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-700">Automatización activa</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Automatización activa</span>
                   </label>
 
                   <label className="flex items-center space-x-2 cursor-pointer">
@@ -291,15 +291,15 @@ export default function EditWorkflowPage() {
                       onChange={(e) => setExecuteOnce(e.target.checked)}
                       className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-700">Ejecutar solo una vez por prioridad</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ejecutar solo una vez por prioridad</span>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* Paso 2: Cuándo ejecutar */}
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">⚡ Paso 2: ¿Cuándo debe ejecutarse?</h2>
+            <div className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">⚡ Paso 2: ¿Cuándo debe ejecutarse?</h2>
 
               <div className="grid md:grid-cols-2 gap-4">
                 {Object.entries(TRIGGER_INFO).map(([key, info]) => (
@@ -307,8 +307,8 @@ export default function EditWorkflowPage() {
                     key={key}
                     className={`relative flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
                       triggerType === key
-                        ? 'border-purple-600 bg-purple-100'
-                        : 'border-gray-300 hover:border-purple-400 bg-white'
+                        ? 'border-purple-600 bg-purple-100 dark:bg-purple-900/50'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-purple-400 bg-white dark:bg-gray-800'
                     }`}
                   >
                     <input
@@ -322,9 +322,9 @@ export default function EditWorkflowPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="text-2xl">{info.emoji}</span>
-                        <span className="font-medium text-gray-900">{info.title}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{info.title}</span>
                       </div>
-                      <p className="text-sm text-gray-600">{info.description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{info.description}</p>
                     </div>
                   </label>
                 ))}
@@ -332,11 +332,11 @@ export default function EditWorkflowPage() {
             </div>
 
             {/* Paso 3: Condiciones (opcional) */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">🎯 Paso 3: ¿Hay alguna condición? (opcional)</h2>
-                  <p className="text-sm text-gray-600">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">🎯 Paso 3: ¿Hay alguna condición? (opcional)</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Si agregas condiciones, la automatización solo se ejecutará cuando TODAS se cumplan.
                     Si no agregas ninguna, siempre se ejecutará.
                   </p>
@@ -352,19 +352,19 @@ export default function EditWorkflowPage() {
               </div>
 
               {conditions.length === 0 ? (
-                <div className="text-center py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
-                  <p className="text-gray-500">Sin condiciones - la automatización siempre se ejecutará</p>
+                <div className="text-center py-8 bg-white dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                  <p className="text-gray-500 dark:text-gray-400">Sin condiciones - la automatización siempre se ejecutará</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {conditions.map((condition, index) => (
-                    <div key={index} className="bg-white p-4 rounded-lg border border-yellow-300 shadow-sm">
+                    <div key={index} className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-yellow-300 dark:border-yellow-700 shadow-sm">
                       <div className="flex items-start space-x-3">
                         <div className="flex-1 space-y-3">
                           <select
                             value={condition.type}
                             onChange={(e) => updateCondition(index, 'type', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           >
                             {getAvailableConditions().map(cond => (
                               <option key={cond.value} value={cond.value}>{cond.label}</option>
@@ -376,7 +376,7 @@ export default function EditWorkflowPage() {
                             <select
                               value={condition.value}
                               onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             >
                               <option value="EN_TIEMPO">EN_TIEMPO</option>
                               <option value="EN_RIESGO">EN_RIESGO</option>
@@ -390,7 +390,7 @@ export default function EditWorkflowPage() {
                               <select
                                 value={condition.value}
                                 onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                               >
                                 <option value="EN_TIEMPO">EN_TIEMPO</option>
                                 <option value="EN_RIESGO">EN_RIESGO</option>
@@ -401,10 +401,10 @@ export default function EditWorkflowPage() {
                                   type="number"
                                   value={condition.days || 1}
                                   onChange={(e) => updateCondition(index, 'days', parseInt(e.target.value))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   min="1"
                                 />
-                                <span className="text-sm text-gray-600">días</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">días</span>
                               </div>
                             </div>
                           )}
@@ -415,11 +415,11 @@ export default function EditWorkflowPage() {
                                 type="number"
                                 value={condition.value || 0}
                                 onChange={(e) => updateCondition(index, 'value', parseInt(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 min="0"
                                 max="100"
                               />
-                              <span className="text-sm text-gray-600">%</span>
+                              <span className="text-sm text-gray-600 dark:text-gray-400">%</span>
                             </div>
                           )}
 
@@ -427,7 +427,7 @@ export default function EditWorkflowPage() {
                             <select
                               value={condition.value || ''}
                               onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             >
                               <option value="">Seleccionar usuario...</option>
                               {users.map(user => (
@@ -442,7 +442,7 @@ export default function EditWorkflowPage() {
                             <select
                               value={condition.value || ''}
                               onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             >
                               <option value="">Seleccionar iniciativa...</option>
                               {initiatives.map(initiative => (
@@ -458,7 +458,7 @@ export default function EditWorkflowPage() {
                               type="text"
                               value={condition.value || ''}
                               onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                               placeholder="Texto a buscar..."
                             />
                           )}
@@ -467,7 +467,7 @@ export default function EditWorkflowPage() {
                         <button
                           type="button"
                           onClick={() => removeCondition(index)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                           title="Eliminar condición"
                         >
                           <Trash2 size={20} />
@@ -480,11 +480,11 @@ export default function EditWorkflowPage() {
             </div>
 
             {/* Paso 4: Acciones */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+            <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">🚀 Paso 4: ¿Qué debe hacer? *</h2>
-                  <p className="text-sm text-gray-600">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">🚀 Paso 4: ¿Qué debe hacer? *</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Agrega al menos una acción. Puedes agregar varias para que se ejecuten todas.
                   </p>
                 </div>
@@ -499,19 +499,19 @@ export default function EditWorkflowPage() {
               </div>
 
               {actions.length === 0 ? (
-                <div className="text-center py-8 bg-white rounded-lg border-2 border-dashed border-red-300">
-                  <p className="text-red-600 font-medium">⚠️ Debes agregar al menos una acción</p>
+                <div className="text-center py-8 bg-white dark:bg-gray-700 rounded-lg border-2 border-dashed border-red-300 dark:border-red-700">
+                  <p className="text-red-600 dark:text-red-400 font-medium">⚠️ Debes agregar al menos una acción</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {actions.map((action, index) => (
-                    <div key={index} className="bg-white p-4 rounded-lg border border-green-300 shadow-sm">
+                    <div key={index} className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-green-300 dark:border-green-700 shadow-sm">
                       <div className="flex items-start space-x-3">
                         <div className="flex-1 space-y-3">
                           <select
                             value={action.type}
                             onChange={(e) => updateAction(index, 'type', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 font-medium"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 font-medium bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           >
                             <option value="send_notification">🔔 Enviar notificación</option>
                             <option value="send_email">📧 Enviar email</option>
@@ -524,7 +524,7 @@ export default function EditWorkflowPage() {
                           {action.type === 'send_notification' && (
                             <>
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">¿A quién?</label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">¿A quién?</label>
                                 <select
                                   value={action.targetRole || 'OWNER'}
                                   onChange={(e) => {
@@ -533,7 +533,7 @@ export default function EditWorkflowPage() {
                                       updateAction(index, 'targetUserId', undefined);
                                     }
                                   }}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 >
                                   <option value="OWNER">Al dueño de la prioridad</option>
                                   <option value="ADMIN">A todos los administradores</option>
@@ -545,7 +545,7 @@ export default function EditWorkflowPage() {
                                 <select
                                   value={action.targetUserId || ''}
                                   onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 >
                                   <option value="">Seleccionar usuario...</option>
                                   {users.map(user => (
@@ -557,15 +557,15 @@ export default function EditWorkflowPage() {
                               )}
 
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Mensaje</label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje</label>
                                 <input
                                   type="text"
                                   value={action.message || ''}
                                   onChange={(e) => updateAction(index, 'message', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   placeholder="Tu prioridad {{title}} necesita atención"
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
                                 </p>
                               </div>
@@ -575,7 +575,7 @@ export default function EditWorkflowPage() {
                           {action.type === 'send_email' && (
                             <>
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">¿A quién?</label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">¿A quién?</label>
                                 <select
                                   value={action.targetRole || 'OWNER'}
                                   onChange={(e) => {
@@ -584,7 +584,7 @@ export default function EditWorkflowPage() {
                                       updateAction(index, 'targetUserId', undefined);
                                     }
                                   }}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 >
                                   <option value="OWNER">Al dueño de la prioridad</option>
                                   <option value="ADMIN">A todos los administradores</option>
@@ -596,7 +596,7 @@ export default function EditWorkflowPage() {
                                 <select
                                   value={action.targetUserId || ''}
                                   onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 >
                                   <option value="">Seleccionar usuario...</option>
                                   {users.map(user => (
@@ -608,26 +608,26 @@ export default function EditWorkflowPage() {
                               )}
 
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Asunto</label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asunto</label>
                                 <input
                                   type="text"
                                   value={action.emailSubject || ''}
                                   onChange={(e) => updateAction(index, 'emailSubject', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   placeholder="Alerta: Tu prioridad {{title}} necesita atención"
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Mensaje</label>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje</label>
                                 <textarea
                                   value={action.message || ''}
                                   onChange={(e) => updateAction(index, 'message', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   rows={2}
                                   placeholder="La prioridad {{title}} está {{status}}..."
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
                                 </p>
                               </div>
@@ -636,11 +636,11 @@ export default function EditWorkflowPage() {
 
                           {action.type === 'change_status' && (
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Cambiar a:</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Cambiar a:</label>
                               <select
                                 value={action.newStatus || 'EN_RIESGO'}
                                 onChange={(e) => updateAction(index, 'newStatus', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                               >
                                 <option value="EN_TIEMPO">EN_TIEMPO</option>
                                 <option value="EN_RIESGO">EN_RIESGO</option>
@@ -652,11 +652,11 @@ export default function EditWorkflowPage() {
 
                           {action.type === 'assign_to_user' && (
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Asignar a:</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asignar a:</label>
                               <select
                                 value={action.targetUserId || ''}
                                 onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                               >
                                 <option value="">Seleccionar usuario...</option>
                                 {users.map(user => (
@@ -670,15 +670,15 @@ export default function EditWorkflowPage() {
 
                           {action.type === 'add_comment' && (
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Comentario</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Comentario</label>
                               <input
                                 type="text"
                                 value={action.message || ''}
                                 onChange={(e) => updateAction(index, 'message', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="🤖 Actualización automática: {{completion}}% completado"
                               />
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
                               </p>
                             </div>
@@ -688,7 +688,7 @@ export default function EditWorkflowPage() {
                         <button
                           type="button"
                           onClick={() => removeAction(index)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                           title="Eliminar acción"
                         >
                           <Trash2 size={20} />
@@ -701,11 +701,11 @@ export default function EditWorkflowPage() {
             </div>
 
             {/* Submit */}
-            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 type="button"
                 onClick={() => router.push('/workflows')}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                className="px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors"
               >
                 Cancelar
               </button>

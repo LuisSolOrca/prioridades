@@ -71,17 +71,17 @@ interface StatCardProps {
 
 function StatCard({ label, value, color }: StatCardProps) {
   const colors = {
-    blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    purple: 'bg-purple-500'
+    blue: 'bg-blue-500 dark:bg-blue-600',
+    green: 'bg-green-500 dark:bg-green-600',
+    purple: 'bg-purple-500 dark:bg-purple-600'
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm text-gray-600 mb-1">{label}</div>
-          <div className="text-3xl font-bold text-gray-800">{value}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{label}</div>
+          <div className="text-3xl font-bold text-gray-800 dark:text-gray-100">{value}</div>
         </div>
         <div className={`${colors[color]} text-white w-14 h-14 rounded-full flex items-center justify-center`}>
           📊
@@ -114,51 +114,51 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
   const hasRisks = blocked > 0 || atRisk > 0;
 
   return (
-    <div className={`bg-white rounded-lg shadow-md border hover:shadow-lg transition-shadow ${hasRisks ? 'border-l-4 border-l-red-500' : ''}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 hover:shadow-lg transition-shadow ${hasRisks ? 'border-l-4 border-l-red-500 dark:border-l-red-500' : ''}`}>
       <div
         className="p-6 cursor-pointer"
         onClick={onToggle}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center flex-1">
-            <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold mr-3">
+            <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3">
               {user.name.split(' ').map(n => n[0]).join('')}
             </div>
             <div className="flex-1">
               <div className="flex items-center">
-                <div className="font-semibold text-gray-800">{user.name}</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-100">{user.name}</div>
                 {hasRisks && (
-                  <span className="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-semibold flex items-center">
+                  <span className="ml-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs px-2 py-1 rounded-full font-semibold flex items-center">
                     ⚠️ {blocked > 0 && `${blocked} bloqueada${blocked > 1 ? 's' : ''}`}
                     {blocked > 0 && atRisk > 0 && ' • '}
                     {atRisk > 0 && `${atRisk} en riesgo`}
                   </span>
                 )}
-                <span className="ml-2 text-sm text-gray-400">
+                <span className="ml-2 text-sm text-gray-400 dark:text-gray-500">
                   {isExpanded ? '▼' : '▶'}
                 </span>
               </div>
-              <div className="text-sm text-gray-500">{priorities.length} prioridades • {completed} completadas</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{priorities.length} prioridades • {completed} completadas</div>
             </div>
           </div>
           <div className="flex items-center space-x-6">
             <div className="text-right">
-              <div className="text-xs text-gray-500 mb-1">Tasa Completado</div>
-              <div className="text-lg font-bold text-blue-600">{completionRate}%</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tasa Completado</div>
+              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{completionRate}%</div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-gray-500 mb-1">Promedio Avance</div>
-              <div className="text-2xl font-bold text-gray-800">{avgCompletion.toFixed(0)}%</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Promedio Avance</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{avgCompletion.toFixed(0)}%</div>
             </div>
           </div>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="px-6 pb-6 pt-0 border-t">
+        <div className="px-6 pb-6 pt-0 border-t dark:border-gray-700">
           <div className="mt-4 space-y-3">
             {priorities.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
+              <div className="text-center text-gray-400 dark:text-gray-500 py-8">
                 <div className="text-4xl mb-2">📋</div>
                 <div>Sin prioridades esta semana</div>
               </div>
@@ -172,13 +172,13 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                 const primaryInitiative = priorityInitiatives[0];
 
                 return (
-                  <div key={priority._id} className="border-l-4 pl-3 py-2 bg-gray-50 rounded" style={{ borderColor: primaryInitiative?.color || '#ccc' }}>
+                  <div key={priority._id} className="border-l-4 pl-3 py-2 bg-gray-50 dark:bg-gray-700 rounded" style={{ borderColor: primaryInitiative?.color || '#ccc' }}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <div className="font-medium text-gray-800 text-sm">{priority.title}</div>
+                          <div className="font-medium text-gray-800 dark:text-gray-100 text-sm">{priority.title}</div>
                           {priority.isCarriedOver && (
-                            <span className="bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                            <span className="bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5">
                               🔄
                             </span>
                           )}
@@ -187,7 +187,7 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                               e.stopPropagation();
                               onViewDetails(priority);
                             }}
-                            className="text-blue-600 hover:text-blue-800 transition relative"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition relative"
                             title="Ver descripción detallada"
                           >
                             🔍
@@ -198,7 +198,7 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                             )}
                           </button>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-1">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap gap-1">
                           {priorityInitiatives.map((initiative, idx) => initiative && (
                             <span key={initiative._id}>
                               <span style={{ color: initiative.color }}>●</span> {initiative.name}
@@ -210,13 +210,13 @@ function UserPriorityCard({ user, priorities, initiatives, isExpanded, onToggle,
                       <StatusBadge status={priority.status} />
                     </div>
                     <div className="mt-2">
-                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                         <span>Avance</span>
                         <span className="font-semibold">{priority.completionPercentage}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all"
                           style={{ width: `${priority.completionPercentage}%` }}
                         ></div>
                       </div>
@@ -504,10 +504,10 @@ export default function DashboardPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -518,56 +518,56 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6 fade-in">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
               📊 Dashboard de Prioridades
             </h1>
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleAIAnalysis}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-semibold"
+                className="bg-purple-600 dark:bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition font-semibold"
                 title="Análisis Organizacional con IA"
               >
                 🤖 Análisis IA
               </button>
               <button
                 onClick={handleExportPowerPoint}
-                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition font-semibold"
+                className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-2 rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition font-semibold"
                 title="Exportar a PowerPoint"
               >
                 📊 Exportar PPT
               </button>
               <button
                 onClick={handleExport}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
+                className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition font-semibold"
                 title="Exportar a Excel"
               >
                 📥 Exportar Excel
               </button>
               <button
                 onClick={() => navigateWeek(-1)}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
               >
                 ←
               </button>
               <button
                 onClick={goToCurrentWeek}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+                className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition font-semibold"
                 title="Ir a la semana actual"
               >
                 📅 Semana Actual
               </button>
               <div className="text-center">
-                <div className="text-sm text-gray-600">Semana del</div>
-                <div className="font-semibold text-gray-800">{getWeekLabel(currentWeek.monday)}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Semana del</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-200">{getWeekLabel(currentWeek.monday)}</div>
               </div>
               <button
                 onClick={() => navigateWeek(1)}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
               >
                 →
               </button>
@@ -575,18 +575,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Filtros */}
-          <div className="bg-white rounded-lg shadow-md p-4 space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 space-y-4">
             {/* Filtro por área (para usuarios con área asignada) */}
             {currentUser?.area && (
-              <div className="flex items-center pb-4 border-b border-gray-200">
+              <div className="flex items-center pb-4 border-b border-gray-200 dark:border-gray-700">
                 <label className="flex items-center cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={filterByMyArea}
                     onChange={(e) => setFilterByMyArea(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                    className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-blue-700 transition">
+                  <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition">
                     📍 Filtrar solo por mi área ({currentUser.area})
                   </span>
                 </label>
@@ -596,13 +596,13 @@ export default function DashboardPage() {
             {/* Filtro de Tipo de Prioridad */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <label className="text-sm font-semibold text-gray-700">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Filtrar por tipo:
                 </label>
                 <select
                   value={priorityTypeFilter}
                   onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium bg-gray-100 cursor-not-allowed"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed"
                   disabled
                 >
                   <option value="TODAS">Todas</option>
@@ -610,10 +610,10 @@ export default function DashboardPage() {
                   <option value="OPERATIVA">Operativas</option>
                 </select>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 Mostrando {filteredPriorities.length} de {priorities.length} prioridades
                 {filterByMyArea && currentUser?.area && (
-                  <span className="ml-1 text-blue-600 font-medium">
+                  <span className="ml-1 text-blue-600 dark:text-blue-400 font-medium">
                     • {filteredUsers.length} usuarios en {currentUser.area}
                   </span>
                 )}
@@ -666,18 +666,18 @@ export default function DashboardPage() {
       {/* Modal de Descripción Detallada */}
       {selectedPriority && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
           onClick={handleCloseModal}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                     {selectedPriority.title}
                   </h2>
                   <div className="flex items-center gap-3 flex-wrap">
@@ -688,7 +688,7 @@ export default function DashboardPage() {
                         .map(id => initiatives.find(i => i._id === id))
                         .filter((init): init is Initiative => init !== undefined);
                       return priorityInitiatives.map(initiative => (
-                        <span key={initiative._id} className="text-sm text-gray-500">
+                        <span key={initiative._id} className="text-sm text-gray-500 dark:text-gray-400">
                           <span style={{ color: initiative.color }}>●</span> {initiative.name}
                         </span>
                       ));
@@ -697,7 +697,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold"
                 >
                   ×
                 </button>
@@ -705,12 +705,12 @@ export default function DashboardPage() {
 
               {/* Descripción */}
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Descripción</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Descripción</h3>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   {selectedPriority.description ? (
-                    <p className="text-gray-700 whitespace-pre-wrap">{selectedPriority.description}</p>
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedPriority.description}</p>
                   ) : (
-                    <p className="text-gray-400 italic">Sin descripción</p>
+                    <p className="text-gray-400 dark:text-gray-500 italic">Sin descripción</p>
                   )}
                 </div>
               </div>
@@ -718,13 +718,13 @@ export default function DashboardPage() {
               {/* Información Adicional */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Usuario</h3>
-                  <p className="text-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Usuario</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
                     {users.find(u => u._id === selectedPriority.userId)?.name}
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Iniciativa(s)</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Iniciativa(s)</h3>
                   <div className="flex flex-wrap gap-2">
                     {(() => {
                       const priorityInitiativeIds = selectedPriority.initiativeIds || (selectedPriority.initiativeId ? [selectedPriority.initiativeId] : []);
@@ -732,33 +732,33 @@ export default function DashboardPage() {
                         .map(id => initiatives.find(i => i._id === id))
                         .filter((init): init is Initiative => init !== undefined);
                       return priorityInitiatives.map(initiative => (
-                        <div key={initiative._id} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                        <div key={initiative._id} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                           <div
                             className="w-2 h-2 rounded-full"
                             style={{ backgroundColor: initiative.color }}
                           ></div>
-                          <span className="text-gray-800 text-sm">{initiative.name}</span>
+                          <span className="text-gray-800 dark:text-gray-200 text-sm">{initiative.name}</span>
                         </div>
                       ));
                     })()}
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Semana</h3>
-                  <p className="text-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Semana</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
                     {new Date(selectedPriority.weekStart).toLocaleDateString('es-MX')} - {new Date(selectedPriority.weekEnd).toLocaleDateString('es-MX')}
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Avance</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Avance</h3>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-3">
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                       <div
-                        className="bg-blue-600 h-3 rounded-full transition-all"
+                        className="bg-blue-600 dark:bg-blue-500 h-3 rounded-full transition-all"
                         style={{ width: `${selectedPriority.completionPercentage}%` }}
                       ></div>
                     </div>
-                    <span className="font-semibold text-gray-800">{selectedPriority.completionPercentage}%</span>
+                    <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedPriority.completionPercentage}%</span>
                   </div>
                 </div>
               </div>
@@ -766,23 +766,23 @@ export default function DashboardPage() {
               {/* Lista de Tareas */}
               {selectedPriority.checklist && selectedPriority.checklist.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                     ✓ Lista de Tareas
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       ({selectedPriority.checklist.filter(item => item.completed).length}/{selectedPriority.checklist.length})
                     </span>
                   </h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                     <div className="space-y-2">
                       {selectedPriority.checklist.map((item, index) => (
                         <div
                           key={item._id || index}
                           className={`flex items-start gap-3 p-2 rounded ${
-                            item.completed ? 'bg-green-50 border border-green-200' : 'bg-white border border-gray-200'
+                            item.completed ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600'
                           }`}
                         >
                           <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            item.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                            item.completed ? 'bg-green-500 dark:bg-green-600 border-green-500 dark:border-green-600' : 'border-gray-300 dark:border-gray-600'
                           }`}>
                             {item.completed && (
                               <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -791,7 +791,7 @@ export default function DashboardPage() {
                             )}
                           </div>
                           <span className={`flex-1 text-sm ${
-                            item.completed ? 'line-through text-gray-500' : 'text-gray-800'
+                            item.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'
                           }`}>
                             {item.text}
                           </span>
@@ -805,13 +805,13 @@ export default function DashboardPage() {
               {/* Enlaces de Evidencia */}
               {selectedPriority.evidenceLinks && selectedPriority.evidenceLinks.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                     🔗 Enlaces de Evidencia
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       ({selectedPriority.evidenceLinks.length})
                     </span>
                   </h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                     <div className="space-y-2">
                       {selectedPriority.evidenceLinks.map((link, index) => (
                         <a
@@ -819,17 +819,17 @@ export default function DashboardPage() {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition group"
+                          className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition group"
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-gray-800 group-hover:text-blue-700 truncate">
+                            <div className="font-medium text-sm text-gray-800 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-blue-400 truncate">
                               {link.title}
                             </div>
-                            <div className="text-xs text-gray-500 truncate">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {link.url}
                             </div>
                           </div>
-                          <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
                         </a>
@@ -848,7 +848,7 @@ export default function DashboardPage() {
               <div className="flex justify-end">
                 <button
                   onClick={handleCloseModal}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+                  className="bg-blue-600 dark:bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition font-semibold"
                 >
                   Cerrar
                 </button>
@@ -861,11 +861,11 @@ export default function DashboardPage() {
       {/* Modal de Análisis Organizacional con IA */}
       {showAnalysisModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
           onClick={closeAnalysisModal}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
@@ -874,31 +874,31 @@ export default function DashboardPage() {
                 <div className="flex items-center space-x-3">
                   <div className="text-4xl">🤖</div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-800">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                       Análisis Organizacional con IA
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Semana del {getWeekLabel(currentWeek.monday)}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={closeAnalysisModal}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold"
                 >
                   ×
                 </button>
               </div>
 
               {/* Contenido del análisis */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 mb-6">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 mb-6">
                 {analysisLoading ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <div className="animate-spin text-6xl mb-4">🤖</div>
-                    <div className="text-lg font-semibold text-gray-700 mb-2">
+                    <div className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Analizando la situación organizacional...
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       Esto puede tomar unos segundos
                     </div>
                   </div>
@@ -906,23 +906,23 @@ export default function DashboardPage() {
                   <div className="prose prose-sm max-w-none">
                     <ReactMarkdown
                       components={{
-                        h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-gray-800 mb-4 mt-6" {...props} />,
-                        h2: ({node, ...props}) => <h2 className="text-xl font-bold text-gray-800 mb-3 mt-5" {...props} />,
-                        h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-gray-700 mb-2 mt-4" {...props} />,
-                        p: ({node, ...props}) => <p className="text-gray-700 mb-3 leading-relaxed" {...props} />,
-                        ul: ({node, ...props}) => <ul className="list-disc list-inside mb-3 space-y-1 text-gray-700" {...props} />,
-                        ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-3 space-y-1 text-gray-700" {...props} />,
+                        h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 mt-6" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3 mt-5" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-4" {...props} />,
+                        p: ({node, ...props}) => <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc list-inside mb-3 space-y-1 text-gray-700 dark:text-gray-300" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-3 space-y-1 text-gray-700 dark:text-gray-300" {...props} />,
                         li: ({node, ...props}) => <li className="ml-4" {...props} />,
-                        strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
-                        em: ({node, ...props}) => <em className="italic text-gray-600" {...props} />,
-                        code: ({node, ...props}) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-semibold text-gray-900 dark:text-gray-100" {...props} />,
+                        em: ({node, ...props}) => <em className="italic text-gray-600 dark:text-gray-400" {...props} />,
+                        code: ({node, ...props}) => <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm font-mono text-gray-800 dark:text-gray-200" {...props} />,
                       }}
                     >
                       {aiAnalysis}
                     </ReactMarkdown>
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 py-8">
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                     Sin análisis disponible
                   </div>
                 )}
@@ -932,7 +932,7 @@ export default function DashboardPage() {
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={closeAnalysisModal}
-                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-semibold"
+                  className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-semibold"
                 >
                   Cerrar
                 </button>
@@ -942,7 +942,7 @@ export default function DashboardPage() {
                       navigator.clipboard.writeText(aiAnalysis);
                       alert('Análisis copiado al portapapeles');
                     }}
-                    className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-semibold"
+                    className="bg-purple-600 dark:bg-purple-700 text-white px-6 py-2 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition font-semibold"
                   >
                     📋 Copiar Análisis
                   </button>

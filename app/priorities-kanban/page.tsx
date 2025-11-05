@@ -199,10 +199,10 @@ export default function PrioritiesKanbanPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">Cargando...</div>
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -211,18 +211,18 @@ export default function PrioritiesKanbanPage() {
   if (!session) return null;
 
   const columns = [
-    { id: 'EN_TIEMPO', title: 'En Tiempo', color: 'bg-green-100', headerColor: 'bg-green-600' },
-    { id: 'EN_RIESGO', title: 'En Riesgo', color: 'bg-yellow-100', headerColor: 'bg-yellow-600' },
-    { id: 'BLOQUEADO', title: 'Bloqueado', color: 'bg-red-100', headerColor: 'bg-red-600' },
-    { id: 'COMPLETADO', title: 'Completado', color: 'bg-blue-100', headerColor: 'bg-blue-600' },
+    { id: 'EN_TIEMPO', title: 'En Tiempo', color: 'bg-green-100 dark:bg-green-900/30', headerColor: 'bg-green-600' },
+    { id: 'EN_RIESGO', title: 'En Riesgo', color: 'bg-yellow-100 dark:bg-yellow-900/30', headerColor: 'bg-yellow-600' },
+    { id: 'BLOQUEADO', title: 'Bloqueado', color: 'bg-red-100 dark:bg-red-900/30', headerColor: 'bg-red-600' },
+    { id: 'COMPLETADO', title: 'Completado', color: 'bg-blue-100 dark:bg-blue-900/30', headerColor: 'bg-blue-600' },
   ];
 
   const renderWeekBoard = (weekId: string, weekLabel: string, priorities: Priority[]) => {
     return (
       <div key={weekId}>
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
           📅 {weekLabel}
-          <span className="ml-3 text-sm font-normal text-gray-600">
+          <span className="ml-3 text-sm font-normal text-gray-600 dark:text-gray-400">
             {priorities.length} {priorities.length === 1 ? 'prioridad' : 'prioridades'}
           </span>
         </h2>
@@ -261,7 +261,7 @@ export default function PrioritiesKanbanPage() {
                       {provided.placeholder}
 
                       {columnPriorities.length === 0 && (
-                        <div className="text-center text-gray-400 text-sm mt-8">
+                        <div className="text-center text-gray-400 dark:text-gray-500 text-sm mt-8">
                           No hay prioridades
                         </div>
                       )}
@@ -277,7 +277,7 @@ export default function PrioritiesKanbanPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <DragDropContext
@@ -291,7 +291,7 @@ export default function PrioritiesKanbanPage() {
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
                 📊 Vista Kanban - Prioridades
               </h1>
               <button
@@ -314,21 +314,21 @@ export default function PrioritiesKanbanPage() {
       {/* Modal de Comentarios */}
       {selectedPriorityForComments && selectedPriorityForComments._id && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedPriorityForComments(null)}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-800">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                     {selectedPriorityForComments.title}
                   </h2>
                   {selectedPriorityForComments.description && (
-                    <p className="text-gray-600 mt-2">
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">
                       {selectedPriorityForComments.description}
                     </p>
                   )}
@@ -337,7 +337,7 @@ export default function PrioritiesKanbanPage() {
 
               <CommentsSection priorityId={selectedPriorityForComments._id} />
 
-              <div className="flex justify-end mt-6 pt-4 border-t">
+              <div className="flex justify-end mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setSelectedPriorityForComments(null)}
                   className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition font-semibold"
