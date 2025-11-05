@@ -22,7 +22,8 @@ import {
   User,
   ChevronDown,
   Building2,
-  UserCog
+  UserCog,
+  Cloud
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -277,6 +278,23 @@ export default function Navbar() {
                   <History size={22} />
                 </button>
 
+                {user.area === 'Tecnología' && (
+                  <>
+                    <div className="pt-3 pb-2 border-t border-gray-200 dark:border-gray-700 mx-2" />
+                    <button
+                      onClick={() => handleNavigation('/azure-devops-config')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname?.startsWith('/azure-devops')
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Azure DevOps"
+                    >
+                      <Cloud size={22} />
+                    </button>
+                  </>
+                )}
+
                 {user.isAreaLeader && (
                   <>
                     <div className="pt-3 pb-2 border-t border-gray-200 mx-2" />
@@ -384,6 +402,22 @@ export default function Navbar() {
                   active={pathname === '/history'}
                   onClick={() => handleNavigation('/history')}
                 />
+
+                {user.area === 'Tecnología' && (
+                  <>
+                    <div className="pt-4 pb-2">
+                      <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">
+                        Integraciones
+                      </p>
+                    </div>
+                    <NavButton
+                      icon={<Cloud size={20} />}
+                      label="Azure DevOps"
+                      active={pathname?.startsWith('/azure-devops') || false}
+                      onClick={() => handleNavigation('/azure-devops-config')}
+                    />
+                  </>
+                )}
 
                 {user.isAreaLeader && (
                   <>
