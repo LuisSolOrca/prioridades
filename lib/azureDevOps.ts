@@ -373,8 +373,8 @@ export class AzureDevOpsClient {
 export function mapAzureDevOpsStateToAppState(
   azureState: string,
   customMapping?: Map<string, string>
-): string {
-  const defaultMapping: Record<string, string> = {
+): 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO' {
+  const defaultMapping: Record<string, 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO'> = {
     'New': 'EN_TIEMPO',
     'Active': 'EN_TIEMPO',
     'Committed': 'EN_TIEMPO',
@@ -388,7 +388,11 @@ export function mapAzureDevOpsStateToAppState(
 
   // Usar mapeo personalizado si existe
   if (customMapping && customMapping.has(azureState)) {
-    return customMapping.get(azureState)!;
+    const mappedValue = customMapping.get(azureState)!;
+    // Validar que el valor mapeado sea un estado válido
+    if (['EN_TIEMPO', 'EN_RIESGO', 'BLOQUEADO', 'COMPLETADO', 'REPROGRAMADO'].includes(mappedValue)) {
+      return mappedValue as 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+    }
   }
 
   return defaultMapping[azureState] || 'EN_TIEMPO';
