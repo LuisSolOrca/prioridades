@@ -57,6 +57,7 @@ export default function AzureDevOpsImportPage() {
   // Estado para sincronización
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncItems, setSyncItems] = useState<any[]>([]);
+  const [unlinkedPriorities, setUnlinkedPriorities] = useState<any[]>([]);
   const [loadingSync, setLoadingSync] = useState(false);
   const [selectedSyncItems, setSelectedSyncItems] = useState<Set<number>>(new Set());
   const [taskHours, setTaskHours] = useState<Map<number, number>>(new Map());
@@ -266,6 +267,7 @@ export default function AzureDevOpsImportPage() {
       }
 
       setSyncItems(data.items || []);
+      setUnlinkedPriorities(data.unlinkedPriorities || []);
       setShowSyncModal(true);
 
       // Pre-seleccionar items con cambios
@@ -299,7 +301,9 @@ export default function AzureDevOpsImportPage() {
         body: JSON.stringify({
           direction: 'both',
           selectedItems: Array.from(selectedSyncItems),
-          taskHours: taskHoursObj
+          taskHours: taskHoursObj,
+          exportUnlinked: unlinkedPriorities.length > 0, // Exportar prioridades no vinculadas si existen
+          workItemType: 'User Story' // Por defecto
         })
       });
 
@@ -312,10 +316,16 @@ export default function AzureDevOpsImportPage() {
       const { results } = data;
       const fromAdo = results.fromAzureDevOps.updated;
       const toAdo = results.toAzureDevOps.updated;
+      const exported = results.exported?.created || 0;
+
+      let messageText = `✅ Sincronización completada: ${fromAdo} actualizados desde Azure DevOps, ${toAdo} actualizados hacia Azure DevOps`;
+      if (exported > 0) {
+        messageText += `, ${exported} prioridades exportadas a Azure DevOps`;
+      }
 
       setMessage({
         type: 'success',
-        text: `✅ Sincronización completada: ${fromAdo} actualizados desde Azure DevOps, ${toAdo} actualizados hacia Azure DevOps`
+        text: messageText
       });
 
       // Actualizar fecha de última sincronización
@@ -325,6 +335,7 @@ export default function AzureDevOpsImportPage() {
       setShowSyncModal(false);
       setSelectedSyncItems(new Set());
       setTaskHours(new Map());
+      setUnlinkedPriorities([]);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -1115,6 +1126,100 @@ export default function AzureDevOpsImportPage() {
                 </div>
               )}
 
+              {/* Prioridades no vinculadas para exportar */}
+              {unlinkedPriorities.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                      📤 Prioridades sin vincular ({unlinkedPriorities.length})
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Las siguientes prioridades se crearán como nuevos work items en Azure DevOps (User Stories) en el sprint actual
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {unlinkedPriorities.map((priority) => (
+                      <div
+                        key={priority.priorityId}
+                        className="border border-green-300 dark:border-green-700 rounded-lg p-4 bg-green-50 dark:bg-green-900/20"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-green-600 dark:text-green-400 text-xl mt-1">✨</span>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-800 dark:text-gray-100 mb-2">
+                              {priority.title}
+                            </h4>
+                            {priority.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                {priority.description}
+                              </p>
+                            )}
+
+                            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                              <span className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700">
+                                Estado: {priority.status}
+                              </span>
+                              {priority.checklistCount > 0 && (
+                                <span className="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                                  ✓ {priority.checklistCount} tareas
+                                </span>
+                              )}
+                              {priority.evidenceLinksCount > 0 && (
+                                <span className="px-2 py-1 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
+                                  🔗 {priority.evidenceLinksCount} enlaces
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Checklist Preview */}
+                            {priority.checklistItems.length > 0 && (
+                              <div className="mb-3 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                  Tareas del checklist:
+                                </h5>
+                                <ul className="space-y-1">
+                                  {priority.checklistItems.map((item: any, idx: number) => (
+                                    <li key={idx} className="text-xs flex items-center gap-2">
+                                      <span>{item.completed ? '☑' : '☐'}</span>
+                                      <span className={item.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}>
+                                        {item.text}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Evidence Links Preview */}
+                            {priority.evidenceLinks.length > 0 && (
+                              <div className="p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                  Enlaces de evidencia:
+                                </h5>
+                                <div className="space-y-1">
+                                  {priority.evidenceLinks.map((link: any, idx: number) => (
+                                    <a
+                                      key={idx}
+                                      href={link.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline block"
+                                    >
+                                      {link.title}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Botones de acción */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
@@ -1126,10 +1231,10 @@ export default function AzureDevOpsImportPage() {
                 </button>
                 <button
                   onClick={handleConfirmSync}
-                  disabled={importing || selectedSyncItems.size === 0}
+                  disabled={importing || (selectedSyncItems.size === 0 && unlinkedPriorities.length === 0)}
                   className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {importing ? 'Sincronizando...' : `✓ Sincronizar (${selectedSyncItems.size})`}
+                  {importing ? 'Sincronizando...' : unlinkedPriorities.length > 0 ? `✓ Sincronizar y Exportar (${selectedSyncItems.size + unlinkedPriorities.length})` : `✓ Sincronizar (${selectedSyncItems.size})`}
                 </button>
               </div>
             </div>
