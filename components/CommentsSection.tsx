@@ -323,7 +323,7 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-gray-800 flex items-center">
+      <h3 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center">
         💬 Comentarios ({comments.length})
       </h3>
 
@@ -336,21 +336,21 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
             onChange={handleTextareaChange}
             onKeyDown={handleTextareaKeyDown}
             placeholder="Escribe un comentario... (usa @ para mencionar usuarios)"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             rows={3}
             disabled={submitting}
           />
 
           {/* Mention Autocomplete Dropdown */}
           {showMentionDropdown && mentionUsers.length > 0 && (
-            <div className="absolute z-10 w-64 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+            <div className="absolute z-10 w-64 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
               {mentionUsers.map((user, index) => (
                 <button
                   key={user._id}
                   type="button"
                   onClick={() => selectMention(user)}
-                  className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition ${
-                    index === selectedMentionIndex ? 'bg-blue-100' : ''
+                  className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 transition ${
+                    index === selectedMentionIndex ? 'bg-blue-100 dark:bg-gray-700' : ''
                   }`}
                 >
                   <div className="flex items-center space-x-2">
@@ -358,10 +358,10 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                       {user.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-gray-800 truncate">
+                      <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">
                         {user.name}
                       </div>
-                      <div className="text-xs text-gray-500 truncate">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {user.email}
                       </div>
                     </div>
@@ -373,7 +373,7 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
         </div>
 
         <div className="flex justify-between items-center">
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
             💡 Usa @ para mencionar usuarios
           </div>
           <button
@@ -389,11 +389,11 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
       {/* Lista de comentarios */}
       <div className="space-y-3">
         {loading ? (
-          <div className="text-center text-gray-500 py-4">
+          <div className="text-center text-gray-500 dark:text-gray-400 py-4">
             Cargando comentarios...
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
+          <div className="text-center text-gray-400 dark:text-gray-500 py-8">
             <div className="text-3xl mb-2">💬</div>
             <div>No hay comentarios aún. ¡Sé el primero en comentar!</div>
           </div>
@@ -401,37 +401,37 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
           comments.map(comment => (
             comment.isSystemComment ? (
               // System comment - read-only with special styling
-              <div key={comment._id} className="bg-blue-50 rounded-lg p-3 border border-blue-200 border-l-4">
+              <div key={comment._id} className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-200 dark:border-blue-700 border-l-4">
                 <div className="flex items-start space-x-2">
                   <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
                     🤖
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <div className="font-semibold text-sm text-blue-900">
+                      <div className="font-semibold text-sm text-blue-900 dark:text-blue-200">
                         Sistema
                       </div>
-                      <div className="text-xs text-blue-600">
+                      <div className="text-xs text-blue-600 dark:text-blue-400">
                         {formatDate(comment.createdAt)}
                       </div>
                     </div>
-                    <p className="text-blue-800 text-sm whitespace-pre-wrap">{comment.text}</p>
+                    <p className="text-blue-800 dark:text-blue-300 text-sm whitespace-pre-wrap">{comment.text}</p>
                   </div>
                 </div>
               </div>
             ) : (
               // Regular user comment - editable
-              <div key={comment._id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div key={comment._id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {comment.userId.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div>
-                      <div className="font-semibold text-sm text-gray-800">
+                      <div className="font-semibold text-sm text-gray-800 dark:text-gray-200">
                         {comment.userId.name}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {formatDate(comment.createdAt)}
                         {comment.createdAt !== comment.updatedAt && ' (editado)'}
                       </div>
@@ -462,13 +462,13 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                     <textarea
                       value={editText}
                       onChange={(e) => setEditText(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       rows={3}
                     />
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={cancelEdit}
-                        className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300 transition"
+                        className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition"
                       >
                         Cancelar
                       </button>
@@ -481,7 +481,7 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{comment.text}</p>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{comment.text}</p>
                 )}
               </div>
             )
