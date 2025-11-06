@@ -583,20 +583,10 @@ export const generateAzureDevOpsReport = async (
     const workItemId = priority.azureDevOps.workItemId;
     const workItemType = priority.azureDevOps.workItemType;
 
-    // Fila principal de la prioridad
-    rows.push([
-      `📋 ${priority.title}`,
-      user?.name || 'Desconocido',
-      initiative?.name || 'Sin iniciativa',
-      weekStart,
-      priority.status,
-      `WI #${workItemId} (${workItemType})`
-    ]);
-
     // Obtener datos enriquecidos de esta prioridad
     const enrichedData = enrichedDataMap.get(priority._id);
 
-    // Agregar tareas del checklist si existen
+    // Si tiene checklist, agregar cada tarea como una fila
     if (priority.checklist && priority.checklist.length > 0) {
       priority.checklist.forEach((item: any) => {
         const status = item.completed ? '✓ Completada' : '○ Pendiente';
@@ -612,14 +602,28 @@ export const generateAzureDevOpsReport = async (
         }
 
         rows.push([
-          `  └─ ${item.text}`,
-          '',
-          '',
-          '',
+          `📋 ${priority.title}`,
+          item.text,
+          user?.name || 'Desconocido',
+          initiative?.name || 'Sin iniciativa',
+          weekStart,
           status,
-          hours > 0 ? `${hours} horas` : '0 horas'
+          hours > 0 ? `${hours} horas` : '0 horas',
+          `WI #${workItemId}`
         ]);
       });
+    } else {
+      // Si no tiene checklist, agregar solo la fila de la prioridad
+      rows.push([
+        `📋 ${priority.title}`,
+        'Sin tareas',
+        user?.name || 'Desconocido',
+        initiative?.name || 'Sin iniciativa',
+        weekStart,
+        priority.status,
+        '0 horas',
+        `WI #${workItemId}`
+      ]);
     }
   });
 
@@ -636,7 +640,7 @@ export const generateAzureDevOpsReport = async (
   const data: ReportData = {
     title: 'Reporte de Prioridades Sincronizadas con Azure DevOps',
     subtitle: filters || 'Prioridades exportadas a Azure DevOps con sus tareas y horas',
-    headers: ['Prioridad / Tarea', 'Usuario', 'Iniciativa', 'Semana', 'Estado', 'Horas / Work Item'],
+    headers: ['Prioridad', 'Tarea', 'Usuario', 'Iniciativa', 'Semana', 'Estado', 'Horas', 'Work Item'],
     rows: rows,
     summary: [
       { label: 'Prioridades Sincronizadas', value: totalPriorities },
