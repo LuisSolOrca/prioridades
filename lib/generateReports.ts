@@ -577,11 +577,24 @@ export const generateAzureDevOpsReport = async (
 
   prioritiesWithAzureDevOps.forEach(priority => {
     const user = users.find(u => u._id === priority.userId);
-    const initiative = initiatives.find(i => i._id === priority.initiativeId);
     const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
 
     const workItemId = priority.azureDevOps.workItemId;
     const workItemType = priority.azureDevOps.workItemType;
+
+    // Obtener iniciativas (puede ser un array o un ID único)
+    let initiativeNames = 'Sin iniciativa';
+    if (priority.initiativeIds && Array.isArray(priority.initiativeIds) && priority.initiativeIds.length > 0) {
+      // Caso nuevo: array de iniciativas
+      const priorityInitiatives = priority.initiativeIds
+        .map((id: any) => initiatives.find(i => i._id === id))
+        .filter((init: any) => init !== undefined);
+      initiativeNames = priorityInitiatives.map((init: any) => init.name).join(', ');
+    } else if (priority.initiativeId) {
+      // Caso legacy: iniciativa única
+      const initiative = initiatives.find(i => i._id === priority.initiativeId);
+      initiativeNames = initiative?.name || 'Sin iniciativa';
+    }
 
     // Obtener datos enriquecidos de esta prioridad
     const enrichedData = enrichedDataMap.get(priority._id);
@@ -605,7 +618,7 @@ export const generateAzureDevOpsReport = async (
           `📋 ${priority.title}`,
           item.text,
           user?.name || 'Desconocido',
-          initiative?.name || 'Sin iniciativa',
+          initiativeNames,
           weekStart,
           status,
           hours > 0 ? `${hours} horas` : '0 horas',
@@ -618,7 +631,7 @@ export const generateAzureDevOpsReport = async (
         `📋 ${priority.title}`,
         'Sin tareas',
         user?.name || 'Desconocido',
-        initiative?.name || 'Sin iniciativa',
+        initiativeNames,
         weekStart,
         priority.status,
         '0 horas',
