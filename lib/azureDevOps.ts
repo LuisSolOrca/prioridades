@@ -348,6 +348,181 @@ export class AzureDevOpsClient {
   }
 
   /**
+   * Crea un nuevo work item (User Story o Bug)
+   */
+  async createWorkItem(
+    workItemType: 'User Story' | 'Bug',
+    title: string,
+    description?: string,
+    areaPath?: string,
+    iterationPath?: string
+  ): Promise<WorkItem> {
+    try {
+      const patchDocument = [
+        {
+          op: 'add',
+          path: '/fields/System.Title',
+          value: title
+        }
+      ];
+
+      if (description) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.Description',
+          value: description
+        });
+      }
+
+      if (areaPath) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.AreaPath',
+          value: areaPath
+        });
+      }
+
+      if (iterationPath) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.IterationPath',
+          value: iterationPath
+        });
+      }
+
+      const response = await fetch(
+        `${this.baseUrl}/wit/workitems/$${workItemType}?api-version=7.0`,
+        {
+          method: 'POST',
+          headers: {
+            ...this.headers,
+            'Content-Type': 'application/json-patch+json'
+          },
+          body: JSON.stringify(patchDocument)
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error creating work item: ${response.status} - ${errorText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating work item:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Crea una tarea (Task) hijo de un work item
+   */
+  async createChildTask(
+    parentWorkItemId: number,
+    title: string,
+    description?: string
+  ): Promise<WorkItem> {
+    try {
+      // Primero crear la tarea
+      const patchDocument = [
+        {
+          op: 'add',
+          path: '/fields/System.Title',
+          value: title
+        }
+      ];
+
+      if (description) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.Description',
+          value: description
+        });
+      }
+
+      const createResponse = await fetch(
+        `${this.baseUrl}/wit/workitems/$Task?api-version=7.0`,
+        {
+          method: 'POST',
+          headers: {
+            ...this.headers,
+            'Content-Type': 'application/json-patch+json'
+          },
+          body: JSON.stringify(patchDocument)
+        }
+      );
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        throw new Error(`Error creating task: ${createResponse.status} - ${errorText}`);
+      }
+
+      const task = await createResponse.json();
+
+      // Luego vincular la tarea al work item padre
+      const linkDocument = [
+        {
+          op: 'add',
+          path: '/relations/-',
+          value: {
+            rel: 'System.LinkTypes.Hierarchy-Reverse',
+            url: `${this.baseUrl}/wit/workitems/${parentWorkItemId}`,
+            attributes: {
+              comment: 'Making child task'
+            }
+          }
+        }
+      ];
+
+      const linkResponse = await fetch(
+        `${this.baseUrl}/wit/workitems/${task.id}?api-version=7.0`,
+        {
+          method: 'PATCH',
+          headers: {
+            ...this.headers,
+            'Content-Type': 'application/json-patch+json'
+          },
+          body: JSON.stringify(linkDocument)
+        }
+      );
+
+      if (!linkResponse.ok) {
+        const errorText = await linkResponse.text();
+        console.error(`Warning: Task created but linking failed: ${linkResponse.status} - ${errorText}`);
+      }
+
+      return task;
+    } catch (error) {
+      console.error('Error creating child task:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Agrega un comentario a un work item
+   */
+  async addComment(workItemId: number, text: string): Promise<void> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/wit/workitems/${workItemId}/comments?api-version=7.0`,
+        {
+          method: 'POST',
+          headers: this.headers,
+          body: JSON.stringify({ text })
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error adding comment: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Verifica la conexión y las credenciales
    */
   async testConnection(): Promise<boolean> {

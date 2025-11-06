@@ -31,10 +31,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { direction = 'both', selectedItems = [], taskHours = {} } = body;
+    const { direction = 'both', selectedItems = [], taskHours = {}, exportUnlinked = false, workItemType = 'User Story' } = body;
     // direction: 'both', 'from-ado', 'to-ado'
     // selectedItems: array de workItemIds para sincronizar (vacío = todos)
     // taskHours: { [taskId]: hours } - horas por tarea completada
+    // exportUnlinked: si es true, exporta prioridades que no están vinculadas a Azure DevOps
+    // workItemType: tipo de work item a crear ('User Story' o 'Bug')
 
     await connectDB();
 
@@ -67,7 +69,8 @@ export async function POST(request: NextRequest) {
 
     const syncResults = {
       fromAzureDevOps: { updated: 0, errors: [] as any[] },
-      toAzureDevOps: { updated: 0, errors: [] as any[] }
+      toAzureDevOps: { updated: 0, errors: [] as any[] },
+      exported: { created: 0, workItems: [] as any[], errors: [] as any[] }
     };
 
     // Obtener todos los vínculos del usuario
@@ -198,6 +201,119 @@ export async function POST(request: NextRequest) {
             error: error instanceof Error ? error.message : 'Error desconocido'
           });
         }
+      }
+    }
+
+    // Exportar prioridades no vinculadas si se solicitó
+    if (exportUnlinked) {
+      try {
+        // Obtener todas las prioridades del usuario
+        const allPriorities = await Priority.find({
+          userId: (session.user as any).id,
+          status: { $nin: ['COMPLETADO', 'REPROGRAMADO'] } // Excluir completadas y reprogramadas
+        });
+
+        // Obtener IDs de prioridades ya vinculadas
+        const linkedPriorityIds = workItemLinks.map(link => link.priorityId.toString());
+
+        // Filtrar prioridades no vinculadas
+        const unlinkedPriorities = allPriorities.filter(
+          priority => !linkedPriorityIds.includes(priority._id.toString())
+        );
+
+        // Exportar cada prioridad no vinculada
+        for (const priority of unlinkedPriorities) {
+          try {
+            // Crear el work item principal
+            const workItem = await client.createWorkItem(
+              workItemType,
+              priority.title,
+              priority.description
+            );
+
+            const exportedWorkItem = {
+              id: workItem.id,
+              priorityId: priority._id,
+              title: priority.title,
+              tasks: [] as any[],
+              hasLinks: false
+            };
+
+            // Crear tareas del checklist si existen
+            if (priority.checklist && priority.checklist.length > 0) {
+              for (const checklistItem of priority.checklist) {
+                try {
+                  const task = await client.createChildTask(
+                    workItem.id,
+                    (checklistItem as any).text
+                  );
+
+                  exportedWorkItem.tasks.push((checklistItem as any).text);
+
+                  // Si la tarea ya estaba completada, cerrarla
+                  if ((checklistItem as any).completed) {
+                    await client.closeTaskWithHours(task.id, 0);
+                  }
+                } catch (error) {
+                  console.error('Error creando tarea del checklist:', error);
+                }
+              }
+            }
+
+            // Agregar enlaces de evidencia como comentarios
+            if (priority.evidenceLinks && priority.evidenceLinks.length > 0) {
+              const linksText = priority.evidenceLinks
+                .map((link: any) => `${link.title}: ${link.url}`)
+                .join('\n');
+
+              try {
+                await client.addComment(
+                  workItem.id,
+                  `Enlaces de evidencia:\n${linksText}`
+                );
+                exportedWorkItem.hasLinks = true;
+              } catch (error) {
+                console.error('Error agregando enlaces de evidencia:', error);
+              }
+            }
+
+            // Sincronizar estado inicial
+            const azureState = mapAppStateToAzureDevOpsState(priority.status);
+            if (azureState !== 'Active') {
+              try {
+                await client.updateWorkItemState(workItem.id, azureState);
+              } catch (error) {
+                console.error('Error sincronizando estado inicial:', error);
+              }
+            }
+
+            // Crear vínculo en la base de datos
+            await AzureDevOpsWorkItem.create({
+              userId: (session.user as any).id,
+              priorityId: priority._id,
+              workItemId: workItem.id,
+              workItemType: workItemType,
+              organization: config.organization,
+              project: config.project,
+              lastSyncedState: azureState
+            });
+
+            syncResults.exported.created++;
+            syncResults.exported.workItems.push(exportedWorkItem);
+          } catch (error) {
+            console.error(`Error exportando prioridad ${priority._id}:`, error);
+            syncResults.exported.errors.push({
+              priorityId: priority._id,
+              title: priority.title,
+              error: error instanceof Error ? error.message : 'Error desconocido'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error en exportación de prioridades no vinculadas:', error);
+        syncResults.exported.errors.push({
+          error: error instanceof Error ? error.message : 'Error desconocido'
+        });
       }
     }
 
