@@ -32,6 +32,21 @@ const loadLogo = async (): Promise<string> => {
   }
 };
 
+// Función para limpiar emojis y caracteres UTF-8 problemáticos
+const cleanTextForPDF = (text: string | number): string => {
+  if (typeof text === 'number') return text.toString();
+  // Remover emojis y otros caracteres UTF-8 problemáticos
+  return text
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Emojis
+    .replace(/[\u{2600}-\u{26FF}]/gu, '') // Símbolos varios
+    .replace(/[\u{2700}-\u{27BF}]/gu, '') // Dingbats
+    .replace(/✓/g, '[OK]') // Checkmark
+    .replace(/○/g, '[ ]') // Círculo vacío
+    .replace(/📋/g, '') // Clipboard
+    .replace(/└─/g, '  |-') // Conectores de árbol
+    .trim();
+};
+
 // Generar reporte en PDF
 export const generatePDFReport = async (data: ReportData, fileName: string = 'Reporte') => {
   const doc = new jsPDF();
@@ -49,13 +64,13 @@ export const generatePDFReport = async (data: ReportData, fileName: string = 'Re
   // Título
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text(data.title, 14, 20);
+  doc.text(cleanTextForPDF(data.title), 14, 20);
 
   // Subtítulo
   if (data.subtitle) {
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text(data.subtitle, 14, 28);
+    doc.text(cleanTextForPDF(data.subtitle), 14, 28);
   }
 
   // Fecha de generación
@@ -79,16 +94,20 @@ export const generatePDFReport = async (data: ReportData, fileName: string = 'Re
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     data.summary.forEach((item, index) => {
-      doc.text(`${item.label}: ${item.value}`, 20, startY + 7 + (index * 6));
+      doc.text(`${cleanTextForPDF(item.label)}: ${cleanTextForPDF(item.value)}`, 20, startY + 7 + (index * 6));
     });
 
     startY += 7 + (data.summary.length * 6) + 5;
   }
 
+  // Limpiar headers y rows de caracteres problemáticos
+  const cleanedHeaders = data.headers.map(h => cleanTextForPDF(h));
+  const cleanedRows = data.rows.map(row => row.map(cell => cleanTextForPDF(cell)));
+
   // Tabla
   autoTable(doc, {
-    head: [data.headers],
-    body: data.rows,
+    head: [cleanedHeaders],
+    body: cleanedRows,
     startY: startY,
     theme: 'grid',
     headStyles: {
