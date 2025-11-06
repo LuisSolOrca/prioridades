@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
     });
 
     const syncItems = [];
+    const unlinkedPriorities = [];
 
     // Analizar cada vínculo
     for (const link of workItemLinks) {
@@ -181,11 +182,46 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Obtener prioridades no vinculadas para mostrar en preview
+    const allPriorities = await Priority.find({
+      userId: (session.user as any).id,
+      status: { $nin: ['COMPLETADO', 'REPROGRAMADO'] }
+    }).lean();
+
+    const linkedPriorityIds = workItemLinks.map(link => link.priorityId.toString());
+
+    const unlinkedPrioritiesList = allPriorities.filter(
+      priority => !linkedPriorityIds.includes(priority._id.toString())
+    );
+
+    // Mapear prioridades no vinculadas para el preview
+    for (const priority of unlinkedPrioritiesList) {
+      unlinkedPriorities.push({
+        priorityId: priority._id.toString(),
+        title: priority.title,
+        description: priority.description,
+        status: priority.status,
+        checklistCount: priority.checklist?.length || 0,
+        checklistItems: priority.checklist?.map((item: any) => ({
+          text: item.text,
+          completed: item.completed
+        })) || [],
+        evidenceLinksCount: priority.evidenceLinks?.length || 0,
+        evidenceLinks: priority.evidenceLinks?.map((link: any) => ({
+          title: link.title,
+          url: link.url
+        })) || [],
+        willBeCreated: true
+      });
+    }
+
     return NextResponse.json({
       success: true,
       totalItems: syncItems.length,
       itemsWithChanges: syncItems.filter(item => item.changes?.hasChanges).length,
-      items: syncItems
+      unlinkedCount: unlinkedPriorities.length,
+      items: syncItems,
+      unlinkedPriorities: unlinkedPriorities
     });
 
   } catch (error) {
