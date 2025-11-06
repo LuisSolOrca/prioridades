@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       let checklistUpdated = false;
       const updatedChecklist = [...localChecklist];
 
-      // Agregar tareas de Azure que no existen localmente
+      // Actualizar estado de tareas existentes en Azure
       for (const adoTask of childTasks) {
         const taskTitle = adoTask.fields['System.Title'];
         const taskIsClosed = adoTask.fields['System.State'] === 'Done' || adoTask.fields['System.State'] === 'Closed';
@@ -119,15 +119,13 @@ export async function POST(request: NextRequest) {
         const existingTask = updatedChecklist.find((item: any) => item.text === taskTitle);
 
         if (!existingTask) {
-          // Tarea nueva desde Azure
-          updatedChecklist.push({
-            text: taskTitle,
-            completed: taskIsClosed,
-            createdAt: new Date()
-          } as any);
-          checklistUpdated = true;
-          syncResult.fromAzureDevOps.updated = true;
-          syncResult.fromAzureDevOps.changes.push(`Tarea agregada: ${taskTitle}`);
+          // Tarea existe en Azure pero no localmente - CONFLICTO
+          // No agregamos automáticamente, se manejará en resolución de conflictos
+          // Solo si el usuario resolvió agregándola en conflictResolutions
+          const taskWasAddedByUser = conflictResolutions[adoTask.id.toString()] === 'add';
+          if (taskWasAddedByUser) {
+            // Ya fue agregada en el PASO 1.5, no hacer nada aquí
+          }
         } else if (existingTask.completed !== taskIsClosed) {
           // Actualizar estado de tarea existente
           const index = updatedChecklist.findIndex((item: any) => item.text === taskTitle);
@@ -234,8 +232,39 @@ export async function POST(request: NextRequest) {
             deletedTaskIds.add(taskIdNum); // Marcar como eliminada
             syncResult.toAzureDevOps.updated = true;
             syncResult.toAzureDevOps.changes.push(`Tarea eliminada de Azure (conflicto resuelto)`);
+          } else if (resolution === 'add') {
+            // Agregar tarea desde Azure al checklist local
+            const taskIdNum = Number(key);
+            const childTasks = await client.getChildTasks(link.workItemId);
+            const adoTask = childTasks.find(t => t.id === taskIdNum);
+
+            if (adoTask) {
+              const taskTitle = adoTask.fields['System.Title'];
+              const taskIsClosed = adoTask.fields['System.State'] === 'Done' || adoTask.fields['System.State'] === 'Closed';
+
+              // Obtener checklist actual
+              const currentPriority = await Priority.findById(priorityId).lean();
+              const currentChecklist = currentPriority?.checklist || [];
+
+              // Verificar que no exista ya
+              const exists = currentChecklist.some((item: any) => item.text === taskTitle);
+
+              if (!exists) {
+                const updatedChecklist = [
+                  ...currentChecklist,
+                  {
+                    text: taskTitle,
+                    completed: taskIsClosed,
+                    createdAt: new Date()
+                  }
+                ];
+
+                await Priority.findByIdAndUpdate(priorityId, { checklist: updatedChecklist });
+                syncResult.fromAzureDevOps.updated = true;
+                syncResult.fromAzureDevOps.changes.push(`Tarea agregada desde Azure (conflicto resuelto): ${taskTitle}`);
+              }
+            }
           }
-          // Si resolution === 'add', ya fue agregada en el paso FROM Azure
         }
       }
     } catch (error) {
