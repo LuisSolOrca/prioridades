@@ -197,32 +197,47 @@ export async function POST(request: NextRequest) {
               if (newAzureComments.length > 0) {
                 console.log(`⬇️ [Azure DevOps] Sincronizando ${newAzureComments.length} comentarios desde WI ${link.workItemId}`);
 
-                for (const azureComment of newAzureComments) {
-                  // Buscar o crear usuario del sistema para comentarios de Azure
-                  let systemUser = await User.findOne({ email: 'azure-devops@system.local' });
-                  if (!systemUser) {
+                // Buscar o crear usuario del sistema para comentarios de Azure (fuera del loop)
+                let systemUser = await User.findOne({ email: 'azure-devops@system.local' });
+                if (!systemUser) {
+                  console.log('⚙️ [Azure DevOps] Creando usuario del sistema para comentarios...');
+                  try {
+                    const bcrypt = require('bcrypt');
+                    const hashedPassword = await bcrypt.hash('SYSTEM_USER_NO_LOGIN', 10);
+
                     systemUser = await User.create({
                       name: 'Azure DevOps',
                       email: 'azure-devops@system.local',
-                      password: 'N/A',
+                      password: hashedPassword,
                       role: 'USER',
-                      isActive: false // Usuario no puede iniciar sesión
+                      isActive: false, // Usuario no puede iniciar sesión
+                      area: 'Sistema' // Área especial para usuario del sistema
                     });
+                    console.log('✅ [Azure DevOps] Usuario del sistema creado exitosamente');
+                  } catch (userCreateError) {
+                    console.error('❌ [Azure DevOps] Error creando usuario del sistema:', userCreateError);
+                    throw userCreateError;
                   }
+                }
 
+                for (const azureComment of newAzureComments) {
                   // Crear comentario local
                   const commentText = `[Azure DevOps - ${azureComment.createdBy?.displayName || 'Usuario'}]\n${azureComment.text}`;
 
-                  await Comment.create({
-                    priorityId: link.priorityId,
-                    userId: systemUser._id,
-                    text: commentText,
-                    isSystemComment: true, // Marcar como comentario del sistema
-                    azureCommentId: azureComment.id,
-                    createdAt: new Date(azureComment.createdDate)
-                  });
+                  try {
+                    await Comment.create({
+                      priorityId: link.priorityId,
+                      userId: systemUser._id,
+                      text: commentText,
+                      isSystemComment: true, // Marcar como comentario del sistema
+                      azureCommentId: azureComment.id,
+                      createdAt: new Date(azureComment.createdDate)
+                    });
 
-                  console.log(`⬇️ [Azure DevOps] Comentario sincronizado: ${azureComment.id} - ${commentText.substring(0, 50)}...`);
+                    console.log(`⬇️ [Azure DevOps] Comentario sincronizado: ${azureComment.id} - ${commentText.substring(0, 50)}...`);
+                  } catch (commentCreateError) {
+                    console.error(`❌ [Azure DevOps] Error creando comentario ${azureComment.id}:`, commentCreateError);
+                  }
                 }
 
                 syncResults.fromAzureDevOps.updated++;
