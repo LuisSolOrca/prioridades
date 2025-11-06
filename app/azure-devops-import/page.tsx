@@ -1278,9 +1278,19 @@ export default function AzureDevOpsImportPage() {
                                         {detail.type === 'estado' && (
                                           <>Estado: {detail.local} (Local) → {detail.remoto} (Azure)</>
                                         )}
-                                        {detail.type === 'tarea_completada' && (
+                                        {detail.type === 'tarea_completada_local' && (
                                           <>
                                             Tarea "{detail.taskTitle}": Completada localmente, pendiente en Azure ({detail.remoteStatus})
+                                          </>
+                                        )}
+                                        {detail.type === 'tarea_completada_remota' && (
+                                          <>
+                                            Tarea "{detail.taskTitle}": Completada en Azure, se marcará como completada localmente
+                                          </>
+                                        )}
+                                        {detail.type === 'tarea_nueva_local' && (
+                                          <>
+                                            ✨ Tarea nueva "{detail.taskTitle}": Se creará en Azure DevOps {detail.localStatus === 'completada' ? '(completada)' : ''}
                                           </>
                                         )}
                                       </li>
@@ -1307,11 +1317,23 @@ export default function AzureDevOpsImportPage() {
                                         </span>
                                         <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">
                                           {task.title}
+                                          {task.isLocalOnly && (
+                                            <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                                              Nueva
+                                            </span>
+                                          )}
                                         </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        <span className={`text-xs ${
+                                          task.state === 'Local'
+                                            ? 'text-blue-600 dark:text-blue-400 font-medium'
+                                            : 'text-gray-500 dark:text-gray-400'
+                                        }`}>
                                           {task.state}
                                         </span>
-                                        {task.localCompleted && (task.state !== 'Done' && task.state !== 'Closed') && (
+                                        {/* Mostrar input de horas si:
+                                            1. La tarea está completada localmente Y
+                                            2. (Es una tarea local O no está cerrada en Azure) */}
+                                        {task.localCompleted && (task.isLocalOnly || (task.state !== 'Done' && task.state !== 'Closed')) && (
                                           <input
                                             type="number"
                                             min="0"

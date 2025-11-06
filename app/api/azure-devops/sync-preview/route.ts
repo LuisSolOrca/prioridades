@@ -105,55 +105,89 @@ export async function GET(request: NextRequest) {
         const localChecklistCount = priority.checklist?.length || 0;
         const remoteTasksCount = childTasks.length;
 
-        if (localChecklistCount > 0 && childTasks.length > 0) {
-          // Verificar tareas completadas localmente que no estén cerradas en Azure DevOps (para sync hacia ADO)
-          const completedLocally = priority.checklist.filter((item: any) => item.completed);
-          const completedLocallyIds = new Set(completedLocally.map((item: any) => item.text));
+        // Crear mapa de tareas de Azure DevOps por título
+        const adoTasksMap = new Map(
+          childTasks.map(task => [task.fields['System.Title'], task])
+        );
 
-          for (const task of childTasks) {
-            const taskTitle = task.fields['System.Title'];
-            const taskIsClosed = task.fields['System.State'] === 'Done' ||
-                                task.fields['System.State'] === 'Closed';
+        if (localChecklistCount > 0) {
+          // Procesar cada tarea local
+          for (const localTask of priority.checklist || []) {
+            const adoTask = adoTasksMap.get(localTask.text);
 
-            if (completedLocallyIds.has(taskTitle) && !taskIsClosed) {
+            if (adoTask) {
+              // La tarea existe en Azure DevOps - verificar si hay cambios
+              const taskIsClosed = adoTask.fields['System.State'] === 'Done' ||
+                                  adoTask.fields['System.State'] === 'Closed';
+
+              // Tarea completada localmente pero no cerrada en Azure DevOps
+              if (localTask.completed && !taskIsClosed) {
+                changes.hasChanges = true;
+                changes.checklistChanged = true;
+                changes.details.push({
+                  type: 'tarea_completada_local',
+                  direction: 'to-ado',
+                  taskId: adoTask.id,
+                  taskTitle: localTask.text,
+                  localStatus: 'completada',
+                  remoteStatus: adoTask.fields['System.State']
+                });
+              }
+
+              // Tarea completada en Azure DevOps pero no localmente
+              if (!localTask.completed && taskIsClosed) {
+                changes.hasChanges = true;
+                changes.checklistChanged = true;
+                changes.details.push({
+                  type: 'tarea_completada_remota',
+                  direction: 'from-ado',
+                  taskId: adoTask.id,
+                  taskTitle: localTask.text,
+                  localStatus: 'pendiente',
+                  remoteStatus: adoTask.fields['System.State']
+                });
+              }
+            } else {
+              // La tarea NO existe en Azure DevOps - será creada
               changes.hasChanges = true;
               changes.checklistChanged = true;
               changes.details.push({
-                type: 'tarea_completada_local',
+                type: 'tarea_nueva_local',
                 direction: 'to-ado',
-                taskId: task.id,
-                taskTitle: taskTitle,
-                localStatus: 'completada',
-                remoteStatus: task.fields['System.State']
-              });
-            }
-          }
-
-          // Verificar tareas completadas en Azure DevOps que no estén completadas localmente (para sync desde ADO)
-          const localChecklistMap = new Map(
-            priority.checklist.map((item: any) => [item.text, item.completed])
-          );
-
-          for (const task of childTasks) {
-            const taskTitle = task.fields['System.Title'];
-            const taskIsClosed = task.fields['System.State'] === 'Done' ||
-                                task.fields['System.State'] === 'Closed';
-            const isCompletedLocally = localChecklistMap.get(taskTitle) === true;
-
-            if (taskIsClosed && !isCompletedLocally && localChecklistMap.has(taskTitle)) {
-              changes.hasChanges = true;
-              changes.checklistChanged = true;
-              changes.details.push({
-                type: 'tarea_completada_remota',
-                direction: 'from-ado',
-                taskId: task.id,
-                taskTitle: taskTitle,
-                localStatus: 'pendiente',
-                remoteStatus: task.fields['System.State']
+                taskId: null,
+                taskTitle: localTask.text,
+                localStatus: localTask.completed ? 'completada' : 'pendiente',
+                remoteStatus: 'No existe'
               });
             }
           }
         }
+
+        // Combinar tareas de Azure DevOps con tareas locales que no existen en Azure
+        const adoTaskTitles = new Set(childTasks.map(task => task.fields['System.Title']));
+        const localOnlyTasks = (priority.checklist || [])
+          .filter((item: any) => !adoTaskTitles.has(item.text))
+          .map((item: any) => ({
+            id: `local-${item._id || item.text}`, // ID temporal para tareas locales
+            title: item.text,
+            state: 'Local', // Indica que solo existe localmente
+            localCompleted: item.completed,
+            isLocalOnly: true // Flag para identificar tareas que solo existen localmente
+          }));
+
+        // Combinar tareas de Azure DevOps con tareas locales
+        const allTasks = [
+          ...childTasks.map(task => ({
+            id: task.id,
+            title: task.fields['System.Title'],
+            state: task.fields['System.State'],
+            localCompleted: priority.checklist?.find((item: any) =>
+              item.text === task.fields['System.Title']
+            )?.completed || false,
+            isLocalOnly: false
+          })),
+          ...localOnlyTasks
+        ];
 
         syncItems.push({
           workItemId: link.workItemId,
@@ -166,14 +200,7 @@ export async function GET(request: NextRequest) {
           checklistCount: localChecklistCount,
           remoteTasksCount: remoteTasksCount,
           changes: changes,
-          childTasks: childTasks.map(task => ({
-            id: task.id,
-            title: task.fields['System.Title'],
-            state: task.fields['System.State'],
-            localCompleted: priority.checklist?.find((item: any) =>
-              item.text === task.fields['System.Title']
-            )?.completed || false
-          }))
+          childTasks: allTasks
         });
 
       } catch (error) {

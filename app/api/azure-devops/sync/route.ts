@@ -145,32 +145,57 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          // Sincronizar tareas completadas del checklist
+          // Sincronizar tareas del checklist
           if (priority.checklist && priority.checklist.length > 0) {
             // Obtener child tasks de Azure DevOps
             const childTasks = await client.getChildTasks(link.workItemId);
 
-            for (const checklistItem of priority.checklist) {
-              if (checklistItem.completed) {
-                // Buscar la tarea correspondiente en Azure DevOps
-                const correspondingTask = childTasks.find(task =>
-                  task.fields['System.Title'] === (checklistItem as any).text
-                );
+            // Crear mapa de tareas existentes en Azure DevOps por título
+            const adoTasksMap = new Map(
+              childTasks.map(task => [task.fields['System.Title'], task])
+            );
 
-                if (correspondingTask) {
-                  const taskState = correspondingTask.fields['System.State'];
+            for (const checklistItem of priority.checklist) {
+              const adoTask = adoTasksMap.get((checklistItem as any).text);
+
+              if (adoTask) {
+                // La tarea YA EXISTE en Azure DevOps
+                if (checklistItem.completed) {
+                  const taskState = adoTask.fields['System.State'];
 
                   // Si la tarea no está cerrada en Azure DevOps
                   if (taskState !== 'Done' && taskState !== 'Closed') {
                     // Obtener horas de taskHours o usar 0 por defecto
-                    const hours = taskHours[correspondingTask.id] || 0;
+                    const hours = taskHours[adoTask.id] || 0;
 
                     // Cerrar tarea con horas
-                    await client.closeTaskWithHours(correspondingTask.id, hours);
+                    await client.closeTaskWithHours(adoTask.id, hours);
 
                     syncResults.toAzureDevOps.updated++;
                   }
                 }
+              } else {
+                // La tarea NO EXISTE en Azure DevOps - CREAR NUEVA
+                const taskId = `local-${(checklistItem as any)._id || (checklistItem as any).text}`;
+                const hours = taskHours[taskId] || 0;
+
+                // Crear la tarea en Azure DevOps
+                const newTask = await client.createChildTask(
+                  link.workItemId,
+                  (checklistItem as any).text,
+                  '', // descripción vacía
+                  hours
+                );
+
+                console.log(`✨ [Azure DevOps] Tarea creada: ${newTask.id} - ${(checklistItem as any).text}`);
+
+                // Si la tarea está completada localmente, cerrarla inmediatamente
+                if (checklistItem.completed && hours > 0) {
+                  await client.closeTaskWithHours(newTask.id, hours);
+                  console.log(`✓ [Azure DevOps] Tarea cerrada inmediatamente: ${newTask.id}`);
+                }
+
+                syncResults.toAzureDevOps.updated++;
               }
             }
           }
