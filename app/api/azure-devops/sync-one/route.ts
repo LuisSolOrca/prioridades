@@ -232,7 +232,12 @@ export async function POST(request: NextRequest) {
             }
           } else {
             // Crear tarea nueva en Azure
-            const newTask = await client.createTask(link.workItemId, (checklistItem as any).text);
+            const newTask = await client.createChildTask(
+              link.workItemId,
+              (checklistItem as any).text,
+              '',
+              hours
+            );
 
             if ((checklistItem as any).completed && hours > 0) {
               await client.closeTaskWithHours(newTask.id, hours);
