@@ -183,9 +183,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener prioridades no vinculadas para mostrar en preview
-    // Incluir TODAS las prioridades del usuario, incluyendo completadas y reprogramadas
+    // Incluir completadas pero excluir reprogramadas (ya que se crea una copia nueva)
     const allPriorities = await Priority.find({
-      userId: (session.user as any).id
+      userId: (session.user as any).id,
+      status: { $ne: 'REPROGRAMADO' } // Excluir reprogramadas porque ya existe la copia nueva
     }).lean();
 
     const linkedPriorityIds = workItemLinks.map(link => link.priorityId.toString());

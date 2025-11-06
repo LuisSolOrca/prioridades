@@ -629,7 +629,8 @@ export function mapAppStateToAzureDevOpsState(appState: string): string {
     'EN_TIEMPO': 'Active',
     'EN_RIESGO': 'Active',
     'BLOQUEADO': 'Removed',
-    'COMPLETADO': 'Closed'
+    'COMPLETADO': 'Closed',
+    'REPROGRAMADO': 'Removed' // Marcar como Removed en Azure DevOps (bloqueada)
   };
 
   return mapping[appState] || 'Active';
