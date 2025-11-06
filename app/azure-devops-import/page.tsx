@@ -57,6 +57,7 @@ export default function AzureDevOpsImportPage() {
   // Estado para sincronización
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncItems, setSyncItems] = useState<any[]>([]);
+  const [syncModalError, setSyncModalError] = useState<string | null>(null);
   const [unlinkedPriorities, setUnlinkedPriorities] = useState<any[]>([]);
   const [areaPaths, setAreaPaths] = useState<any[]>([]);
   const [selectedAreaPaths, setSelectedAreaPaths] = useState<Map<string, string>>(new Map());
@@ -259,6 +260,7 @@ export default function AzureDevOpsImportPage() {
   const handleShowSyncModal = async () => {
     setLoadingSync(true);
     setMessage(null);
+    setSyncModalError(null); // Limpiar errores previos del modal
 
     try {
       const res = await fetch('/api/azure-devops/sync-preview');
@@ -334,12 +336,12 @@ export default function AzureDevOpsImportPage() {
       // Si hay tareas sin horas, mostrar error y no continuar
       if (missingHours.length > 0) {
         setImporting(false);
-        setMessage({
-          type: 'error',
-          text: `⚠️ Debes ingresar las horas para todas las tareas completadas. Faltan horas en: ${missingHours.slice(0, 3).join(', ')}${missingHours.length > 3 ? ` y ${missingHours.length - 3} más` : ''}`
-        });
+        setSyncModalError(`⚠️ Debes ingresar las horas para todas las tareas completadas. Faltan horas en: ${missingHours.slice(0, 3).join(', ')}${missingHours.length > 3 ? ` y ${missingHours.length - 3} más` : ''}`);
         return;
       }
+
+      // Limpiar error si la validación pasó
+      setSyncModalError(null);
 
       // Convertir taskHours Map a objeto
       // Separar horas para tareas vinculadas (taskId numérico) y no vinculadas (priorityId-idx)
@@ -1155,7 +1157,12 @@ export default function AzureDevOpsImportPage() {
       {showSyncModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
-          onClick={() => !importing && setShowSyncModal(false)}
+          onClick={() => {
+            if (!importing) {
+              setShowSyncModal(false);
+              setSyncModalError(null);
+            }
+          }}
         >
           <div
             className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
@@ -1176,13 +1183,23 @@ export default function AzureDevOpsImportPage() {
                 </div>
                 {!importing && (
                   <button
-                    onClick={() => setShowSyncModal(false)}
+                    onClick={() => {
+                      setShowSyncModal(false);
+                      setSyncModalError(null);
+                    }}
                     className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
                   >
                     ×
                   </button>
                 )}
               </div>
+
+              {/* Mensaje de error de validación */}
+              {syncModalError && (
+                <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-lg border border-red-300 dark:border-red-700">
+                  {syncModalError}
+                </div>
+              )}
 
               {/* Lista de items de sincronización */}
               {syncItems.length === 0 ? (
