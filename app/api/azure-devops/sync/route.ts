@@ -207,10 +207,9 @@ export async function POST(request: NextRequest) {
     // Exportar prioridades no vinculadas si se solicitó
     if (exportUnlinked) {
       try {
-        // Obtener todas las prioridades del usuario
+        // Obtener todas las prioridades del usuario (incluir completadas y reprogramadas)
         const allPriorities = await Priority.find({
-          userId: (session.user as any).id,
-          status: { $nin: ['COMPLETADO', 'REPROGRAMADO'] } // Excluir completadas y reprogramadas
+          userId: (session.user as any).id
         });
 
         // Obtener IDs de prioridades ya vinculadas
