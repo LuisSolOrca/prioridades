@@ -6,7 +6,7 @@ import AzureDevOpsConfig from '@/models/AzureDevOpsConfig';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import Priority from '@/models/Priority';
 import Comment from '@/models/Comment';
-import { AzureDevOpsClient, mapAzureDevOpsStateToAppState } from '@/lib/azureDevOps';
+import { AzureDevOpsClient, mapAzureDevOpsStateToAppState, mapAppStateToAzureDevOpsState } from '@/lib/azureDevOps';
 
 /**
  * GET - Obtiene preview de sincronización con cambios detectados
@@ -339,6 +339,259 @@ export async function GET(request: NextRequest) {
     console.error('Error obteniendo preview de sincronización:', error);
     return NextResponse.json(
       { error: 'Error al obtener preview de sincronización' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST - Obtiene vista previa de sincronización para una prioridad individual
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar que el usuario sea del área Tecnología
+    if ((session.user as any).area !== 'Tecnología') {
+      return NextResponse.json(
+        { error: 'Solo usuarios del área Tecnología pueden sincronizar con Azure DevOps' },
+        { status: 403 }
+      );
+    }
+
+    await connectDB();
+
+    const body = await request.json();
+    const { priorityId } = body;
+
+    if (!priorityId) {
+      return NextResponse.json(
+        { error: 'priorityId es requerido' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que la prioridad existe y tiene vínculo con Azure DevOps
+    const priority = await Priority.findById(priorityId).lean();
+
+    if (!priority) {
+      return NextResponse.json(
+        { error: 'Prioridad no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    // Buscar el vínculo con Azure DevOps
+    const link = await AzureDevOpsWorkItem.findOne({ priorityId: priorityId });
+
+    if (!link) {
+      return NextResponse.json(
+        { error: 'Esta prioridad no está vinculada con Azure DevOps' },
+        { status: 404 }
+      );
+    }
+
+    // Obtener configuración del usuario dueño de la prioridad
+    const config = await AzureDevOpsConfig.findOne({
+      userId: link.userId,
+      isActive: true
+    });
+
+    if (!config) {
+      return NextResponse.json(
+        { error: 'No hay configuración de Azure DevOps para el usuario dueño de la prioridad' },
+        { status: 404 }
+      );
+    }
+
+    // Crear cliente de Azure DevOps
+    const client = new AzureDevOpsClient({
+      organization: config.organization,
+      project: config.project,
+      personalAccessToken: config.personalAccessToken
+    });
+
+    // Obtener estado actual de Azure DevOps
+    const workItem = await client.getWorkItem(link.workItemId);
+    const currentAdoState = workItem.fields['System.State'];
+    const mappedAdoState = mapAzureDevOpsStateToAppState(currentAdoState, config.stateMapping);
+
+    // Comparar estados
+    const willUpdateState = mappedAdoState !== priority.status ||
+                           mapAppStateToAzureDevOpsState(priority.status) !== currentAdoState;
+
+    // Obtener tareas de Azure DevOps
+    const childTasks = await client.getChildTasks(link.workItemId);
+    const localChecklist = priority.checklist || [];
+
+    // Crear mapa de tareas de Azure DevOps
+    const adoTasksMap = new Map();
+    for (const task of childTasks) {
+      adoTasksMap.set(task.fields['System.Title'], task);
+    }
+
+    // Cambios detectados desde Azure DevOps (FROM ADO)
+    const fromAzureDevOps = {
+      changes: [] as string[],
+      willUpdate: false
+    };
+
+    // Cambios detectados hacia Azure DevOps (TO ADO)
+    const toAzureDevOps = {
+      changes: [] as string[],
+      willUpdate: false
+    };
+
+    // Comparar estado desde Azure
+    if (mappedAdoState !== priority.status) {
+      fromAzureDevOps.changes.push(`Estado: ${currentAdoState} (${mappedAdoState}) → ${priority.status}`);
+      fromAzureDevOps.willUpdate = true;
+    }
+
+    // Comparar estado hacia Azure
+    const expectedAdoState = mapAppStateToAzureDevOpsState(priority.status);
+    if (expectedAdoState !== currentAdoState) {
+      toAzureDevOps.changes.push(`Estado: ${priority.status} → ${expectedAdoState}`);
+      toAzureDevOps.willUpdate = true;
+    }
+
+    // Comparar tareas
+    const taskComparisons = [];
+
+    // Revisar tareas locales vs Azure
+    for (const localTask of localChecklist) {
+      const taskText = (localTask as any).text;
+      const adoTask = adoTasksMap.get(taskText);
+      const localCompleted = (localTask as any).completed;
+
+      if (adoTask) {
+        // Tarea existe en ambos lados
+        const azureCompleted = adoTask.fields['System.State'] === 'Done' ||
+                              adoTask.fields['System.State'] === 'Closed';
+
+        const willClose = localCompleted && !azureCompleted;
+        const willReopen = !localCompleted && azureCompleted;
+
+        // Siempre incluir para mostrar estado
+        taskComparisons.push({
+          text: taskText,
+          taskId: adoTask.id.toString(),
+          localCompleted,
+          azureCompleted,
+          willClose,
+          willReopen,
+          isNew: false,
+          direction: willClose ? 'to-ado' : willReopen ? 'to-ado' : 'none'
+        });
+
+        if (willClose) {
+          toAzureDevOps.changes.push(`Tarea: "${taskText}" → Cerrar`);
+          toAzureDevOps.willUpdate = true;
+        }
+
+        if (willReopen) {
+          toAzureDevOps.changes.push(`Tarea: "${taskText}" → Reabrir`);
+          toAzureDevOps.willUpdate = true;
+        }
+      } else {
+        // Tarea nueva (solo existe localmente)
+        taskComparisons.push({
+          text: taskText,
+          taskId: (localTask as any)._id || taskText,
+          localCompleted,
+          azureCompleted: false,
+          willClose: localCompleted,
+          willReopen: false,
+          isNew: true,
+          direction: 'to-ado'
+        });
+
+        toAzureDevOps.changes.push(`Tarea: "${taskText}" → Crear${localCompleted ? ' y cerrar' : ''}`);
+        toAzureDevOps.willUpdate = true;
+      }
+    }
+
+    // Revisar tareas de Azure que no existen localmente
+    for (const adoTask of childTasks) {
+      const taskTitle = adoTask.fields['System.Title'];
+      const existsLocally = localChecklist.some((item: any) => item.text === taskTitle);
+
+      if (!existsLocally) {
+        const azureCompleted = adoTask.fields['System.State'] === 'Done' ||
+                              adoTask.fields['System.State'] === 'Closed';
+
+        // Tarea que se agregará desde Azure
+        taskComparisons.push({
+          text: taskTitle,
+          taskId: adoTask.id.toString(),
+          localCompleted: false,
+          azureCompleted,
+          willClose: false,
+          willReopen: false,
+          isNew: false,
+          direction: 'from-ado'
+        });
+
+        fromAzureDevOps.changes.push(`Tarea: "${taskTitle}" → Agregar${azureCompleted ? ' (completada)' : ''}`);
+        fromAzureDevOps.willUpdate = true;
+      }
+    }
+
+    // Detectar comentarios nuevos locales por sincronizar a Azure
+    const lastCommentSync = link.lastCommentSyncDate || new Date(0);
+    const newLocalComments = await Comment.find({
+      priorityId: priorityId,
+      createdAt: { $gt: lastCommentSync },
+      azureCommentId: { $exists: false }
+    })
+      .populate('userId', 'name')
+      .sort({ createdAt: 1 })
+      .lean();
+
+    if (newLocalComments.length > 0) {
+      toAzureDevOps.changes.push(`${newLocalComments.length} comentario(s) nuevo(s) → Sincronizar`);
+      toAzureDevOps.willUpdate = true;
+    }
+
+    // Detectar comentarios de Azure DevOps que no existen localmente
+    const azureComments = await client.getComments(link.workItemId);
+
+    if (azureComments.length > 0) {
+      const syncedAzureCommentIds = await Comment.find({
+        priorityId: priorityId,
+        azureCommentId: { $exists: true, $ne: null }
+      }).distinct('azureCommentId');
+
+      const syncedIds = new Set(syncedAzureCommentIds.map(id => Number(id)));
+      const newAzureComments = azureComments.filter(c => !syncedIds.has(c.id));
+
+      if (newAzureComments.length > 0) {
+        fromAzureDevOps.changes.push(`${newAzureComments.length} comentario(s) nuevo(s) → Agregar`);
+        fromAzureDevOps.willUpdate = true;
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      preview: {
+        localState: priority.status,
+        azureState: currentAdoState,
+        willUpdateState,
+        tasks: taskComparisons,
+        fromAzureDevOps,
+        toAzureDevOps,
+        hasChanges: fromAzureDevOps.willUpdate || toAzureDevOps.willUpdate
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en vista previa de sincronización:', error);
+    return NextResponse.json(
+      { error: 'Error al obtener vista previa de sincronización' },
       { status: 500 }
     );
   }
