@@ -95,7 +95,16 @@ export async function POST(request: NextRequest) {
           const workItem = await client.getWorkItem(link.workItemId);
           const currentAdoState = workItem.fields['System.State'];
 
-          // Si el estado en Azure DevOps cambió
+          // Obtener prioridad actual
+          const priority = await Priority.findById(link.priorityId);
+          if (!priority) {
+            continue;
+          }
+
+          let needsUpdate = false;
+          const updates: any = {};
+
+          // Sincronizar estado si cambió
           if (currentAdoState !== link.lastSyncedState) {
             // Mapear a estado de la app
             const newAppState = mapAzureDevOpsStateToAppState(
@@ -103,11 +112,12 @@ export async function POST(request: NextRequest) {
               config.stateMapping
             );
 
-            // Actualizar prioridad
-            await Priority.findByIdAndUpdate(link.priorityId, {
-              status: newAppState,
-              completionPercentage: newAppState === 'COMPLETADO' ? 100 : undefined
-            });
+            updates.status = newAppState;
+            if (newAppState === 'COMPLETADO') {
+              updates.completionPercentage = 100;
+            }
+
+            needsUpdate = true;
 
             // Actualizar último estado sincronizado
             link.lastSyncedState = currentAdoState;
@@ -115,6 +125,57 @@ export async function POST(request: NextRequest) {
             await link.save();
 
             syncResults.fromAzureDevOps.updated++;
+          }
+
+          // Sincronizar tareas del checklist desde Azure DevOps
+          const childTasks = await client.getChildTasks(link.workItemId);
+          if (childTasks.length > 0) {
+            // Crear mapa de tareas locales por título
+            const localChecklistMap = new Map(
+              (priority.checklist || []).map((item: any) => [item.text, item])
+            );
+
+            let checklistUpdated = false;
+            const updatedChecklist = [...(priority.checklist || [])];
+
+            for (const adoTask of childTasks) {
+              const taskTitle = adoTask.fields['System.Title'];
+              const taskIsClosed = adoTask.fields['System.State'] === 'Done' ||
+                                  adoTask.fields['System.State'] === 'Closed';
+              const localTask = localChecklistMap.get(taskTitle);
+
+              if (!localTask) {
+                // La tarea existe en Azure pero NO localmente → AGREGAR
+                updatedChecklist.push({
+                  text: taskTitle,
+                  completed: taskIsClosed,
+                  createdAt: new Date()
+                });
+                checklistUpdated = true;
+                console.log(`⬇️ [Sync from Azure] Tarea agregada al checklist local: ${taskTitle}`);
+              } else if (localTask.completed !== taskIsClosed) {
+                // La tarea existe pero el estado de completado difiere → ACTUALIZAR
+                const index = updatedChecklist.findIndex((item: any) => item.text === taskTitle);
+                if (index !== -1) {
+                  updatedChecklist[index] = {
+                    ...updatedChecklist[index],
+                    completed: taskIsClosed
+                  };
+                  checklistUpdated = true;
+                  console.log(`⬇️ [Sync from Azure] Tarea actualizada: ${taskTitle} (${taskIsClosed ? 'completada' : 'pendiente'})`);
+                }
+              }
+            }
+
+            if (checklistUpdated) {
+              updates.checklist = updatedChecklist;
+              needsUpdate = true;
+            }
+          }
+
+          // Aplicar actualizaciones si hay cambios
+          if (needsUpdate) {
+            await Priority.findByIdAndUpdate(link.priorityId, updates);
           }
         } catch (error) {
           console.error(`Error sincronizando desde Azure DevOps (WI ${link.workItemId}):`, error);

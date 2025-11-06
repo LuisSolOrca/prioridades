@@ -1293,6 +1293,11 @@ export default function AzureDevOpsImportPage() {
                                             ✨ Tarea nueva "{detail.taskTitle}": Se creará en Azure DevOps {detail.localStatus === 'completada' ? '(completada)' : ''}
                                           </>
                                         )}
+                                        {detail.type === 'tarea_nueva_remota' && (
+                                          <>
+                                            ⬇️ Tarea "{detail.taskTitle}": Existe en Azure, se agregará al checklist local ({detail.remoteStatus})
+                                          </>
+                                        )}
                                       </li>
                                     ))}
                                   </ul>
@@ -1319,7 +1324,12 @@ export default function AzureDevOpsImportPage() {
                                           {task.title}
                                           {task.isLocalOnly && (
                                             <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
-                                              Nueva
+                                              Nueva (local)
+                                            </span>
+                                          )}
+                                          {task.isRemoteOnly && (
+                                            <span className="ml-2 text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                                              De Azure
                                             </span>
                                           )}
                                         </span>
