@@ -23,7 +23,8 @@ import {
   ChevronDown,
   Building2,
   UserCog,
-  Cloud
+  Cloud,
+  Link
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -348,6 +349,19 @@ export default function Navbar() {
                     >
                       <Settings size={22} />
                     </button>
+                    {user.area === 'Tecnología' && (
+                      <button
+                        onClick={() => handleNavigation('/admin/azure-links')}
+                        className={`w-full flex justify-center p-3 rounded-lg transition ${
+                          pathname === '/admin/azure-links'
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                        title="Vínculos Azure DevOps"
+                      >
+                        <Link size={22} />
+                      </button>
+                    )}
                   </>
                 )}
               </>
@@ -460,6 +474,14 @@ export default function Navbar() {
                       active={pathname === '/admin/ai-config'}
                       onClick={() => handleNavigation('/admin/ai-config')}
                     />
+                    {user.area === 'Tecnología' && (
+                      <NavButton
+                        icon={<Link size={20} />}
+                        label="Vínculos Azure DevOps"
+                        active={pathname === '/admin/azure-links'}
+                        onClick={() => handleNavigation('/admin/azure-links')}
+                      />
+                    )}
                   </>
                 )}
               </>
