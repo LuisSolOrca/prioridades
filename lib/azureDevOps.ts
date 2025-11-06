@@ -352,14 +352,11 @@ export class AzureDevOpsClient {
    */
   async deleteTask(taskId: number): Promise<void> {
     try {
-      const url = `https://dev.azure.com/${this.organization}/${this.project}/_apis/wit/workitems/${taskId}?api-version=7.1`;
+      const url = `${this.baseUrl}/wit/workitems/${taskId}?api-version=7.1`;
 
       const response = await fetch(url, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Basic ${Buffer.from(`:${this.personalAccessToken}`).toString('base64')}`,
-          'Content-Type': 'application/json'
-        }
+        headers: this.headers
       });
 
       if (!response.ok) {
