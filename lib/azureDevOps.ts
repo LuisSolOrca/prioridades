@@ -429,7 +429,8 @@ export class AzureDevOpsClient {
   async createChildTask(
     parentWorkItemId: number,
     title: string,
-    description?: string
+    description?: string,
+    assignedTo?: string
   ): Promise<WorkItem> {
     try {
       // Primero crear la tarea
@@ -446,6 +447,14 @@ export class AzureDevOpsClient {
           op: 'add',
           path: '/fields/System.Description',
           value: description
+        });
+      }
+
+      if (assignedTo) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.AssignedTo',
+          value: assignedTo
         });
       }
 

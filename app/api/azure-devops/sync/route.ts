@@ -262,7 +262,9 @@ export async function POST(request: NextRequest) {
                 try {
                   const task = await client.createChildTask(
                     workItem.id,
-                    (checklistItem as any).text
+                    (checklistItem as any).text,
+                    undefined, // description
+                    userEmail || undefined // assignedTo - asignar tarea al usuario
                   );
 
                   exportedWorkItem.tasks.push((checklistItem as any).text);
