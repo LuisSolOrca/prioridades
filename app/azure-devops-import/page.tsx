@@ -592,6 +592,21 @@ export default function AzureDevOpsImportPage() {
             </div>
           </div>
 
+          {/* Mensaje informativo */}
+          <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">ℹ️</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">
+                  Work Items de Azure DevOps
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  Los work items mostrados a continuación están asignados a ti en Azure DevOps pero <strong>aún NO están en el sistema de prioridades</strong>. Selecciona los que deseas importar como prioridades semanales.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {message && (
             <div
               className={`mb-6 p-4 rounded-lg ${
@@ -722,10 +737,10 @@ export default function AzureDevOpsImportPage() {
           <div className="flex items-center justify-between mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <div>
               <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
-                {workItems.length} work items disponibles
+                {workItems.length} work items disponibles en Azure DevOps
               </p>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                {selectedIds.size} seleccionados
+                {selectedIds.size} seleccionados • Estos work items aún NO están en el sistema de prioridades
               </p>
             </div>
             <div className="flex gap-3 items-center">
