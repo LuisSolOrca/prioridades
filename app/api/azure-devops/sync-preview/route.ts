@@ -274,7 +274,7 @@ export async function GET(request: NextRequest) {
           remoteTasksCount: remoteTasksCount,
           changes: changes,
           childTasks: allTasks,
-          newCommentsCount: newCommentsCount
+          newLocalCommentsCount: newLocalCommentsCount
         });
 
       } catch (error) {
