@@ -1280,12 +1280,12 @@ export default function AzureDevOpsImportPage() {
                                         )}
                                         {detail.type === 'tarea_completada_local' && (
                                           <>
-                                            Tarea "{detail.taskTitle}": Completada localmente, pendiente en Azure ({detail.remoteStatus})
+                                            ✅ Tarea "{detail.taskTitle}": Completada localmente, se cerrará en Azure ({detail.remoteStatus})
                                           </>
                                         )}
-                                        {detail.type === 'tarea_completada_remota' && (
+                                        {detail.type === 'tarea_reabierta_local' && (
                                           <>
-                                            Tarea "{detail.taskTitle}": Completada en Azure, se marcará como completada localmente
+                                            🔄 Tarea "{detail.taskTitle}": Reabierta localmente, se reabrirá en Azure ({detail.remoteStatus} → Active)
                                           </>
                                         )}
                                         {detail.type === 'tarea_nueva_local' && (

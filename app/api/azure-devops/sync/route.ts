@@ -160,19 +160,24 @@ export async function POST(request: NextRequest) {
 
               if (adoTask) {
                 // La tarea YA EXISTE en Azure DevOps
-                if (checklistItem.completed) {
-                  const taskState = adoTask.fields['System.State'];
+                const taskState = adoTask.fields['System.State'];
+                const taskIsClosed = taskState === 'Done' || taskState === 'Closed';
 
-                  // Si la tarea no está cerrada en Azure DevOps
-                  if (taskState !== 'Done' && taskState !== 'Closed') {
-                    // Obtener horas de taskHours o usar 0 por defecto
-                    const hours = taskHours[adoTask.id] || 0;
+                if (checklistItem.completed && !taskIsClosed) {
+                  // Tarea completada localmente pero NO cerrada en Azure DevOps → CERRAR
+                  const hours = taskHours[adoTask.id] || 0;
 
-                    // Cerrar tarea con horas
-                    await client.closeTaskWithHours(adoTask.id, hours);
+                  // Cerrar tarea con horas
+                  await client.closeTaskWithHours(adoTask.id, hours);
 
-                    syncResults.toAzureDevOps.updated++;
-                  }
+                  console.log(`✅ [Azure DevOps] Tarea cerrada: ${adoTask.id} - ${(checklistItem as any).text} (${hours}h)`);
+                  syncResults.toAzureDevOps.updated++;
+                } else if (!checklistItem.completed && taskIsClosed) {
+                  // Tarea NO completada localmente pero SÍ cerrada en Azure DevOps → REABRIR
+                  await client.reopenTask(adoTask.id);
+
+                  console.log(`🔄 [Azure DevOps] Tarea reabierta: ${adoTask.id} - ${(checklistItem as any).text}`);
+                  syncResults.toAzureDevOps.updated++;
                 }
               } else {
                 // La tarea NO EXISTE en Azure DevOps - CREAR NUEVA

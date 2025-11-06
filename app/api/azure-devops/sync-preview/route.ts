@@ -134,13 +134,13 @@ export async function GET(request: NextRequest) {
                 });
               }
 
-              // Tarea completada en Azure DevOps pero no localmente
+              // Tarea NO completada localmente pero SÍ cerrada en Azure DevOps (REAPERTURA)
               if (!localTask.completed && taskIsClosed) {
                 changes.hasChanges = true;
                 changes.checklistChanged = true;
                 changes.details.push({
-                  type: 'tarea_completada_remota',
-                  direction: 'from-ado',
+                  type: 'tarea_reabierta_local',
+                  direction: 'to-ado',
                   taskId: adoTask.id,
                   taskTitle: localTask.text,
                   localStatus: 'pendiente',
