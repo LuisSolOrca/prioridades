@@ -551,7 +551,29 @@ export const generateAzureDevOpsReport = async (
   // Filtrar solo prioridades sincronizadas con Azure DevOps
   const prioritiesWithAzureDevOps = priorities.filter(p => p.azureDevOps);
 
+  if (prioritiesWithAzureDevOps.length === 0) {
+    throw new Error('No hay prioridades sincronizadas con Azure DevOps');
+  }
+
+  // Obtener datos enriquecidos con horas desde el API
+  const priorityIds = prioritiesWithAzureDevOps.map(p => p._id).join(',');
+  let enrichedDataMap = new Map();
+
+  try {
+    const response = await fetch(`/api/azure-devops/report-data?priorityIds=${priorityIds}`);
+    if (response.ok) {
+      const result = await response.json();
+      // Crear un mapa para acceso rápido por priorityId
+      enrichedDataMap = new Map(
+        result.data.map((item: any) => [item.priorityId, item])
+      );
+    }
+  } catch (error) {
+    console.error('Error fetching enriched data:', error);
+  }
+
   const rows: (string | number)[][] = [];
+  let totalHours = 0;
 
   prioritiesWithAzureDevOps.forEach(priority => {
     const user = users.find(u => u._id === priority.userId);
@@ -571,18 +593,31 @@ export const generateAzureDevOpsReport = async (
       `WI #${workItemId} (${workItemType})`
     ]);
 
+    // Obtener datos enriquecidos de esta prioridad
+    const enrichedData = enrichedDataMap.get(priority._id);
+
     // Agregar tareas del checklist si existen
     if (priority.checklist && priority.checklist.length > 0) {
       priority.checklist.forEach((item: any) => {
         const status = item.completed ? '✓ Completada' : '○ Pendiente';
-        // Nota: Las horas reales están en Azure DevOps, aquí solo mostramos el estado
+
+        // Buscar las horas en los datos enriquecidos
+        let hours = 0;
+        if (enrichedData && enrichedData.tasks) {
+          const taskData = enrichedData.tasks.find((t: any) => t.title === item.text);
+          if (taskData) {
+            hours = taskData.completedWork;
+            totalHours += hours;
+          }
+        }
+
         rows.push([
           `  └─ ${item.text}`,
           '',
           '',
           '',
           status,
-          'Ver en Azure DevOps'
+          hours > 0 ? `${hours} horas` : '0 horas'
         ]);
       });
     }
@@ -600,15 +635,15 @@ export const generateAzureDevOpsReport = async (
 
   const data: ReportData = {
     title: 'Reporte de Prioridades Sincronizadas con Azure DevOps',
-    subtitle: filters || 'Prioridades exportadas a Azure DevOps con sus tareas',
-    headers: ['Prioridad / Tarea', 'Usuario', 'Iniciativa', 'Semana', 'Estado', 'Work Item'],
+    subtitle: filters || 'Prioridades exportadas a Azure DevOps con sus tareas y horas',
+    headers: ['Prioridad / Tarea', 'Usuario', 'Iniciativa', 'Semana', 'Estado', 'Horas / Work Item'],
     rows: rows,
     summary: [
       { label: 'Prioridades Sincronizadas', value: totalPriorities },
       { label: 'Total de Tareas', value: totalTasks },
       { label: 'Tareas Completadas', value: completedTasks },
       { label: 'Tareas Pendientes', value: totalTasks - completedTasks },
-      { label: 'Nota', value: 'Las horas trabajadas están registradas en Azure DevOps' }
+      { label: 'Total de Horas Trabajadas', value: `${totalHours} horas` }
     ]
   };
 
