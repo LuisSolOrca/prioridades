@@ -446,17 +446,32 @@ export async function POST(request: NextRequest) {
       willUpdate: false
     };
 
-    // Comparar estado desde Azure
-    if (mappedAdoState !== priority.status) {
+    // Conflictos detectados
+    const conflicts = [];
+
+    // Comparar estados - CONFLICTO si ambos cambiaron
+    const localStateChanged = priority.status !== link.lastSyncedState;
+    const azureStateChanged = currentAdoState !== link.lastSyncedState;
+
+    if (localStateChanged && azureStateChanged) {
+      // CONFLICTO: Ambos estados cambiaron desde la última sincronización
+      conflicts.push({
+        type: 'state_conflict',
+        localValue: priority.status,
+        azureValue: currentAdoState,
+        lastSynced: link.lastSyncedState,
+        message: `Estado modificado en ambos lados`
+      });
+    } else if (mappedAdoState !== priority.status) {
+      // No es conflicto, solo sincronización normal
       fromAzureDevOps.changes.push(`Estado: ${currentAdoState} (${mappedAdoState}) → ${priority.status}`);
       fromAzureDevOps.willUpdate = true;
-    }
-
-    // Comparar estado hacia Azure
-    const expectedAdoState = mapAppStateToAzureDevOpsState(priority.status);
-    if (expectedAdoState !== currentAdoState) {
-      toAzureDevOps.changes.push(`Estado: ${priority.status} → ${expectedAdoState}`);
-      toAzureDevOps.willUpdate = true;
+    } else {
+      const expectedAdoState = mapAppStateToAzureDevOpsState(priority.status);
+      if (expectedAdoState !== currentAdoState) {
+        toAzureDevOps.changes.push(`Estado: ${priority.status} → ${expectedAdoState}`);
+        toAzureDevOps.willUpdate = true;
+      }
     }
 
     // Comparar tareas
@@ -475,6 +490,13 @@ export async function POST(request: NextRequest) {
 
         const willClose = localCompleted && !azureCompleted;
         const willReopen = !localCompleted && azureCompleted;
+
+        // CONFLICTO: Si ambos estados son diferentes, verificar si es un conflicto real
+        // (por ejemplo, si la tarea cambió en ambos lados desde la última sync)
+        if (willClose || willReopen) {
+          // Por ahora, tratamos los cambios de estado de tareas como sincronización normal
+          // pero podríamos agregar lógica más compleja aquí si es necesario
+        }
 
         // Siempre incluir para mostrar estado
         taskComparisons.push({
@@ -516,7 +538,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Revisar tareas de Azure que no existen localmente (CONFLICTO)
-    const conflicts = [];
     for (const adoTask of childTasks) {
       const taskTitle = adoTask.fields['System.Title'];
       const existsLocally = localChecklist.some((item: any) => item.text === taskTitle);
@@ -531,7 +552,8 @@ export async function POST(request: NextRequest) {
           text: taskTitle,
           taskId: adoTask.id.toString(),
           azureCompleted,
-          type: 'missing_locally'
+          type: 'task_missing_locally',
+          message: `Tarea existe en Azure pero no localmente`
         });
 
         taskComparisons.push({

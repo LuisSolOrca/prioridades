@@ -201,14 +201,38 @@ export async function POST(request: NextRequest) {
     // PASO 1.5: Resolver conflictos
     // ========================================
     try {
-      for (const [taskId, resolution] of Object.entries(conflictResolutions)) {
-        if (resolution === 'delete') {
-          // Eliminar tarea de Azure DevOps
-          await client.deleteTask(Number(taskId));
-          syncResult.toAzureDevOps.updated = true;
-          syncResult.toAzureDevOps.changes.push(`Tarea eliminada de Azure (conflicto resuelto)`);
+      for (const [key, resolution] of Object.entries(conflictResolutions)) {
+        if (key === 'state') {
+          // Conflicto de estado
+          if (resolution === 'local') {
+            // Usar estado local → actualizar Azure
+            const expectedAdoState = mapAppStateToAzureDevOpsState(priority.status);
+            await client.updateWorkItemState(link.workItemId, expectedAdoState);
+            syncResult.toAzureDevOps.updated = true;
+            syncResult.toAzureDevOps.changes.push(`Estado actualizado en Azure (conflicto resuelto): ${expectedAdoState}`);
+            link.lastSyncedState = expectedAdoState;
+            await link.save();
+          } else if (resolution === 'azure') {
+            // Usar estado de Azure → actualizar local
+            const workItem = await client.getWorkItem(link.workItemId);
+            const currentAdoState = workItem.fields['System.State'];
+            const mappedAdoState = mapAzureDevOpsStateToAppState(currentAdoState, config.stateMapping);
+            await Priority.findByIdAndUpdate(priorityId, { status: mappedAdoState });
+            syncResult.fromAzureDevOps.updated = true;
+            syncResult.fromAzureDevOps.changes.push(`Estado actualizado localmente (conflicto resuelto): ${mappedAdoState}`);
+            link.lastSyncedState = currentAdoState;
+            await link.save();
+          }
+        } else {
+          // Conflicto de tarea
+          if (resolution === 'delete') {
+            // Eliminar tarea de Azure DevOps
+            await client.deleteTask(Number(key));
+            syncResult.toAzureDevOps.updated = true;
+            syncResult.toAzureDevOps.changes.push(`Tarea eliminada de Azure (conflicto resuelto)`);
+          }
+          // Si resolution === 'add', ya fue agregada en el paso FROM Azure
         }
-        // Si resolution === 'add', ya fue agregada en el paso FROM Azure
       }
     } catch (error) {
       console.error(`Error resolviendo conflictos:`, error);

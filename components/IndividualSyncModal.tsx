@@ -26,12 +26,16 @@ interface SyncPreview {
     changes: string[];
     willUpdate: boolean;
   };
-  conflicts: {
-    text: string;
-    taskId: string;
-    azureCompleted: boolean;
-    type: 'missing_locally';
-  }[];
+  conflicts: Array<{
+    type: 'state_conflict' | 'task_missing_locally';
+    text?: string;
+    taskId?: string;
+    azureCompleted?: boolean;
+    localValue?: string;
+    azureValue?: string;
+    lastSynced?: string;
+    message: string;
+  }>;
   hasChanges: boolean;
   hasConflicts: boolean;
 }
@@ -48,8 +52,10 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
   const [preview, setPreview] = useState<SyncPreview | null>(null);
   const [taskHours, setTaskHours] = useState<{ [key: string]: number }>({});
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  // Resoluciones de conflictos: taskId -> 'add' (agregar desde Azure) | 'delete' (eliminar de Azure)
-  const [conflictResolutions, setConflictResolutions] = useState<{ [taskId: string]: 'add' | 'delete' }>({});
+  // Resoluciones de conflictos:
+  // - Para tareas: taskId -> 'add' | 'delete'
+  // - Para estado: 'state' -> 'local' | 'azure'
+  const [conflictResolutions, setConflictResolutions] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     loadPreview();
@@ -101,9 +107,14 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
 
     // Validar que todos los conflictos estén resueltos
     if (preview?.hasConflicts) {
-      const unresolvedConflicts = preview.conflicts.filter(
-        c => !conflictResolutions[c.taskId]
-      );
+      const unresolvedConflicts = preview.conflicts.filter(conflict => {
+        if (conflict.type === 'state_conflict') {
+          return !conflictResolutions['state'];
+        } else if (conflict.type === 'task_missing_locally' && conflict.taskId) {
+          return !conflictResolutions[conflict.taskId];
+        }
+        return false;
+      });
 
       if (unresolvedConflicts.length > 0) {
         setMessage({
@@ -274,48 +285,90 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
                         ⚠️ Conflictos detectados
                       </p>
                       <p className="text-xs text-orange-700 dark:text-orange-300">
-                        Las siguientes tareas existen en Azure DevOps pero no localmente. ¿Qué deseas hacer?
+                        Se encontraron cambios en ambos lados. Debes resolverlos antes de sincronizar.
                       </p>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    {preview.conflicts.map((conflict) => (
-                      <div
-                        key={conflict.taskId}
-                        className="p-3 bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-800 rounded"
-                      >
-                        <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          {conflict.text}
-                          {conflict.azureCompleted && (
-                            <span className="ml-2 text-xs text-green-600 dark:text-green-400">(completada en Azure)</span>
-                          )}
-                        </p>
+                  <div className="space-y-3">
+                    {preview.conflicts.map((conflict, idx) => (
+                      <div key={idx}>
+                        {conflict.type === 'state_conflict' && (
+                          <div className="p-3 bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-800 rounded">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                              🔄 Conflicto de estado de la prioridad
+                            </p>
+                            <div className="text-xs space-y-1 mb-3 text-gray-700 dark:text-gray-300">
+                              <p>• Local: <span className="font-semibold">{conflict.localValue}</span></p>
+                              <p>• Azure: <span className="font-semibold">{conflict.azureValue}</span></p>
+                              <p className="text-gray-500 dark:text-gray-400">Último sincronizado: {conflict.lastSynced || 'Nunca'}</p>
+                            </div>
 
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setConflictResolutions(prev => ({ ...prev, [conflict.taskId]: 'add' }))}
-                            disabled={syncing}
-                            className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
-                              conflictResolutions[conflict.taskId] === 'add'
-                                ? 'bg-blue-600 text-white border-2 border-blue-700'
-                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                            }`}
-                          >
-                            ← Agregar desde Azure
-                          </button>
-                          <button
-                            onClick={() => setConflictResolutions(prev => ({ ...prev, [conflict.taskId]: 'delete' }))}
-                            disabled={syncing}
-                            className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
-                              conflictResolutions[conflict.taskId] === 'delete'
-                                ? 'bg-red-600 text-white border-2 border-red-700'
-                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20'
-                            }`}
-                          >
-                            Eliminar de Azure →
-                          </button>
-                        </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setConflictResolutions(prev => ({ ...prev, ['state']: 'local' }))}
+                                disabled={syncing}
+                                className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
+                                  conflictResolutions['state'] === 'local'
+                                    ? 'bg-purple-600 text-white border-2 border-purple-700'
+                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                                }`}
+                              >
+                                Usar estado local →
+                              </button>
+                              <button
+                                onClick={() => setConflictResolutions(prev => ({ ...prev, ['state']: 'azure' }))}
+                                disabled={syncing}
+                                className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
+                                  conflictResolutions['state'] === 'azure'
+                                    ? 'bg-blue-600 text-white border-2 border-blue-700'
+                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                }`}
+                              >
+                                ← Usar estado de Azure
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {conflict.type === 'task_missing_locally' && conflict.taskId && (
+                          <div className="p-3 bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-800 rounded">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                              📝 {conflict.text}
+                              {conflict.azureCompleted && (
+                                <span className="ml-2 text-xs text-green-600 dark:text-green-400">(completada en Azure)</span>
+                              )}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Esta tarea existe en Azure pero no localmente
+                            </p>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setConflictResolutions(prev => ({ ...prev, [conflict.taskId!]: 'add' }))}
+                                disabled={syncing}
+                                className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
+                                  conflictResolutions[conflict.taskId] === 'add'
+                                    ? 'bg-blue-600 text-white border-2 border-blue-700'
+                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                }`}
+                              >
+                                ← Agregar desde Azure
+                              </button>
+                              <button
+                                onClick={() => setConflictResolutions(prev => ({ ...prev, [conflict.taskId!]: 'delete' }))}
+                                disabled={syncing}
+                                className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
+                                  conflictResolutions[conflict.taskId] === 'delete'
+                                    ? 'bg-red-600 text-white border-2 border-red-700'
+                                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                }`}
+                              >
+                                Eliminar de Azure →
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
