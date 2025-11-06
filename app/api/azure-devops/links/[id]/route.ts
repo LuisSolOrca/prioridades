@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
-import Priority from '@/models/Priority';
 
 /**
  * DELETE - Elimina un vínculo entre prioridad y Azure DevOps
@@ -41,15 +40,6 @@ export async function DELETE(
         { error: 'Vínculo no encontrado' },
         { status: 404 }
       );
-    }
-
-    // Obtener la prioridad para eliminar la información de Azure DevOps
-    const priority = await Priority.findById(link.priorityId);
-
-    if (priority && priority.azureDevOps) {
-      // Eliminar la información de Azure DevOps de la prioridad
-      priority.azureDevOps = undefined;
-      await priority.save();
     }
 
     // Eliminar el vínculo
