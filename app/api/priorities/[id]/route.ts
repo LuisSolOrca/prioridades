@@ -73,6 +73,7 @@ export async function PUT(
     const oldStatus = priority.status;
     const oldCompletionPercentage = priority.completionPercentage;
     const oldChecklistLength = priority.checklist?.length || 0;
+    const oldChecklist = JSON.stringify(priority.checklist || []);
     const oldWeekStart = priority.weekStart.toISOString();
     const oldWeekEnd = priority.weekEnd.toISOString();
 
@@ -230,8 +231,22 @@ export async function PUT(
 
     // Sincronización automática con Azure DevOps
     try {
+      // Detectar si el checklist cambió realmente
+      const newChecklist = JSON.stringify(body.checklist || []);
+      const checklistChanged = body.checklist && newChecklist !== oldChecklist;
+
       // Solo sincronizar si el estado cambió o el checklist cambió
-      if (body.status && body.status !== oldStatus || body.checklist) {
+      const shouldSync = (body.status && body.status !== oldStatus) || checklistChanged;
+
+      console.log(`🔍 [Azure DevOps Sync] Detección de cambios:`, {
+        statusChanged: body.status && body.status !== oldStatus,
+        checklistChanged,
+        shouldSync,
+        oldChecklistLength,
+        newChecklistLength: body.checklist?.length || 0
+      });
+
+      if (shouldSync) {
         // Verificar si hay vínculo con Azure DevOps
         const adoLink = await AzureDevOpsWorkItem.findOne({ priorityId: id });
 
