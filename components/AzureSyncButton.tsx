@@ -9,7 +9,7 @@ interface ChecklistItem {
 }
 
 interface Priority {
-  _id: string;
+  _id?: string;
   title: string;
   checklist?: ChecklistItem[];
 }

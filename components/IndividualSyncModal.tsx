@@ -10,7 +10,7 @@ interface ChecklistItem {
 }
 
 interface Priority {
-  _id: string;
+  _id?: string;
   title: string;
   status: string;
   checklist?: ChecklistItem[];
@@ -61,6 +61,11 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
   const loadPreview = async () => {
     try {
       setLoading(true);
+
+      if (!priority._id) {
+        throw new Error('La prioridad no tiene ID');
+      }
+
       const response = await fetch('/api/azure-devops/sync-preview', {
         method: 'POST',
         headers: {
@@ -89,6 +94,14 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
   const tasksNeedingHours = preview?.tasks.filter(t => t.willClose) || [];
 
   const handleSync = async () => {
+    if (!priority._id) {
+      setMessage({
+        type: 'error',
+        text: 'La prioridad no tiene ID'
+      });
+      return;
+    }
+
     setSyncing(true);
     setMessage(null);
 
