@@ -180,7 +180,9 @@ export async function POST(request: NextRequest) {
 
           // Sincronizar comentarios desde Azure DevOps
           try {
+            console.log(`🔍 [Comentarios from-ado] Obteniendo comentarios de WI ${link.workItemId}`);
             const azureComments = await client.getComments(link.workItemId);
+            console.log(`📊 [Comentarios from-ado] Total comentarios en Azure: ${azureComments.length}`);
 
             if (azureComments.length > 0) {
               // Obtener IDs de comentarios de Azure ya sincronizados
@@ -189,10 +191,14 @@ export async function POST(request: NextRequest) {
                 azureCommentId: { $exists: true, $ne: null }
               }).distinct('azureCommentId');
 
+              console.log(`📊 [Comentarios from-ado] Comentarios ya sincronizados: ${syncedAzureCommentIds.length}`);
+              console.log(`📋 [Comentarios from-ado] IDs sincronizados:`, syncedAzureCommentIds);
+
               const syncedIds = new Set(syncedAzureCommentIds.map(id => Number(id)));
 
               // Filtrar comentarios que aún no se han sincronizado
               const newAzureComments = azureComments.filter(c => !syncedIds.has(c.id));
+              console.log(`📊 [Comentarios from-ado] Comentarios nuevos por sincronizar: ${newAzureComments.length}`);
 
               if (newAzureComments.length > 0) {
                 console.log(`⬇️ [Azure DevOps] Sincronizando ${newAzureComments.length} comentarios desde WI ${link.workItemId}`);
@@ -225,6 +231,8 @@ export async function POST(request: NextRequest) {
                   const commentText = `[Azure DevOps - ${azureComment.createdBy?.displayName || 'Usuario'}]\n${azureComment.text}`;
 
                   try {
+                    console.log(`⬇️ [Comentarios from-ado] Creando comentario local para Azure ID: ${azureComment.id}`);
+
                     await Comment.create({
                       priorityId: link.priorityId,
                       userId: systemUser._id,
@@ -234,17 +242,21 @@ export async function POST(request: NextRequest) {
                       createdAt: new Date(azureComment.createdDate)
                     });
 
-                    console.log(`⬇️ [Azure DevOps] Comentario sincronizado: ${azureComment.id} - ${commentText.substring(0, 50)}...`);
+                    console.log(`✅ [Azure DevOps] Comentario sincronizado: ${azureComment.id} - ${commentText.substring(0, 50)}...`);
                   } catch (commentCreateError) {
                     console.error(`❌ [Azure DevOps] Error creando comentario ${azureComment.id}:`, commentCreateError);
                   }
                 }
 
                 syncResults.fromAzureDevOps.updated++;
+              } else {
+                console.log(`✅ [Comentarios from-ado] No hay comentarios nuevos por sincronizar para WI ${link.workItemId}`);
               }
+            } else {
+              console.log(`ℹ️ [Comentarios from-ado] No hay comentarios en Azure para WI ${link.workItemId}`);
             }
           } catch (commentSyncError) {
-            console.error(`Error sincronizando comentarios desde Azure DevOps (WI ${link.workItemId}):`, commentSyncError);
+            console.error(`❌ [Comentarios from-ado] Error sincronizando comentarios desde Azure DevOps (WI ${link.workItemId}):`, commentSyncError);
             // No fallar la sincronización completa si falla la sincronización de comentarios
           }
         } catch (error) {
@@ -355,6 +367,7 @@ export async function POST(request: NextRequest) {
           // Sincronizar comentarios nuevos desde la última sincronización
           try {
             const lastCommentSync = link.lastCommentSyncDate || new Date(0); // Si nunca se han sincronizado, usar fecha muy antigua
+            console.log(`🔍 [Comentarios to-ado] Buscando comentarios después de ${lastCommentSync.toISOString()} para WI ${link.workItemId}`);
 
             // Obtener comentarios nuevos desde la última sincronización (solo los locales, no los que vienen de Azure)
             const newComments = await Comment.find({
@@ -366,6 +379,8 @@ export async function POST(request: NextRequest) {
               .sort({ createdAt: 1 })
               .lean();
 
+            console.log(`📊 [Comentarios to-ado] Encontrados ${newComments.length} comentarios para sincronizar`);
+
             if (newComments.length > 0) {
               console.log(`💬 [Azure DevOps] Sincronizando ${newComments.length} comentarios nuevos para WI ${link.workItemId}`);
 
@@ -376,9 +391,11 @@ export async function POST(request: NextRequest) {
                   : `💬 [${userName}] ${comment.text}`;
 
                 try {
+                  console.log(`⬆️ [Comentarios to-ado] Enviando: ${commentText.substring(0, 50)}...`);
+
                   // Agregar comentario a Azure DevOps y obtener el ID asignado
                   const azureCommentResult = await client.addComment(link.workItemId, commentText);
-                  console.log(`💬 [Azure DevOps] Comentario sincronizado: ${commentText.substring(0, 50)}...`);
+                  console.log(`✅ [Azure DevOps] Comentario creado con ID: ${azureCommentResult.id}`);
 
                   // Actualizar el comentario local con el ID de Azure para evitar duplicados
                   await Comment.findByIdAndUpdate(comment._id, {
@@ -386,16 +403,17 @@ export async function POST(request: NextRequest) {
                   });
                   console.log(`✅ [Azure DevOps] azureCommentId guardado: ${azureCommentResult.id} para comentario local ${comment._id}`);
                 } catch (commentError) {
-                  console.error(`Error agregando comentario a WI ${link.workItemId}:`, commentError);
+                  console.error(`❌ [Comentarios to-ado] Error agregando comentario a WI ${link.workItemId}:`, commentError);
                 }
               }
 
               // Actualizar fecha de última sincronización de comentarios
               link.lastCommentSyncDate = new Date();
               await link.save();
+              console.log(`✅ [Comentarios to-ado] lastCommentSyncDate actualizada para WI ${link.workItemId}`);
             }
           } catch (commentSyncError) {
-            console.error(`Error sincronizando comentarios para WI ${link.workItemId}:`, commentSyncError);
+            console.error(`❌ [Comentarios to-ado] Error sincronizando comentarios para WI ${link.workItemId}:`, commentSyncError);
             // No fallar la sincronización completa si falla la sincronización de comentarios
           }
         } catch (error) {
