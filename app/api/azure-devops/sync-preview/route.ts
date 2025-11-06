@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import AzureDevOpsConfig from '@/models/AzureDevOpsConfig';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import Priority from '@/models/Priority';
+import Comment from '@/models/Comment';
 import { AzureDevOpsClient, mapAzureDevOpsStateToAppState } from '@/lib/azureDevOps';
 
 /**
@@ -218,6 +219,22 @@ export async function GET(request: NextRequest) {
           ...localOnlyTasks
         ];
 
+        // Detectar comentarios nuevos por sincronizar
+        const lastCommentSync = link.lastCommentSyncDate || new Date(0);
+        const newCommentsCount = await Comment.countDocuments({
+          priorityId: link.priorityId,
+          createdAt: { $gt: lastCommentSync }
+        });
+
+        if (newCommentsCount > 0) {
+          changes.hasChanges = true;
+          changes.details.push({
+            type: 'comentarios_nuevos',
+            direction: 'to-ado',
+            count: newCommentsCount
+          });
+        }
+
         syncItems.push({
           workItemId: link.workItemId,
           workItemType: workItem.fields['System.WorkItemType'],
@@ -229,7 +246,8 @@ export async function GET(request: NextRequest) {
           checklistCount: localChecklistCount,
           remoteTasksCount: remoteTasksCount,
           changes: changes,
-          childTasks: allTasks
+          childTasks: allTasks,
+          newCommentsCount: newCommentsCount
         });
 
       } catch (error) {

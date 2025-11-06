@@ -35,6 +35,10 @@ const AzureDevOpsWorkItemSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  lastCommentSyncDate: {
+    type: Date,
+    default: null // Última vez que se sincronizaron comentarios
+  },
   syncErrors: [{
     error: String,
     date: Date

@@ -1315,6 +1315,11 @@ export default function AzureDevOpsImportPage() {
                                             ⬇️ Tarea "{detail.taskTitle}": Existe en Azure, se agregará al checklist local ({detail.remoteStatus})
                                           </>
                                         )}
+                                        {detail.type === 'comentarios_nuevos' && (
+                                          <>
+                                            💬 {detail.count} comentario{detail.count > 1 ? 's' : ''} nuevo{detail.count > 1 ? 's' : ''}: Se sincronizará{detail.count > 1 ? 'n' : ''} a Azure DevOps Discussion
+                                          </>
+                                        )}
                                       </li>
                                     ))}
                                   </ul>

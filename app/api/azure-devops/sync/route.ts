@@ -281,6 +281,45 @@ export async function POST(request: NextRequest) {
 
             syncResults.toAzureDevOps.updated++;
           }
+
+          // Sincronizar comentarios nuevos desde la última sincronización
+          try {
+            const lastCommentSync = link.lastCommentSyncDate || new Date(0); // Si nunca se han sincronizado, usar fecha muy antigua
+
+            // Obtener comentarios nuevos desde la última sincronización
+            const newComments = await Comment.find({
+              priorityId: link.priorityId,
+              createdAt: { $gt: lastCommentSync }
+            })
+              .populate('userId', 'name')
+              .sort({ createdAt: 1 })
+              .lean();
+
+            if (newComments.length > 0) {
+              console.log(`💬 [Azure DevOps] Sincronizando ${newComments.length} comentarios nuevos para WI ${link.workItemId}`);
+
+              for (const comment of newComments) {
+                const userName = (comment.userId as any)?.name || 'Usuario';
+                const commentText = comment.isSystemComment
+                  ? `🤖 [Sistema] ${comment.text}`
+                  : `💬 [${userName}] ${comment.text}`;
+
+                try {
+                  await client.addComment(link.workItemId, commentText);
+                  console.log(`💬 [Azure DevOps] Comentario sincronizado: ${commentText.substring(0, 50)}...`);
+                } catch (commentError) {
+                  console.error(`Error agregando comentario a WI ${link.workItemId}:`, commentError);
+                }
+              }
+
+              // Actualizar fecha de última sincronización de comentarios
+              link.lastCommentSyncDate = new Date();
+              await link.save();
+            }
+          } catch (commentSyncError) {
+            console.error(`Error sincronizando comentarios para WI ${link.workItemId}:`, commentSyncError);
+            // No fallar la sincronización completa si falla la sincronización de comentarios
+          }
         } catch (error) {
           console.error(`Error sincronizando hacia Azure DevOps (WI ${link.workItemId}):`, error);
 
