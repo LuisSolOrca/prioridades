@@ -41,7 +41,9 @@ export async function GET(request: NextRequest) {
 
     // Crear un mapa de configuraciones por userId para acceso rápido
     const configsByUserId = new Map(
-      allConfigs.map(config => [config.userId.toString(), config])
+      allConfigs
+        .filter(config => config.userId) // Filtrar configs sin userId
+        .map(config => [config.userId.toString(), config])
     );
 
     const enrichedData = [];
