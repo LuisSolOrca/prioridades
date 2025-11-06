@@ -2,21 +2,9 @@
 
 import { RefreshCw } from 'lucide-react';
 
-interface ChecklistItem {
-  _id?: string;
-  text: string;
-  completed: boolean;
-}
-
-interface Priority {
-  _id?: string;
-  title: string;
-  checklist?: ChecklistItem[];
-}
-
 interface AzureSyncButtonProps {
-  priority: Priority;
-  onOpenModal: (priority: Priority) => void;
+  priority: any; // Usar any para aceptar cualquier tipo de Priority
+  onOpenModal: (priority: any) => void;
 }
 
 export default function AzureSyncButton({ priority, onOpenModal }: AzureSyncButtonProps) {

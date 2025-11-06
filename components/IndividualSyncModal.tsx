@@ -3,19 +3,6 @@
 import { useState, useEffect } from 'react';
 import { X, RefreshCw, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 
-interface ChecklistItem {
-  _id?: string;
-  text: string;
-  completed: boolean;
-}
-
-interface Priority {
-  _id?: string;
-  title: string;
-  status: string;
-  checklist?: ChecklistItem[];
-}
-
 interface SyncPreview {
   localState: string;
   azureState: string;
@@ -42,7 +29,7 @@ interface SyncPreview {
 }
 
 interface IndividualSyncModalProps {
-  priority: Priority;
+  priority: any; // Usar any para aceptar cualquier tipo de Priority
   onClose: () => void;
   onSyncComplete: () => void;
 }
