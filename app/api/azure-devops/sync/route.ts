@@ -177,6 +177,61 @@ export async function POST(request: NextRequest) {
           if (needsUpdate) {
             await Priority.findByIdAndUpdate(link.priorityId, updates);
           }
+
+          // Sincronizar comentarios desde Azure DevOps
+          try {
+            const azureComments = await client.getComments(link.workItemId);
+
+            if (azureComments.length > 0) {
+              // Obtener IDs de comentarios de Azure ya sincronizados
+              const syncedAzureCommentIds = await Comment.find({
+                priorityId: link.priorityId,
+                azureCommentId: { $exists: true, $ne: null }
+              }).distinct('azureCommentId');
+
+              const syncedIds = new Set(syncedAzureCommentIds.map(id => Number(id)));
+
+              // Filtrar comentarios que aún no se han sincronizado
+              const newAzureComments = azureComments.filter(c => !syncedIds.has(c.id));
+
+              if (newAzureComments.length > 0) {
+                console.log(`⬇️ [Azure DevOps] Sincronizando ${newAzureComments.length} comentarios desde WI ${link.workItemId}`);
+
+                for (const azureComment of newAzureComments) {
+                  // Buscar o crear usuario del sistema para comentarios de Azure
+                  let systemUser = await User.findOne({ email: 'azure-devops@system.local' });
+                  if (!systemUser) {
+                    systemUser = await User.create({
+                      name: 'Azure DevOps',
+                      email: 'azure-devops@system.local',
+                      password: 'N/A',
+                      role: 'USER',
+                      isActive: false // Usuario no puede iniciar sesión
+                    });
+                  }
+
+                  // Crear comentario local
+                  const commentText = `[Azure DevOps - ${azureComment.createdBy?.displayName || 'Usuario'}]\n${azureComment.text}`;
+
+                  await Comment.create({
+                    priorityId: link.priorityId,
+                    userId: systemUser._id,
+                    text: commentText,
+                    isSystemComment: true, // Marcar como comentario del sistema
+                    azureCommentId: azureComment.id,
+                    createdAt: new Date(azureComment.createdDate)
+                  });
+
+                  console.log(`⬇️ [Azure DevOps] Comentario sincronizado: ${azureComment.id} - ${commentText.substring(0, 50)}...`);
+                }
+
+                syncResults.fromAzureDevOps.updated++;
+              }
+            }
+          } catch (commentSyncError) {
+            console.error(`Error sincronizando comentarios desde Azure DevOps (WI ${link.workItemId}):`, commentSyncError);
+            // No fallar la sincronización completa si falla la sincronización de comentarios
+          }
         } catch (error) {
           console.error(`Error sincronizando desde Azure DevOps (WI ${link.workItemId}):`, error);
 
@@ -286,10 +341,11 @@ export async function POST(request: NextRequest) {
           try {
             const lastCommentSync = link.lastCommentSyncDate || new Date(0); // Si nunca se han sincronizado, usar fecha muy antigua
 
-            // Obtener comentarios nuevos desde la última sincronización
+            // Obtener comentarios nuevos desde la última sincronización (solo los locales, no los que vienen de Azure)
             const newComments = await Comment.find({
               priorityId: link.priorityId,
-              createdAt: { $gt: lastCommentSync }
+              createdAt: { $gt: lastCommentSync },
+              azureCommentId: { $exists: false } // Excluir comentarios que ya vienen de Azure
             })
               .populate('userId', 'name')
               .sort({ createdAt: 1 })

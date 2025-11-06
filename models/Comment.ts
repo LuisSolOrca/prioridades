@@ -6,6 +6,7 @@ export interface IComment extends Document {
   userId: mongoose.Types.ObjectId;
   text: string;
   isSystemComment: boolean;
+  azureCommentId?: number; // ID del comentario en Azure DevOps (si fue sincronizado desde allá)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +31,11 @@ const CommentSchema = new Schema<IComment>({
   isSystemComment: {
     type: Boolean,
     default: false
+  },
+  azureCommentId: {
+    type: Number,
+    required: false,
+    index: true // Índice para búsquedas rápidas
   }
 }, {
   timestamps: true

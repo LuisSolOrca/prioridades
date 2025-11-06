@@ -219,20 +219,47 @@ export async function GET(request: NextRequest) {
           ...localOnlyTasks
         ];
 
-        // Detectar comentarios nuevos por sincronizar
+        // Detectar comentarios nuevos locales por sincronizar a Azure
         const lastCommentSync = link.lastCommentSyncDate || new Date(0);
-        const newCommentsCount = await Comment.countDocuments({
+        const newLocalCommentsCount = await Comment.countDocuments({
           priorityId: link.priorityId,
-          createdAt: { $gt: lastCommentSync }
+          createdAt: { $gt: lastCommentSync },
+          azureCommentId: { $exists: false } // Solo comentarios que no vienen de Azure
         });
 
-        if (newCommentsCount > 0) {
+        if (newLocalCommentsCount > 0) {
           changes.hasChanges = true;
           changes.details.push({
-            type: 'comentarios_nuevos',
+            type: 'comentarios_nuevos_local',
             direction: 'to-ado',
-            count: newCommentsCount
+            count: newLocalCommentsCount
           });
+        }
+
+        // Detectar comentarios de Azure DevOps que no existen localmente
+        try {
+          const azureComments = await client.getComments(link.workItemId);
+
+          if (azureComments.length > 0) {
+            const syncedAzureCommentIds = await Comment.find({
+              priorityId: link.priorityId,
+              azureCommentId: { $exists: true, $ne: null }
+            }).distinct('azureCommentId');
+
+            const syncedIds = new Set(syncedAzureCommentIds.map(id => Number(id)));
+            const newAzureCommentsCount = azureComments.filter(c => !syncedIds.has(c.id)).length;
+
+            if (newAzureCommentsCount > 0) {
+              changes.hasChanges = true;
+              changes.details.push({
+                type: 'comentarios_nuevos_remoto',
+                direction: 'from-ado',
+                count: newAzureCommentsCount
+              });
+            }
+          }
+        } catch (error) {
+          console.error(`Error obteniendo comentarios de Azure para preview (WI ${link.workItemId}):`, error);
         }
 
         syncItems.push({

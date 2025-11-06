@@ -517,6 +517,31 @@ export class AzureDevOpsClient {
   }
 
   /**
+   * Obtiene los comentarios de un work item
+   */
+  async getComments(workItemId: number): Promise<Array<{ id: number; text: string; createdDate: string; createdBy: { displayName: string } }>> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/wit/workItems/${workItemId}/comments?api-version=7.1-preview.3`,
+        {
+          headers: this.headers
+        }
+      );
+
+      if (!response.ok) {
+        console.error(`Error fetching comments for work item ${workItemId}: ${response.status}`);
+        return [];
+      }
+
+      const data = await response.json();
+      return data.comments || [];
+    } catch (error) {
+      console.error(`Error fetching comments for work item ${workItemId}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Agrega un comentario a un work item (aparece en Discussion)
    */
   async addComment(workItemId: number, text: string): Promise<void> {
