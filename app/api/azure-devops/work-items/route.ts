@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         storyPoints: wi.fields['Microsoft.VSTS.Scheduling.StoryPoints'],
         iterationPath: wi.fields['System.IterationPath'],
         areaPath: wi.fields['System.AreaPath'],
-        url: wi.url
+        url: `https://dev.azure.com/${config.organization}/${config.project}/_workitems/edit/${wi.id}`
       }))
     });
   } catch (error) {
