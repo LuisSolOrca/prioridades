@@ -13,6 +13,10 @@ interface ReportData {
     label: string;
     value: string | number;
   }[];
+  summaryTable?: {
+    headers: string[];
+    rows: (string | number)[][];
+  };
 }
 
 // Función para cargar el logo
@@ -100,11 +104,56 @@ export const generatePDFReport = async (data: ReportData, fileName: string = 'Re
     startY += 7 + (data.summary.length * 6) + 5;
   }
 
+  // Tabla de resumen por persona (si existe)
+  if (data.summaryTable) {
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Resumen de Horas por Persona:', 14, startY);
+
+    startY += 7;
+
+    const cleanedSummaryHeaders = data.summaryTable.headers.map(h => cleanTextForPDF(h));
+    const cleanedSummaryRows = data.summaryTable.rows.map(row => row.map(cell => cleanTextForPDF(cell)));
+
+    autoTable(doc, {
+      head: [cleanedSummaryHeaders],
+      body: cleanedSummaryRows,
+      startY: startY,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [16, 185, 129], // green-500
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: {
+        textColor: [31, 41, 55],
+        halign: 'center'
+      },
+      margin: { left: 14, right: 14 },
+      styles: {
+        fontSize: 10,
+        cellPadding: 4
+      }
+    });
+
+    startY = (doc as any).lastAutoTable.finalY + 15;
+  }
+
   // Limpiar headers y rows de caracteres problemáticos
   const cleanedHeaders = data.headers.map(h => cleanTextForPDF(h));
   const cleanedRows = data.rows.map(row => row.map(cell => cleanTextForPDF(cell)));
 
-  // Tabla
+  // Tabla principal
+  if (data.summaryTable) {
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Detalle de Tareas:', 14, startY);
+    startY += 7;
+  }
+
   autoTable(doc, {
     head: [cleanedHeaders],
     body: cleanedRows,
@@ -255,7 +304,73 @@ export const generateDOCReport = async (data: ReportData, fileName: string = 'Re
     );
   }
 
-  // Tabla
+  // Tabla de resumen por persona (si existe)
+  if (data.summaryTable) {
+    sections.push(
+      new Paragraph({
+        text: 'Resumen de Horas por Persona:',
+        heading: 'Heading2',
+        spacing: { before: 200, after: 100 }
+      })
+    );
+
+    const summaryTableRows = [
+      // Headers
+      new TableRow({
+        children: data.summaryTable.headers.map(header =>
+          new TableCell({
+            children: [new Paragraph({
+              children: [new TextRun({ text: header, bold: true, color: 'FFFFFF' })]
+            })],
+            shading: { fill: '10B981' }, // green-500
+            margins: { top: 100, bottom: 100, left: 100, right: 100 }
+          })
+        )
+      }),
+      // Rows
+      ...data.summaryTable.rows.map((row, rowIndex) =>
+        new TableRow({
+          children: row.map(cell =>
+            new TableCell({
+              children: [new Paragraph({
+                children: [new TextRun({ text: String(cell) })],
+                alignment: AlignmentType.CENTER
+              })],
+              shading: rowIndex % 2 === 0 ? { fill: 'FFFFFF' } : { fill: 'F9FAFB' },
+              margins: { top: 100, bottom: 100, left: 100, right: 100 }
+            })
+          )
+        })
+      )
+    ];
+
+    const summaryTable = new Table({
+      rows: summaryTableRows,
+      width: {
+        size: 100,
+        type: WidthType.PERCENTAGE
+      }
+    });
+
+    sections.push(summaryTable);
+
+    sections.push(
+      new Paragraph({
+        text: '',
+        spacing: { after: 400 }
+      })
+    );
+
+    sections.push(
+      new Paragraph({
+        text: 'Detalle de Tareas:',
+        heading: 'Heading2',
+        spacing: { before: 200, after: 100 }
+      })
+    );
+  }
+
+  // Tabla principal
   const tableRows = [
     // Headers
     new TableRow({
@@ -574,6 +689,7 @@ export const generateAzureDevOpsReport = async (
 
   const rows: (string | number)[][] = [];
   let totalHours = 0;
+  const hoursByUser = new Map<string, number>(); // Acumulador de horas por usuario
 
   prioritiesWithAzureDevOps.forEach(priority => {
     const user = users.find(u => u._id === priority.userId);
@@ -611,6 +727,10 @@ export const generateAzureDevOpsReport = async (
           if (taskData) {
             hours = taskData.completedWork;
             totalHours += hours;
+
+            // Acumular horas por usuario
+            const userName = user?.name || 'Desconocido';
+            hoursByUser.set(userName, (hoursByUser.get(userName) || 0) + hours);
           }
         }
 
@@ -640,6 +760,19 @@ export const generateAzureDevOpsReport = async (
     }
   });
 
+  // Crear tabla de resumen por persona
+  const summaryTableRows: (string | number)[][] = [];
+  hoursByUser.forEach((hours, userName) => {
+    summaryTableRows.push([userName, `${hours} horas`]);
+  });
+
+  // Ordenar por horas descendente
+  summaryTableRows.sort((a, b) => {
+    const hoursA = parseFloat(String(a[1]).replace(' horas', ''));
+    const hoursB = parseFloat(String(b[1]).replace(' horas', ''));
+    return hoursB - hoursA;
+  });
+
   const totalPriorities = prioritiesWithAzureDevOps.length;
   const totalTasks = prioritiesWithAzureDevOps.reduce(
     (sum, p) => sum + (p.checklist?.length || 0),
@@ -661,7 +794,11 @@ export const generateAzureDevOpsReport = async (
       { label: 'Tareas Completadas', value: completedTasks },
       { label: 'Tareas Pendientes', value: totalTasks - completedTasks },
       { label: 'Total de Horas Trabajadas', value: `${totalHours} horas` }
-    ]
+    ],
+    summaryTable: {
+      headers: ['Usuario', 'Total de Horas'],
+      rows: summaryTableRows
+    }
   };
 
   const fileName = `Reporte_AzureDevOps_${new Date().getTime()}`;
