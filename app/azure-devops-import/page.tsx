@@ -297,9 +297,18 @@ export default function AzureDevOpsImportPage() {
 
     try {
       // Convertir taskHours Map a objeto
+      // Separar horas para tareas vinculadas (taskId numérico) y no vinculadas (priorityId-idx)
       const taskHoursObj: any = {};
-      taskHours.forEach((hours, taskId) => {
-        taskHoursObj[taskId] = hours;
+      const unlinkedTaskHours: any = {};
+
+      taskHours.forEach((hours, key) => {
+        if (typeof key === 'string' && key.includes('-')) {
+          // Formato: priorityId-taskIndex para tareas no vinculadas
+          unlinkedTaskHours[key] = hours;
+        } else {
+          // taskId numérico para tareas ya vinculadas
+          taskHoursObj[key] = hours;
+        }
       });
 
       // Convertir selectedAreaPaths Map a objeto
@@ -317,7 +326,8 @@ export default function AzureDevOpsImportPage() {
           taskHours: taskHoursObj,
           exportUnlinked: unlinkedPriorities.length > 0, // Exportar prioridades no vinculadas si existen
           workItemType: 'User Story', // Por defecto
-          areaPaths: areaPathsObj // Áreas seleccionadas para cada prioridad
+          areaPaths: areaPathsObj, // Áreas seleccionadas para cada prioridad
+          unlinkedTaskHours: unlinkedTaskHours // Horas para tareas de prioridades no vinculadas
         })
       });
 
@@ -1220,22 +1230,44 @@ export default function AzureDevOpsImportPage() {
                               )}
                             </div>
 
-                            {/* Checklist Preview */}
+                            {/* Checklist Preview con input de horas */}
                             {priority.checklistItems.length > 0 && (
                               <div className="mb-3 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
                                 <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                   Tareas del checklist:
                                 </h5>
-                                <ul className="space-y-1">
+                                <div className="space-y-2">
                                   {priority.checklistItems.map((item: any, idx: number) => (
-                                    <li key={idx} className="text-xs flex items-center gap-2">
-                                      <span>{item.completed ? '☑' : '☐'}</span>
-                                      <span className={item.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}>
+                                    <div key={idx} className="flex items-center gap-3">
+                                      <span className={`text-xs ${item.completed ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                        {item.completed ? '☑' : '☐'}
+                                      </span>
+                                      <span className={`flex-1 text-xs ${item.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
                                         {item.text}
                                       </span>
-                                    </li>
+                                      {item.completed && (
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="0.5"
+                                          placeholder="Horas"
+                                          value={taskHours.get(`${priority.priorityId}-${idx}`) || ''}
+                                          onChange={(e) => {
+                                            const newHours = new Map(taskHours);
+                                            const value = parseFloat(e.target.value);
+                                            if (value > 0) {
+                                              newHours.set(`${priority.priorityId}-${idx}`, value);
+                                            } else {
+                                              newHours.delete(`${priority.priorityId}-${idx}`);
+                                            }
+                                            setTaskHours(newHours);
+                                          }}
+                                          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                        />
+                                      )}
+                                    </div>
                                   ))}
-                                </ul>
+                                </div>
                               </div>
                             )}
 

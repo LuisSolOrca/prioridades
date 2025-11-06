@@ -33,13 +33,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { direction = 'both', selectedItems = [], taskHours = {}, exportUnlinked = false, workItemType = 'User Story', areaPaths = {} } = body;
+    const { direction = 'both', selectedItems = [], taskHours = {}, exportUnlinked = false, workItemType = 'User Story', areaPaths = {}, unlinkedTaskHours = {} } = body;
     // direction: 'both', 'from-ado', 'to-ado'
     // selectedItems: array de workItemIds para sincronizar (vacío = todos)
-    // taskHours: { [taskId]: hours } - horas por tarea completada
+    // taskHours: { [taskId]: hours } - horas por tarea completada (tareas vinculadas)
     // exportUnlinked: si es true, exporta prioridades que no están vinculadas a Azure DevOps
     // workItemType: tipo de work item a crear ('User Story' o 'Bug')
     // areaPaths: { [priorityId]: areaPath } - área/team para cada prioridad
+    // unlinkedTaskHours: { "priorityId-taskIndex": hours } - horas para tareas de prioridades no vinculadas
 
     await connectDB();
 
@@ -256,7 +257,8 @@ export async function POST(request: NextRequest) {
 
             // Crear tareas del checklist si existen
             if (priority.checklist && priority.checklist.length > 0) {
-              for (const checklistItem of priority.checklist) {
+              for (let taskIndex = 0; taskIndex < priority.checklist.length; taskIndex++) {
+                const checklistItem = priority.checklist[taskIndex];
                 try {
                   const task = await client.createChildTask(
                     workItem.id,
@@ -265,9 +267,13 @@ export async function POST(request: NextRequest) {
 
                   exportedWorkItem.tasks.push((checklistItem as any).text);
 
-                  // Si la tarea ya estaba completada, cerrarla
+                  // Si la tarea ya estaba completada, cerrarla con las horas ingresadas
                   if ((checklistItem as any).completed) {
-                    await client.closeTaskWithHours(task.id, 0);
+                    // Obtener horas para esta tarea del objeto unlinkedTaskHours
+                    const hoursKey = `${priority._id.toString()}-${taskIndex}`;
+                    const hours = unlinkedTaskHours[hoursKey] || 0;
+
+                    await client.closeTaskWithHours(task.id, hours);
                   }
                 } catch (error) {
                   console.error('Error creando tarea del checklist:', error);
