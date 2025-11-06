@@ -792,8 +792,10 @@ export default function AzureDevOpsImportPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {workItems.map((item) => (
+            <div className="flex gap-6">
+              {/* Lista de work items - columna izquierda */}
+              <div className="flex-1 space-y-3">
+                {workItems.map((item) => (
                 <div
                   key={item.id}
                   className={`border rounded-lg p-4 transition cursor-pointer ${
@@ -861,6 +863,106 @@ export default function AzureDevOpsImportPage() {
                   </div>
                 </div>
               ))}
+              </div>
+
+              {/* Card informativa - columna derecha */}
+              <div className="w-80 flex-shrink-0">
+                <div className="sticky top-20 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-5 shadow-lg">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">💡</span>
+                    <h3 className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                      Guía de Uso
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4 text-sm">
+                    {/* Importación inicial */}
+                    <div>
+                      <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
+                        <span className="text-lg">📥</span>
+                        Importación Inicial
+                      </h4>
+                      <p className="text-blue-700 dark:text-blue-300 text-xs leading-relaxed">
+                        Selecciona work items y usa <strong>Vista Previa</strong> para importarlos como prioridades. Se importan automáticamente:
+                      </p>
+                      <ul className="mt-2 space-y-1 text-xs text-blue-600 dark:text-blue-300">
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
+                          <span>Título y descripción</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
+                          <span>Estado mapeado a tu sistema</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
+                          <span>Child Tasks como checklist</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
+                          <span>Story Points y metadata</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Desde Azure DevOps */}
+                    <div className="pt-3 border-t border-blue-200 dark:border-blue-700">
+                      <h4 className="font-semibold text-indigo-800 dark:text-indigo-200 mb-2 flex items-center gap-2">
+                        <span className="text-lg">⬇️</span>
+                        Desde Azure DevOps
+                      </h4>
+                      <p className="text-indigo-700 dark:text-indigo-300 text-xs leading-relaxed">
+                        Sincroniza <strong>cambios de Azure DevOps hacia Prioridades</strong>. Úsalo cuando:
+                      </p>
+                      <ul className="mt-2 space-y-1 text-xs text-indigo-600 dark:text-indigo-300">
+                        <li className="flex items-start gap-2">
+                          <span className="mr-1">•</span>
+                          <span>Cambien estados en Azure DevOps</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mr-1">•</span>
+                          <span>Se completen tareas en Azure DevOps</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Actualizar DevOps */}
+                    <div className="pt-3 border-t border-blue-200 dark:border-blue-700">
+                      <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2 flex items-center gap-2">
+                        <span className="text-lg">⬆️</span>
+                        Actualizar DevOps
+                      </h4>
+                      <p className="text-purple-700 dark:text-purple-300 text-xs leading-relaxed">
+                        Sincroniza <strong>cambios de Prioridades hacia Azure DevOps</strong>. Úsalo cuando:
+                      </p>
+                      <ul className="mt-2 space-y-1 text-xs text-purple-600 dark:text-purple-300">
+                        <li className="flex items-start gap-2">
+                          <span className="mr-1">•</span>
+                          <span>Cambies estados en Prioridades</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mr-1">•</span>
+                          <span>Completes tareas del checklist</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mr-1">•</span>
+                          <span>Exportes prioridades nuevas a Azure DevOps</span>
+                        </li>
+                      </ul>
+                      <div className="mt-2 p-2 bg-purple-100 dark:bg-purple-900/30 rounded text-xs text-purple-800 dark:text-purple-200">
+                        <strong>⚠️ Importante:</strong> Debes ingresar las horas trabajadas para cada tarea completada.
+                      </div>
+                    </div>
+
+                    {/* Nota final */}
+                    <div className="pt-3 border-t border-blue-200 dark:border-blue-700">
+                      <p className="text-xs text-blue-600 dark:text-blue-400 italic">
+                        💡 <strong>Tip:</strong> Usa los botones de sincronización regularmente para mantener ambos sistemas actualizados.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
