@@ -26,11 +26,36 @@ export async function GET(request: NextRequest) {
     }
 
     const comments = await Comment.find({ priorityId })
-      .populate('userId', 'name email')
       .sort({ createdAt: 1 }) // Ordenar del más antiguo al más reciente
       .lean();
 
-    return NextResponse.json(comments);
+    // Poblar manualmente los usuarios para manejar mejor los errores
+    const populatedComments = await Promise.all(comments.map(async (comment: any) => {
+      if (comment.userId) {
+        const user = await User.findById(comment.userId).select('name email').lean();
+        if (user) {
+          comment.userId = user;
+        } else {
+          // Usuario no encontrado, dejar el ObjectId pero agregar placeholder
+          console.warn(`User not found for comment ${comment._id}, userId: ${comment.userId}`);
+          comment.userId = {
+            _id: comment.userId,
+            name: 'Usuario desconocido',
+            email: 'unknown@system.local'
+          };
+        }
+      } else {
+        // userId es null
+        comment.userId = {
+          _id: null,
+          name: 'Usuario desconocido',
+          email: 'unknown@system.local'
+        };
+      }
+      return comment;
+    }));
+
+    return NextResponse.json(populatedComments);
   } catch (error: any) {
     console.error('Error fetching comments:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
