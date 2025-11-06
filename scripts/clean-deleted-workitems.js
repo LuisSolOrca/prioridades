@@ -33,7 +33,7 @@ async function cleanDeletedWorkItems() {
       mongoose.model('AzureDevOpsWorkItem', AzureDevOpsWorkItemSchema);
 
     // IDs de los work items que fueron eliminados en Azure DevOps
-    const deletedWorkItemIds = [11748, 11752, 11756];
+    const deletedWorkItemIds = [11784, 11788, 11792];
 
     console.log(`\nBuscando referencias a work items eliminados: ${deletedWorkItemIds.join(', ')}`);
 

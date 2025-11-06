@@ -208,8 +208,8 @@ export async function POST(request: NextRequest) {
                 if (!systemUser) {
                   console.log('⚙️ [Azure DevOps] Creando usuario del sistema para comentarios...');
                   try {
-                    const bcrypt = require('bcrypt');
-                    const hashedPassword = await bcrypt.hash('SYSTEM_USER_NO_LOGIN', 10);
+                    const bcryptjs = require('bcryptjs');
+                    const hashedPassword = await bcryptjs.hash('SYSTEM_USER_NO_LOGIN', 10);
 
                     systemUser = await User.create({
                       name: 'Azure DevOps',

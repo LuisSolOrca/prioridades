@@ -38,7 +38,7 @@ async function addDevAdmin() {
     const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
     // Verificar si el usuario ya existe
-    const existingUser = await User.findOne({ email: 'development@orcagrc.com' });
+    const existingUser = await User.findOne({ email: 'development2@orcagrc.com' });
 
     if (existingUser) {
       console.log('⚠️  El usuario development@orcagrc.com ya existe');
@@ -56,7 +56,7 @@ async function addDevAdmin() {
     // Crear nuevo usuario admin
     const newAdmin = await User.create({
       name: 'Development Admin',
-      email: 'development@orcagrc.com',
+      email: 'development2@orcagrc.com',
       password: hashedPassword,
       role: 'ADMIN',
       isActive: true,
