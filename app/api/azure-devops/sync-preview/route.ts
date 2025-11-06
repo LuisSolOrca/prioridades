@@ -614,7 +614,7 @@ export async function POST(request: NextRequest) {
         fromAzureDevOps,
         toAzureDevOps,
         conflicts,
-        hasChanges: fromAzureDevOps.willUpdate || toAzureDevOps.willUpdate,
+        hasChanges: fromAzureDevOps.willUpdate || toAzureDevOps.willUpdate || conflicts.length > 0,
         hasConflicts: conflicts.length > 0
       }
     });

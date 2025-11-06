@@ -449,7 +449,11 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
           </button>
           <button
             onClick={handleSync}
-            disabled={syncing || !preview?.hasChanges}
+            disabled={syncing || !preview?.hasChanges || (preview?.hasConflicts && preview.conflicts.some(c => {
+              if (c.type === 'state_conflict') return !conflictResolutions['state'];
+              if (c.type === 'task_missing_locally' && c.taskId) return !conflictResolutions[c.taskId];
+              return false;
+            }))}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             {syncing ? (
@@ -460,7 +464,12 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
             ) : (
               <>
                 <RefreshCw size={16} />
-                {preview?.hasChanges ? 'Sincronizar' : 'Sin cambios'}
+                {!preview?.hasChanges ? 'Sin cambios' :
+                 preview?.hasConflicts && preview.conflicts.some(c => {
+                   if (c.type === 'state_conflict') return !conflictResolutions['state'];
+                   if (c.type === 'task_missing_locally' && c.taskId) return !conflictResolutions[c.taskId];
+                   return false;
+                 }) ? 'Resolver conflictos' : 'Sincronizar'}
               </>
             )}
           </button>
