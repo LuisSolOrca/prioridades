@@ -515,7 +515,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Revisar tareas de Azure que no existen localmente
+    // Revisar tareas de Azure que no existen localmente (CONFLICTO)
+    const conflicts = [];
     for (const adoTask of childTasks) {
       const taskTitle = adoTask.fields['System.Title'];
       const existsLocally = localChecklist.some((item: any) => item.text === taskTitle);
@@ -524,7 +525,15 @@ export async function POST(request: NextRequest) {
         const azureCompleted = adoTask.fields['System.State'] === 'Done' ||
                               adoTask.fields['System.State'] === 'Closed';
 
-        // Tarea que se agregará desde Azure
+        // CONFLICTO: Tarea existe en Azure pero no localmente
+        // Usuario debe decidir: agregar desde Azure o eliminar de Azure
+        conflicts.push({
+          text: taskTitle,
+          taskId: adoTask.id.toString(),
+          azureCompleted,
+          type: 'missing_locally'
+        });
+
         taskComparisons.push({
           text: taskTitle,
           taskId: adoTask.id.toString(),
@@ -533,11 +542,9 @@ export async function POST(request: NextRequest) {
           willClose: false,
           willReopen: false,
           isNew: false,
-          direction: 'from-ado'
+          direction: 'conflict',
+          isConflict: true
         });
-
-        fromAzureDevOps.changes.push(`Tarea: "${taskTitle}" → Agregar${azureCompleted ? ' (completada)' : ''}`);
-        fromAzureDevOps.willUpdate = true;
       }
     }
 
@@ -584,7 +591,9 @@ export async function POST(request: NextRequest) {
         tasks: taskComparisons,
         fromAzureDevOps,
         toAzureDevOps,
-        hasChanges: fromAzureDevOps.willUpdate || toAzureDevOps.willUpdate
+        conflicts,
+        hasChanges: fromAzureDevOps.willUpdate || toAzureDevOps.willUpdate,
+        hasConflicts: conflicts.length > 0
       }
     });
 

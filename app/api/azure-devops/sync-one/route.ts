@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { priorityId, taskHours = {} } = body;
+    const { priorityId, taskHours = {}, conflictResolutions = {} } = body;
 
     if (!priorityId) {
       return NextResponse.json(
@@ -195,6 +195,23 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       console.error(`Error sincronizando desde Azure (WI ${link.workItemId}):`, error);
+    }
+
+    // ========================================
+    // PASO 1.5: Resolver conflictos
+    // ========================================
+    try {
+      for (const [taskId, resolution] of Object.entries(conflictResolutions)) {
+        if (resolution === 'delete') {
+          // Eliminar tarea de Azure DevOps
+          await client.deleteTask(Number(taskId));
+          syncResult.toAzureDevOps.updated = true;
+          syncResult.toAzureDevOps.changes.push(`Tarea eliminada de Azure (conflicto resuelto)`);
+        }
+        // Si resolution === 'add', ya fue agregada en el paso FROM Azure
+      }
+    } catch (error) {
+      console.error(`Error resolviendo conflictos:`, error);
     }
 
     // ========================================

@@ -15,7 +15,8 @@ interface SyncPreview {
     willClose: boolean;
     willReopen: boolean;
     isNew: boolean;
-    direction: 'from-ado' | 'to-ado' | 'none';
+    direction: 'from-ado' | 'to-ado' | 'none' | 'conflict';
+    isConflict?: boolean;
   }[];
   fromAzureDevOps: {
     changes: string[];
@@ -25,7 +26,14 @@ interface SyncPreview {
     changes: string[];
     willUpdate: boolean;
   };
+  conflicts: {
+    text: string;
+    taskId: string;
+    azureCompleted: boolean;
+    type: 'missing_locally';
+  }[];
   hasChanges: boolean;
+  hasConflicts: boolean;
 }
 
 interface IndividualSyncModalProps {
@@ -40,6 +48,8 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
   const [preview, setPreview] = useState<SyncPreview | null>(null);
   const [taskHours, setTaskHours] = useState<{ [key: string]: number }>({});
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  // Resoluciones de conflictos: taskId -> 'add' (agregar desde Azure) | 'delete' (eliminar de Azure)
+  const [conflictResolutions, setConflictResolutions] = useState<{ [taskId: string]: 'add' | 'delete' }>({});
 
   useEffect(() => {
     loadPreview();
@@ -89,6 +99,21 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
       return;
     }
 
+    // Validar que todos los conflictos estén resueltos
+    if (preview?.hasConflicts) {
+      const unresolvedConflicts = preview.conflicts.filter(
+        c => !conflictResolutions[c.taskId]
+      );
+
+      if (unresolvedConflicts.length > 0) {
+        setMessage({
+          type: 'error',
+          text: `Debes resolver ${unresolvedConflicts.length} conflicto(s) antes de sincronizar`
+        });
+        return;
+      }
+    }
+
     setSyncing(true);
     setMessage(null);
 
@@ -100,7 +125,8 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
         },
         body: JSON.stringify({
           priorityId: priority._id,
-          taskHours
+          taskHours,
+          conflictResolutions
         }),
       });
 
@@ -236,6 +262,64 @@ export default function IndividualSyncModal({ priority, onClose, onSyncComplete 
                     </div>
                   )}
                 </>
+              )}
+
+              {/* Conflictos - Usuario debe resolver */}
+              {preview.hasConflicts && preview.conflicts.length > 0 && (
+                <div className="mb-4 p-4 bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700 rounded-lg">
+                  <div className="flex items-start gap-2 mb-3">
+                    <AlertCircle className="text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" size={20} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-orange-900 dark:text-orange-200 mb-1">
+                        ⚠️ Conflictos detectados
+                      </p>
+                      <p className="text-xs text-orange-700 dark:text-orange-300">
+                        Las siguientes tareas existen en Azure DevOps pero no localmente. ¿Qué deseas hacer?
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {preview.conflicts.map((conflict) => (
+                      <div
+                        key={conflict.taskId}
+                        className="p-3 bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-800 rounded"
+                      >
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                          {conflict.text}
+                          {conflict.azureCompleted && (
+                            <span className="ml-2 text-xs text-green-600 dark:text-green-400">(completada en Azure)</span>
+                          )}
+                        </p>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setConflictResolutions(prev => ({ ...prev, [conflict.taskId]: 'add' }))}
+                            disabled={syncing}
+                            className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
+                              conflictResolutions[conflict.taskId] === 'add'
+                                ? 'bg-blue-600 text-white border-2 border-blue-700'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                            }`}
+                          >
+                            ← Agregar desde Azure
+                          </button>
+                          <button
+                            onClick={() => setConflictResolutions(prev => ({ ...prev, [conflict.taskId]: 'delete' }))}
+                            disabled={syncing}
+                            className={`flex-1 px-3 py-2 text-sm rounded transition-colors ${
+                              conflictResolutions[conflict.taskId] === 'delete'
+                                ? 'bg-red-600 text-white border-2 border-red-700'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+                            }`}
+                          >
+                            Eliminar de Azure →
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Detalle de tareas - Solo mostrar si hay cambios que requieren atención */}

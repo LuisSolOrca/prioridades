@@ -348,6 +348,33 @@ export class AzureDevOpsClient {
   }
 
   /**
+   * Elimina una tarea (work item)
+   */
+  async deleteTask(taskId: number): Promise<void> {
+    try {
+      const url = `https://dev.azure.com/${this.organization}/${this.project}/_apis/wit/workitems/${taskId}?api-version=7.1`;
+
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`:${this.personalAccessToken}`).toString('base64')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error deleting task ${taskId}: ${response.status} - ${errorText}`);
+      }
+
+      console.log(`Task ${taskId} deleted successfully`);
+    } catch (error) {
+      console.error(`Error deleting task ${taskId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Crea un nuevo work item (User Story o Bug)
    */
   async createWorkItem(
