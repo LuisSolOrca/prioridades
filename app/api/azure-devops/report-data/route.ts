@@ -19,46 +19,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar que el usuario sea del área Tecnología
-    if ((session.user as any).area !== 'Tecnología') {
-      return NextResponse.json(
-        { error: 'Solo usuarios del área Tecnología pueden acceder a Azure DevOps' },
-        { status: 403 }
-      );
-    }
-
     await connectDB();
 
     const { searchParams } = new URL(request.url);
     const priorityIds = searchParams.get('priorityIds')?.split(',') || [];
 
-    // Obtener configuración del usuario
-    const config = await AzureDevOpsConfig.findOne({
-      userId: (session.user as any).id,
-      isActive: true
-    });
-
-    if (!config) {
-      return NextResponse.json(
-        { error: 'No hay configuración de Azure DevOps' },
-        { status: 404 }
-      );
-    }
-
-    // Crear cliente de Azure DevOps
-    const client = new AzureDevOpsClient({
-      organization: config.organization,
-      project: config.project,
-      personalAccessToken: config.personalAccessToken
-    });
-
-    // Obtener vínculos de Azure DevOps para las prioridades solicitadas
-    const query: any = { userId: (session.user as any).id };
+    // Obtener vínculos de Azure DevOps para las prioridades solicitadas (de TODOS los usuarios)
+    const query: any = {};
     if (priorityIds.length > 0) {
       query.priorityId = { $in: priorityIds };
     }
 
     const workItemLinks = await AzureDevOpsWorkItem.find(query);
+
+    // Obtener todas las configuraciones de Azure DevOps activas
+    const allConfigs = await AzureDevOpsConfig.find({ isActive: true });
+
+    // Crear un mapa de configuraciones por userId para acceso rápido
+    const configsByUserId = new Map(
+      allConfigs.map(config => [config.userId.toString(), config])
+    );
 
     const enrichedData = [];
 
@@ -67,6 +47,21 @@ export async function GET(request: NextRequest) {
         // Obtener prioridad
         const priority = await Priority.findById(link.priorityId).lean();
         if (!priority) continue;
+
+        // Obtener la configuración del usuario dueño de esta prioridad
+        const userConfig = configsByUserId.get(link.userId.toString());
+
+        if (!userConfig) {
+          console.log(`No config found for user ${link.userId}, skipping work item ${link.workItemId}`);
+          continue;
+        }
+
+        // Crear cliente de Azure DevOps con la configuración del usuario
+        const client = new AzureDevOpsClient({
+          organization: userConfig.organization,
+          project: userConfig.project,
+          personalAccessToken: userConfig.personalAccessToken
+        });
 
         // Obtener child tasks desde Azure DevOps
         const childTasks = await client.getChildTasks(link.workItemId);
