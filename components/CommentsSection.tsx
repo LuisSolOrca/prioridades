@@ -425,11 +425,11 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                      {comment.userId.name.split(' ').map(n => n[0]).join('')}
+                      {comment.userId?.name ? comment.userId.name.split(' ').map(n => n[0]).join('') : '?'}
                     </div>
                     <div>
                       <div className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-                        {comment.userId.name}
+                        {comment.userId?.name || 'Usuario desconocido'}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         {formatDate(comment.createdAt)}
@@ -437,9 +437,9 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                       </div>
                     </div>
                   </div>
-                  {(comment.userId._id === currentUserId || isAdmin) && (
+                  {comment.userId && (comment.userId._id === currentUserId || isAdmin) && (
                     <div className="flex space-x-2">
-                      {comment.userId._id === currentUserId && editingId !== comment._id && (
+                      {comment.userId && comment.userId._id === currentUserId && editingId !== comment._id && (
                         <button
                           onClick={() => startEdit(comment)}
                           className="text-blue-600 hover:text-blue-800 text-sm"
