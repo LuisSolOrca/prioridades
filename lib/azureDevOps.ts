@@ -523,6 +523,54 @@ export class AzureDevOpsClient {
   }
 
   /**
+   * Obtiene el sprint/iteración actual del equipo
+   */
+  async getCurrentIteration(): Promise<string | null> {
+    try {
+      // Obtener el equipo predeterminado del proyecto
+      const teamsResponse = await fetch(
+        `https://dev.azure.com/${this.baseUrl.split('/')[3]}/_apis/projects/${this.baseUrl.split('/')[4]}/teams?api-version=7.0`,
+        {
+          headers: this.headers
+        }
+      );
+
+      if (!teamsResponse.ok) {
+        console.error('Error fetching teams');
+        return null;
+      }
+
+      const teamsData = await teamsResponse.json();
+      const defaultTeam = teamsData.value?.[0];
+
+      if (!defaultTeam) {
+        return null;
+      }
+
+      // Obtener la iteración actual del equipo
+      const iterationResponse = await fetch(
+        `https://dev.azure.com/${this.baseUrl.split('/')[3]}/${this.baseUrl.split('/')[4]}/${defaultTeam.name}/_apis/work/teamsettings/iterations?$timeframe=current&api-version=7.0`,
+        {
+          headers: this.headers
+        }
+      );
+
+      if (!iterationResponse.ok) {
+        console.error('Error fetching current iteration');
+        return null;
+      }
+
+      const iterationData = await iterationResponse.json();
+      const currentIteration = iterationData.value?.[0];
+
+      return currentIteration?.path || null;
+    } catch (error) {
+      console.error('Error getting current iteration:', error);
+      return null;
+    }
+  }
+
+  /**
    * Verifica la conexión y las credenciales
    */
   async testConnection(): Promise<boolean> {

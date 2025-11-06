@@ -221,14 +221,19 @@ export async function POST(request: NextRequest) {
           priority => !linkedPriorityIds.includes(priority._id.toString())
         );
 
+        // Obtener el sprint/iteración actual
+        const currentIteration = await client.getCurrentIteration();
+
         // Exportar cada prioridad no vinculada
         for (const priority of unlinkedPriorities) {
           try {
-            // Crear el work item principal
+            // Crear el work item principal con el sprint actual
             const workItem = await client.createWorkItem(
               workItemType,
               priority.title,
-              priority.description
+              priority.description,
+              undefined, // areaPath
+              currentIteration || undefined // iterationPath - sprint actual
             );
 
             const exportedWorkItem = {
