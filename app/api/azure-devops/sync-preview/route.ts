@@ -190,9 +190,14 @@ export async function GET(request: NextRequest) {
 
     const linkedPriorityIds = workItemLinks.map(link => link.priorityId.toString());
 
+    console.log('Total prioridades del usuario:', allPriorities.length);
+    console.log('Prioridades vinculadas:', linkedPriorityIds.length);
+
     const unlinkedPrioritiesList = allPriorities.filter(
       priority => !linkedPriorityIds.includes(priority._id.toString())
     );
+
+    console.log('Prioridades sin vincular:', unlinkedPrioritiesList.length);
 
     // Mapear prioridades no vinculadas para el preview
     for (const priority of unlinkedPrioritiesList) {

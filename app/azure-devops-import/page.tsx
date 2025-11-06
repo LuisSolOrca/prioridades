@@ -266,6 +266,9 @@ export default function AzureDevOpsImportPage() {
         throw new Error(data.error || 'Error al obtener preview de sincronización');
       }
 
+      console.log('Sync preview data:', data);
+      console.log('Unlinked priorities:', data.unlinkedPriorities);
+
       setSyncItems(data.items || []);
       setUnlinkedPriorities(data.unlinkedPriorities || []);
       setShowSyncModal(true);
