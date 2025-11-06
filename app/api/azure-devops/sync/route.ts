@@ -224,16 +224,20 @@ export async function POST(request: NextRequest) {
         // Obtener el sprint/iteración actual
         const currentIteration = await client.getCurrentIteration();
 
+        // Obtener email del usuario para asignación
+        const userEmail = session.user.email;
+
         // Exportar cada prioridad no vinculada
         for (const priority of unlinkedPriorities) {
           try {
-            // Crear el work item principal con el sprint actual
+            // Crear el work item principal con el sprint actual y asignado al usuario
             const workItem = await client.createWorkItem(
               workItemType,
               priority.title,
               priority.description,
               undefined, // areaPath
-              currentIteration || undefined // iterationPath - sprint actual
+              currentIteration || undefined, // iterationPath - sprint actual
+              userEmail || undefined // assignedTo - email del usuario
             );
 
             const exportedWorkItem = {

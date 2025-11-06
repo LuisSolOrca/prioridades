@@ -101,13 +101,17 @@ export async function POST(request: NextRequest) {
       // 1. Obtener el sprint/iteración actual
       const currentIteration = await client.getCurrentIteration();
 
-      // 2. Crear el work item principal en el sprint actual
+      // 2. Obtener email del usuario para asignación
+      const userEmail = session.user.email;
+
+      // 3. Crear el work item principal en el sprint actual y asignado al usuario
       const workItem = await client.createWorkItem(
         workItemType,
         priority.title,
         priority.description,
         undefined, // areaPath
-        currentIteration || undefined // iterationPath - sprint actual
+        currentIteration || undefined, // iterationPath - sprint actual
+        userEmail || undefined // assignedTo - email del usuario
       );
 
       exportResults.workItem = {
@@ -117,7 +121,7 @@ export async function POST(request: NextRequest) {
         url: workItem.url
       };
 
-      // 3. Crear tareas del checklist si existen
+      // 4. Crear tareas del checklist si existen
       if (priority.checklist && priority.checklist.length > 0) {
         for (const checklistItem of priority.checklist) {
           try {
@@ -147,7 +151,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 4. Agregar enlaces de evidencia como comentarios
+      // 5. Agregar enlaces de evidencia como comentarios
       if (priority.evidenceLinks && priority.evidenceLinks.length > 0) {
         const linksText = priority.evidenceLinks
           .map((link: any) => `${link.title}: ${link.url}`)
@@ -172,7 +176,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 5. Sincronizar estado inicial
+      // 6. Sincronizar estado inicial
       const azureState = mapAppStateToAzureDevOpsState(priority.status);
       if (azureState !== 'Active') {
         try {
@@ -186,7 +190,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 6. Crear vínculo en la base de datos
+      // 7. Crear vínculo en la base de datos
       await AzureDevOpsWorkItem.create({
         userId: (session.user as any).id,
         priorityId: priority._id,

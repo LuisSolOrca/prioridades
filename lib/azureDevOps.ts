@@ -355,7 +355,8 @@ export class AzureDevOpsClient {
     title: string,
     description?: string,
     areaPath?: string,
-    iterationPath?: string
+    iterationPath?: string,
+    assignedTo?: string
   ): Promise<WorkItem> {
     try {
       const patchDocument = [
@@ -387,6 +388,14 @@ export class AzureDevOpsClient {
           op: 'add',
           path: '/fields/System.IterationPath',
           value: iterationPath
+        });
+      }
+
+      if (assignedTo) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.AssignedTo',
+          value: assignedTo
         });
       }
 
