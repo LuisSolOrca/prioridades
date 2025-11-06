@@ -508,23 +508,34 @@ export class AzureDevOpsClient {
   }
 
   /**
-   * Agrega un comentario a un work item
+   * Agrega un comentario a un work item (aparece en Discussion)
    */
   async addComment(workItemId: number, text: string): Promise<void> {
     try {
+      // Usar el endpoint de discussions que aparece en la pestaña Discussion
       const response = await fetch(
-        `${this.baseUrl}/wit/workitems/${workItemId}/comments?api-version=7.0`,
+        `${this.baseUrl}/wit/workItems/${workItemId}/comments?api-version=7.1-preview.3`,
         {
           method: 'POST',
-          headers: this.headers,
-          body: JSON.stringify({ text })
+          headers: {
+            ...this.headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: text
+          })
         }
       );
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`Error adding comment to work item ${workItemId}: ${response.status} - ${errorText}`);
         throw new Error(`Error adding comment: ${response.status} - ${errorText}`);
       }
+
+      const result = await response.json();
+      console.log(`Comment added successfully to work item ${workItemId}`);
+      return result;
     } catch (error) {
       console.error('Error adding comment:', error);
       throw error;
