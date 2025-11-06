@@ -600,8 +600,11 @@ export default function AzureDevOpsImportPage() {
                 <p className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">
                   Work Items de Azure DevOps
                 </p>
-                <p className="text-xs text-amber-800 dark:text-amber-200">
+                <p className="text-xs text-amber-800 dark:text-amber-200 mb-2">
                   Los work items mostrados a continuación están asignados a ti en Azure DevOps pero <strong>aún NO están en el sistema de prioridades</strong>. Selecciona los que deseas importar como prioridades semanales.
+                </p>
+                <p className="text-xs text-amber-900 dark:text-amber-100 font-semibold">
+                  👉 Después de seleccionar, haz clic en el botón "Vista Previa" para continuar con la importación.
                 </p>
               </div>
             </div>
