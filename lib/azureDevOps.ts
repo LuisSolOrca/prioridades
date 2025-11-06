@@ -544,7 +544,7 @@ export class AzureDevOpsClient {
   /**
    * Agrega un comentario a un work item (aparece en Discussion)
    */
-  async addComment(workItemId: number, text: string): Promise<void> {
+  async addComment(workItemId: number, text: string): Promise<{ id: number; text: string; createdDate: string }> {
     try {
       // Usar el endpoint de discussions que aparece en la pestaña Discussion
       const response = await fetch(

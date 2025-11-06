@@ -376,8 +376,15 @@ export async function POST(request: NextRequest) {
                   : `💬 [${userName}] ${comment.text}`;
 
                 try {
-                  await client.addComment(link.workItemId, commentText);
+                  // Agregar comentario a Azure DevOps y obtener el ID asignado
+                  const azureCommentResult = await client.addComment(link.workItemId, commentText);
                   console.log(`💬 [Azure DevOps] Comentario sincronizado: ${commentText.substring(0, 50)}...`);
+
+                  // Actualizar el comentario local con el ID de Azure para evitar duplicados
+                  await Comment.findByIdAndUpdate(comment._id, {
+                    azureCommentId: azureCommentResult.id
+                  });
+                  console.log(`✅ [Azure DevOps] azureCommentId guardado: ${azureCommentResult.id} para comentario local ${comment._id}`);
                 } catch (commentError) {
                   console.error(`Error agregando comentario a WI ${link.workItemId}:`, commentError);
                 }
