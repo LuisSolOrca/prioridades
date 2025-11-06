@@ -1232,18 +1232,21 @@ export default function AzureDevOpsImportPage() {
 
                             {/* Checklist Preview con input de horas */}
                             {priority.checklistItems.length > 0 && (
-                              <div className="mb-3 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
-                                <h5 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                  Tareas del checklist:
+                              <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                                <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                  📋 Tareas ({priority.checklistItems.length})
                                 </h5>
                                 <div className="space-y-2">
                                   {priority.checklistItems.map((item: any, idx: number) => (
                                     <div key={idx} className="flex items-center gap-3">
-                                      <span className={`text-xs ${item.completed ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                                        {item.completed ? '☑' : '☐'}
+                                      <span className={`text-sm ${item.completed ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                        {item.completed ? '✓' : '○'}
                                       </span>
-                                      <span className={`flex-1 text-xs ${item.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                                      <span className={`flex-1 text-sm ${item.completed ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300'}`}>
                                         {item.text}
+                                      </span>
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        {item.completed ? 'Completada' : 'Pendiente'}
                                       </span>
                                       {item.completed && (
                                         <input
@@ -1262,7 +1265,7 @@ export default function AzureDevOpsImportPage() {
                                             }
                                             setTaskHours(newHours);
                                           }}
-                                          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                         />
                                       )}
                                     </div>
