@@ -296,6 +296,51 @@ export default function AzureDevOpsImportPage() {
     setMessage(null);
 
     try {
+      // Validar que todas las tareas completadas tengan horas ingresadas
+      const missingHours: string[] = [];
+
+      // Validar tareas de items vinculados
+      for (const item of syncItems) {
+        if (selectedSyncItems.has(item.workItemId)) {
+          const completedTasks = item.changes?.details?.filter(
+            (d: any) => d.direction === 'to-ado' && d.type === 'tarea_completada_local'
+          ) || [];
+
+          for (const task of completedTasks) {
+            if (!taskHours.has(task.taskId) || taskHours.get(task.taskId) === 0) {
+              missingHours.push(`${item.title} - ${task.taskTitle}`);
+            }
+          }
+        }
+      }
+
+      // Validar tareas de prioridades no vinculadas (nuevas)
+      for (const priority of unlinkedPriorities) {
+        if (selectedAreaPaths.has(priority.priorityId)) {
+          const completedTasks = priority.checklistItems?.filter((item: any) => item.completed) || [];
+
+          for (let idx = 0; idx < priority.checklistItems?.length || 0; idx++) {
+            const checklistItem = priority.checklistItems[idx];
+            if (checklistItem.completed) {
+              const hoursKey = `${priority.priorityId}-${idx}`;
+              if (!taskHours.has(hoursKey) || taskHours.get(hoursKey) === 0) {
+                missingHours.push(`${priority.title} - ${checklistItem.text}`);
+              }
+            }
+          }
+        }
+      }
+
+      // Si hay tareas sin horas, mostrar error y no continuar
+      if (missingHours.length > 0) {
+        setImporting(false);
+        setMessage({
+          type: 'error',
+          text: `⚠️ Debes ingresar las horas para todas las tareas completadas. Faltan horas en: ${missingHours.slice(0, 3).join(', ')}${missingHours.length > 3 ? ` y ${missingHours.length - 3} más` : ''}`
+        });
+        return;
+      }
+
       // Convertir taskHours Map a objeto
       // Separar horas para tareas vinculadas (taskId numérico) y no vinculadas (priorityId-idx)
       const taskHoursObj: any = {};
