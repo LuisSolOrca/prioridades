@@ -200,6 +200,8 @@ export async function POST(request: NextRequest) {
     // ========================================
     // PASO 1.5: Resolver conflictos
     // ========================================
+    const deletedTaskIds = new Set<number>(); // Rastrear tareas eliminadas
+
     try {
       for (const [key, resolution] of Object.entries(conflictResolutions)) {
         if (key === 'state') {
@@ -227,7 +229,9 @@ export async function POST(request: NextRequest) {
           // Conflicto de tarea
           if (resolution === 'delete') {
             // Eliminar tarea de Azure DevOps
-            await client.deleteTask(Number(key));
+            const taskIdNum = Number(key);
+            await client.deleteTask(taskIdNum);
+            deletedTaskIds.add(taskIdNum); // Marcar como eliminada
             syncResult.toAzureDevOps.updated = true;
             syncResult.toAzureDevOps.changes.push(`Tarea eliminada de Azure (conflicto resuelto)`);
           }
@@ -248,10 +252,13 @@ export async function POST(request: NextRequest) {
 
       const childTasks = await client.getChildTasks(link.workItemId);
 
+      // Filtrar tareas que fueron eliminadas en la resolución de conflictos
+      const activeChildTasks = childTasks.filter(task => !deletedTaskIds.has(task.id));
+
       // Sincronizar checklist a Azure DevOps
       if (refreshedPriority.checklist && refreshedPriority.checklist.length > 0) {
         for (const checklistItem of refreshedPriority.checklist) {
-          const adoTask = childTasks.find(task => task.fields['System.Title'] === (checklistItem as any).text);
+          const adoTask = activeChildTasks.find(task => task.fields['System.Title'] === (checklistItem as any).text);
           const taskId = (checklistItem as any)._id || (checklistItem as any).text;
           const hours = taskHours[taskId] || 0;
 
