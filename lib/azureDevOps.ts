@@ -543,6 +543,52 @@ export class AzureDevOpsClient {
   }
 
   /**
+   * Obtiene la lista de areas/teams del proyecto
+   */
+  async getAreaPaths(): Promise<{ name: string; path: string }[]> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/wit/classificationnodes/areas?$depth=10&api-version=7.0`,
+        {
+          headers: this.headers
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Error fetching area paths');
+        return [];
+      }
+
+      const data = await response.json();
+      const areas: { name: string; path: string }[] = [];
+
+      // Función recursiva para extraer todas las áreas
+      const extractAreas = (node: any, parentPath: string = '') => {
+        const currentPath = parentPath ? `${parentPath}\\${node.name}` : node.name;
+        areas.push({
+          name: node.name,
+          path: currentPath
+        });
+
+        if (node.children && node.children.length > 0) {
+          node.children.forEach((child: any) => {
+            extractAreas(child, currentPath);
+          });
+        }
+      };
+
+      if (data) {
+        extractAreas(data);
+      }
+
+      return areas;
+    } catch (error) {
+      console.error('Error getting area paths:', error);
+      return [];
+    }
+  }
+
+  /**
    * Obtiene el sprint/iteración actual del equipo
    */
   async getCurrentIteration(): Promise<string | null> {

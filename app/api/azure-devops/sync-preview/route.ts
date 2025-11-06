@@ -48,6 +48,9 @@ export async function GET(request: NextRequest) {
       personalAccessToken: config.personalAccessToken
     });
 
+    // Obtener areas/teams disponibles
+    const areaPaths = await client.getAreaPaths();
+
     // Obtener todos los vínculos del usuario
     const workItemLinks = await AzureDevOpsWorkItem.find({
       userId: (session.user as any).id
@@ -227,7 +230,8 @@ export async function GET(request: NextRequest) {
       itemsWithChanges: syncItems.filter(item => item.changes?.hasChanges).length,
       unlinkedCount: unlinkedPriorities.length,
       items: syncItems,
-      unlinkedPriorities: unlinkedPriorities
+      unlinkedPriorities: unlinkedPriorities,
+      areaPaths: areaPaths // Lista de areas/teams disponibles
     });
 
   } catch (error) {

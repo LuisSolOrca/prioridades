@@ -33,12 +33,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { direction = 'both', selectedItems = [], taskHours = {}, exportUnlinked = false, workItemType = 'User Story' } = body;
+    const { direction = 'both', selectedItems = [], taskHours = {}, exportUnlinked = false, workItemType = 'User Story', areaPaths = {} } = body;
     // direction: 'both', 'from-ado', 'to-ado'
     // selectedItems: array de workItemIds para sincronizar (vacío = todos)
     // taskHours: { [taskId]: hours } - horas por tarea completada
     // exportUnlinked: si es true, exporta prioridades que no están vinculadas a Azure DevOps
     // workItemType: tipo de work item a crear ('User Story' o 'Bug')
+    // areaPaths: { [priorityId]: areaPath } - área/team para cada prioridad
 
     await connectDB();
 
@@ -232,12 +233,15 @@ export async function POST(request: NextRequest) {
         // Exportar cada prioridad no vinculada
         for (const priority of unlinkedPriorities) {
           try {
-            // Crear el work item principal con el sprint actual y asignado al usuario
+            // Obtener el areaPath seleccionado para esta prioridad
+            const selectedAreaPath = areaPaths[priority._id.toString()];
+
+            // Crear el work item principal con el sprint actual, área y asignado al usuario
             const workItem = await client.createWorkItem(
               workItemType,
               priority.title,
               priority.description,
-              undefined, // areaPath
+              selectedAreaPath || undefined, // areaPath - área/team seleccionado
               currentIteration || undefined, // iterationPath - sprint actual
               userEmail || undefined // assignedTo - email del usuario
             );

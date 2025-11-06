@@ -58,6 +58,8 @@ export default function AzureDevOpsImportPage() {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncItems, setSyncItems] = useState<any[]>([]);
   const [unlinkedPriorities, setUnlinkedPriorities] = useState<any[]>([]);
+  const [areaPaths, setAreaPaths] = useState<any[]>([]);
+  const [selectedAreaPaths, setSelectedAreaPaths] = useState<Map<string, string>>(new Map());
   const [loadingSync, setLoadingSync] = useState(false);
   const [selectedSyncItems, setSelectedSyncItems] = useState<Set<number>>(new Set());
   const [taskHours, setTaskHours] = useState<Map<number, number>>(new Map());
@@ -268,9 +270,11 @@ export default function AzureDevOpsImportPage() {
 
       console.log('Sync preview data:', data);
       console.log('Unlinked priorities:', data.unlinkedPriorities);
+      console.log('Area paths:', data.areaPaths);
 
       setSyncItems(data.items || []);
       setUnlinkedPriorities(data.unlinkedPriorities || []);
+      setAreaPaths(data.areaPaths || []);
       setShowSyncModal(true);
 
       // Pre-seleccionar items con cambios
@@ -298,6 +302,12 @@ export default function AzureDevOpsImportPage() {
         taskHoursObj[taskId] = hours;
       });
 
+      // Convertir selectedAreaPaths Map a objeto
+      const areaPathsObj: any = {};
+      selectedAreaPaths.forEach((areaPath, priorityId) => {
+        areaPathsObj[priorityId] = areaPath;
+      });
+
       const res = await fetch('/api/azure-devops/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -306,7 +316,8 @@ export default function AzureDevOpsImportPage() {
           selectedItems: Array.from(selectedSyncItems),
           taskHours: taskHoursObj,
           exportUnlinked: unlinkedPriorities.length > 0, // Exportar prioridades no vinculadas si existen
-          workItemType: 'User Story' // Por defecto
+          workItemType: 'User Story', // Por defecto
+          areaPaths: areaPathsObj // Áreas seleccionadas para cada prioridad
         })
       });
 
@@ -339,6 +350,8 @@ export default function AzureDevOpsImportPage() {
       setSelectedSyncItems(new Set());
       setTaskHours(new Map());
       setUnlinkedPriorities([]);
+      setSelectedAreaPaths(new Map());
+      setAreaPaths([]);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -1175,6 +1188,38 @@ export default function AzureDevOpsImportPage() {
                               )}
                             </div>
 
+                            {/* Selector de Área/Team */}
+                            <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-300 dark:border-yellow-700">
+                              <h5 className="text-xs font-semibold text-yellow-900 dark:text-yellow-200 mb-2">
+                                🎯 Área/Team (Requerido)
+                              </h5>
+                              <select
+                                value={selectedAreaPaths.get(priority.priorityId) || ''}
+                                onChange={(e) => {
+                                  const newMap = new Map(selectedAreaPaths);
+                                  if (e.target.value) {
+                                    newMap.set(priority.priorityId, e.target.value);
+                                  } else {
+                                    newMap.delete(priority.priorityId);
+                                  }
+                                  setSelectedAreaPaths(newMap);
+                                }}
+                                className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-700 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                              >
+                                <option value="">Seleccionar área/team...</option>
+                                {areaPaths.map((area) => (
+                                  <option key={area.path} value={area.path}>
+                                    {area.path}
+                                  </option>
+                                ))}
+                              </select>
+                              {!selectedAreaPaths.has(priority.priorityId) && (
+                                <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-semibold">
+                                  ⚠️ Debes seleccionar un área/team
+                                </p>
+                              )}
+                            </div>
+
                             {/* Checklist Preview */}
                             {priority.checklistItems.length > 0 && (
                               <div className="mb-3 p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
@@ -1234,7 +1279,11 @@ export default function AzureDevOpsImportPage() {
                 </button>
                 <button
                   onClick={handleConfirmSync}
-                  disabled={importing || (selectedSyncItems.size === 0 && unlinkedPriorities.length === 0)}
+                  disabled={
+                    importing ||
+                    (selectedSyncItems.size === 0 && unlinkedPriorities.length === 0) ||
+                    (unlinkedPriorities.length > 0 && unlinkedPriorities.some(p => !selectedAreaPaths.has(p.priorityId)))
+                  }
                   className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {importing ? 'Sincronizando...' : unlinkedPriorities.length > 0 ? `✓ Sincronizar y Exportar (${selectedSyncItems.size + unlinkedPriorities.length})` : `✓ Sincronizar (${selectedSyncItems.size})`}
