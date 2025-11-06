@@ -62,7 +62,7 @@ export default function AzureDevOpsImportPage() {
   const [selectedAreaPaths, setSelectedAreaPaths] = useState<Map<string, string>>(new Map());
   const [loadingSync, setLoadingSync] = useState(false);
   const [selectedSyncItems, setSelectedSyncItems] = useState<Set<number>>(new Set());
-  const [taskHours, setTaskHours] = useState<Map<number, number>>(new Map());
+  const [taskHours, setTaskHours] = useState<Map<number | string, number>>(new Map());
   const [loadingAutoSync, setLoadingAutoSync] = useState(false);
   const [lastSyncDate, setLastSyncDate] = useState<Date | null>(null);
   const [showFromAdoModal, setShowFromAdoModal] = useState(false);
