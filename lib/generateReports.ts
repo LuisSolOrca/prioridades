@@ -521,3 +521,83 @@ export const generateChecklistReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+export const generateAzureDevOpsReport = async (
+  priorities: any[],
+  users: any[],
+  initiatives: any[],
+  format: 'pdf' | 'doc',
+  filters?: string
+) => {
+  // Filtrar solo prioridades sincronizadas con Azure DevOps
+  const prioritiesWithAzureDevOps = priorities.filter(p => p.azureDevOps);
+
+  const rows: (string | number)[][] = [];
+
+  prioritiesWithAzureDevOps.forEach(priority => {
+    const user = users.find(u => u._id === priority.userId);
+    const initiative = initiatives.find(i => i._id === priority.initiativeId);
+    const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
+
+    const workItemId = priority.azureDevOps.workItemId;
+    const workItemType = priority.azureDevOps.workItemType;
+
+    // Fila principal de la prioridad
+    rows.push([
+      `📋 ${priority.title}`,
+      user?.name || 'Desconocido',
+      initiative?.name || 'Sin iniciativa',
+      weekStart,
+      priority.status,
+      `WI #${workItemId} (${workItemType})`
+    ]);
+
+    // Agregar tareas del checklist si existen
+    if (priority.checklist && priority.checklist.length > 0) {
+      priority.checklist.forEach((item: any) => {
+        const status = item.completed ? '✓ Completada' : '○ Pendiente';
+        // Nota: Las horas reales están en Azure DevOps, aquí solo mostramos el estado
+        rows.push([
+          `  └─ ${item.text}`,
+          '',
+          '',
+          '',
+          status,
+          'Ver en Azure DevOps'
+        ]);
+      });
+    }
+  });
+
+  const totalPriorities = prioritiesWithAzureDevOps.length;
+  const totalTasks = prioritiesWithAzureDevOps.reduce(
+    (sum, p) => sum + (p.checklist?.length || 0),
+    0
+  );
+  const completedTasks = prioritiesWithAzureDevOps.reduce(
+    (sum, p) => sum + (p.checklist?.filter((item: any) => item.completed).length || 0),
+    0
+  );
+
+  const data: ReportData = {
+    title: 'Reporte de Prioridades Sincronizadas con Azure DevOps',
+    subtitle: filters || 'Prioridades exportadas a Azure DevOps con sus tareas',
+    headers: ['Prioridad / Tarea', 'Usuario', 'Iniciativa', 'Semana', 'Estado', 'Work Item'],
+    rows: rows,
+    summary: [
+      { label: 'Prioridades Sincronizadas', value: totalPriorities },
+      { label: 'Total de Tareas', value: totalTasks },
+      { label: 'Tareas Completadas', value: completedTasks },
+      { label: 'Tareas Pendientes', value: totalTasks - completedTasks },
+      { label: 'Nota', value: 'Las horas trabajadas están registradas en Azure DevOps' }
+    ]
+  };
+
+  const fileName = `Reporte_AzureDevOps_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};

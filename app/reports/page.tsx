@@ -10,7 +10,8 @@ import {
   generatePrioritiesReport,
   generateUserPerformanceReport,
   generateInitiativesReport,
-  generateChecklistReport
+  generateChecklistReport,
+  generateAzureDevOpsReport
 } from '@/lib/generateReports';
 
 interface User {
@@ -49,7 +50,7 @@ interface Priority {
   checklist?: ChecklistItem[];
 }
 
-type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist';
+type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -241,6 +242,15 @@ export default function ReportsPage() {
           filterDescription
         );
         break;
+      case 'azuredevops':
+        generateAzureDevOpsReport(
+          filteredPriorities,
+          users,
+          initiatives,
+          format,
+          filterDescription
+        );
+        break;
     }
   };
 
@@ -353,6 +363,25 @@ export default function ReportsPage() {
                 <div className="font-semibold text-gray-800 dark:text-gray-100">Tareas de Checklist</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Avance detallado de tareas en checklists de prioridades
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType('azuredevops')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'azuredevops'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                }`}
+              >
+                <div className="text-3xl mb-2">
+                  <svg className="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M0 4.5v15l6.5 3.5v-3.5l-3-1.5v-13l3-1.5v-3.5l-6.5 3.5zm10.5-4.5v4.5l3 1.5v13l-3 1.5v4.5l6.5-3.5v-19l-6.5 3.5zm7 0v4.5l6.5 3.5v-8l-6.5 0z"/>
+                  </svg>
+                </div>
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Azure DevOps</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Prioridades sincronizadas con Azure DevOps y sus tareas
                 </div>
               </button>
             </div>
@@ -500,6 +529,11 @@ export default function ReportsPage() {
                 {reportType === 'initiatives' && (
                   <>
                     <span className="font-semibold text-gray-800 dark:text-gray-100">{initiatives.length}</span> iniciativas serán incluidas en el reporte
+                  </>
+                )}
+                {reportType === 'azuredevops' && (
+                  <>
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.filter((p: any) => p.azureDevOps).length}</span> prioridades sincronizadas con Azure DevOps serán incluidas en el reporte
                   </>
                 )}
               </div>
