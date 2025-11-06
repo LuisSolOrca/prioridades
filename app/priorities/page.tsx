@@ -534,6 +534,19 @@ export default function PrioritiesPage() {
                                     ✏️ Editado
                                   </span>
                                 )}
+                                {(priority as any).azureDevOps && (
+                                  <a
+                                    href={`https://dev.azure.com/${(priority as any).azureDevOps.organization}/${(priority as any).azureDevOps.project}/_workitems/edit/${(priority as any).azureDevOps.workItemId}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition"
+                                    title={`Sincronizado con Azure DevOps (WI #${(priority as any).azureDevOps.workItemId})`}
+                                  >
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M0 4.5v15l6.5 3.5v-3.5l-3-1.5v-13l3-1.5v-3.5l-6.5 3.5zm10.5-4.5v4.5l3 1.5v13l-3 1.5v4.5l6.5-3.5v-19l-6.5 3.5zm7 0v4.5l6.5 3.5v-8l-6.5 0z"/>
+                                    </svg>
+                                  </a>
+                                )}
                               </div>
                               {priority.description && (
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{priority.description}</p>
@@ -692,6 +705,19 @@ export default function PrioritiesPage() {
                                   <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 text-xs px-2 py-1 rounded">
                                     ✏️ Editado
                                   </span>
+                                )}
+                                {(priority as any).azureDevOps && (
+                                  <a
+                                    href={`https://dev.azure.com/${(priority as any).azureDevOps.organization}/${(priority as any).azureDevOps.project}/_workitems/edit/${(priority as any).azureDevOps.workItemId}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition"
+                                    title={`Sincronizado con Azure DevOps (WI #${(priority as any).azureDevOps.workItemId})`}
+                                  >
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M0 4.5v15l6.5 3.5v-3.5l-3-1.5v-13l3-1.5v-3.5l-6.5 3.5zm10.5-4.5v4.5l3 1.5v13l-3 1.5v4.5l6.5-3.5v-19l-6.5 3.5zm7 0v4.5l6.5 3.5v-8l-6.5 0z"/>
+                                    </svg>
+                                  </a>
                                 )}
                               </div>
                               {priority.description && (

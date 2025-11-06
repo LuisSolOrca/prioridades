@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
+import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import { awardBadge } from '@/lib/gamification';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
 
@@ -56,7 +57,30 @@ export async function GET(request: NextRequest) {
       .sort({ weekStart: -1, createdAt: -1 })
       .lean();
 
-    return NextResponse.json(priorities);
+    // Obtener información de Azure DevOps para las prioridades
+    const priorityIds = priorities.map(p => p._id);
+    const azureDevOpsLinks = await AzureDevOpsWorkItem.find({
+      priorityId: { $in: priorityIds }
+    }).lean();
+
+    // Crear un mapa para acceso rápido
+    const azureDevOpsMap = new Map(
+      azureDevOpsLinks.map(link => [link.priorityId.toString(), link])
+    );
+
+    // Agregar información de Azure DevOps a cada prioridad
+    const prioritiesWithAzureDevOps = priorities.map(priority => ({
+      ...priority,
+      azureDevOps: azureDevOpsMap.get(priority._id.toString()) ? {
+        workItemId: azureDevOpsMap.get(priority._id.toString())!.workItemId,
+        workItemType: azureDevOpsMap.get(priority._id.toString())!.workItemType,
+        organization: azureDevOpsMap.get(priority._id.toString())!.organization,
+        project: azureDevOpsMap.get(priority._id.toString())!.project,
+        lastSyncDate: azureDevOpsMap.get(priority._id.toString())!.lastSyncDate
+      } : null
+    }));
+
+    return NextResponse.json(prioritiesWithAzureDevOps);
   } catch (error: any) {
     console.error('Error fetching priorities:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

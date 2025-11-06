@@ -206,6 +206,20 @@ function AreaPriorityCard({
                               🔄
                             </span>
                           )}
+                          {(priority as any).azureDevOps && (
+                            <a
+                              href={`https://dev.azure.com/${(priority as any).azureDevOps.organization}/${(priority as any).azureDevOps.project}/_workitems/edit/${(priority as any).azureDevOps.workItemId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition"
+                              title={`Sincronizado con Azure DevOps (WI #${(priority as any).azureDevOps.workItemId})`}
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M0 4.5v15l6.5 3.5v-3.5l-3-1.5v-13l3-1.5v-3.5l-6.5 3.5zm10.5-4.5v4.5l3 1.5v13l-3 1.5v4.5l6.5-3.5v-19l-6.5 3.5zm7 0v4.5l6.5 3.5v-8l-6.5 0z"/>
+                              </svg>
+                            </a>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
