@@ -5,6 +5,8 @@ import connectDB from '@/lib/mongodb';
 import AzureDevOpsConfig from '@/models/AzureDevOpsConfig';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import Priority from '@/models/Priority';
+import Comment from '@/models/Comment';
+import User from '@/models/User';
 import { AzureDevOpsClient, mapAppStateToAzureDevOpsState } from '@/lib/azureDevOps';
 
 /**
@@ -160,7 +162,7 @@ export async function POST(request: NextRequest) {
         try {
           await client.addComment(
             workItem.id,
-            `Enlaces de evidencia:\n${linksText}`
+            `📎 Enlaces de evidencia:\n${linksText}`
           );
 
           exportResults.links = priority.evidenceLinks.map((link: any) => ({
@@ -174,6 +176,39 @@ export async function POST(request: NextRequest) {
             error: error instanceof Error ? error.message : 'Error desconocido'
           });
         }
+      }
+
+      // 5.5. Agregar comentarios de la prioridad
+      try {
+        const comments = await Comment.find({ priorityId: priority._id })
+          .populate('userId', 'name')
+          .sort({ createdAt: 1 })
+          .lean();
+
+        if (comments.length > 0) {
+          for (const comment of comments) {
+            const userName = (comment.userId as any)?.name || 'Usuario';
+            const commentText = comment.isSystemComment
+              ? `🤖 [Sistema] ${comment.text}`
+              : `💬 [${userName}] ${comment.text}`;
+
+            try {
+              await client.addComment(workItem.id, commentText);
+            } catch (error) {
+              console.error('Error agregando comentario:', error);
+              exportResults.errors.push({
+                type: 'comment',
+                error: error instanceof Error ? error.message : 'Error desconocido'
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error obteniendo comentarios de la prioridad:', error);
+        exportResults.errors.push({
+          type: 'comments_fetch',
+          error: error instanceof Error ? error.message : 'Error desconocido'
+        });
       }
 
       // 6. Sincronizar estado inicial

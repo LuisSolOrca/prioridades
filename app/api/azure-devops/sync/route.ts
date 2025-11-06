@@ -5,6 +5,8 @@ import connectDB from '@/lib/mongodb';
 import AzureDevOpsConfig from '@/models/AzureDevOpsConfig';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import Priority from '@/models/Priority';
+import Comment from '@/models/Comment';
+import User from '@/models/User';
 import {
   AzureDevOpsClient,
   mapAzureDevOpsStateToAppState,
@@ -278,12 +280,37 @@ export async function POST(request: NextRequest) {
               try {
                 await client.addComment(
                   workItem.id,
-                  `Enlaces de evidencia:\n${linksText}`
+                  `📎 Enlaces de evidencia:\n${linksText}`
                 );
                 exportedWorkItem.hasLinks = true;
               } catch (error) {
                 console.error('Error agregando enlaces de evidencia:', error);
               }
+            }
+
+            // Agregar comentarios de la prioridad
+            try {
+              const comments = await Comment.find({ priorityId: priority._id })
+                .populate('userId', 'name')
+                .sort({ createdAt: 1 })
+                .lean();
+
+              if (comments.length > 0) {
+                for (const comment of comments) {
+                  const userName = (comment.userId as any)?.name || 'Usuario';
+                  const commentText = comment.isSystemComment
+                    ? `🤖 [Sistema] ${comment.text}`
+                    : `💬 [${userName}] ${comment.text}`;
+
+                  try {
+                    await client.addComment(workItem.id, commentText);
+                  } catch (error) {
+                    console.error('Error agregando comentario:', error);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error obteniendo comentarios de la prioridad:', error);
             }
 
             // Sincronizar estado inicial
