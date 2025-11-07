@@ -123,8 +123,8 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
               >
                 {item.text}
               </span>
-              {/* Campo de horas - solo si está vinculado a Azure DevOps y la tarea está completada */}
-              {hasAzureDevOpsLink && item.completed && (
+              {/* Campo de horas - solo si la tarea está completada */}
+              {item.completed && (
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     type="number"
