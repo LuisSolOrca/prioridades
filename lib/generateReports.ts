@@ -682,8 +682,13 @@ export const generateInitiativesReport = async (
     });
 
     const completed = initiativePriorities.filter(p => p.status === 'COMPLETADO').length;
-    const percentage = priorities.length > 0
-      ? (initiativePriorities.length / priorities.length * 100).toFixed(1)
+    const inProgress = initiativePriorities.filter(p => p.status === 'EN_TIEMPO').length;
+    const atRisk = initiativePriorities.filter(p => p.status === 'EN_RIESGO').length;
+    const blocked = initiativePriorities.filter(p => p.status === 'BLOQUEADO').length;
+
+    // Porcentaje de completado dentro de esta iniciativa
+    const completionRate = initiativePriorities.length > 0
+      ? (completed / initiativePriorities.length * 100).toFixed(1)
       : '0';
 
     return {
@@ -691,7 +696,10 @@ export const generateInitiativesReport = async (
       description: initiative.description || 'Sin descripción',
       total: initiativePriorities.length,
       completed,
-      percentage: `${percentage}%`,
+      inProgress,
+      atRisk,
+      blocked,
+      completionRate: `${completionRate}%`,
       active: initiative.isActive ? 'Activa' : 'Inactiva'
     };
   }).sort((a, b) => b.total - a.total);
@@ -699,13 +707,16 @@ export const generateInitiativesReport = async (
   const data: ReportData = {
     title: 'Reporte de Iniciativas Estratégicas',
     subtitle: filters || 'Distribución de prioridades por iniciativa',
-    headers: ['Iniciativa', 'Descripción', 'Total', 'Completadas', 'Porcentaje', 'Estado'],
+    headers: ['Iniciativa', 'Descripción', 'Total', 'Completadas', 'En Tiempo', 'En Riesgo', 'Bloqueadas', '% Completado', 'Estado'],
     rows: initiativeStats.map(stat => [
       stat.name,
       stat.description,
       stat.total,
       stat.completed,
-      stat.percentage,
+      stat.inProgress,
+      stat.atRisk,
+      stat.blocked,
+      stat.completionRate,
       stat.active
     ]),
     summary: [
