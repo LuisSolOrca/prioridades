@@ -6,13 +6,13 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import LocalHoursReport from '@/components/LocalHoursReport';
 import {
   generatePrioritiesReport,
   generateUserPerformanceReport,
   generateInitiativesReport,
   generateChecklistReport,
-  generateAzureDevOpsReport
+  generateAzureDevOpsReport,
+  generateLocalHoursReport
 } from '@/lib/generateReports';
 
 interface User {
@@ -252,6 +252,16 @@ export default function ReportsPage() {
           filterDescription
         );
         break;
+      case 'localhours':
+        generateLocalHoursReport(
+          selectedUser,
+          selectedArea,
+          dateFrom,
+          dateTo,
+          format,
+          filterDescription
+        );
+        break;
     }
   };
 
@@ -403,21 +413,7 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* Local Hours Report */}
-          {reportType === 'localhours' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <LocalHoursReport
-                selectedUser={selectedUser}
-                selectedArea={selectedArea}
-                includeAdmins={includeAdmins}
-                dateFrom={dateFrom}
-                dateTo={dateTo}
-              />
-            </div>
-          )}
-
           {/* Filtros */}
-          {reportType !== 'localhours' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Filtros del Reporte</h2>
 
@@ -566,6 +562,11 @@ export default function ReportsPage() {
                     <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.filter((p: any) => p.azureDevOps).length}</span> prioridades sincronizadas con Azure DevOps serán incluidas en el reporte
                   </>
                 )}
+                {reportType === 'localhours' && (
+                  <>
+                    Los filtros seleccionados se aplicarán al reporte de horas locales
+                  </>
+                )}
               </div>
               <button
                 onClick={clearFilters}
@@ -575,10 +576,9 @@ export default function ReportsPage() {
               </button>
             </div>
           </div>
-          )}
 
           {/* Vista Previa */}
-          {reportType !== 'localhours' && getFilterDescription() && (
+          {getFilterDescription() && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">Filtros Aplicados</h3>
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -588,7 +588,6 @@ export default function ReportsPage() {
           )}
 
           {/* Botones de Generación */}
-          {reportType !== 'localhours' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Generar Reporte</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -621,7 +620,6 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
-          )}
         </div>
       </div>
     </div>

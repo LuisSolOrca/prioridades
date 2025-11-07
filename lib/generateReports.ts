@@ -809,3 +809,90 @@ export const generateAzureDevOpsReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+export const generateLocalHoursReport = async (
+  selectedUser: string,
+  selectedArea: string,
+  dateFrom: string,
+  dateTo: string,
+  format: 'pdf' | 'doc',
+  filters?: string
+) => {
+  // Construir los parámetros de la consulta
+  const params = new URLSearchParams({
+    startDate: dateFrom,
+    endDate: dateTo
+  });
+
+  if (selectedUser !== 'all') {
+    params.append('userId', selectedUser);
+  }
+
+  if (selectedArea !== 'all') {
+    params.append('area', selectedArea);
+  }
+
+  // Obtener datos del API
+  const response = await fetch(`/api/reports/local-hours?${params}`);
+  if (!response.ok) {
+    throw new Error('Error al obtener datos del reporte de horas locales');
+  }
+
+  const reportData = await response.json();
+
+  if (!reportData.priorities || reportData.priorities.length === 0) {
+    throw new Error('No se encontraron prioridades con horas registradas en el período seleccionado');
+  }
+
+  const rows: (string | number)[][] = [];
+  let totalHours = 0;
+  const hoursByUser = new Map<string, number>();
+
+  reportData.priorities.forEach((priority: any) => {
+    const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
+    const weekEnd = new Date(priority.weekEnd).toLocaleDateString('es-MX');
+
+    priority.tasks.forEach((task: any) => {
+      rows.push([
+        `📋 ${priority.title}`,
+        task.text,
+        priority.userName,
+        `${weekStart} - ${weekEnd}`,
+        `${task.hours} horas`
+      ]);
+
+      totalHours += task.hours;
+      hoursByUser.set(priority.userName, (hoursByUser.get(priority.userName) || 0) + task.hours);
+    });
+  });
+
+  // Crear tabla resumen de horas por usuario
+  const summaryTableRows: (string | number)[][] = [];
+  hoursByUser.forEach((hours, userName) => {
+    summaryTableRows.push([userName, `${hours} horas`]);
+  });
+
+  const data: ReportData = {
+    title: 'Reporte de Horas - Prioridades Locales',
+    subtitle: filters || `Período: ${new Date(dateFrom).toLocaleDateString('es-MX')} - ${new Date(dateTo).toLocaleDateString('es-MX')}`,
+    headers: ['Prioridad', 'Tarea', 'Usuario', 'Semana', 'Horas'],
+    rows: rows,
+    summary: [
+      { label: 'Total de Prioridades', value: reportData.summary.totalPriorities },
+      { label: 'Total de Tareas', value: reportData.summary.totalTasks },
+      { label: 'Total de Horas Trabajadas', value: `${reportData.summary.totalHours} horas` }
+    ],
+    summaryTable: {
+      headers: ['Usuario', 'Total de Horas'],
+      rows: summaryTableRows
+    }
+  };
+
+  const fileName = `Reporte_HorasLocales_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};
