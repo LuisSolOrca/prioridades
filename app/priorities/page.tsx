@@ -104,6 +104,7 @@ export default function PrioritiesPage() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [showWorkflowMenu, setShowWorkflowMenu] = useState<string | null>(null);
   const [selectedPriorityForSync, setSelectedPriorityForSync] = useState<Priority | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const currentWeek = getWeekDates();
   const nextWeek = getWeekDates(new Date(currentWeek.monday.getTime() + 7 * 24 * 60 * 60 * 1000));
 
@@ -268,12 +269,16 @@ export default function PrioritiesPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Prevenir dobles clicks
+    if (isSaving) return;
+
     // Validar que se haya seleccionado al menos una iniciativa
     if (!formData.initiativeIds || formData.initiativeIds.length === 0) {
       alert('Debes seleccionar al menos una iniciativa estratégica');
       return;
     }
 
+    setIsSaving(true);
     try {
       if (editingPriority?._id) {
         // Update
@@ -307,6 +312,8 @@ export default function PrioritiesPage() {
     } catch (error: any) {
       console.error('Error saving priority:', error);
       alert(error.message || 'Error al guardar la prioridad');
+    } finally {
+      setIsSaving(false);
     }
   };
 
