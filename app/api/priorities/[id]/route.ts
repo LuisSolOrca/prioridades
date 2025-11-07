@@ -219,17 +219,25 @@ export async function PUT(
       }
 
       // 2. Notificar hitos de % completado (25%, 50%, 75%, 100%)
+      // Solo notificar el hito más alto alcanzado para evitar spam
       if (body.completionPercentage !== undefined && body.completionPercentage !== oldCompletionPercentage) {
         const milestones = [25, 50, 75, 100];
+        let highestMilestoneReached = null;
+
         for (const milestone of milestones) {
           if (oldCompletionPercentage < milestone && body.completionPercentage >= milestone) {
-            await notifyCompletionMilestone(
-              priority.userId.toString(),
-              priority.title,
-              milestone,
-              id
-            );
+            highestMilestoneReached = milestone;
           }
+        }
+
+        // Solo notificar si se alcanzó algún hito
+        if (highestMilestoneReached !== null) {
+          await notifyCompletionMilestone(
+            priority.userId.toString(),
+            priority.title,
+            highestMilestoneReached,
+            id
+          );
         }
 
         // 3. Verificar si completó todas las prioridades de la semana
