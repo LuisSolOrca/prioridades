@@ -320,8 +320,7 @@ export async function POST(request: NextRequest) {
             const newTask = await client.createChildTask(
               link.workItemId,
               (checklistItem as any).text,
-              '',
-              hours
+              ''
             );
 
             // Si la tarea está completada, cerrarla siempre (con o sin horas)
