@@ -316,7 +316,8 @@ export async function POST(request: NextRequest) {
               hours
             );
 
-            if ((checklistItem as any).completed && hours > 0) {
+            // Si la tarea está completada, cerrarla siempre (con o sin horas)
+            if ((checklistItem as any).completed) {
               await client.closeTaskWithHours(newTask.id, hours);
             }
 
