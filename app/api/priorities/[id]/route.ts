@@ -24,7 +24,7 @@ export async function GET(
     await connectDB();
 
     const { id } = await params;
-    const priority = await Priority.findById(id);
+    const priority = await Priority.findById(id).lean();
 
     if (!priority) {
       return NextResponse.json({ error: 'Prioridad no encontrada' }, { status: 404 });
@@ -35,7 +35,21 @@ export async function GET(
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    return NextResponse.json(priority);
+    // Obtener información de Azure DevOps si existe
+    const azureDevOpsLink = await AzureDevOpsWorkItem.findOne({ priorityId: id }).lean();
+
+    const priorityWithAzureDevOps = {
+      ...priority,
+      azureDevOps: azureDevOpsLink ? {
+        workItemId: azureDevOpsLink.workItemId,
+        workItemType: azureDevOpsLink.workItemType,
+        organization: azureDevOpsLink.organization,
+        project: azureDevOpsLink.project,
+        lastSyncDate: azureDevOpsLink.lastSyncDate
+      } : null
+    };
+
+    return NextResponse.json(priorityWithAzureDevOps);
   } catch (error: any) {
     console.error('Error fetching priority:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
