@@ -48,6 +48,7 @@ interface PriorityFormModalProps {
   users?: User[]; // Lista de usuarios para reasignar
   selectedUserId?: string; // Usuario actual seleccionado
   onUserChange?: (userId: string) => void; // Callback para cambiar usuario
+  hasAzureDevOpsLink?: boolean; // Si la prioridad está vinculada a Azure DevOps
 }
 
 export default function PriorityFormModal({
@@ -66,7 +67,8 @@ export default function PriorityFormModal({
   allowUserReassignment = false,
   users = [],
   selectedUserId,
-  onUserChange
+  onUserChange,
+  hasAzureDevOpsLink = false
 }: PriorityFormModalProps) {
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
@@ -545,6 +547,7 @@ export default function PriorityFormModal({
           <ChecklistManager
             checklist={formData.checklist}
             onChange={(checklist) => setFormData({ ...formData, checklist })}
+            hasAzureDevOpsLink={hasAzureDevOpsLink}
           />
 
           {/* Divider */}

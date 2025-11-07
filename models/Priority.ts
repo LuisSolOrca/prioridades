@@ -7,6 +7,7 @@ export interface IChecklistItem {
   _id?: mongoose.Types.ObjectId;
   text: string;
   completed: boolean;
+  completedHours?: number;
   createdAt?: Date;
 }
 
@@ -109,6 +110,7 @@ const PrioritySchema = new Schema<IPriority>({
     type: [{
       text: { type: String, required: true, trim: true },
       completed: { type: Boolean, default: false },
+      completedHours: { type: Number, min: 0 },
       createdAt: { type: Date, default: Date.now }
     }],
     default: []

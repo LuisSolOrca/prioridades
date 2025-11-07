@@ -289,31 +289,37 @@ export async function PUT(
               }
             }
 
-            // Sincronizar reapertura de tareas (automático, no requiere horas)
-            // El cierre de tareas requiere horas y se hace manualmente vía "⬆️ Actualizar DevOps"
+            // Sincronizar tareas del checklist (reapertura automática, cierre con horas)
             if (body.checklist && Array.isArray(body.checklist)) {
               try {
                 const childTasks = await client.getChildTasks(adoLink.workItemId);
                 let tasksReopenedCount = 0;
+                let tasksClosedCount = 0;
 
                 for (const checklistItem of body.checklist) {
-                  // Solo reabrir tareas que fueron desmarcadas localmente
-                  if (!checklistItem.completed) {
-                    // Buscar tarea correspondiente en Azure DevOps
-                    const correspondingTask = childTasks.find(task =>
-                      task.fields['System.Title'] === (checklistItem as any).text
-                    );
+                  // Buscar tarea correspondiente en Azure DevOps
+                  const correspondingTask = childTasks.find(task =>
+                    task.fields['System.Title'] === (checklistItem as any).text
+                  );
 
-                    if (correspondingTask) {
-                      const taskState = correspondingTask.fields['System.State'];
-                      const taskIsClosed = taskState === 'Done' || taskState === 'Closed';
+                  if (correspondingTask) {
+                    const taskState = correspondingTask.fields['System.State'];
+                    const taskIsClosed = taskState === 'Done' || taskState === 'Closed';
 
-                      // Si NO está completada localmente pero SÍ está cerrada en Azure DevOps, reabrirla
-                      if (taskIsClosed) {
-                        await client.reopenTask(correspondingTask.id);
-                        console.log(`🔄 [Azure DevOps] Tarea reabierta automáticamente: ${correspondingTask.id} - ${correspondingTask.fields['System.Title']}`);
-                        tasksReopenedCount++;
+                    if (checklistItem.completed && !taskIsClosed) {
+                      // Tarea completada localmente pero NO cerrada en Azure DevOps
+                      // Cerrar automáticamente solo si tiene horas registradas
+                      const hours = (checklistItem as any).completedHours || 0;
+                      if (hours > 0) {
+                        await client.closeTaskWithHours(correspondingTask.id, hours);
+                        console.log(`✅ [Azure DevOps] Tarea cerrada automáticamente: ${correspondingTask.id} - ${correspondingTask.fields['System.Title']} (${hours}h)`);
+                        tasksClosedCount++;
                       }
+                    } else if (!checklistItem.completed && taskIsClosed) {
+                      // Tarea NO completada localmente pero SÍ cerrada en Azure DevOps - reabrirla
+                      await client.reopenTask(correspondingTask.id);
+                      console.log(`🔄 [Azure DevOps] Tarea reabierta automáticamente: ${correspondingTask.id} - ${correspondingTask.fields['System.Title']}`);
+                      tasksReopenedCount++;
                     }
                   }
                 }

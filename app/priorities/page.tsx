@@ -882,6 +882,7 @@ export default function PrioritiesPage() {
         nextWeek={nextWeek}
         selectedWeekOffset={selectedWeekOffset}
         setSelectedWeekOffset={setSelectedWeekOffset}
+        hasAzureDevOpsLink={editingPriority?.azureDevOpsLink || false}
       />
 
       {/* Modal de Comentarios */}

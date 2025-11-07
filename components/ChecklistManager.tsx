@@ -7,6 +7,7 @@ export interface ChecklistItem {
   _id?: string;
   text: string;
   completed: boolean;
+  completedHours?: number;
   createdAt?: string;
 }
 
@@ -14,9 +15,10 @@ interface ChecklistManagerProps {
   checklist: ChecklistItem[];
   onChange: (checklist: ChecklistItem[]) => void;
   disabled?: boolean;
+  hasAzureDevOpsLink?: boolean;
 }
 
-export default function ChecklistManager({ checklist, onChange, disabled = false }: ChecklistManagerProps) {
+export default function ChecklistManager({ checklist, onChange, disabled = false, hasAzureDevOpsLink = false }: ChecklistManagerProps) {
   const [newItemText, setNewItemText] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
@@ -41,6 +43,13 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
 
   const handleDeleteItem = (index: number) => {
     const updatedChecklist = checklist.filter((_, i) => i !== index);
+    onChange(updatedChecklist);
+  };
+
+  const handleHoursChange = (index: number, hours: string) => {
+    const numHours = parseFloat(hours) || 0;
+    const updatedChecklist = [...checklist];
+    updatedChecklist[index].completedHours = numHours > 0 ? numHours : undefined;
     onChange(updatedChecklist);
   };
 
@@ -104,15 +113,36 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
             >
               {item.completed && <Check size={14} className="text-white" />}
             </button>
-            <span
-              className={`flex-1 text-sm ${
-                item.completed
-                  ? 'line-through text-gray-500 dark:text-gray-400'
-                  : 'text-gray-800 dark:text-gray-200'
-              }`}
-            >
-              {item.text}
-            </span>
+            <div className="flex-1">
+              <span
+                className={`text-sm ${
+                  item.completed
+                    ? 'line-through text-gray-500 dark:text-gray-400'
+                    : 'text-gray-800 dark:text-gray-200'
+                }`}
+              >
+                {item.text}
+              </span>
+              {/* Campo de horas - solo si está vinculado a Azure DevOps y la tarea está completada */}
+              {hasAzureDevOpsLink && item.completed && (
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={item.completedHours || ''}
+                    onChange={(e) => handleHoursChange(index, e.target.value)}
+                    placeholder="Horas"
+                    disabled={disabled}
+                    className="w-20 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded
+                             bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                             focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <span className="text-xs text-gray-500 dark:text-gray-400">hrs trabajadas</span>
+                </div>
+              )}
+            </div>
             {!disabled && (
               <button
                 type="button"
