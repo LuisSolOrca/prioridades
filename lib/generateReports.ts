@@ -836,8 +836,14 @@ export const generateAzureDevOpsReport = async (
   format: 'pdf' | 'doc',
   filters?: string
 ) => {
+  console.log('🔍 [Azure DevOps Report] Total priorities received:', priorities.length);
+  console.log('🔍 [Azure DevOps Report] Unique users in priorities:', [...new Set(priorities.map(p => p.userId))]);
+
   // Filtrar solo prioridades sincronizadas con Azure DevOps
   const prioritiesWithAzureDevOps = priorities.filter(p => p.azureDevOps);
+
+  console.log('🔍 [Azure DevOps Report] Priorities with Azure DevOps:', prioritiesWithAzureDevOps.length);
+  console.log('🔍 [Azure DevOps Report] Users with Azure DevOps priorities:', [...new Set(prioritiesWithAzureDevOps.map(p => p.userId))]);
 
   if (prioritiesWithAzureDevOps.length === 0) {
     throw new Error('No hay prioridades sincronizadas con Azure DevOps');
