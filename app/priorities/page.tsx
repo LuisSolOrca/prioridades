@@ -26,6 +26,7 @@ interface ChecklistItem {
   _id?: string;
   text: string;
   completed: boolean;
+  completedHours?: number;
   createdAt?: string;
 }
 

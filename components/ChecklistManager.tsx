@@ -22,10 +22,6 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
   const [newItemText, setNewItemText] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
-  // Debug: log checklist when it changes
-  console.log('ChecklistManager - hasAzureDevOpsLink:', hasAzureDevOpsLink);
-  console.log('ChecklistManager - checklist:', checklist);
-
   const handleAddItem = () => {
     if (newItemText.trim()) {
       const newItem: ChecklistItem = {
@@ -144,10 +140,6 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
                              disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <span className="text-xs text-gray-500 dark:text-gray-400">hrs trabajadas</span>
-                  {/* Debug info */}
-                  <span className="text-xs text-red-500">
-                    (Link: {String(hasAzureDevOpsLink)}, Completed: {String(item.completed)}, Hours: {item.completedHours || 'none'})
-                  </span>
                 </div>
               )}
             </div>
