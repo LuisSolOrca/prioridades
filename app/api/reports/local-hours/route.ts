@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
+import StrategicInitiative from '@/models/StrategicInitiative';
 
 /**
  * GET - Genera reporte de horas trabajadas en prioridades locales (no vinculadas a Azure DevOps)
@@ -63,9 +64,12 @@ export async function GET(request: NextRequest) {
     const userIds = Array.from(new Set(priorities.map((p: any) => p.userId?._id?.toString()).filter(Boolean)));
 
     // Obtener todos los vínculos de Azure DevOps para estos usuarios
-    const azureLinks = await AzureDevOpsWorkItem.find({
-      userId: { $in: userIds }
-    }).lean();
+    let azureLinks: any[] = [];
+    if (userIds.length > 0) {
+      azureLinks = await AzureDevOpsWorkItem.find({
+        userId: { $in: userIds }
+      }).lean();
+    }
 
     // Crear set de IDs de prioridades vinculadas a Azure DevOps
     const linkedPriorityIds = new Set(
