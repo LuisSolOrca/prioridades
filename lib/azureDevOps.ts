@@ -457,6 +457,9 @@ export class AzureDevOpsClient {
     assignedTo?: string
   ): Promise<WorkItem> {
     try {
+      // Obtener el work item padre para heredar IterationPath y AreaPath
+      const parentWorkItem = await this.getWorkItem(parentWorkItemId);
+
       // Primero crear la tarea
       const patchDocument = [
         {
@@ -479,6 +482,24 @@ export class AzureDevOpsClient {
           op: 'add',
           path: '/fields/System.AssignedTo',
           value: assignedTo
+        });
+      }
+
+      // Heredar IterationPath (Sprint) del padre
+      if (parentWorkItem.fields['System.IterationPath']) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.IterationPath',
+          value: parentWorkItem.fields['System.IterationPath']
+        });
+      }
+
+      // Heredar AreaPath del padre
+      if (parentWorkItem.fields['System.AreaPath']) {
+        patchDocument.push({
+          op: 'add',
+          path: '/fields/System.AreaPath',
+          value: parentWorkItem.fields['System.AreaPath']
         });
       }
 
