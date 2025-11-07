@@ -668,7 +668,19 @@ export const generateInitiativesReport = async (
   filters?: string
 ) => {
   const initiativeStats = initiatives.map(initiative => {
-    const initiativePriorities = priorities.filter(p => p.initiativeId === initiative._id);
+    // Filtrar prioridades que incluyan esta iniciativa (soporta tanto initiativeId como initiativeIds)
+    const initiativePriorities = priorities.filter(p => {
+      // Caso nuevo: array de iniciativas
+      if (p.initiativeIds && Array.isArray(p.initiativeIds)) {
+        return p.initiativeIds.some((id: any) => id === initiative._id || id?._id === initiative._id);
+      }
+      // Caso legacy: iniciativa única
+      if (p.initiativeId) {
+        return p.initiativeId === initiative._id || p.initiativeId?._id === initiative._id;
+      }
+      return false;
+    });
+
     const completed = initiativePriorities.filter(p => p.status === 'COMPLETADO').length;
     const percentage = priorities.length > 0
       ? (initiativePriorities.length / priorities.length * 100).toFixed(1)
