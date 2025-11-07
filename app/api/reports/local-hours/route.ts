@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
+    // Asegurar que el modelo StrategicInitiative esté registrado
+    // Esto es necesario para el populate de initiativeIds
+    const _ = StrategicInitiative;
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const area = searchParams.get('area');
