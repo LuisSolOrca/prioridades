@@ -35,6 +35,7 @@ interface ChecklistItem {
   _id?: string;
   text: string;
   completed: boolean;
+  completedHours?: number;
   createdAt?: string;
 }
 
@@ -723,11 +724,18 @@ export default function AreaDashboardPage() {
                               </svg>
                             )}
                           </div>
-                          <span className={`flex-1 text-sm ${
-                            item.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'
-                          }`}>
-                            {item.text}
-                          </span>
+                          <div className="flex-1">
+                            <span className={`text-sm ${
+                              item.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'
+                            }`}>
+                              {item.text}
+                            </span>
+                            {item.completed && item.completedHours && (
+                              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                ⏱️ {item.completedHours} hrs trabajadas
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
