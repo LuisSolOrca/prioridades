@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         $lte: new Date(endDate)
       };
     }
+    // Si no se especifica rango de fechas, traer todas las prioridades
 
     // Obtener todas las prioridades del usuario en el rango
     let priorities = await Priority.find(query)

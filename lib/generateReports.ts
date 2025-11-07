@@ -819,10 +819,12 @@ export const generateLocalHoursReport = async (
   filters?: string
 ) => {
   // Construir los parámetros de la consulta
-  const params = new URLSearchParams({
-    startDate: dateFrom,
-    endDate: dateTo
-  });
+  const params = new URLSearchParams();
+
+  if (dateFrom && dateTo) {
+    params.append('startDate', dateFrom);
+    params.append('endDate', dateTo);
+  }
 
   if (selectedUser !== 'all') {
     params.append('userId', selectedUser);
@@ -872,9 +874,13 @@ export const generateLocalHoursReport = async (
     summaryTableRows.push([userName, `${hours} horas`]);
   });
 
+  const subtitle = filters || (dateFrom && dateTo
+    ? `Período: ${new Date(dateFrom).toLocaleDateString('es-MX')} - ${new Date(dateTo).toLocaleDateString('es-MX')}`
+    : 'Todas las prioridades');
+
   const data: ReportData = {
     title: 'Reporte de Horas - Prioridades Locales',
-    subtitle: filters || `Período: ${new Date(dateFrom).toLocaleDateString('es-MX')} - ${new Date(dateTo).toLocaleDateString('es-MX')}`,
+    subtitle: subtitle,
     headers: ['Prioridad', 'Tarea', 'Usuario', 'Semana', 'Horas'],
     rows: rows,
     summary: [
