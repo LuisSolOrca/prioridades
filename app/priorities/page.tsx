@@ -52,6 +52,13 @@ interface Priority {
   evidenceLinks?: EvidenceLink[];
   wasEdited?: boolean;
   isCarriedOver?: boolean;
+  azureDevOps?: {
+    workItemId: number;
+    workItemType: string;
+    organization: string;
+    project: string;
+    lastSyncDate?: Date;
+  } | null;
 }
 
 interface Workflow {
