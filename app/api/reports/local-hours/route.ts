@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const area = searchParams.get('area');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
@@ -28,8 +29,11 @@ export async function GET(request: NextRequest) {
 
     // Si es admin y se especifica userId, filtrar por ese usuario
     // Si no es admin, solo ver sus propias prioridades
-    if ((session.user as any).role === 'ADMIN' && userId) {
-      query.userId = userId;
+    if ((session.user as any).role === 'ADMIN') {
+      if (userId && userId !== 'all') {
+        query.userId = userId;
+      }
+      // Si no se especifica userId, incluir todas las prioridades (filtros posteriores aplicarán)
     } else {
       query.userId = (session.user as any).id;
     }
@@ -43,15 +47,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener todas las prioridades del usuario en el rango
-    const priorities = await Priority.find(query)
-      .populate('userId', 'name email')
+    let priorities = await Priority.find(query)
+      .populate('userId', 'name email area')
       .populate('initiativeIds', 'name color')
       .sort({ weekStart: -1 })
       .lean();
 
-    // Obtener todos los vínculos de Azure DevOps para este usuario
+    // Filtrar por área si se especifica
+    if (area && area !== 'all') {
+      priorities = priorities.filter((p: any) => p.userId?.area === area);
+    }
+
+    // Obtener IDs de usuarios únicos para buscar vínculos de Azure DevOps
+    const userIds = Array.from(new Set(priorities.map((p: any) => p.userId?._id?.toString()).filter(Boolean)));
+
+    // Obtener todos los vínculos de Azure DevOps para estos usuarios
     const azureLinks = await AzureDevOpsWorkItem.find({
-      userId: query.userId
+      userId: { $in: userIds }
     }).lean();
 
     // Crear set de IDs de prioridades vinculadas a Azure DevOps
@@ -92,6 +104,7 @@ export async function GET(request: NextRequest) {
         reportData.push({
           priorityId: priority._id,
           title: priority.title,
+          userName: (priority.userId as any)?.name || 'Usuario desconocido',
           weekStart: priority.weekStart,
           weekEnd: priority.weekEnd,
           status: priority.status,

@@ -404,9 +404,15 @@ export default function ReportsPage() {
           </div>
 
           {/* Local Hours Report */}
-          {reportType === 'localhours' && currentUser && (
+          {reportType === 'localhours' && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <LocalHoursReport userId={currentUser._id} userName={currentUser.name} />
+              <LocalHoursReport
+                selectedUser={selectedUser}
+                selectedArea={selectedArea}
+                includeAdmins={includeAdmins}
+                dateFrom={dateFrom}
+                dateTo={dateTo}
+              />
             </div>
           )}
 

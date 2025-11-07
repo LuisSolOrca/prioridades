@@ -1,33 +1,53 @@
 'use client';
 
-import { useState } from 'react';
-import { Clock, Calendar, BarChart3, FileText, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Clock, BarChart3, FileText } from 'lucide-react';
 
 interface LocalHoursReportProps {
-  userId: string;
-  userName: string;
+  selectedUser: string;
+  selectedArea: string;
+  includeAdmins: boolean;
+  dateFrom: string;
+  dateTo: string;
 }
 
-export default function LocalHoursReport({ userId, userName }: LocalHoursReportProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function LocalHoursReport({
+  selectedUser,
+  selectedArea,
+  includeAdmins,
+  dateFrom,
+  dateTo
+}: LocalHoursReportProps) {
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+
+  // Auto-generate report when filters change
+  useEffect(() => {
+    if (dateFrom && dateTo) {
+      handleGenerateReport();
+    }
+  }, [selectedUser, selectedArea, includeAdmins, dateFrom, dateTo]);
 
   const handleGenerateReport = async () => {
-    if (!startDate || !endDate) {
-      alert('Por favor selecciona un rango de fechas');
+    if (!dateFrom || !dateTo) {
+      setReportData(null);
       return;
     }
 
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        userId,
-        startDate,
-        endDate
+        startDate: dateFrom,
+        endDate: dateTo
       });
+
+      if (selectedUser !== 'all') {
+        params.append('userId', selectedUser);
+      }
+
+      if (selectedArea !== 'all') {
+        params.append('area', selectedArea);
+      }
 
       const response = await fetch(`/api/reports/local-hours?${params}`);
       const data = await response.json();
@@ -50,117 +70,57 @@ export default function LocalHoursReport({ userId, userName }: LocalHoursReportP
 
     const rows = [
       ['Reporte de Horas - Prioridades Locales'],
-      ['Usuario', reportData.user.name],
-      ['Periodo', `${startDate} a ${endDate}`],
+      ['Periodo', `${dateFrom} a ${dateTo}`],
       [''],
-      ['Prioridad', 'Semana', 'Tarea', 'Horas'],
+      ['Usuario', 'Prioridad', 'Semana', 'Tarea', 'Horas'],
     ];
 
     reportData.priorities.forEach((priority: any) => {
       priority.tasks.forEach((task: any, index: number) => {
         rows.push([
+          index === 0 ? priority.userName : '',
           index === 0 ? priority.title : '',
           index === 0 ? `${new Date(priority.weekStart).toLocaleDateString()} - ${new Date(priority.weekEnd).toLocaleDateString()}` : '',
           task.text,
           task.hours.toString()
         ]);
       });
-      rows.push(['', '', 'Subtotal', priority.totalHours.toString()]);
+      rows.push(['', '', '', 'Subtotal', priority.totalHours.toString()]);
       rows.push(['']);
     });
 
-    rows.push(['', '', 'TOTAL', reportData.summary.totalHours.toString()]);
+    rows.push(['', '', '', 'TOTAL', reportData.summary.totalHours.toString()]);
 
     const csvContent = rows.map(row => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `reporte-horas-local-${startDate}-${endDate}.csv`;
+    link.download = `reporte-horas-local-${dateFrom}-${dateTo}.csv`;
     link.click();
   };
 
   return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-      >
-        <BarChart3 size={20} />
-        Reporte de Horas Local
-      </button>
+    <div className="space-y-6">
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-8">
+          <div className="text-4xl mb-4">⏳</div>
+          <div className="text-gray-600 dark:text-gray-400">Generando reporte...</div>
+        </div>
+      )}
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <BarChart3 className="text-green-600" size={24} />
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Reporte de Horas Local
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Prioridades sin vínculo con Azure DevOps
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                <X size={24} />
-              </button>
-            </div>
+      {/* No date range selected */}
+      {!dateFrom || !dateTo ? (
+        <div className="text-center py-8">
+          <div className="text-4xl mb-4">📅</div>
+          <div className="text-gray-600 dark:text-gray-400">
+            Por favor selecciona un rango de fechas en los filtros para generar el reporte
+          </div>
+        </div>
+      ) : null}
 
-            {/* Content */}
-            <div className="p-6 space-y-6">
-              {/* Date Range Selector */}
-              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Calendar className="inline mr-2" size={16} />
-                  Rango de Fechas
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      Desde
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                               bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      Hasta
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                               bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      onClick={handleGenerateReport}
-                      disabled={loading || !startDate || !endDate}
-                      className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700
-                               disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {loading ? 'Generando...' : 'Generar Reporte'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Report Results */}
-              {reportData && (
+      {/* Report Results */}
+      {!loading && reportData && (
                 <div className="space-y-6">
                   {/* Summary */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -217,6 +177,7 @@ export default function LocalHoursReport({ userId, userName }: LocalHoursReportP
                               {priority.title}
                             </h4>
                             <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              <span className="font-medium">{priority.userName}</span> • {' '}
                               {new Date(priority.weekStart).toLocaleDateString()} -{' '}
                               {new Date(priority.weekEnd).toLocaleDateString()}
                             </div>
@@ -260,10 +221,6 @@ export default function LocalHoursReport({ userId, userName }: LocalHoursReportP
                   )}
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
