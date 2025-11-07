@@ -17,6 +17,12 @@ interface ReportData {
     headers: string[];
     rows: (string | number)[][];
   };
+  taskMetrics?: {
+    totalTasks: number;
+    completedTasks: number;
+    pendingTasks: number;
+    completionPercentage: number;
+  };
 }
 
 // Función para cargar el logo
@@ -49,6 +55,84 @@ const cleanTextForPDF = (text: string | number): string => {
     .replace(/📋/g, '') // Clipboard
     .replace(/└─/g, '  |-') // Conectores de árbol
     .trim();
+};
+
+// Función para dibujar gráfica de progreso circular
+const drawProgressChart = (doc: jsPDF, x: number, y: number, percentage: number, label: string) => {
+  const radius = 20;
+  const centerX = x + radius;
+  const centerY = y + radius;
+
+  // Círculo de fondo (gris)
+  doc.setFillColor(230, 230, 230);
+  doc.circle(centerX, centerY, radius, 'F');
+
+  // Círculo de progreso (verde)
+  if (percentage > 0) {
+    doc.setFillColor(34, 197, 94); // green-500
+    const angle = (percentage / 100) * 360;
+    const startAngle = -90; // Empezar desde arriba
+    const endAngle = startAngle + angle;
+
+    // Dibujar arco de progreso
+    for (let i = startAngle; i < endAngle; i += 1) {
+      const rad1 = (i * Math.PI) / 180;
+      const rad2 = ((i + 1) * Math.PI) / 180;
+      doc.triangle(
+        centerX,
+        centerY,
+        centerX + radius * Math.cos(rad1),
+        centerY + radius * Math.sin(rad1),
+        centerX + radius * Math.cos(rad2),
+        centerY + radius * Math.sin(rad2),
+        'F'
+      );
+    }
+  }
+
+  // Círculo interno blanco
+  doc.setFillColor(255, 255, 255);
+  doc.circle(centerX, centerY, radius * 0.7, 'F');
+
+  // Porcentaje en el centro
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0);
+  const percentText = `${percentage}%`;
+  const textWidth = doc.getTextWidth(percentText);
+  doc.text(percentText, centerX - textWidth / 2, centerY + 4);
+
+  // Label debajo
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  const labelWidth = doc.getTextWidth(label);
+  doc.text(label, centerX - labelWidth / 2, centerY + radius + 8);
+};
+
+// Función para dibujar barra de progreso horizontal
+const drawProgressBar = (doc: jsPDF, x: number, y: number, width: number, completed: number, total: number) => {
+  const barHeight = 20;
+  const percentage = total > 0 ? (completed / total) * 100 : 0;
+
+  // Fondo de la barra
+  doc.setFillColor(230, 230, 230);
+  doc.roundedRect(x, y, width, barHeight, 3, 3, 'F');
+
+  // Barra de progreso
+  if (percentage > 0) {
+    doc.setFillColor(34, 197, 94); // green-500
+    const progressWidth = (width * percentage) / 100;
+    doc.roundedRect(x, y, progressWidth, barHeight, 3, 3, 'F');
+  }
+
+  // Texto en el centro
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0);
+  const text = `${completed} / ${total} (${Math.round(percentage)}%)`;
+  const textWidth = doc.getTextWidth(text);
+  doc.text(text, x + (width - textWidth) / 2, y + barHeight / 2 + 3);
 };
 
 // Generar reporte en PDF
@@ -87,8 +171,60 @@ export const generatePDFReport = async (data: ReportData, fileName: string = 'Re
   doc.setTextColor(100);
   doc.text(`Generado: ${today}`, 14, data.subtitle ? 35 : 28);
 
-  // Resumen (si existe)
+  // Métricas de tareas (si existen)
   let startY = data.subtitle ? 42 : 35;
+  if (data.taskMetrics) {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Métricas de Completado', 14, startY);
+
+    startY += 10;
+
+    // Barra de progreso horizontal
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text('Progreso General:', 14, startY);
+    startY += 5;
+    drawProgressBar(doc, 14, startY, 180, data.taskMetrics.completedTasks, data.taskMetrics.totalTasks);
+
+    startY += 30;
+
+    // Gráfica circular de porcentaje de completado
+    drawProgressChart(doc, 20, startY, Math.round(data.taskMetrics.completionPercentage), 'Completado');
+
+    // Métricas en tarjetas
+    const cardX = 80;
+    doc.setFillColor(240, 253, 244); // green-50
+    doc.roundedRect(cardX, startY, 50, 30, 2, 2, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text('Total Tareas', cardX + 25 - doc.getTextWidth('Total Tareas') / 2, startY + 10);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(22, 163, 74); // green-600
+    doc.text(data.taskMetrics.totalTasks.toString(), cardX + 25 - doc.getTextWidth(data.taskMetrics.totalTasks.toString()) / 2, startY + 22);
+
+    const cardX2 = cardX + 60;
+    doc.setFillColor(220, 252, 231); // green-100
+    doc.roundedRect(cardX2, startY, 50, 30, 2, 2, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text('Completadas', cardX2 + 25 - doc.getTextWidth('Completadas') / 2, startY + 10);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(22, 163, 74);
+    doc.text(data.taskMetrics.completedTasks.toString(), cardX2 + 25 - doc.getTextWidth(data.taskMetrics.completedTasks.toString()) / 2, startY + 22);
+
+    // Agregar nueva página después de las métricas para evitar encimarse
+    doc.addPage();
+    startY = 20;
+  }
+
+  // Resumen (si existe)
   if (data.summary && data.summary.length > 0) {
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
@@ -783,6 +919,8 @@ export const generateAzureDevOpsReport = async (
     0
   );
 
+  const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
   const data: ReportData = {
     title: 'Reporte de Prioridades Sincronizadas con Azure DevOps',
     subtitle: filters || 'Prioridades exportadas a Azure DevOps con sus tareas y horas',
@@ -798,6 +936,12 @@ export const generateAzureDevOpsReport = async (
     summaryTable: {
       headers: ['Usuario', 'Total de Horas'],
       rows: summaryTableRows
+    },
+    taskMetrics: {
+      totalTasks: totalTasks,
+      completedTasks: completedTasks,
+      pendingTasks: totalTasks - completedTasks,
+      completionPercentage: completionPercentage
     }
   };
 
@@ -878,6 +1022,11 @@ export const generateLocalHoursReport = async (
     ? `Período: ${new Date(dateFrom).toLocaleDateString('es-MX')} - ${new Date(dateTo).toLocaleDateString('es-MX')}`
     : 'Todas las prioridades');
 
+  // Las tareas en el reporte local ya están completadas (solo incluimos completed tasks)
+  const totalTasks = reportData.summary.totalTasks;
+  const completedTasks = totalTasks; // Todas las tareas del reporte están completadas
+  const completionPercentage = 100; // 100% porque solo mostramos completadas
+
   const data: ReportData = {
     title: 'Reporte de Horas - Prioridades Locales',
     subtitle: subtitle,
@@ -885,12 +1034,18 @@ export const generateLocalHoursReport = async (
     rows: rows,
     summary: [
       { label: 'Total de Prioridades', value: reportData.summary.totalPriorities },
-      { label: 'Total de Tareas', value: reportData.summary.totalTasks },
+      { label: 'Total de Tareas', value: totalTasks },
       { label: 'Total de Horas Trabajadas', value: `${reportData.summary.totalHours} horas` }
     ],
     summaryTable: {
       headers: ['Usuario', 'Total de Horas'],
       rows: summaryTableRows
+    },
+    taskMetrics: {
+      totalTasks: totalTasks,
+      completedTasks: completedTasks,
+      pendingTasks: 0,
+      completionPercentage: completionPercentage
     }
   };
 
