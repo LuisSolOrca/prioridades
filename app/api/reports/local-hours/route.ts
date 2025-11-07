@@ -89,17 +89,18 @@ export async function GET(request: NextRequest) {
       let priorityTotalHours = 0;
 
       for (const item of priority.checklist) {
-        if (item.completed && item.completedHours && item.completedHours > 0) {
+        if (item.completed) {
+          const hours = item.completedHours || 0;
           tasks.push({
             text: item.text,
-            hours: item.completedHours
+            hours: hours
           });
-          priorityTotalHours += item.completedHours;
-          totalHours += item.completedHours;
+          priorityTotalHours += hours;
+          totalHours += hours;
         }
       }
 
-      // Solo incluir prioridades que tengan tareas con horas
+      // Incluir prioridades que tengan tareas completadas (aunque sea con 0 horas)
       if (tasks.length > 0) {
         reportData.push({
           priorityId: priority._id,
