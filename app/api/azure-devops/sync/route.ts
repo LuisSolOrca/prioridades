@@ -331,16 +331,15 @@ export async function POST(request: NextRequest) {
                 const newTask = await client.createChildTask(
                   link.workItemId,
                   (checklistItem as any).text,
-                  '', // descripción vacía
-                  hours
+                  '' // descripción vacía
                 );
 
                 console.log(`✨ [Azure DevOps] Tarea creada: ${newTask.id} - ${(checklistItem as any).text}`);
 
-                // Si la tarea está completada localmente, cerrarla inmediatamente
-                if (checklistItem.completed && hours > 0) {
+                // Si la tarea está completada localmente, cerrarla siempre (con o sin horas)
+                if (checklistItem.completed) {
                   await client.closeTaskWithHours(newTask.id, hours);
-                  console.log(`✓ [Azure DevOps] Tarea cerrada inmediatamente: ${newTask.id}`);
+                  console.log(`✓ [Azure DevOps] Tarea cerrada inmediatamente: ${newTask.id} (${hours}h)`);
                 }
 
                 syncResults.toAzureDevOps.updated++;
