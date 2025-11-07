@@ -22,6 +22,10 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
   const [newItemText, setNewItemText] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
+  // Debug: log checklist when it changes
+  console.log('ChecklistManager - hasAzureDevOpsLink:', hasAzureDevOpsLink);
+  console.log('ChecklistManager - checklist:', checklist);
+
   const handleAddItem = () => {
     if (newItemText.trim()) {
       const newItem: ChecklistItem = {
