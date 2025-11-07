@@ -93,6 +93,7 @@ export default function PrioritiesPage() {
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, 1 = next week
   const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
   const [selectedPriorityForComments, setSelectedPriorityForComments] = useState<Priority | null>(null);
+  const [selectedPriorityForView, setSelectedPriorityForView] = useState<Priority | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({});
   const [userStats, setUserStats] = useState<{
     points: number;
@@ -633,15 +634,15 @@ export default function PrioritiesPage() {
                                 )}
                               </button>
                               {priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO' ? (
-                                <div className="flex items-center space-x-2">
-                                  <span className={`text-xs font-medium px-3 py-2 rounded-lg ${
-                                    priority.status === 'COMPLETADO'
-                                      ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20'
-                                      : 'text-gray-600 dark:text-gray-400 bg-gray-50'
-                                  }`}>
-                                    {priority.status === 'COMPLETADO' ? '✓ Completado' : '🔄 Reprogramado'} (Solo lectura)
-                                  </span>
-                                </div>
+                                <>
+                                  <button
+                                    onClick={() => setSelectedPriorityForView(priority)}
+                                    className="text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 w-10 h-10 rounded-lg transition"
+                                    title="Ver detalles"
+                                  >
+                                    🔍
+                                  </button>
+                                </>
                               ) : (
                                 <>
                                   <button
@@ -811,13 +812,15 @@ export default function PrioritiesPage() {
                                 )}
                               </button>
                               {priority.status === 'COMPLETADO' || priority.status === 'REPROGRAMADO' ? (
-                                <span className={`text-xs font-medium px-3 py-2 rounded-lg ${
-                                  priority.status === 'COMPLETADO'
-                                    ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20'
-                                    : 'text-gray-600 dark:text-gray-400 bg-gray-50'
-                                }`}>
-                                  {priority.status === 'COMPLETADO' ? '✓ Completado' : '🔄 Reprogramado'} (Solo lectura)
-                                </span>
+                                <>
+                                  <button
+                                    onClick={() => setSelectedPriorityForView(priority)}
+                                    className="text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 w-10 h-10 rounded-lg transition"
+                                    title="Ver detalles"
+                                  >
+                                    🔍
+                                  </button>
+                                </>
                               ) : (
                                 <>
                                   <button
@@ -963,6 +966,149 @@ export default function PrioritiesPage() {
                     setSelectedPriorityForComments(null);
                     loadCommentCounts(priorities);
                   }}
+                  className="bg-gray-600 dark:bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-semibold"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Visualización (Solo lectura) */}
+      {selectedPriorityForView && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedPriorityForView(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    {selectedPriorityForView.title}
+                  </h2>
+                  {selectedPriorityForView.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      {selectedPriorityForView.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <StatusBadge status={selectedPriorityForView.status} />
+                    {(() => {
+                      const priorityInitiativeIds = selectedPriorityForView.initiativeIds ||
+                        (selectedPriorityForView.initiativeId ? [selectedPriorityForView.initiativeId] : []);
+                      const priorityInitiatives = priorityInitiativeIds
+                        .map(id => initiatives.find(i => i._id === id))
+                        .filter((init): init is Initiative => init !== undefined);
+                      return priorityInitiatives.map(initiative => (
+                        <span key={initiative._id} className="text-sm text-gray-500 dark:text-gray-400 inline-flex items-center">
+                          <span style={{ color: initiative.color }}>●</span> {initiative.name}
+                        </span>
+                      ));
+                    })()}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedPriorityForView(null)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold ml-4"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Completion Percentage */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <span className="font-medium">Porcentaje de Completado</span>
+                  <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{selectedPriorityForView.completionPercentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                  <div
+                    className="bg-blue-600 dark:bg-blue-500 h-3 rounded-full transition-all"
+                    style={{ width: `${selectedPriorityForView.completionPercentage}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Checklist */}
+              {selectedPriorityForView.checklist && selectedPriorityForView.checklist.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                    ✓ Lista de Tareas
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      ({selectedPriorityForView.checklist.filter(item => item.completed).length}/{selectedPriorityForView.checklist.length})
+                    </span>
+                  </h3>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div className="space-y-2">
+                      {selectedPriorityForView.checklist.map((item, index) => (
+                        <div
+                          key={item._id || index}
+                          className={`flex items-start gap-3 p-2 rounded ${
+                            item.completed ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600'
+                          }`}
+                        >
+                          <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            item.completed ? 'bg-green-500 dark:bg-green-600 border-green-500 dark:border-green-600' : 'border-gray-300 dark:border-gray-600'
+                          }`}>
+                            {item.completed && (
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <span className={`text-sm ${
+                              item.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'
+                            }`}>
+                              {item.text}
+                            </span>
+                            {item.completed && item.completedHours && (
+                              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                ⏱️ {item.completedHours} hrs trabajadas
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Evidence Links */}
+              {selectedPriorityForView.evidenceLinks && selectedPriorityForView.evidenceLinks.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">🔗 Enlaces de Evidencia</h3>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div className="space-y-2">
+                      {selectedPriorityForView.evidenceLinks.map((link, index) => (
+                        <div key={link._id || index} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            {link.title}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Close Button */}
+              <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setSelectedPriorityForView(null)}
                   className="bg-gray-600 dark:bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-semibold"
                 >
                   Cerrar
