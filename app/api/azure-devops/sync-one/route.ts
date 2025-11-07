@@ -288,8 +288,16 @@ export async function POST(request: NextRequest) {
       if (refreshedPriority.checklist && refreshedPriority.checklist.length > 0) {
         for (const checklistItem of refreshedPriority.checklist) {
           const adoTask = activeChildTasks.find(task => task.fields['System.Title'] === (checklistItem as any).text);
-          const taskId = (checklistItem as any)._id || (checklistItem as any).text;
-          const hours = taskHours[taskId] || 0;
+
+          // Buscar horas: primero por ID de Azure DevOps (si existe), luego por _id local, finalmente por texto
+          let hours = 0;
+          if (adoTask) {
+            // Tarea existente en Azure - buscar por ID de Azure
+            hours = taskHours[adoTask.id.toString()] || taskHours[(checklistItem as any)._id] || taskHours[(checklistItem as any).text] || 0;
+          } else {
+            // Tarea nueva - buscar por _id local o texto
+            hours = taskHours[(checklistItem as any)._id] || taskHours[(checklistItem as any).text] || 0;
+          }
 
           if (adoTask) {
             const taskIsClosed = adoTask.fields['System.State'] === 'Done' || adoTask.fields['System.State'] === 'Closed';
