@@ -36,7 +36,7 @@ export async function GET(
     }
 
     // Obtener información de Azure DevOps si existe
-    const azureDevOpsLink = await AzureDevOpsWorkItem.findOne({ priorityId: id }).lean();
+    const azureDevOpsLink = await AzureDevOpsWorkItem.findOne({ priorityId: id }).lean() as any;
 
     const priorityWithAzureDevOps = {
       ...priority,
