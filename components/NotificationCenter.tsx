@@ -153,25 +153,25 @@ export default function NotificationCenter() {
       case 'STATUS_CHANGE':
       case 'PRIORITY_DUE_SOON':
       case 'INITIATIVE_AT_RISK':
-        return 'border-red-200 bg-red-50';
+        return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20';
       case 'COMMENT':
       case 'COMMENT_REPLY':
       case 'WEEK_START_REMINDER':
-        return 'border-blue-200 bg-blue-50';
+        return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20';
       case 'MENTION':
-        return 'border-purple-200 bg-purple-50';
+        return 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20';
       case 'WEEKEND_REMINDER':
       case 'PRIORITY_INACTIVE':
-        return 'border-yellow-200 bg-yellow-50';
+        return 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20';
       case 'PRIORITY_ASSIGNED':
       case 'PRIORITY_UNBLOCKED':
       case 'WEEK_COMPLETED':
       case 'COMPLETION_MILESTONE':
-        return 'border-green-200 bg-green-50';
+        return 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20';
       case 'WEEKLY_SUMMARY':
-        return 'border-indigo-200 bg-indigo-50';
+        return 'border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20';
       default:
-        return 'border-gray-200 bg-gray-50';
+        return 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800';
     }
   };
 
@@ -182,7 +182,7 @@ export default function NotificationCenter() {
       {/* Bell Icon with Badge */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
+        className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
         aria-label="Notificaciones"
       >
         <Bell size={24} />
@@ -203,10 +203,10 @@ export default function NotificationCenter() {
           />
 
           {/* Panel */}
-          <div className="absolute right-0 mt-2 w-96 max-h-[600px] bg-white rounded-lg shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col">
+          <div className="absolute right-0 mt-2 w-96 max-h-[600px] bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Notificaciones
               </h3>
               <div className="flex items-center space-x-2">
@@ -214,7 +214,7 @@ export default function NotificationCenter() {
                   <button
                     onClick={markAllAsRead}
                     disabled={loading}
-                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1 disabled:opacity-50"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center space-x-1 disabled:opacity-50"
                     title="Marcar todas como leídas"
                   >
                     <CheckCheck size={16} />
@@ -223,7 +223,7 @@ export default function NotificationCenter() {
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 >
                   <X size={20} />
                 </button>
@@ -233,19 +233,19 @@ export default function NotificationCenter() {
             {/* Notifications List */}
             <div className="overflow-y-auto flex-1">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <Bell size={48} className="mx-auto mb-3 text-gray-300" />
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                  <Bell size={48} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                   <p>No tienes notificaciones</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
                   {notifications.map((notification) => (
                     <div
                       key={notification._id}
                       className={`p-4 transition-colors ${
                         !notification.isRead
-                          ? 'bg-blue-50 hover:bg-blue-100'
-                          : 'hover:bg-gray-50'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                       } cursor-pointer group relative`}
                     >
                       <div
@@ -268,17 +268,17 @@ export default function NotificationCenter() {
                               <p
                                 className={`text-sm ${
                                   !notification.isRead
-                                    ? 'font-semibold text-gray-900'
-                                    : 'font-medium text-gray-700'
+                                    ? 'font-semibold text-gray-900 dark:text-gray-100'
+                                    : 'font-medium text-gray-700 dark:text-gray-300'
                                 }`}
                               >
                                 {notification.title}
                               </p>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                               {formatDistanceToNow(new Date(notification.createdAt), {
                                 addSuffix: true,
                                 locale: es,
@@ -296,7 +296,7 @@ export default function NotificationCenter() {
                               e.stopPropagation();
                               markAsRead(notification._id);
                             }}
-                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                            className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded"
                             title="Marcar como leída"
                           >
                             <Check size={16} />
@@ -307,7 +307,7 @@ export default function NotificationCenter() {
                             e.stopPropagation();
                             deleteNotification(notification._id);
                           }}
-                          className="p-1 text-red-600 hover:bg-red-100 rounded"
+                          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 rounded"
                           title="Eliminar"
                         >
                           <Trash2 size={16} />
@@ -321,13 +321,13 @@ export default function NotificationCenter() {
 
             {/* Footer */}
             {notifications.length > 0 && (
-              <div className="p-3 border-t border-gray-200 bg-gray-50 text-center">
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-center">
                 <button
                   onClick={() => {
                     setIsOpen(false);
                     window.location.href = '/priorities';
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                 >
                   Ver mis prioridades
                 </button>
