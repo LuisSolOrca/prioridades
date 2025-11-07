@@ -575,16 +575,30 @@ export const generatePrioritiesReport = async (
   const data: ReportData = {
     title: 'Reporte de Prioridades',
     subtitle: filters || 'Reporte completo de prioridades',
-    headers: ['Título', 'Usuario', 'Iniciativa', 'Estado', '% Completado', 'Semana'],
+    headers: ['Título', 'Usuario', 'Iniciativas', 'Estado', '% Completado', 'Semana'],
     rows: priorities.map(p => {
       const user = users.find(u => u._id === p.userId);
-      const initiative = initiatives.find(i => i._id === p.initiativeId);
+
+      // Obtener nombres de iniciativas (soporta tanto initiativeId como initiativeIds)
+      let initiativeNames = 'Sin iniciativa';
+      if (p.initiativeIds && Array.isArray(p.initiativeIds) && p.initiativeIds.length > 0) {
+        // Caso nuevo: array de iniciativas
+        const priorityInitiatives = p.initiativeIds
+          .map((id: any) => initiatives.find(i => i._id === id || i._id === id?._id))
+          .filter((init: any) => init !== undefined);
+        initiativeNames = priorityInitiatives.map((init: any) => init.name).join(', ');
+      } else if (p.initiativeId) {
+        // Caso legacy: iniciativa única
+        const initiative = initiatives.find(i => i._id === p.initiativeId || i._id === p.initiativeId?._id);
+        initiativeNames = initiative?.name || 'Sin iniciativa';
+      }
+
       const weekStart = new Date(p.weekStart).toLocaleDateString('es-MX');
 
       return [
         p.title,
         user?.name || 'N/A',
-        initiative?.name || 'N/A',
+        initiativeNames,
         p.status,
         `${p.completionPercentage}%`,
         weekStart
