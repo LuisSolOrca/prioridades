@@ -259,6 +259,7 @@ export default function PrioritiesPage() {
       initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []),
       type: priority.type || 'ESTRATEGICA'
     };
+
     setFormData(editFormData);
     setEditingPriority(priority);
     setShowForm(true);

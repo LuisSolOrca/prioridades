@@ -70,7 +70,7 @@ export async function PUT(
     await connectDB();
 
     const { id } = await params;
-    const priority = await Priority.findById(id);
+    let priority = await Priority.findById(id);
 
     if (!priority) {
       return NextResponse.json({ error: 'Prioridad no encontrada' }, { status: 404 });
@@ -160,11 +160,27 @@ export async function PUT(
       updateData.userId = body.userId;
     }
 
-    const updatedPriority = await Priority.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    // Si hay checklist en el body, necesitamos actualizar usando $set para forzar la actualización de subdocumentos
+    if (body.checklist) {
+      // Usar updateOne con $set para forzar actualización completa del array
+      await Priority.updateOne(
+        { _id: id },
+        { $set: { checklist: body.checklist } }
+      );
+      // Actualizar el resto de campos
+      delete updateData.checklist;
+      Object.assign(priority, updateData);
+      await priority.save();
+      // Recargar el documento con el checklist actualizado
+      const updatedPriority = await Priority.findById(id);
+      priority = updatedPriority!;
+    } else {
+      // Sin checklist, actualización normal
+      Object.assign(priority, updateData);
+      await priority.save();
+    }
+
+    const updatedPriority = priority;
 
     // Otorgar badge de FIRST_TASK si agregó su primera tarea
     if (body.checklist && Array.isArray(body.checklist) && body.checklist.length > 0 && oldChecklistLength === 0) {
