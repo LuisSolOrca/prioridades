@@ -24,7 +24,8 @@ import {
   Building2,
   UserCog,
   Cloud,
-  Link
+  Link,
+  Briefcase
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -278,6 +279,17 @@ export default function Navbar() {
                 >
                   <History size={22} />
                 </button>
+                <button
+                  onClick={() => handleNavigation('/clients')}
+                  className={`w-full flex justify-center p-3 rounded-lg transition ${
+                    pathname === '/clients'
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  title="Clientes"
+                >
+                  <Briefcase size={22} />
+                </button>
 
                 {user.area === 'Tecnología' && (
                   <>
@@ -415,6 +427,12 @@ export default function Navbar() {
                   label="Historial"
                   active={pathname === '/history'}
                   onClick={() => handleNavigation('/history')}
+                />
+                <NavButton
+                  icon={<Briefcase size={20} />}
+                  label="Clientes"
+                  active={pathname === '/clients'}
+                  onClick={() => handleNavigation('/clients')}
                 />
 
                 {user.area === 'Tecnología' && (

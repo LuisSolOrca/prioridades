@@ -39,6 +39,12 @@ interface EvidenceLink {
   createdAt?: string;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface Priority {
   _id: string;
   title: string;
@@ -51,6 +57,7 @@ interface Priority {
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
+  clientId?: string;
   isCarriedOver?: boolean;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
@@ -61,6 +68,7 @@ export default function HistoryPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
@@ -90,22 +98,25 @@ export default function HistoryPage() {
     try {
       const currentUserId = (session?.user as any)?.id;
 
-      const [usersRes, initiativesRes, prioritiesRes, currentUserRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
+        fetch('/api/clients?activeOnly=true'),
         fetch('/api/priorities?forDashboard=true'),
         currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, prioritiesData, currentUserData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
+        clientsRes.json(),
         prioritiesRes.json(),
         currentUserRes ? currentUserRes.json() : null
       ]);
 
       setUsers(usersData);
       setInitiatives(initiativesData);
+      setClients(Array.isArray(clientsData) ? clientsData : []);
       setPriorities(prioritiesData);
       setCurrentUser(currentUserData);
     } catch (error) {
@@ -203,6 +214,7 @@ export default function HistoryPage() {
       title: priority.title,
       description: priority.description || '',
       initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []),
+      clientId: priority.clientId,
       completionPercentage: priority.completionPercentage,
       status: priority.status,
       type: (priority.type || 'ESTRATEGICA') as 'ESTRATEGICA' | 'OPERATIVA',
@@ -211,6 +223,7 @@ export default function HistoryPage() {
       weekStart: priority.weekStart,
       weekEnd: priority.weekEnd
     };
+
     setEditingPriority(priority);
     setFormData(editFormData);
     setSelectedUserId(priority.userId);
@@ -555,15 +568,21 @@ export default function HistoryPage() {
           title: '',
           description: '',
           initiativeIds: [],
+          clientId: undefined,
           completionPercentage: 0,
           status: 'EN_TIEMPO',
           type: 'ESTRATEGICA',
           checklist: [],
           evidenceLinks: []
         }}
-        setFormData={setFormData}
+        setFormData={(data) => setFormData(data)}
         handleSubmit={handleSave}
         initiatives={initiatives}
+        clients={clients}
+        onClientCreated={(newClient) => {
+          // Agregar el nuevo cliente a la lista
+          setClients([...clients, newClient]);
+        }}
         isEditing={true}
         weekLabel={editingPriority ? getWeekLabel(new Date(editingPriority.weekStart)) : ''}
         allowUserReassignment={isAdmin}

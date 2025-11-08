@@ -31,6 +31,12 @@ interface Initiative {
   isActive: boolean;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface ChecklistItem {
   _id?: string;
   text: string;
@@ -58,6 +64,7 @@ interface Priority {
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
+  clientId?: string;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   wasEdited: boolean;
@@ -252,6 +259,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [currentWeek, setCurrentWeek] = useState(getWeekDates());
   const [loading, setLoading] = useState(true);
@@ -291,22 +299,25 @@ export default function DashboardPage() {
 
       const currentUserId = (session?.user as any)?.id;
 
-      const [usersRes, initiativesRes, prioritiesRes, currentUserRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users?activeOnly=true'),
         fetch('/api/initiatives?activeOnly=true'),
+        fetch('/api/clients?activeOnly=true'),
         fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`),
         currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, prioritiesData, currentUserData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
+        clientsRes.json(),
         prioritiesRes.json(),
         currentUserRes ? currentUserRes.json() : null
       ]);
 
       setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
+      setClients(Array.isArray(clientsData) ? clientsData : []);
       setPriorities(prioritiesData);
       setCurrentUser(currentUserData);
 
@@ -757,6 +768,14 @@ export default function DashboardPage() {
                       ));
                     })()}
                   </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cliente</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {selectedPriority.clientId
+                      ? (clients.find(c => c._id === selectedPriority.clientId)?.name || 'No especificado')
+                      : 'No especificado'}
+                  </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Semana</h3>

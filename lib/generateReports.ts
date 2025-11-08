@@ -849,6 +849,17 @@ export const generateAzureDevOpsReport = async (
     throw new Error('No hay prioridades sincronizadas con Azure DevOps');
   }
 
+  // Obtener clientes
+  let clients: any[] = [];
+  try {
+    const clientsResponse = await fetch('/api/clients');
+    if (clientsResponse.ok) {
+      clients = await clientsResponse.json();
+    }
+  } catch (error) {
+    console.error('Error fetching clients:', error);
+  }
+
   // Obtener datos enriquecidos con horas desde el API
   const priorityIds = prioritiesWithAzureDevOps.map(p => p._id).join(',');
   let enrichedDataMap = new Map();
@@ -891,6 +902,10 @@ export const generateAzureDevOpsReport = async (
       initiativeNames = initiative?.name || 'Sin iniciativa';
     }
 
+    // Obtener cliente
+    const client = clients.find(c => c._id === priority.clientId);
+    const clientName = client?.name || 'No especificado';
+
     // Obtener datos enriquecidos de esta prioridad
     const enrichedData = enrichedDataMap.get(priority._id);
 
@@ -917,6 +932,7 @@ export const generateAzureDevOpsReport = async (
           `📋 ${priority.title}`,
           item.text,
           user?.name || 'Desconocido',
+          clientName,
           initiativeNames,
           weekStart,
           status,
@@ -930,6 +946,7 @@ export const generateAzureDevOpsReport = async (
         `📋 ${priority.title}`,
         'Sin tareas',
         user?.name || 'Desconocido',
+        clientName,
         initiativeNames,
         weekStart,
         priority.status,
@@ -967,7 +984,7 @@ export const generateAzureDevOpsReport = async (
   const data: ReportData = {
     title: 'Reporte de Prioridades Sincronizadas con Azure DevOps',
     subtitle: filters || 'Prioridades exportadas a Azure DevOps con sus tareas y horas',
-    headers: ['Prioridad', 'Tarea', 'Usuario', 'Iniciativa', 'Semana', 'Estado', 'Horas', 'Work Item'],
+    headers: ['Prioridad', 'Tarea', 'Usuario', 'Cliente', 'Iniciativa', 'Semana', 'Estado', 'Horas', 'Work Item'],
     rows: rows,
     summary: [
       { label: 'Prioridades Sincronizadas', value: totalPriorities },
@@ -1000,6 +1017,7 @@ export const generateAzureDevOpsReport = async (
 export const generateLocalHoursReport = async (
   selectedUser: string,
   selectedArea: string,
+  selectedClient: string,
   dateFrom: string,
   dateTo: string,
   format: 'pdf' | 'doc',
@@ -1021,6 +1039,10 @@ export const generateLocalHoursReport = async (
     params.append('area', selectedArea);
   }
 
+  if (selectedClient !== 'all') {
+    params.append('clientId', selectedClient);
+  }
+
   // Obtener datos del API
   const response = await fetch(`/api/reports/local-hours?${params}`);
   if (!response.ok) {
@@ -1040,12 +1062,14 @@ export const generateLocalHoursReport = async (
   reportData.priorities.forEach((priority: any) => {
     const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
     const weekEnd = new Date(priority.weekEnd).toLocaleDateString('es-MX');
+    const clientName = priority.client?.name || 'No especificado';
 
     priority.tasks.forEach((task: any) => {
       rows.push([
         `📋 ${priority.title}`,
         task.text,
         priority.userName,
+        clientName,
         `${weekStart} - ${weekEnd}`,
         `${task.hours} horas`
       ]);
@@ -1073,7 +1097,7 @@ export const generateLocalHoursReport = async (
   const data: ReportData = {
     title: 'Reporte de Horas - Prioridades Locales',
     subtitle: subtitle,
-    headers: ['Prioridad', 'Tarea', 'Usuario', 'Semana', 'Horas'],
+    headers: ['Prioridad', 'Tarea', 'Usuario', 'Cliente', 'Semana', 'Horas'],
     rows: rows,
     summary: [
       { label: 'Total de Prioridades', value: reportData.summary.totalPriorities },

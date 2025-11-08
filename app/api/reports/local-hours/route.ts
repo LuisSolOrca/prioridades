@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import StrategicInitiative from '@/models/StrategicInitiative';
+import Client from '@/models/Client';
 
 /**
  * GET - Genera reporte de horas trabajadas en prioridades locales (no vinculadas a Azure DevOps)
@@ -19,13 +20,15 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
-    // Asegurar que el modelo StrategicInitiative esté registrado
-    // Esto es necesario para el populate de initiativeIds
+    // Asegurar que los modelos estén registrados
+    // Esto es necesario para el populate de initiativeIds y clientId
     const _ = StrategicInitiative;
+    const __ = Client;
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const area = searchParams.get('area');
+    const clientId = searchParams.get('clientId');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
@@ -52,10 +55,16 @@ export async function GET(request: NextRequest) {
     }
     // Si no se especifica rango de fechas, traer todas las prioridades
 
+    // Filtrar por cliente si se especifica
+    if (clientId && clientId !== 'all') {
+      query.clientId = clientId;
+    }
+
     // Obtener todas las prioridades del usuario en el rango
     let priorities = await Priority.find(query)
       .populate('userId', 'name email area')
       .populate('initiativeIds', 'name color')
+      .populate('clientId', 'name')
       .sort({ weekStart: -1 })
       .lean();
 
@@ -119,6 +128,7 @@ export async function GET(request: NextRequest) {
           weekEnd: priority.weekEnd,
           status: priority.status,
           initiatives: priority.initiativeIds,
+          client: priority.clientId,
           tasks,
           totalHours: priorityTotalHours
         });

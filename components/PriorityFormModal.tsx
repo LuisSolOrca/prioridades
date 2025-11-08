@@ -11,10 +11,17 @@ interface Initiative {
   color: string;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface PriorityFormData {
   title: string;
   description?: string;
   initiativeIds: string[];
+  clientId?: string; // Opcional aquí para permitir el estado transitorio mientras se crea
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   type: 'ESTRATEGICA' | 'OPERATIVA';
@@ -38,6 +45,8 @@ interface PriorityFormModalProps {
   setFormData: (data: PriorityFormData) => void;
   handleSubmit: (e: React.FormEvent) => void;
   initiatives: Initiative[];
+  clients?: Client[];
+  onClientCreated?: (client: Client) => void; // Callback cuando se crea un nuevo cliente
   isEditing: boolean;
   weekLabel: string;
   currentWeek?: any;
@@ -58,6 +67,8 @@ export default function PriorityFormModal({
   setFormData,
   handleSubmit,
   initiatives,
+  clients = [],
+  onClientCreated,
   isEditing,
   weekLabel,
   currentWeek,
@@ -72,6 +83,9 @@ export default function PriorityFormModal({
 }: PriorityFormModalProps) {
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
+  const [isCreatingNewClient, setIsCreatingNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [clientCreating, setClientCreating] = useState(false);
   const DRAFT_KEY = 'priority_form_draft';
 
   // Guardar borrador en localStorage cuando formData cambia (solo si el modal está abierto)
@@ -179,6 +193,50 @@ export default function PriorityFormModal({
 
   const handleRejectSuggestion = () => {
     setAiSuggestion(null);
+  };
+
+  const handleCreateClient = async () => {
+    if (!newClientName.trim()) {
+      alert('Por favor ingresa el nombre del cliente');
+      return;
+    }
+
+    setClientCreating(true);
+    try {
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newClientName.trim(),
+          isActive: true
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error al crear el cliente');
+      }
+
+      const newClient = await res.json();
+
+      // Actualizar formData con el nuevo cliente
+      setFormData({ ...formData, clientId: newClient._id });
+
+      // Resetear estados
+      setIsCreatingNewClient(false);
+      setNewClientName('');
+
+      // Notificar al componente padre para actualizar la lista de clientes
+      if (onClientCreated) {
+        onClientCreated(newClient);
+      }
+
+    } catch (error: any) {
+      console.error('Error creating client:', error);
+      alert(error.message || 'Error al crear el cliente');
+    } finally {
+      setClientCreating(false);
+    }
   };
 
   const getWeekLabel = (date: Date) => {
@@ -489,6 +547,96 @@ export default function PriorityFormModal({
               <option value="ESTRATEGICA">Estratégica</option>
               <option value="OPERATIVA">Operativa</option>
             </select>
+          </div>
+
+          {/* Cliente */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Cliente *
+            </label>
+
+            {!formData.clientId && isEditing && (
+              <div className="mb-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3">
+                <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                  ⚠️ Esta prioridad no tiene un cliente asignado. Por favor selecciona uno para poder guardar los cambios.
+                </p>
+              </div>
+            )}
+
+            {!isCreatingNewClient ? (
+              <div className="flex gap-2">
+                <select
+                  value={formData.clientId || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '__new__') {
+                      setIsCreatingNewClient(true);
+                      setFormData({ ...formData, clientId: undefined });
+                    } else {
+                      setFormData({ ...formData, clientId: value || undefined });
+                    }
+                  }}
+                  required
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">{!formData.clientId ? '⚠️ Seleccionar cliente (requerido)...' : 'Seleccionar cliente...'}</option>
+                  {clients.filter(c => c.isActive).map((client) => (
+                    <option key={client._id} value={client._id}>
+                      {client.name}
+                    </option>
+                  ))}
+                  <option value="__new__">+ Crear nuevo cliente</option>
+                </select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newClientName}
+                    onChange={(e) => setNewClientName(e.target.value)}
+                    placeholder="Nombre del nuevo cliente"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    maxLength={100}
+                    disabled={clientCreating}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCreateClient();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateClient}
+                    disabled={clientCreating || !newClientName.trim()}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                  >
+                    {clientCreating ? '⏳' : '✓ Crear'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingNewClient(false);
+                      setNewClientName('');
+                    }}
+                    disabled={clientCreating}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Presiona Enter o haz clic en "Crear" para guardar el nuevo cliente
+                </p>
+              </div>
+            )}
+
+            {!isCreatingNewClient && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Selecciona un cliente existente o crea uno nuevo
+              </p>
+            )}
           </div>
 
           {/* Estado */}

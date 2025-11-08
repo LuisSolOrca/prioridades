@@ -58,12 +58,14 @@ export default function ReportsPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filtros
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
+  const [selectedClient, setSelectedClient] = useState('all');
   const [selectedArea, setSelectedArea] = useState('all');
   const [includeAdmins, setIncludeAdmins] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
@@ -86,22 +88,25 @@ export default function ReportsPage() {
     try {
       const currentUserId = (session?.user as any)?.id;
 
-      const [usersRes, initiativesRes, prioritiesRes, currentUserRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
+        fetch('/api/clients'),
         fetch('/api/priorities?forDashboard=true'),
         currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, prioritiesData, currentUserData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
+        clientsRes.json(),
         prioritiesRes.json(),
         currentUserRes ? currentUserRes.json() : null
       ]);
 
       setUsers(usersData);
       setInitiatives(initiativesData);
+      setClients(clientsData);
       setPriorities(prioritiesData);
       setCurrentUser(currentUserData);
     } catch (error) {
@@ -133,6 +138,11 @@ export default function ReportsPage() {
       filtered = filtered.filter(p => p.initiativeId === selectedInitiative);
     }
 
+    // Filtro por cliente
+    if (selectedClient !== 'all') {
+      filtered = filtered.filter(p => p.clientId === selectedClient);
+    }
+
     if (dateFrom) {
       const fromDate = new Date(dateFrom);
       filtered = filtered.filter(p => new Date(p.weekStart) >= fromDate);
@@ -156,7 +166,7 @@ export default function ReportsPage() {
     }
 
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative, selectedArea, includeAdmins, dateFrom, dateTo, searchKeyword, priorityTypeFilter, users]);
+  }, [priorities, selectedUser, selectedInitiative, selectedClient, selectedArea, includeAdmins, dateFrom, dateTo, searchKeyword, priorityTypeFilter, users]);
 
   const filteredUsers = useMemo(() => {
     if (includeAdmins) return users;
@@ -188,6 +198,11 @@ export default function ReportsPage() {
     if (selectedInitiative !== 'all') {
       const initiative = initiatives.find(i => i._id === selectedInitiative);
       parts.push(`Iniciativa: ${initiative?.name}`);
+    }
+
+    if (selectedClient !== 'all') {
+      const client = clients.find(c => c._id === selectedClient);
+      parts.push(`Cliente: ${client?.name}`);
     }
 
     if (dateFrom && dateTo) {
@@ -256,6 +271,7 @@ export default function ReportsPage() {
         generateLocalHoursReport(
           selectedUser,
           selectedArea,
+          selectedClient,
           dateFrom,
           dateTo,
           format,
@@ -268,6 +284,7 @@ export default function ReportsPage() {
   const clearFilters = () => {
     setSelectedUser('all');
     setSelectedInitiative('all');
+    setSelectedClient('all');
     setSelectedArea('all');
     setIncludeAdmins(true);
     setDateFrom('');
@@ -464,6 +481,22 @@ export default function ReportsPage() {
                   <option value="all">Todas las iniciativas</option>
                   {initiatives.map(initiative => (
                     <option key={initiative._id} value={initiative._id}>{initiative.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Cliente
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  value={selectedClient}
+                  onChange={(e) => setSelectedClient(e.target.value)}
+                >
+                  <option value="all">Todos los clientes</option>
+                  {clients.map(client => (
+                    <option key={client._id} value={client._id}>{client.name}</option>
                   ))}
                 </select>
               </div>

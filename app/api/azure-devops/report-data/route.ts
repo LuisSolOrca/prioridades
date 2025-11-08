@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
           priorityId: priority._id,
           workItemId: link.workItemId,
           workItemType: link.workItemType,
+          clientId: priority.clientId,
           tasks: tasksWithHours
         });
 

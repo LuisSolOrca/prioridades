@@ -31,6 +31,12 @@ interface Initiative {
   isActive: boolean;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface ChecklistItem {
   _id?: string;
   text: string;
@@ -58,6 +64,7 @@ interface Priority {
   userId: string;
   initiativeId?: string;
   initiativeIds?: string[];
+  clientId?: string;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   wasEdited: boolean;
@@ -284,6 +291,7 @@ export default function AreaDashboardPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [currentWeek, setCurrentWeek] = useState(getWeekDates());
   const [loading, setLoading] = useState(true);
@@ -311,20 +319,23 @@ export default function AreaDashboardPage() {
     try {
       setLoading(true);
 
-      const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, prioritiesRes] = await Promise.all([
         fetch('/api/users?activeOnly=true'),
         fetch('/api/initiatives?activeOnly=true'),
+        fetch('/api/clients?activeOnly=true'),
         fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`)
       ]);
 
-      const [usersData, initiativesData, prioritiesData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, prioritiesData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
+        clientsRes.json(),
         prioritiesRes.json()
       ]);
 
       setUsers(usersData);
       setInitiatives(initiativesData);
+      setClients(Array.isArray(clientsData) ? clientsData : []);
       setPriorities(prioritiesData);
 
       await loadCommentCounts(prioritiesData);
@@ -695,6 +706,62 @@ export default function AreaDashboardPage() {
                 ) : (
                   <p className="text-gray-400 dark:text-gray-500 italic">Sin descripción</p>
                 )}
+              </div>
+
+              {/* Información Adicional */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Usuario</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {users.find(u => u._id === selectedPriority.userId)?.name}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Iniciativa(s)</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const priorityInitiativeIds = selectedPriority.initiativeIds || (selectedPriority.initiativeId ? [selectedPriority.initiativeId] : []);
+                      const priorityInitiatives = priorityInitiativeIds
+                        .map(id => initiatives.find(i => i._id === id))
+                        .filter((init): init is Initiative => init !== undefined);
+                      return priorityInitiatives.map(initiative => (
+                        <div key={initiative._id} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: initiative.color }}
+                          ></div>
+                          <span className="text-gray-800 dark:text-gray-200 text-sm">{initiative.name}</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cliente</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {selectedPriority.clientId
+                      ? (clients.find(c => c._id === selectedPriority.clientId)?.name || 'No especificado')
+                      : 'No especificado'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Semana</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {new Date(selectedPriority.weekStart).toLocaleDateString('es-MX')} - {new Date(selectedPriority.weekEnd).toLocaleDateString('es-MX')}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Avance</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                      <div
+                        className="bg-blue-600 dark:bg-blue-500 h-3 rounded-full transition-all"
+                        style={{ width: `${selectedPriority.completionPercentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedPriority.completionPercentage}%</span>
+                  </div>
+                </div>
               </div>
 
               {/* Lista de Tareas */}

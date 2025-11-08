@@ -121,6 +121,7 @@ export async function PUT(
         status: 'EN_TIEMPO',
         userId: priority.userId,
         initiativeIds: body.initiativeIds || priority.initiativeIds,
+        clientId: body.clientId || priority.clientId,
         checklist: priority.checklist?.map(item => ({ text: item.text, completed: false })) || [],
         evidenceLinks: [],
         wasEdited: false,
@@ -160,18 +161,25 @@ export async function PUT(
       updateData.userId = body.userId;
     }
 
+    // Asegurar que clientId se actualice si viene en el body
+    if (body.clientId !== undefined) {
+      updateData.clientId = body.clientId;
+    }
+
     // Si hay checklist en el body, necesitamos actualizar usando $set para forzar la actualización de subdocumentos
     if (body.checklist) {
-      // Usar updateOne con $set para forzar actualización completa del array
+      // Usar updateOne con $set para forzar actualización completa del array y otros campos
+      delete updateData.checklist; // Remover checklist del updateData antes de usarlo en $set
       await Priority.updateOne(
         { _id: id },
-        { $set: { checklist: body.checklist } }
+        {
+          $set: {
+            checklist: body.checklist,
+            ...updateData // Incluir todos los demás campos en el $set
+          }
+        }
       );
-      // Actualizar el resto de campos
-      delete updateData.checklist;
-      Object.assign(priority, updateData);
-      await priority.save();
-      // Recargar el documento con el checklist actualizado
+      // Recargar el documento con todos los cambios
       const updatedPriority = await Priority.findById(id);
       priority = updatedPriority!;
     } else {
