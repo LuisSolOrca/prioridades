@@ -559,6 +559,17 @@ export default function PriorityFormModal({
 
           {/* Cliente */}
           <div>
+            {/* Mensaje informativo - solo si no hay cliente seleccionado */}
+            {!formData.clientId && (
+              <div className="mb-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
+                <p className="text-xs text-blue-800 dark:text-blue-200 leading-relaxed">
+                  ℹ️ <strong>Información importante:</strong> La captura del cliente es requerida para el cálculo de costos por cliente de la empresa.
+                  Si la prioridad no está designada a un cliente específico, selecciona la opción <strong>"Sin cliente / Interno"</strong>.
+                  Si la prioridad aplica a varios clientes, puedes seleccionar <strong>"Multicliente"</strong>, aunque lo recomendado es crear una prioridad por cada cliente.
+                </p>
+              </div>
+            )}
+
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Cliente *
             </label>
