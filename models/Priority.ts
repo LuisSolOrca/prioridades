@@ -33,6 +33,7 @@ export interface IPriority {
   initiativeId?: mongoose.Types.ObjectId; // Mantener para compatibilidad hacia atrás
   initiativeIds: mongoose.Types.ObjectId[]; // Nuevo campo para múltiples iniciativas
   clientId: mongoose.Types.ObjectId; // Cliente asociado (obligatorio)
+  projectId?: mongoose.Types.ObjectId; // Proyecto asociado (opcional)
   checklist: IChecklistItem[]; // Lista de tareas
   evidenceLinks: IEvidenceLink[]; // Enlaces de evidencia
   createdAt: Date;
@@ -108,6 +109,11 @@ const PrioritySchema = new Schema<IPriority>({
     type: Schema.Types.ObjectId,
     ref: 'Client',
     required: [true, 'El cliente es requerido'],
+  },
+  projectId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Project',
+    required: false,
   },
   lastEditedAt: {
     type: Date,

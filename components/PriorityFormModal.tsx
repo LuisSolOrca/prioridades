@@ -17,11 +17,19 @@ interface Client {
   isActive: boolean;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface PriorityFormData {
   title: string;
   description?: string;
   initiativeIds: string[];
   clientId?: string; // Opcional aquí para permitir el estado transitorio mientras se crea
+  projectId?: string; // Proyecto asociado (opcional)
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   type: 'ESTRATEGICA' | 'OPERATIVA';
@@ -47,6 +55,8 @@ interface PriorityFormModalProps {
   initiatives: Initiative[];
   clients?: Client[];
   onClientCreated?: (client: Client) => void; // Callback cuando se crea un nuevo cliente
+  projects?: Project[];
+  onProjectCreated?: (project: Project) => void; // Callback cuando se crea un nuevo proyecto
   isEditing: boolean;
   weekLabel: string;
   currentWeek?: any;
@@ -69,6 +79,8 @@ export default function PriorityFormModal({
   initiatives,
   clients = [],
   onClientCreated,
+  projects = [],
+  onProjectCreated,
   isEditing,
   weekLabel,
   currentWeek,
@@ -86,6 +98,9 @@ export default function PriorityFormModal({
   const [isCreatingNewClient, setIsCreatingNewClient] = useState(false);
   const [newClientName, setNewClientName] = useState('');
   const [clientCreating, setClientCreating] = useState(false);
+  const [isCreatingNewProject, setIsCreatingNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [projectCreating, setProjectCreating] = useState(false);
   const DRAFT_KEY = 'priority_form_draft';
 
   // Guardar borrador en localStorage cuando formData cambia (solo si el modal está abierto)
@@ -244,6 +259,50 @@ export default function PriorityFormModal({
       alert(error.message || 'Error al crear el cliente');
     } finally {
       setClientCreating(false);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) {
+      alert('Por favor ingresa el nombre del proyecto');
+      return;
+    }
+
+    setProjectCreating(true);
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newProjectName.trim(),
+          isActive: true
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error al crear el proyecto');
+      }
+
+      const newProject = await res.json();
+
+      // Actualizar formData con el nuevo proyecto
+      setFormData({ ...formData, projectId: newProject._id });
+
+      // Resetear estados
+      setIsCreatingNewProject(false);
+      setNewProjectName('');
+
+      // Notificar al componente padre para actualizar la lista de proyectos
+      if (onProjectCreated) {
+        onProjectCreated(newProject);
+      }
+
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      alert(error.message || 'Error al crear el proyecto');
+    } finally {
+      setProjectCreating(false);
     }
   };
 
@@ -654,6 +713,87 @@ export default function PriorityFormModal({
             {!isCreatingNewClient && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Selecciona un cliente existente o crea uno nuevo
+              </p>
+            )}
+          </div>
+
+          {/* Proyecto */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Proyecto (Opcional)
+            </label>
+
+            {!isCreatingNewProject ? (
+              <div className="flex gap-2">
+                <select
+                  value={formData.projectId || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '__new__') {
+                      setIsCreatingNewProject(true);
+                      setFormData({ ...formData, projectId: undefined });
+                    } else {
+                      setFormData({ ...formData, projectId: value || undefined });
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Sin proyecto asignado</option>
+                  {projects.filter(p => p.isActive).map((project) => (
+                    <option key={project._id} value={project._id}>
+                      {project.name}
+                    </option>
+                  ))}
+                  <option value="__new__">+ Crear nuevo proyecto</option>
+                </select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    placeholder="Nombre del nuevo proyecto"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    maxLength={100}
+                    disabled={projectCreating}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCreateProject();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateProject}
+                    disabled={projectCreating || !newProjectName.trim()}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                  >
+                    {projectCreating ? '⏳' : '✓ Crear'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingNewProject(false);
+                      setNewProjectName('');
+                    }}
+                    disabled={projectCreating}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Presiona Enter o haz clic en "Crear" para guardar el nuevo proyecto
+                </p>
+              </div>
+            )}
+
+            {!isCreatingNewProject && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Selecciona un proyecto existente, crea uno nuevo o déjalo sin asignar
               </p>
             )}
           </div>
