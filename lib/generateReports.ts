@@ -1137,7 +1137,7 @@ export const generateClientBreakdownReport = async (
   filters?: string
 ) => {
   // Trackear generación de reporte
-  await trackFeature('reportGenerated');
+  await trackFeature('reportsGenerated');
 
   // Agrupar prioridades por cliente
   const prioritiesByClient = new Map<string, any[]>();
