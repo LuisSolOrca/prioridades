@@ -1071,6 +1071,52 @@ export default function PrioritiesPage() {
                 </div>
               </div>
 
+              {/* Información adicional */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Usuario</h3>
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    {session?.user?.name || 'Usuario actual'}
+                  </p>
+                </div>
+
+                {selectedPriorityForView.clientId && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Cliente</h3>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">
+                      {clients.find(c => c._id === selectedPriorityForView.clientId)?.name || 'No especificado'}
+                    </p>
+                  </div>
+                )}
+
+                {selectedPriorityForView.projectId && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Proyecto</h3>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">
+                      {projects.find(p => p._id === selectedPriorityForView.projectId)?.name || 'No especificado'}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Semana</h3>
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    {new Date(selectedPriorityForView.weekStart).toLocaleDateString('es-MX')} - {new Date(selectedPriorityForView.weekEnd).toLocaleDateString('es-MX')}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Tipo</h3>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                    (selectedPriorityForView.type || 'ESTRATEGICA') === 'ESTRATEGICA'
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
+                      : 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200'
+                  }`}>
+                    {(selectedPriorityForView.type || 'ESTRATEGICA') === 'ESTRATEGICA' ? 'Estratégica' : 'Operativa'}
+                  </span>
+                </div>
+              </div>
+
               {/* Checklist */}
               {selectedPriorityForView.checklist && selectedPriorityForView.checklist.length > 0 && (
                 <div className="mb-6">
