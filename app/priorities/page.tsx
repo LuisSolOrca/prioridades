@@ -903,6 +903,7 @@ export default function PrioritiesPage() {
           description: formData.description,
           initiativeIds: formData.initiativeIds || [],
           clientId: formData.clientId,
+          projectId: formData.projectId,
           completionPercentage: formData.completionPercentage,
           status: formData.status,
           type: formData.type || 'ESTRATEGICA',
