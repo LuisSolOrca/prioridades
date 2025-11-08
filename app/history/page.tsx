@@ -45,6 +45,13 @@ interface Client {
   isActive: boolean;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface Priority {
   _id: string;
   title: string;
@@ -58,6 +65,7 @@ interface Priority {
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   clientId?: string;
+  projectId?: string;
   isCarriedOver?: boolean;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
@@ -69,6 +77,7 @@ export default function HistoryPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
@@ -98,18 +107,20 @@ export default function HistoryPage() {
     try {
       const currentUserId = (session?.user as any)?.id;
 
-      const [usersRes, initiativesRes, clientsRes, prioritiesRes, currentUserRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, projectsRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
         fetch('/api/clients?activeOnly=true'),
+        fetch('/api/projects'),
         fetch('/api/priorities?forDashboard=true'),
         currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, clientsData, prioritiesData, currentUserData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, projectsData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
         clientsRes.json(),
+        projectsRes.json(),
         prioritiesRes.json(),
         currentUserRes ? currentUserRes.json() : null
       ]);
@@ -117,6 +128,7 @@ export default function HistoryPage() {
       setUsers(usersData);
       setInitiatives(initiativesData);
       setClients(Array.isArray(clientsData) ? clientsData : []);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
       setPriorities(prioritiesData);
       setCurrentUser(currentUserData);
     } catch (error) {
@@ -569,6 +581,7 @@ export default function HistoryPage() {
           description: '',
           initiativeIds: [],
           clientId: undefined,
+          projectId: undefined,
           completionPercentage: 0,
           status: 'EN_TIEMPO',
           type: 'ESTRATEGICA',
@@ -582,6 +595,11 @@ export default function HistoryPage() {
         onClientCreated={(newClient) => {
           // Agregar el nuevo cliente a la lista
           setClients([...clients, newClient]);
+        }}
+        projects={projects}
+        onProjectCreated={(newProject) => {
+          // Agregar el nuevo proyecto a la lista
+          setProjects([...projects, newProject]);
         }}
         isEditing={true}
         weekLabel={editingPriority ? getWeekLabel(new Date(editingPriority.weekStart)) : ''}
