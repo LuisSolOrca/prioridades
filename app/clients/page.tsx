@@ -34,9 +34,14 @@ export default function ClientsPage() {
     }
 
     if (status === 'authenticated') {
+      // Solo permitir acceso a administradores
+      if ((session?.user as any)?.role !== 'ADMIN') {
+        router.push('/dashboard');
+        return;
+      }
       loadClients();
     }
-  }, [status, router]);
+  }, [status, router, session]);
 
   const loadClients = async () => {
     try {
@@ -149,6 +154,18 @@ export default function ClientsPage() {
   }
 
   if (!session) return null;
+
+  // Verificar que el usuario sea admin
+  if ((session.user as any)?.role !== 'ADMIN') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🔒</div>
+          <div className="text-gray-600 dark:text-gray-400">Acceso denegado. Esta página es solo para administradores.</div>
+        </div>
+      </div>
+    );
+  }
 
   const activeCount = clients.filter(c => c.isActive).length;
 
