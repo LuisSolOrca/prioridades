@@ -23,6 +23,19 @@ interface Initiative {
   color: string;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface Priority {
   _id: string;
   title: string;
@@ -33,6 +46,8 @@ interface Priority {
   userId: string;
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
+  clientId?: string;
+  projectId?: string;
   weekStart: string;
   weekEnd: string;
 }
@@ -42,11 +57,20 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [allPriorities, setAllPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedInitiative, setExpandedInitiative] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [expandedUserInTable, setExpandedUserInTable] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState('all');
+  const [selectedInitiative, setSelectedInitiative] = useState('all');
+  const [selectedClient, setSelectedClient] = useState('all');
+  const [selectedProject, setSelectedProject] = useState('all');
+  const [selectedArea, setSelectedArea] = useState('all');
+  const [includeAdmins, setIncludeAdmins] = useState(true);
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
@@ -67,20 +91,26 @@ export default function AnalyticsPage() {
 
   const loadData = async () => {
     try {
-      const [usersRes, initiativesRes, prioritiesRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, projectsRes, prioritiesRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
+        fetch('/api/clients?activeOnly=true'),
+        fetch('/api/projects'),
         fetch('/api/priorities?forDashboard=true')
       ]);
 
-      const [usersData, initiativesData, prioritiesData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, projectsData, prioritiesData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
+        clientsRes.json(),
+        projectsRes.json(),
         prioritiesRes.json()
       ]);
 
       setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
+      setClients(Array.isArray(clientsData) ? clientsData : []);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
       setAllPriorities(prioritiesData);
 
       // Cargar puntos del mes actual calculados dinámicamente
@@ -112,12 +142,50 @@ export default function AnalyticsPage() {
     }
   };
 
-  // Filtrar prioridades por rango de fechas y tipo
+  // Filtrar prioridades por todos los criterios
   const priorities = allPriorities.filter(priority => {
+    // Filtro por usuario
+    if (selectedUser !== 'all') {
+      if (priority.userId !== selectedUser) return false;
+    }
+
+    // Filtro por rol de usuario (incluir/excluir admins)
+    if (!includeAdmins) {
+      const user = users.find(u => u._id === priority.userId);
+      if (user && user.role === 'ADMIN') return false;
+    }
+
+    // Filtro por área
+    if (selectedArea !== 'all') {
+      const user = users.find(u => u._id === priority.userId);
+      if (!user || user.area !== selectedArea) return false;
+    }
+
+    // Filtro por iniciativa
+    if (selectedInitiative !== 'all') {
+      if (priority.initiativeId !== selectedInitiative) return false;
+    }
+
+    // Filtro por cliente
+    if (selectedClient !== 'all') {
+      if (priority.clientId !== selectedClient) return false;
+    }
+
+    // Filtro por proyecto
+    if (selectedProject !== 'all') {
+      if (priority.projectId !== selectedProject) return false;
+    }
+
     // Filtro por tipo
     if (priorityTypeFilter !== 'TODAS') {
       const priorityType = priority.type || 'ESTRATEGICA';
       if (priorityType !== priorityTypeFilter) return false;
+    }
+
+    // Filtro por keywords
+    if (searchKeyword.trim()) {
+      const keyword = searchKeyword.toLowerCase();
+      if (!priority.title.toLowerCase().includes(keyword)) return false;
     }
 
     // Filtro por fecha
@@ -148,10 +216,20 @@ export default function AnalyticsPage() {
   });
 
   const handleClearFilters = () => {
+    setSelectedUser('all');
+    setSelectedInitiative('all');
+    setSelectedClient('all');
+    setSelectedProject('all');
+    setSelectedArea('all');
+    setIncludeAdmins(true);
+    setSearchKeyword('');
     setDateFrom('');
     setDateTo('');
     setPriorityTypeFilter('TODAS');
   };
+
+  // Obtener áreas únicas
+  const uniqueAreas = Array.from(new Set(users.filter(u => u.area).map(u => u.area as string)));
 
   if (status === 'loading' || loading) {
     return (
@@ -330,10 +408,135 @@ export default function AnalyticsPage() {
             📊 Analítica y Métricas
           </h1>
 
-          {/* Filtros de Rango de Tiempo y Tipo */}
+          {/* Filtros Completos */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">🔍 Filtros</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+
+            <div className="mb-4">
+              <label className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={includeAdmins}
+                  onChange={(e) => setIncludeAdmins(e.target.checked)}
+                  className="mr-2"
+                />
+                Incluir prioridades de administradores
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Usuario
+                </label>
+                <select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">Todos los usuarios</option>
+                  {users.filter(u => includeAdmins || u.role === 'USER').map(user => (
+                    <option key={user._id} value={user._id}>
+                      {user.name} {user.role === 'ADMIN' ? '(Admin)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Iniciativa
+                </label>
+                <select
+                  value={selectedInitiative}
+                  onChange={(e) => setSelectedInitiative(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">Todas las iniciativas</option>
+                  {initiatives.map(initiative => (
+                    <option key={initiative._id} value={initiative._id}>{initiative.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Cliente
+                </label>
+                <select
+                  value={selectedClient}
+                  onChange={(e) => setSelectedClient(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">Todos los clientes</option>
+                  {clients.map(client => (
+                    <option key={client._id} value={client._id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Proyecto
+                </label>
+                <select
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">Todos los proyectos</option>
+                  {projects.filter(p => p.isActive).map(project => (
+                    <option key={project._id} value={project._id}>{project.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Área
+                </label>
+                <select
+                  value={selectedArea}
+                  onChange={(e) => setSelectedArea(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="all">Todas las áreas</option>
+                  {uniqueAreas.map(area => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tipo de Prioridad
+                </label>
+                <select
+                  value={priorityTypeFilter}
+                  onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="TODAS">Todas</option>
+                  <option value="ESTRATEGICA">Estratégicas</option>
+                  <option value="OPERATIVA">Operativas</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Buscar por palabras clave
+                </label>
+                <input
+                  type="text"
+                  placeholder="Buscar en títulos..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Desde
@@ -342,7 +545,7 @@ export default function AnalyticsPage() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
               <div>
@@ -353,22 +556,8 @@ export default function AnalyticsPage() {
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tipo de Prioridad
-                </label>
-                <select
-                  value={priorityTypeFilter}
-                  onChange={(e) => setPriorityTypeFilter(e.target.value as 'TODAS' | 'ESTRATEGICA' | 'OPERATIVA')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="TODAS">Todas</option>
-                  <option value="ESTRATEGICA">Estratégicas</option>
-                  <option value="OPERATIVA">Operativas</option>
-                </select>
               </div>
               <div>
                 <button
@@ -379,18 +568,12 @@ export default function AnalyticsPage() {
                 </button>
               </div>
             </div>
-            {(dateFrom || dateTo || priorityTypeFilter !== 'TODAS') && (
-              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  📊 Mostrando datos filtrados:
-                  {dateFrom && ` desde ${new Date(dateFrom).toLocaleDateString('es-MX')}`}
-                  {dateFrom && dateTo && ' '}
-                  {dateTo && ` hasta ${new Date(dateTo).toLocaleDateString('es-MX')}`}
-                  {priorityTypeFilter !== 'TODAS' && ` • Tipo: ${priorityTypeFilter === 'ESTRATEGICA' ? 'Estratégicas' : 'Operativas'}`}
-                  {' '}• {priorities.length} prioridades
-                </p>
-              </div>
-            )}
+
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                📊 Mostrando {priorities.length} prioridades
+              </p>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
