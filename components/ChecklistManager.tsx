@@ -49,7 +49,9 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
   const handleHoursChange = (index: number, hours: string) => {
     const numHours = parseFloat(hours) || 0;
     const updatedChecklist = [...checklist];
-    updatedChecklist[index].completedHours = numHours > 0 ? numHours : undefined;
+    // Redondear a 2 decimales
+    const roundedHours = numHours > 0 ? Math.round(numHours * 100) / 100 : undefined;
+    updatedChecklist[index].completedHours = roundedHours;
     onChange(updatedChecklist);
   };
 
@@ -129,7 +131,7 @@ export default function ChecklistManager({ checklist, onChange, disabled = false
                   <input
                     type="number"
                     min="0"
-                    step="0.5"
+                    step="0.01"
                     value={item.completedHours || ''}
                     onChange={(e) => handleHoursChange(index, e.target.value)}
                     placeholder="Horas"
