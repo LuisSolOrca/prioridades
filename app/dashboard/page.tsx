@@ -37,6 +37,13 @@ interface Client {
   isActive: boolean;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface ChecklistItem {
   _id?: string;
   text: string;
@@ -65,6 +72,7 @@ interface Priority {
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   clientId?: string;
+  projectId?: string;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   wasEdited: boolean;
@@ -260,6 +268,7 @@ export default function DashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [currentWeek, setCurrentWeek] = useState(getWeekDates());
   const [loading, setLoading] = useState(true);
@@ -299,18 +308,20 @@ export default function DashboardPage() {
 
       const currentUserId = (session?.user as any)?.id;
 
-      const [usersRes, initiativesRes, clientsRes, prioritiesRes, currentUserRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, projectsRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users?activeOnly=true'),
         fetch('/api/initiatives?activeOnly=true'),
         fetch('/api/clients?activeOnly=true'),
+        fetch('/api/projects'),
         fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`),
         currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, clientsData, prioritiesData, currentUserData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, projectsData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
         clientsRes.json(),
+        projectsRes.json(),
         prioritiesRes.json(),
         currentUserRes ? currentUserRes.json() : null
       ]);
@@ -318,6 +329,7 @@ export default function DashboardPage() {
       setUsers(usersData); // Mostrar todos los usuarios (USER y ADMIN)
       setInitiatives(initiativesData);
       setClients(Array.isArray(clientsData) ? clientsData : []);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
       setPriorities(prioritiesData);
       setCurrentUser(currentUserData);
 

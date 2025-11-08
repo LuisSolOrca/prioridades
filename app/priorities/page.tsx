@@ -43,6 +43,13 @@ interface Client {
   isActive: boolean;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface Priority {
   _id?: string;
   title: string;
@@ -56,6 +63,7 @@ interface Priority {
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   clientId?: string;
+  projectId?: string;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   wasEdited?: boolean;
@@ -81,6 +89,7 @@ export default function PrioritiesPage() {
   const router = useRouter();
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingPriority, setEditingPriority] = useState<Priority | null>(null);
@@ -145,17 +154,19 @@ export default function PrioritiesPage() {
       setLoading(true);
 
       // Cargar prioridades de la semana actual y la siguiente
-      const [initiativesRes, clientsRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes, workflowsRes] = await Promise.all([
+      const [initiativesRes, clientsRes, projectsRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes, workflowsRes] = await Promise.all([
         fetch('/api/initiatives?activeOnly=true'),
         fetch('/api/clients?activeOnly=true'),
+        fetch('/api/projects'),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${nextWeek.monday.toISOString()}&weekEnd=${nextWeek.friday.toISOString()}`),
         fetch('/api/workflows')
       ]);
 
-      const [initiativesData, clientsData, currentWeekPriorities, nextWeekPriorities, workflowsData] = await Promise.all([
+      const [initiativesData, clientsData, projectsData, currentWeekPriorities, nextWeekPriorities, workflowsData] = await Promise.all([
         initiativesRes.json(),
         clientsRes.json(),
+        projectsRes.json(),
         currentWeekPrioritiesRes.json(),
         nextWeekPrioritiesRes.json(),
         workflowsRes.json()
@@ -163,6 +174,7 @@ export default function PrioritiesPage() {
 
       setInitiatives(Array.isArray(initiativesData) ? initiativesData : []);
       setClients(Array.isArray(clientsData) ? clientsData : []);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
       // Combinar prioridades de ambas semanas
       const allPriorities = [
         ...(Array.isArray(currentWeekPriorities) ? currentWeekPriorities : []),
@@ -906,6 +918,11 @@ export default function PrioritiesPage() {
         onClientCreated={(newClient) => {
           // Agregar el nuevo cliente a la lista
           setClients([...clients, newClient]);
+        }}
+        projects={projects}
+        onProjectCreated={(newProject) => {
+          // Agregar el nuevo proyecto a la lista
+          setProjects([...projects, newProject]);
         }}
         isEditing={!!editingPriority}
         weekLabel={editingPriority
