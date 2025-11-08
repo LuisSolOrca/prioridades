@@ -227,6 +227,7 @@ export default function HistoryPage() {
       description: priority.description || '',
       initiativeIds: priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []),
       clientId: priority.clientId,
+      projectId: priority.projectId,
       completionPercentage: priority.completionPercentage,
       status: priority.status,
       type: (priority.type || 'ESTRATEGICA') as 'ESTRATEGICA' | 'OPERATIVA',
