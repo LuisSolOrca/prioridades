@@ -81,6 +81,8 @@ export default function HistoryPage() {
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
+  const [selectedClient, setSelectedClient] = useState('all');
+  const [selectedProject, setSelectedProject] = useState('all');
   const [selectedArea, setSelectedArea] = useState('all');
   const [includeAdmins, setIncludeAdmins] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
@@ -163,6 +165,16 @@ export default function HistoryPage() {
       filtered = filtered.filter(p => p.initiativeId === selectedInitiative);
     }
 
+    // Filtro por cliente
+    if (selectedClient !== 'all') {
+      filtered = filtered.filter(p => p.clientId === selectedClient);
+    }
+
+    // Filtro por proyecto
+    if (selectedProject !== 'all') {
+      filtered = filtered.filter(p => p.projectId === selectedProject);
+    }
+
     // Filtro por tipo de prioridad
     if (priorityTypeFilter !== 'TODAS') {
       filtered = filtered.filter(p => (p.type || 'ESTRATEGICA') === priorityTypeFilter);
@@ -188,7 +200,7 @@ export default function HistoryPage() {
     }
 
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative, selectedArea, priorityTypeFilter, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
+  }, [priorities, selectedUser, selectedInitiative, selectedClient, selectedProject, selectedArea, priorityTypeFilter, includeAdmins, dateFrom, dateTo, searchKeyword, users]);
 
   // Obtener áreas únicas
   const uniqueAreas = useMemo(() => {
@@ -369,6 +381,36 @@ export default function HistoryPage() {
                   <option value="all">Todas las iniciativas</option>
                   {initiatives.map(initiative => (
                     <option key={initiative._id} value={initiative._id}>{initiative.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Cliente
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  value={selectedClient}
+                  onChange={(e) => setSelectedClient(e.target.value)}
+                >
+                  <option value="all">Todos los clientes</option>
+                  {clients.map(client => (
+                    <option key={client._id} value={client._id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Proyecto
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                >
+                  <option value="all">Todos los proyectos</option>
+                  {projects.filter(p => p.isActive).map(project => (
+                    <option key={project._id} value={project._id}>{project.name}</option>
                   ))}
                 </select>
               </div>
