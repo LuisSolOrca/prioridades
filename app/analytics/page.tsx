@@ -161,9 +161,17 @@ export default function AnalyticsPage() {
       if (!user || user.area !== selectedArea) return false;
     }
 
-    // Filtro por iniciativa
+    // Filtro por iniciativa (puede ser array o string único)
     if (selectedInitiative !== 'all') {
-      if (priority.initiativeId !== selectedInitiative) return false;
+      // Si tiene initiativeIds (array), verificar si contiene la iniciativa seleccionada
+      if (priority.initiativeIds && Array.isArray(priority.initiativeIds)) {
+        if (!priority.initiativeIds.includes(selectedInitiative)) return false;
+      } else if (priority.initiativeId) {
+        // Si solo tiene initiativeId (campo único), comparar directamente
+        if (priority.initiativeId !== selectedInitiative) return false;
+      } else {
+        return false;
+      }
     }
 
     // Filtro por cliente

@@ -160,9 +160,19 @@ export default function HistoryPage() {
       filtered = filtered.filter(p => areaUserIds.includes(p.userId));
     }
 
-    // Filtro por iniciativa
+    // Filtro por iniciativa (puede ser array o string único)
     if (selectedInitiative !== 'all') {
-      filtered = filtered.filter(p => p.initiativeId === selectedInitiative);
+      filtered = filtered.filter(p => {
+        // Si tiene initiativeIds (array), verificar si contiene la iniciativa seleccionada
+        if (p.initiativeIds && Array.isArray(p.initiativeIds)) {
+          return p.initiativeIds.includes(selectedInitiative);
+        }
+        // Si solo tiene initiativeId (campo único), comparar directamente
+        if (p.initiativeId) {
+          return p.initiativeId === selectedInitiative;
+        }
+        return false;
+      });
     }
 
     // Filtro por cliente
