@@ -176,12 +176,22 @@ export default function BulkAssignmentPage() {
 
     // Filtro por cliente
     if (selectedClient !== 'all') {
-      filtered = filtered.filter(p => p.clientId === selectedClient);
+      if (selectedClient === 'none') {
+        // Filtrar prioridades sin cliente
+        filtered = filtered.filter(p => !p.clientId);
+      } else {
+        filtered = filtered.filter(p => p.clientId === selectedClient);
+      }
     }
 
     // Filtro por proyecto
     if (selectedProject !== 'all') {
-      filtered = filtered.filter(p => p.projectId === selectedProject);
+      if (selectedProject === 'none') {
+        // Filtrar prioridades sin proyecto
+        filtered = filtered.filter(p => !p.projectId);
+      } else {
+        filtered = filtered.filter(p => p.projectId === selectedProject);
+      }
     }
 
     // Filtro por tipo
@@ -457,6 +467,7 @@ export default function BulkAssignmentPage() {
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="all">Todos los clientes</option>
+                <option value="none">❌ Sin cliente asignado</option>
                 {clients.map(client => (
                   <option key={client._id} value={client._id}>{client.name}</option>
                 ))}
@@ -475,6 +486,7 @@ export default function BulkAssignmentPage() {
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="all">Todos los proyectos</option>
+                <option value="none">❌ Sin proyecto asignado</option>
                 {projects.filter(p => p.isActive).map(project => (
                   <option key={project._id} value={project._id}>{project.name}</option>
                 ))}
