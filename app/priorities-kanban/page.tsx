@@ -17,6 +17,19 @@ interface Initiative {
   isActive: boolean;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface ChecklistItem {
   _id?: string;
   text: string;
@@ -44,6 +57,8 @@ interface Priority {
   initiativeId?: string;
   initiativeIds?: string[];
   initiatives?: Initiative[];
+  clientId?: string;
+  projectId?: string;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   isCarriedOver?: boolean;
@@ -53,6 +68,8 @@ export default function PrioritiesKanbanPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [currentWeekPriorities, setCurrentWeekPriorities] = useState<Priority[]>([]);
   const [nextWeekPriorities, setNextWeekPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,17 +95,23 @@ export default function PrioritiesKanbanPage() {
     try {
       setLoading(true);
 
-      const [initiativesRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes] = await Promise.all([
+      const [initiativesRes, clientsRes, projectsRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes] = await Promise.all([
         fetch('/api/initiatives?activeOnly=true'),
+        fetch('/api/clients?activeOnly=true'),
+        fetch('/api/projects'),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${nextWeek.monday.toISOString()}&weekEnd=${nextWeek.friday.toISOString()}`)
       ]);
 
       const initiativesData = await initiativesRes.json();
+      const clientsData = await clientsRes.json();
+      const projectsData = await projectsRes.json();
       const currentWeekData = await currentWeekPrioritiesRes.json();
       const nextWeekData = await nextWeekPrioritiesRes.json();
 
       setInitiatives(initiativesData);
+      setClients(Array.isArray(clientsData) ? clientsData : []);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
 
       // Add initiatives to priorities
       const enrichPriorities = (priorities: Priority[]) => {
@@ -405,6 +428,22 @@ export default function PrioritiesKanbanPage() {
                       <p className="text-gray-600 dark:text-gray-400 text-sm">No especificado</p>
                     )}
                   </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cliente</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {selectedPriorityForComments.clientId
+                      ? (clients.find(c => c._id === selectedPriorityForComments.clientId)?.name || 'No especificado')
+                      : 'No especificado'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Proyecto</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {selectedPriorityForComments.projectId
+                      ? (projects.find(p => p._id === selectedPriorityForComments.projectId)?.name || 'No especificado')
+                      : 'Sin proyecto'}
+                  </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Semana</h3>

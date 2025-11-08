@@ -790,6 +790,14 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Proyecto</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {selectedPriority.projectId
+                      ? (projects.find(p => p._id === selectedPriority.projectId)?.name || 'No especificado')
+                      : 'Sin proyecto'}
+                  </p>
+                </div>
+                <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Semana</h3>
                   <p className="text-gray-800 dark:text-gray-200">
                     {new Date(selectedPriority.weekStart).toLocaleDateString('es-MX')} - {new Date(selectedPriority.weekEnd).toLocaleDateString('es-MX')}
