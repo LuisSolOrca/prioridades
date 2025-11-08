@@ -31,6 +31,12 @@ interface Initiative {
   isActive: boolean;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface ChecklistItem {
   _id?: string;
   text: string;
