@@ -141,6 +141,14 @@ export default function PriorityFormModal({
 
   // Limpiar borrador cuando se envía el formulario
   const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validar que si el progreso es 100%, el estado debe ser COMPLETADO
+    if (formData.completionPercentage === 100 && formData.status !== 'COMPLETADO') {
+      alert('Si el progreso es 100%, el estado debe ser "Completado"');
+      return;
+    }
+
     localStorage.removeItem(DRAFT_KEY);
     handleSubmit(e);
   };
