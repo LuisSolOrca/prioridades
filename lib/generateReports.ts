@@ -1252,3 +1252,128 @@ export const generateClientBreakdownReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+export const generateProjectBreakdownReport = async (
+  priorities: any[],
+  users: any[],
+  projects: any[],
+  initiatives: any[],
+  format: 'pdf' | 'doc',
+  filters?: string
+) => {
+  // Trackear generación de reporte
+  await trackFeature('reportsGenerated');
+
+  // Agrupar prioridades por proyecto
+  const prioritiesByProject = new Map<string, any[]>();
+  const projectHours = new Map<string, number>();
+
+  priorities.forEach(priority => {
+    // Solo usar 'sin-proyecto' si projectId es undefined, null o vacío
+    const projectId = (priority.projectId && priority.projectId.trim() !== '') ? priority.projectId : 'sin-proyecto';
+    if (!prioritiesByProject.has(projectId)) {
+      prioritiesByProject.set(projectId, []);
+    }
+    prioritiesByProject.get(projectId)!.push(priority);
+
+    // Calcular horas trabajadas de las tareas completadas
+    if (priority.checklist && priority.checklist.length > 0) {
+      const completedHours = priority.checklist
+        .filter((task: any) => task.completed && task.completedHours)
+        .reduce((sum: number, task: any) => sum + (task.completedHours || 0), 0);
+
+      projectHours.set(projectId, (projectHours.get(projectId) || 0) + completedHours);
+    }
+  });
+
+  // Crear filas del reporte
+  const rows: (string | number)[][] = [];
+  let totalHours = 0;
+  let totalPriorities = 0;
+
+  // Ordenar proyectos por horas trabajadas (de mayor a menor)
+  const sortedProjects = Array.from(prioritiesByProject.entries()).sort((a, b) => {
+    const hoursA = projectHours.get(a[0]) || 0;
+    const hoursB = projectHours.get(b[0]) || 0;
+    return hoursB - hoursA;
+  });
+
+  sortedProjects.forEach(([projectId, projectPriorities]) => {
+    const project = projectId !== 'sin-proyecto' ? projects.find(p => p._id === projectId) : null;
+    const projectName = project ? project.name : 'Sin proyecto';
+    const hours = projectHours.get(projectId) || 0;
+
+    projectPriorities.forEach(priority => {
+      const user = users.find(u => u._id === priority.userId);
+      const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
+      const weekEnd = new Date(priority.weekEnd).toLocaleDateString('es-MX');
+
+      // Calcular horas de esta prioridad específica
+      const priorityHours = priority.checklist && priority.checklist.length > 0
+        ? priority.checklist
+            .filter((task: any) => task.completed && task.completedHours)
+            .reduce((sum: number, task: any) => sum + (task.completedHours || 0), 0)
+        : 0;
+
+      const statusText = priority.status === 'COMPLETADO' ? 'Completado' :
+                        priority.status === 'EN_TIEMPO' ? 'En Tiempo' :
+                        priority.status === 'EN_RIESGO' ? 'En Riesgo' :
+                        priority.status === 'BLOQUEADO' ? 'Bloqueado' :
+                        priority.status === 'REPROGRAMADO' ? 'Reprogramado' : priority.status;
+
+      rows.push([
+        projectName,
+        `📋 ${priority.title}`,
+        user?.name || 'Desconocido',
+        `${weekStart} - ${weekEnd}`,
+        statusText,
+        `${priority.completionPercentage}%`,
+        `${priorityHours.toFixed(2)} hrs`
+      ]);
+
+      totalPriorities++;
+    });
+
+    totalHours += hours;
+  });
+
+  // Crear tabla resumen por proyecto
+  const summaryTableRows: (string | number)[][] = [];
+  sortedProjects.forEach(([projectId, projectPriorities]) => {
+    const project = projectId !== 'sin-proyecto' ? projects.find(p => p._id === projectId) : null;
+    const projectName = project ? project.name : 'Sin proyecto';
+    const hours = projectHours.get(projectId) || 0;
+    const priorityCount = projectPriorities.length;
+
+    summaryTableRows.push([
+      projectName,
+      priorityCount,
+      `${hours.toFixed(2)} hrs`
+    ]);
+  });
+
+  const data: ReportData = {
+    title: 'Reporte de Breakdown por Proyecto',
+    subtitle: filters || 'Todas las prioridades',
+    headers: ['Proyecto', 'Prioridad', 'Usuario', 'Semana', 'Estado', 'Avance', 'Horas'],
+    rows: rows,
+    summary: [
+      { label: 'Total de Proyectos', value: prioritiesByProject.size },
+      { label: 'Total de Prioridades', value: totalPriorities },
+      { label: 'Total de Horas Trabajadas', value: `${totalHours.toFixed(2)} horas` }
+    ],
+    summaryTable: {
+      headers: ['Proyecto', 'Prioridades', 'Total Horas'],
+      rows: summaryTableRows
+    },
+    summaryTableTitle: 'Resumen de Horas por Proyecto:'
+  };
+
+  const fileName = `Reporte_BreakdownProyectos_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};

@@ -13,7 +13,8 @@ import {
   generateChecklistReport,
   generateAzureDevOpsReport,
   generateLocalHoursReport,
-  generateClientBreakdownReport
+  generateClientBreakdownReport,
+  generateProjectBreakdownReport
 } from '@/lib/generateReports';
 
 interface User {
@@ -59,7 +60,7 @@ interface Priority {
   checklist?: ChecklistItem[];
 }
 
-type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours' | 'clientbreakdown';
+type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours' | 'clientbreakdown' | 'projectbreakdown';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -67,6 +68,7 @@ export default function ReportsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,18 +100,20 @@ export default function ReportsPage() {
     try {
       const currentUserId = (session?.user as any)?.id;
 
-      const [usersRes, initiativesRes, clientsRes, prioritiesRes, currentUserRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, projectsRes, prioritiesRes, currentUserRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
         fetch('/api/clients'),
+        fetch('/api/projects'),
         fetch('/api/priorities?forDashboard=true'),
         currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, clientsData, prioritiesData, currentUserData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, projectsData, prioritiesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
         clientsRes.json(),
+        projectsRes.json(),
         prioritiesRes.json(),
         currentUserRes ? currentUserRes.json() : null
       ]);
@@ -117,6 +121,7 @@ export default function ReportsPage() {
       setUsers(usersData);
       setInitiatives(initiativesData);
       setClients(clientsData);
+      setProjects(projectsData);
       setPriorities(prioritiesData);
       setCurrentUser(currentUserData);
     } catch (error) {
@@ -311,6 +316,17 @@ export default function ReportsPage() {
             filterDescription
           );
           break;
+        case 'projectbreakdown':
+          setReportProgress('Generando breakdown por proyecto...');
+          await generateProjectBreakdownReport(
+            filteredPriorities,
+            users,
+            projects,
+            initiatives,
+            format,
+            filterDescription
+          );
+          break;
       }
 
       setReportProgress('¡Reporte generado exitosamente!');
@@ -484,6 +500,21 @@ export default function ReportsPage() {
                 <div className="font-semibold text-gray-800 dark:text-gray-100">Breakdown por Cliente</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Horas trabajadas y prioridades desglosadas por cliente
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType('projectbreakdown')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'projectbreakdown'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                }`}
+              >
+                <div className="text-3xl mb-2">📁</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Breakdown por Proyecto</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Horas trabajadas y prioridades desglosadas por proyecto
                 </div>
               </button>
             </div>
@@ -662,6 +693,11 @@ export default function ReportsPage() {
                 {reportType === 'clientbreakdown' && (
                   <>
                     <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.length}</span> prioridades serán incluidas en el breakdown por cliente
+                  </>
+                )}
+                {reportType === 'projectbreakdown' && (
+                  <>
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.length}</span> prioridades serán incluidas en el breakdown por proyecto
                   </>
                 )}
               </div>
