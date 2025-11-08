@@ -57,6 +57,7 @@ interface Priority {
   userId: string;
   initiativeId: string;
   clientId?: string;
+  projectId?: string;
   checklist?: ChecklistItem[];
 }
 
@@ -76,6 +77,7 @@ export default function ReportsPage() {
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedInitiative, setSelectedInitiative] = useState('all');
   const [selectedClient, setSelectedClient] = useState('all');
+  const [selectedProject, setSelectedProject] = useState('all');
   const [selectedArea, setSelectedArea] = useState('all');
   const [includeAdmins, setIncludeAdmins] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
@@ -158,6 +160,11 @@ export default function ReportsPage() {
       filtered = filtered.filter(p => p.clientId === selectedClient);
     }
 
+    // Filtro por proyecto
+    if (selectedProject !== 'all') {
+      filtered = filtered.filter(p => p.projectId === selectedProject);
+    }
+
     if (dateFrom) {
       const fromDate = new Date(dateFrom);
       filtered = filtered.filter(p => new Date(p.weekStart) >= fromDate);
@@ -181,7 +188,7 @@ export default function ReportsPage() {
     }
 
     return filtered;
-  }, [priorities, selectedUser, selectedInitiative, selectedClient, selectedArea, includeAdmins, dateFrom, dateTo, searchKeyword, priorityTypeFilter, users]);
+  }, [priorities, selectedUser, selectedInitiative, selectedClient, selectedProject, selectedArea, includeAdmins, dateFrom, dateTo, searchKeyword, priorityTypeFilter, users]);
 
   const filteredUsers = useMemo(() => {
     if (includeAdmins) return users;
@@ -218,6 +225,11 @@ export default function ReportsPage() {
     if (selectedClient !== 'all') {
       const client = clients.find(c => c._id === selectedClient);
       parts.push(`Cliente: ${client?.name}`);
+    }
+
+    if (selectedProject !== 'all') {
+      const project = projects.find(p => p._id === selectedProject);
+      parts.push(`Proyecto: ${project?.name}`);
     }
 
     if (dateFrom && dateTo) {
@@ -345,6 +357,7 @@ export default function ReportsPage() {
     setSelectedUser('all');
     setSelectedInitiative('all');
     setSelectedClient('all');
+    setSelectedProject('all');
     setSelectedArea('all');
     setIncludeAdmins(true);
     setDateFrom('');
@@ -587,6 +600,22 @@ export default function ReportsPage() {
                   <option value="all">Todos los clientes</option>
                   {clients.map(client => (
                     <option key={client._id} value={client._id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Filtrar por Proyecto
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                >
+                  <option value="all">Todos los proyectos</option>
+                  {projects.filter(p => p.isActive).map(project => (
+                    <option key={project._id} value={project._id}>{project.name}</option>
                   ))}
                 </select>
               </div>
