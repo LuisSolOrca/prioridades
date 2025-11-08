@@ -56,6 +56,7 @@ interface Priority {
   type?: 'ESTRATEGICA' | 'OPERATIVA';
   userId: string;
   initiativeId: string;
+  initiativeIds?: string[]; // Array de iniciativas (nuevo formato)
   clientId?: string;
   projectId?: string;
   checklist?: ChecklistItem[];
