@@ -78,6 +78,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
+    // Verificar si hay prioridades usando este proyecto
+    const Priority = mongoose.models.Priority || (await import('@/models/Priority')).default;
+    const prioritiesCount = await Priority.countDocuments({ projectId: params.id });
+
+    if (prioritiesCount > 0) {
+      return NextResponse.json({
+        error: `No se puede eliminar el proyecto porque tiene ${prioritiesCount} prioridad(es) asociada(s). Por favor, reasigna o elimina esas prioridades primero.`
+      }, { status: 400 });
+    }
+
     const project = await Project.findByIdAndDelete(params.id);
 
     if (!project) {

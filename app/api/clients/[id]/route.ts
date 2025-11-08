@@ -68,6 +68,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
+    // Verificar si hay prioridades usando este cliente
+    const Priority = mongoose.models.Priority || (await import('@/models/Priority')).default;
+    const prioritiesCount = await Priority.countDocuments({ clientId: params.id });
+
+    if (prioritiesCount > 0) {
+      return NextResponse.json({
+        error: `No se puede eliminar el cliente porque tiene ${prioritiesCount} prioridad(es) asociada(s). Por favor, reasigna o elimina esas prioridades primero.`
+      }, { status: 400 });
+    }
+
     const client = await Client.findByIdAndDelete(params.id);
 
     if (!client) {
