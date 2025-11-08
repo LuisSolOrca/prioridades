@@ -87,6 +87,14 @@ export default function BulkAssignmentPage() {
   const [assignProject, setAssignProject] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
 
+  // Estados para crear nuevos clientes y proyectos
+  const [isCreatingNewClient, setIsCreatingNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [clientCreating, setClientCreating] = useState(false);
+  const [isCreatingNewProject, setIsCreatingNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [projectCreating, setProjectCreating] = useState(false);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -229,6 +237,86 @@ export default function BulkAssignmentPage() {
       setSelectedPriorities(new Set());
     } else {
       setSelectedPriorities(new Set(filteredPriorities.map(p => p._id)));
+    }
+  };
+
+  const handleCreateClient = async () => {
+    if (!newClientName.trim()) {
+      alert('Por favor ingresa el nombre del cliente');
+      return;
+    }
+
+    setClientCreating(true);
+    try {
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newClientName.trim(),
+          isActive: true
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error al crear el cliente');
+      }
+
+      const newClient = await res.json();
+
+      // Agregar el nuevo cliente a la lista y seleccionarlo
+      setClients([...clients, newClient]);
+      setAssignClient(newClient._id);
+
+      // Limpiar estado
+      setNewClientName('');
+      setIsCreatingNewClient(false);
+      alert(`✅ Cliente "${newClient.name}" creado exitosamente`);
+    } catch (error: any) {
+      console.error('Error al crear cliente:', error);
+      alert('Error al crear el cliente: ' + error.message);
+    } finally {
+      setClientCreating(false);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) {
+      alert('Por favor ingresa el nombre del proyecto');
+      return;
+    }
+
+    setProjectCreating(true);
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newProjectName.trim(),
+          isActive: true
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error al crear el proyecto');
+      }
+
+      const newProject = await res.json();
+
+      // Agregar el nuevo proyecto a la lista y seleccionarlo
+      setProjects([...projects, newProject]);
+      setAssignProject(newProject._id);
+
+      // Limpiar estado
+      setNewProjectName('');
+      setIsCreatingNewProject(false);
+      alert(`✅ Proyecto "${newProject.name}" creado exitosamente`);
+    } catch (error: any) {
+      console.error('Error al crear proyecto:', error);
+      alert('Error al crear el proyecto: ' + error.message);
+    } finally {
+      setProjectCreating(false);
     }
   };
 
@@ -477,33 +565,115 @@ export default function BulkAssignmentPage() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Asignar Cliente
               </label>
-              <select
-                value={assignClient}
-                onChange={(e) => setAssignClient(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                disabled={isAssigning}
-              >
-                <option value="">No modificar cliente</option>
-                {clients.map(client => (
-                  <option key={client._id} value={client._id}>{client.name}</option>
-                ))}
-              </select>
+              {!isCreatingNewClient ? (
+                <div className="flex gap-2">
+                  <select
+                    value={assignClient}
+                    onChange={(e) => setAssignClient(e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    disabled={isAssigning}
+                  >
+                    <option value="">No modificar cliente</option>
+                    {clients.map(client => (
+                      <option key={client._id} value={client._id}>{client.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setIsCreatingNewClient(true)}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold text-sm"
+                    disabled={isAssigning}
+                    title="Crear nuevo cliente"
+                  >
+                    + Nuevo
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newClientName}
+                    onChange={(e) => setNewClientName(e.target.value)}
+                    placeholder="Nombre del nuevo cliente"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    disabled={clientCreating}
+                    onKeyPress={(e) => e.key === 'Enter' && handleCreateClient()}
+                  />
+                  <button
+                    onClick={handleCreateClient}
+                    disabled={clientCreating || !newClientName.trim()}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold text-sm disabled:bg-gray-400"
+                  >
+                    {clientCreating ? '...' : '✓'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCreatingNewClient(false);
+                      setNewClientName('');
+                    }}
+                    disabled={clientCreating}
+                    className="px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-semibold text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Asignar Proyecto
               </label>
-              <select
-                value={assignProject}
-                onChange={(e) => setAssignProject(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                disabled={isAssigning}
-              >
-                <option value="">No modificar proyecto</option>
-                {projects.filter(p => p.isActive).map(project => (
-                  <option key={project._id} value={project._id}>{project.name}</option>
-                ))}
-              </select>
+              {!isCreatingNewProject ? (
+                <div className="flex gap-2">
+                  <select
+                    value={assignProject}
+                    onChange={(e) => setAssignProject(e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    disabled={isAssigning}
+                  >
+                    <option value="">No modificar proyecto</option>
+                    {projects.filter(p => p.isActive).map(project => (
+                      <option key={project._id} value={project._id}>{project.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setIsCreatingNewProject(true)}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold text-sm"
+                    disabled={isAssigning}
+                    title="Crear nuevo proyecto"
+                  >
+                    + Nuevo
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    placeholder="Nombre del nuevo proyecto"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    disabled={projectCreating}
+                    onKeyPress={(e) => e.key === 'Enter' && handleCreateProject()}
+                  />
+                  <button
+                    onClick={handleCreateProject}
+                    disabled={projectCreating || !newProjectName.trim()}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold text-sm disabled:bg-gray-400"
+                  >
+                    {projectCreating ? '...' : '✓'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCreatingNewProject(false);
+                      setNewProjectName('');
+                    }}
+                    disabled={projectCreating}
+                    className="px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-semibold text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-end">
               <button
