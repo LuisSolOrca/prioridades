@@ -493,6 +493,8 @@ export default function HistoryPage() {
                 onClick={() => {
                   setSelectedUser('all');
                   setSelectedInitiative('all');
+                  setSelectedClient('all');
+                  setSelectedProject('all');
                   setSelectedArea('all');
                   setIncludeAdmins(true);
                   setDateFrom('');
