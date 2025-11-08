@@ -122,6 +122,7 @@ export async function PUT(
         userId: priority.userId,
         initiativeIds: body.initiativeIds || priority.initiativeIds,
         clientId: body.clientId || priority.clientId,
+        projectId: body.projectId || priority.projectId,
         checklist: priority.checklist?.map(item => ({ text: item.text, completed: false })) || [],
         evidenceLinks: [],
         wasEdited: false,
@@ -164,6 +165,11 @@ export async function PUT(
     // Asegurar que clientId se actualice si viene en el body
     if (body.clientId !== undefined) {
       updateData.clientId = body.clientId;
+    }
+
+    // Asegurar que projectId se actualice si viene en el body
+    if (body.projectId !== undefined) {
+      updateData.projectId = body.projectId;
     }
 
     // Si hay checklist en el body, necesitamos actualizar usando $set para forzar la actualización de subdocumentos
