@@ -17,6 +17,7 @@ interface ReportData {
     headers: string[];
     rows: (string | number)[][];
   };
+  summaryTableTitle?: string;
   taskMetrics?: {
     totalTasks: number;
     completedTasks: number;
@@ -245,7 +246,7 @@ export const generatePDFReport = async (data: ReportData, fileName: string = 'Re
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('Resumen de Horas por Cliente:', 14, startY);
+    doc.text(data.summaryTableTitle || 'Resumen:', 14, startY);
 
     startY += 7;
 
@@ -444,7 +445,7 @@ export const generateDOCReport = async (data: ReportData, fileName: string = 'Re
   if (data.summaryTable) {
     sections.push(
       new Paragraph({
-        text: 'Resumen de Horas por Cliente:',
+        text: data.summaryTableTitle || 'Resumen:',
         heading: 'Heading2',
         spacing: { before: 200, after: 100 }
       })
@@ -997,6 +998,7 @@ export const generateAzureDevOpsReport = async (
       headers: ['Usuario', 'Total de Horas'],
       rows: summaryTableRows
     },
+    summaryTableTitle: 'Resumen de Horas por Persona:',
     taskMetrics: {
       totalTasks: totalTasks,
       completedTasks: completedTasks,
@@ -1108,6 +1110,7 @@ export const generateLocalHoursReport = async (
       headers: ['Usuario', 'Total de Horas'],
       rows: summaryTableRows
     },
+    summaryTableTitle: 'Resumen de Horas por Persona:',
     taskMetrics: {
       totalTasks: totalTasks,
       completedTasks: completedTasks,
@@ -1237,7 +1240,8 @@ export const generateClientBreakdownReport = async (
     summaryTable: {
       headers: ['Cliente', 'Prioridades', 'Total Horas'],
       rows: summaryTableRows
-    }
+    },
+    summaryTableTitle: 'Resumen de Horas por Cliente:'
   };
 
   const fileName = `Reporte_BreakdownClientes_${new Date().getTime()}`;
