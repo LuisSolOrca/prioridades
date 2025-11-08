@@ -12,7 +12,8 @@ import {
   generateInitiativesReport,
   generateChecklistReport,
   generateAzureDevOpsReport,
-  generateLocalHoursReport
+  generateLocalHoursReport,
+  generateClientBreakdownReport
 } from '@/lib/generateReports';
 
 interface User {
@@ -58,7 +59,7 @@ interface Priority {
   checklist?: ChecklistItem[];
 }
 
-type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours';
+type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours' | 'clientbreakdown';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -285,6 +286,16 @@ export default function ReportsPage() {
           filterDescription
         );
         break;
+      case 'clientbreakdown':
+        generateClientBreakdownReport(
+          filteredPriorities,
+          users,
+          clients,
+          initiatives,
+          format,
+          filterDescription
+        );
+        break;
     }
   };
 
@@ -432,6 +443,21 @@ export default function ReportsPage() {
                 <div className="font-semibold text-gray-800 dark:text-gray-100">Horas Locales</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Horas trabajadas en prioridades no vinculadas a Azure DevOps
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType('clientbreakdown')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'clientbreakdown'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                }`}
+              >
+                <div className="text-3xl mb-2">🏢</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Breakdown por Cliente</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Horas trabajadas y prioridades desglosadas por cliente
                 </div>
               </button>
             </div>
@@ -605,6 +631,11 @@ export default function ReportsPage() {
                 {reportType === 'localhours' && (
                   <>
                     Los filtros seleccionados se aplicarán al reporte de horas locales
+                  </>
+                )}
+                {reportType === 'clientbreakdown' && (
+                  <>
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.length}</span> prioridades serán incluidas en el breakdown por cliente
                   </>
                 )}
               </div>

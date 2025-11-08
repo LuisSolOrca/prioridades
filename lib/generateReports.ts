@@ -1124,3 +1124,126 @@ export const generateLocalHoursReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+export const generateClientBreakdownReport = async (
+  priorities: any[],
+  users: any[],
+  clients: any[],
+  initiatives: any[],
+  format: 'pdf' | 'doc',
+  filters?: string
+) => {
+  // Trackear generación de reporte
+  await trackFeature('reportGenerated');
+
+  // Agrupar prioridades por cliente
+  const prioritiesByClient = new Map<string, any[]>();
+  const clientHours = new Map<string, number>();
+
+  priorities.forEach(priority => {
+    const clientId = priority.clientId || 'sin-cliente';
+    if (!prioritiesByClient.has(clientId)) {
+      prioritiesByClient.set(clientId, []);
+    }
+    prioritiesByClient.get(clientId)!.push(priority);
+
+    // Calcular horas trabajadas de las tareas completadas
+    if (priority.checklist && priority.checklist.length > 0) {
+      const completedHours = priority.checklist
+        .filter((task: any) => task.completed && task.completedHours)
+        .reduce((sum: number, task: any) => sum + (task.completedHours || 0), 0);
+
+      clientHours.set(clientId, (clientHours.get(clientId) || 0) + completedHours);
+    }
+  });
+
+  // Crear filas del reporte
+  const rows: (string | number)[][] = [];
+  let totalHours = 0;
+  let totalPriorities = 0;
+
+  // Ordenar clientes por horas trabajadas (de mayor a menor)
+  const sortedClients = Array.from(prioritiesByClient.entries()).sort((a, b) => {
+    const hoursA = clientHours.get(a[0]) || 0;
+    const hoursB = clientHours.get(b[0]) || 0;
+    return hoursB - hoursA;
+  });
+
+  sortedClients.forEach(([clientId, clientPriorities]) => {
+    const client = clients.find(c => c._id === clientId);
+    const clientName = client ? client.name : 'Sin cliente / Interno';
+    const hours = clientHours.get(clientId) || 0;
+
+    clientPriorities.forEach(priority => {
+      const user = users.find(u => u._id === priority.userId);
+      const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
+      const weekEnd = new Date(priority.weekEnd).toLocaleDateString('es-MX');
+
+      // Calcular horas de esta prioridad específica
+      const priorityHours = priority.checklist && priority.checklist.length > 0
+        ? priority.checklist
+            .filter((task: any) => task.completed && task.completedHours)
+            .reduce((sum: number, task: any) => sum + (task.completedHours || 0), 0)
+        : 0;
+
+      const statusText = priority.status === 'COMPLETADO' ? 'Completado' :
+                        priority.status === 'EN_TIEMPO' ? 'En Tiempo' :
+                        priority.status === 'EN_RIESGO' ? 'En Riesgo' :
+                        priority.status === 'BLOQUEADO' ? 'Bloqueado' :
+                        priority.status === 'REPROGRAMADO' ? 'Reprogramado' : priority.status;
+
+      rows.push([
+        clientName,
+        `📋 ${priority.title}`,
+        user?.name || 'Desconocido',
+        `${weekStart} - ${weekEnd}`,
+        statusText,
+        `${priority.completionPercentage}%`,
+        `${priorityHours.toFixed(2)} hrs`
+      ]);
+
+      totalPriorities++;
+    });
+
+    totalHours += hours;
+  });
+
+  // Crear tabla resumen por cliente
+  const summaryTableRows: (string | number)[][] = [];
+  sortedClients.forEach(([clientId, clientPriorities]) => {
+    const client = clients.find(c => c._id === clientId);
+    const clientName = client ? client.name : 'Sin cliente / Interno';
+    const hours = clientHours.get(clientId) || 0;
+    const priorityCount = clientPriorities.length;
+
+    summaryTableRows.push([
+      clientName,
+      priorityCount,
+      `${hours.toFixed(2)} hrs`
+    ]);
+  });
+
+  const data: ReportData = {
+    title: 'Reporte de Breakdown por Cliente',
+    subtitle: filters || 'Todas las prioridades',
+    headers: ['Cliente', 'Prioridad', 'Usuario', 'Semana', 'Estado', 'Avance', 'Horas'],
+    rows: rows,
+    summary: [
+      { label: 'Total de Clientes', value: prioritiesByClient.size },
+      { label: 'Total de Prioridades', value: totalPriorities },
+      { label: 'Total de Horas Trabajadas', value: `${totalHours.toFixed(2)} horas` }
+    ],
+    summaryTable: {
+      headers: ['Cliente', 'Prioridades', 'Total Horas'],
+      rows: summaryTableRows
+    }
+  };
+
+  const fileName = `Reporte_BreakdownClientes_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};
