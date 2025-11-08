@@ -25,7 +25,8 @@ import {
   UserCog,
   Cloud,
   Link,
-  Briefcase
+  Briefcase,
+  ClipboardList
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -374,6 +375,17 @@ export default function Navbar() {
                     >
                       <Briefcase size={22} />
                     </button>
+                    <button
+                      onClick={() => handleNavigation('/admin/bulk-assignment')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/admin/bulk-assignment'
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Asignación Masiva"
+                    >
+                      <ClipboardList size={22} />
+                    </button>
                   </>
                 )}
               </>
@@ -499,6 +511,12 @@ export default function Navbar() {
                       label="Clientes"
                       active={pathname === '/clients'}
                       onClick={() => handleNavigation('/clients')}
+                    />
+                    <NavButton
+                      icon={<ClipboardList size={20} />}
+                      label="Asignación Masiva"
+                      active={pathname === '/admin/bulk-assignment'}
+                      onClick={() => handleNavigation('/admin/bulk-assignment')}
                     />
                   </>
                 )}
