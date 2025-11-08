@@ -1141,7 +1141,8 @@ export const generateClientBreakdownReport = async (
   const clientHours = new Map<string, number>();
 
   priorities.forEach(priority => {
-    const clientId = priority.clientId || 'sin-cliente';
+    // Solo usar 'sin-cliente' si clientId es undefined, null o vacío
+    const clientId = (priority.clientId && priority.clientId.trim() !== '') ? priority.clientId : 'sin-cliente';
     if (!prioritiesByClient.has(clientId)) {
       prioritiesByClient.set(clientId, []);
     }
@@ -1170,8 +1171,8 @@ export const generateClientBreakdownReport = async (
   });
 
   sortedClients.forEach(([clientId, clientPriorities]) => {
-    const client = clients.find(c => c._id === clientId);
-    const clientName = client ? client.name : 'Sin cliente / Interno';
+    const client = clientId !== 'sin-cliente' ? clients.find(c => c._id === clientId) : null;
+    const clientName = client ? client.name : 'Cliente no definido';
     const hours = clientHours.get(clientId) || 0;
 
     clientPriorities.forEach(priority => {
@@ -1211,8 +1212,8 @@ export const generateClientBreakdownReport = async (
   // Crear tabla resumen por cliente
   const summaryTableRows: (string | number)[][] = [];
   sortedClients.forEach(([clientId, clientPriorities]) => {
-    const client = clients.find(c => c._id === clientId);
-    const clientName = client ? client.name : 'Sin cliente / Interno';
+    const client = clientId !== 'sin-cliente' ? clients.find(c => c._id === clientId) : null;
+    const clientName = client ? client.name : 'Cliente no definido';
     const hours = clientHours.get(clientId) || 0;
     const priorityCount = clientPriorities.length;
 
