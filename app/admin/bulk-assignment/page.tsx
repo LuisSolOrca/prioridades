@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
+import { Search, X } from 'lucide-react';
 
 interface User {
   _id: string;
@@ -94,6 +95,9 @@ export default function BulkAssignmentPage() {
   const [isCreatingNewProject, setIsCreatingNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [projectCreating, setProjectCreating] = useState(false);
+
+  // Estado para modal de detalles
+  const [selectedPriorityForView, setSelectedPriorityForView] = useState<Priority | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -751,8 +755,7 @@ export default function BulkAssignmentPage() {
                 return (
                   <div
                     key={priority._id}
-                    onClick={() => togglePriority(priority._id)}
-                    className={`p-4 border rounded-lg cursor-pointer transition ${
+                    className={`p-4 border rounded-lg transition ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
@@ -764,15 +767,28 @@ export default function BulkAssignmentPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => togglePriority(priority._id)}
-                          className="w-5 h-5"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-5 h-5 cursor-pointer"
                         />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 cursor-pointer" onClick={() => togglePriority(priority._id)}>
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold text-gray-800 dark:text-gray-100">
                             {priority.title}
                           </h3>
-                          <StatusBadge status={priority.status} />
+                          <div className="flex items-center gap-2">
+                            <StatusBadge status={priority.status} />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPriorityForView(priority);
+                              }}
+                              className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition"
+                              title="Ver detalles"
+                            >
+                              <Search size={18} />
+                            </button>
+                          </div>
                         </div>
                         {priority.description && (
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
@@ -814,6 +830,148 @@ export default function BulkAssignmentPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Detalles */}
+      {selectedPriorityForView && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                Detalles de la Prioridad
+              </h2>
+              <button
+                onClick={() => setSelectedPriorityForView(null)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Título */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Título</h3>
+                <p className="text-gray-800 dark:text-gray-200">{selectedPriorityForView.title}</p>
+              </div>
+
+              {/* Descripción */}
+              {selectedPriorityForView.description && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Descripción</h3>
+                  <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{selectedPriorityForView.description}</p>
+                </div>
+              )}
+
+              {/* Usuario */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Usuario</h3>
+                <p className="text-gray-800 dark:text-gray-200">
+                  {users.find(u => u._id === selectedPriorityForView.userId)?.name || 'Usuario desconocido'}
+                </p>
+              </div>
+
+              {/* Iniciativa */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Iniciativa</h3>
+                <p className="text-gray-800 dark:text-gray-200">
+                  {(() => {
+                    if (selectedPriorityForView.initiativeIds && selectedPriorityForView.initiativeIds.length > 0) {
+                      return selectedPriorityForView.initiativeIds
+                        .map(id => initiatives.find(i => i._id === id)?.name)
+                        .filter(Boolean)
+                        .join(', ') || 'No especificada';
+                    }
+                    if (selectedPriorityForView.initiativeId) {
+                      return initiatives.find(i => i._id === selectedPriorityForView.initiativeId)?.name || 'No especificada';
+                    }
+                    return 'No especificada';
+                  })()}
+                </p>
+              </div>
+
+              {/* Cliente */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cliente</h3>
+                <p className="text-gray-800 dark:text-gray-200">
+                  {selectedPriorityForView.clientId
+                    ? (clients.find(c => c._id === selectedPriorityForView.clientId)?.name || 'No especificado')
+                    : 'Sin cliente'}
+                </p>
+              </div>
+
+              {/* Proyecto */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Proyecto</h3>
+                <p className="text-gray-800 dark:text-gray-200">
+                  {selectedPriorityForView.projectId
+                    ? (projects.find(p => p._id === selectedPriorityForView.projectId)?.name || 'No especificado')
+                    : 'Sin proyecto'}
+                </p>
+              </div>
+
+              {/* Semana */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Semana</h3>
+                <p className="text-gray-800 dark:text-gray-200">
+                  {new Date(selectedPriorityForView.weekStart).toLocaleDateString('es-MX')} - {new Date(selectedPriorityForView.weekEnd).toLocaleDateString('es-MX')}
+                </p>
+              </div>
+
+              {/* Estado y Progreso */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Estado</h3>
+                  <StatusBadge status={selectedPriorityForView.status} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Progreso</h3>
+                  <p className="text-gray-800 dark:text-gray-200">{selectedPriorityForView.completionPercentage}%</p>
+                </div>
+              </div>
+
+              {/* Tipo */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tipo</h3>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  (selectedPriorityForView.type || 'ESTRATEGICA') === 'ESTRATEGICA'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
+                    : 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200'
+                }`}>
+                  {(selectedPriorityForView.type || 'ESTRATEGICA') === 'ESTRATEGICA' ? 'Estratégica' : 'Operativa'}
+                </span>
+              </div>
+
+              {/* Checklist */}
+              {selectedPriorityForView.checklist && selectedPriorityForView.checklist.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Checklist ({selectedPriorityForView.checklist.filter(item => item.completed).length}/{selectedPriorityForView.checklist.length})
+                  </h3>
+                  <ul className="space-y-2">
+                    {selectedPriorityForView.checklist.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-lg">{item.completed ? '✅' : '⬜'}</span>
+                        <span className={`flex-1 ${item.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                          {item.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-6">
+              <button
+                onClick={() => setSelectedPriorityForView(null)}
+                className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
