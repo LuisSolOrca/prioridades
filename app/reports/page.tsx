@@ -82,6 +82,8 @@ export default function ReportsPage() {
   const [reportType, setReportType] = useState<ReportType>('priorities');
   const [priorityTypeFilter, setPriorityTypeFilter] = useState<'TODAS' | 'ESTRATEGICA' | 'OPERATIVA'>('TODAS');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportProgress, setReportProgress] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -228,74 +230,98 @@ export default function ReportsPage() {
     return parts.length > 0 ? parts.join(' | ') : undefined;
   };
 
-  const handleGenerateReport = (format: 'pdf' | 'doc') => {
-    const filterDescription = getFilterDescription();
+  const handleGenerateReport = async (format: 'pdf' | 'doc') => {
+    setIsGeneratingReport(true);
+    setReportProgress('Preparando datos del reporte...');
 
-    switch (reportType) {
-      case 'priorities':
-        generatePrioritiesReport(
-          filteredPriorities,
-          users,
-          initiatives,
-          format,
-          filterDescription
-        );
-        break;
-      case 'performance':
-        generateUserPerformanceReport(
-          filteredUsers,
-          filteredPriorities,
-          format,
-          filterDescription
-        );
-        break;
-      case 'initiatives':
-        generateInitiativesReport(
-          initiatives,
-          filteredPriorities,
-          format,
-          filterDescription
-        );
-        break;
-      case 'checklist':
-        generateChecklistReport(
-          filteredPriorities,
-          users,
-          initiatives,
-          format,
-          filterDescription
-        );
-        break;
-      case 'azuredevops':
-        generateAzureDevOpsReport(
-          filteredPriorities,
-          users,
-          initiatives,
-          format,
-          filterDescription
-        );
-        break;
-      case 'localhours':
-        generateLocalHoursReport(
-          selectedUser,
-          selectedArea,
-          selectedClient,
-          dateFrom,
-          dateTo,
-          format,
-          filterDescription
-        );
-        break;
-      case 'clientbreakdown':
-        generateClientBreakdownReport(
-          filteredPriorities,
-          users,
-          clients,
-          initiatives,
-          format,
-          filterDescription
-        );
-        break;
+    try {
+      const filterDescription = getFilterDescription();
+
+      await new Promise(resolve => setTimeout(resolve, 300)); // Pequeña pausa para mostrar el mensaje inicial
+
+      switch (reportType) {
+        case 'priorities':
+          setReportProgress('Generando reporte de prioridades...');
+          await generatePrioritiesReport(
+            filteredPriorities,
+            users,
+            initiatives,
+            format,
+            filterDescription
+          );
+          break;
+        case 'performance':
+          setReportProgress('Generando reporte de rendimiento...');
+          await generateUserPerformanceReport(
+            filteredUsers,
+            filteredPriorities,
+            format,
+            filterDescription
+          );
+          break;
+        case 'initiatives':
+          setReportProgress('Generando reporte de iniciativas...');
+          await generateInitiativesReport(
+            initiatives,
+            filteredPriorities,
+            format,
+            filterDescription
+          );
+          break;
+        case 'checklist':
+          setReportProgress('Generando reporte de checklist...');
+          await generateChecklistReport(
+            filteredPriorities,
+            users,
+            initiatives,
+            format,
+            filterDescription
+          );
+          break;
+        case 'azuredevops':
+          setReportProgress('Generando reporte de Azure DevOps...');
+          await generateAzureDevOpsReport(
+            filteredPriorities,
+            users,
+            initiatives,
+            format,
+            filterDescription
+          );
+          break;
+        case 'localhours':
+          setReportProgress('Consultando horas locales...');
+          await generateLocalHoursReport(
+            selectedUser,
+            selectedArea,
+            selectedClient,
+            dateFrom,
+            dateTo,
+            format,
+            filterDescription
+          );
+          break;
+        case 'clientbreakdown':
+          setReportProgress('Generando breakdown por cliente...');
+          await generateClientBreakdownReport(
+            filteredPriorities,
+            users,
+            clients,
+            initiatives,
+            format,
+            filterDescription
+          );
+          break;
+      }
+
+      setReportProgress('¡Reporte generado exitosamente!');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setReportProgress('Error al generar el reporte');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    } finally {
+      setIsGeneratingReport(false);
+      setReportProgress('');
     }
   };
 
@@ -658,13 +684,40 @@ export default function ReportsPage() {
             </div>
           )}
 
+          {/* Barra de Progreso */}
+          {isGeneratingReport && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-2 border-blue-500 dark:border-blue-400">
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    Generando Reporte...
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {reportProgress}
+                  </p>
+                  <div className="mt-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                    <div className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Botones de Generación */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Generar Reporte</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 onClick={() => handleGenerateReport('pdf')}
-                className="flex items-center justify-center space-x-3 bg-red-600 text-white px-6 py-4 rounded-lg hover:bg-red-700 transition shadow-md font-semibold"
+                disabled={isGeneratingReport}
+                className={`flex items-center justify-center space-x-3 px-6 py-4 rounded-lg transition shadow-md font-semibold ${
+                  isGeneratingReport
+                    ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
               >
                 <span className="text-2xl">📕</span>
                 <span>Generar Reporte PDF</span>
@@ -672,7 +725,12 @@ export default function ReportsPage() {
 
               <button
                 onClick={() => handleGenerateReport('doc')}
-                className="flex items-center justify-center space-x-3 bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition shadow-md font-semibold"
+                disabled={isGeneratingReport}
+                className={`flex items-center justify-center space-x-3 px-6 py-4 rounded-lg transition shadow-md font-semibold ${
+                  isGeneratingReport
+                    ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
                 <span className="text-2xl">📘</span>
                 <span>Generar Reporte Word (.docx)</span>
