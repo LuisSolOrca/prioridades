@@ -37,6 +37,13 @@ interface Client {
   isActive: boolean;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface ChecklistItem {
   _id?: string;
   text: string;
@@ -65,6 +72,7 @@ interface Priority {
   initiativeId?: string;
   initiativeIds?: string[];
   clientId?: string;
+  projectId?: string;
   checklist?: ChecklistItem[];
   evidenceLinks?: EvidenceLink[];
   wasEdited: boolean;
@@ -292,6 +300,7 @@ export default function AreaDashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [currentWeek, setCurrentWeek] = useState(getWeekDates());
   const [loading, setLoading] = useState(true);
@@ -319,23 +328,26 @@ export default function AreaDashboardPage() {
     try {
       setLoading(true);
 
-      const [usersRes, initiativesRes, clientsRes, prioritiesRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, projectsRes, prioritiesRes] = await Promise.all([
         fetch('/api/users?activeOnly=true'),
         fetch('/api/initiatives?activeOnly=true'),
         fetch('/api/clients?activeOnly=true'),
+        fetch('/api/projects'),
         fetch(`/api/priorities?weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}&forDashboard=true`)
       ]);
 
-      const [usersData, initiativesData, clientsData, prioritiesData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, projectsData, prioritiesData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
         clientsRes.json(),
+        projectsRes.json(),
         prioritiesRes.json()
       ]);
 
       setUsers(usersData);
       setInitiatives(initiativesData);
       setClients(Array.isArray(clientsData) ? clientsData : []);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
       setPriorities(prioritiesData);
 
       await loadCommentCounts(prioritiesData);
@@ -742,6 +754,14 @@ export default function AreaDashboardPage() {
                     {selectedPriority.clientId
                       ? (clients.find(c => c._id === selectedPriority.clientId)?.name || 'No especificado')
                       : 'No especificado'}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Proyecto</h3>
+                  <p className="text-gray-800 dark:text-gray-200">
+                    {selectedPriority.projectId
+                      ? (projects.find(p => p._id === selectedPriority.projectId)?.name || 'No especificado')
+                      : 'Sin proyecto'}
                   </p>
                 </div>
                 <div>
