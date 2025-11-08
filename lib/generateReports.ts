@@ -245,7 +245,7 @@ export const generatePDFReport = async (data: ReportData, fileName: string = 'Re
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('Resumen de Horas por Persona:', 14, startY);
+    doc.text('Resumen de Horas por Cliente:', 14, startY);
 
     startY += 7;
 
@@ -444,7 +444,7 @@ export const generateDOCReport = async (data: ReportData, fileName: string = 'Re
   if (data.summaryTable) {
     sections.push(
       new Paragraph({
-        text: 'Resumen de Horas por Persona:',
+        text: 'Resumen de Horas por Cliente:',
         heading: 'Heading2',
         spacing: { before: 200, after: 100 }
       })
