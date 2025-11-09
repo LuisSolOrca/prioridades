@@ -17,6 +17,12 @@ export async function POST() {
   try {
     await connectDB();
 
+    // Force model registration (needed in serverless environment)
+    User;
+    StrategicInitiative;
+    Client;
+    Project;
+
     // Get current date and week boundaries
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

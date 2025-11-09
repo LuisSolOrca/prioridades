@@ -23,6 +23,12 @@ export async function GET() {
 
     await connectDB();
 
+    // Force model registration (needed in serverless environment)
+    User;
+    StrategicInitiative;
+    Client;
+    Project;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
