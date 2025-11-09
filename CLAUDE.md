@@ -173,12 +173,12 @@ if (session.user.role !== 'ADMIN') {
 
 ## Automatic Priority Rescheduling
 
-The system automatically reschedules priorities that expire (pass their `weekEnd`) in `EN_TIEMPO` status:
+The system can reschedule priorities that expire (pass their `weekEnd`) in `EN_TIEMPO` status:
 
 - **How it works**: Just like manual rescheduling in Kanban, the original is marked `REPROGRAMADO` and a copy is created for the next week with `status: EN_TIEMPO`, `isCarriedOver: true`, and progress reset to 0%
-- **Execution**: Runs automatically via lazy execution when users access the dashboard (every 6 hours max)
+- **Admin Panel**: Access `/admin/auto-reschedule` to view statistics and execute manually with "▶️ Ejecutar Ahora" button
 - **Manual trigger**: Call `POST /api/priorities/auto-reschedule`
-- **External cron**: Use `GET /api/cron/weekly-reschedule` with free services like cron-job.org
+- **External cron (optional)**: Use `GET /api/cron/weekly-reschedule` with free services like cron-job.org for weekly automation
 - **Testing**: Run `npx tsx scripts/test-auto-reschedule.ts`
 
 See `docs/AUTO_RESCHEDULE.md` for detailed documentation.

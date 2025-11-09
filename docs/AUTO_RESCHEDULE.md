@@ -17,20 +17,7 @@ Este comportamiento replica exactamente lo que sucede cuando un usuario mueve ma
 
 ## Implementación
 
-### 1. Ejecución Automática (Lazy Execution)
-
-El sistema ejecuta automáticamente la reprogramación cuando los usuarios acceden a la aplicación. Esto se implementa en:
-
-- **Dashboard** (`app/dashboard/page.tsx`)
-- Puede agregarse a otras páginas de alta frecuencia
-
-**Características:**
-- Se ejecuta en segundo plano (no bloquea al usuario)
-- Verifica cada 6 horas si es necesario ejecutar la reprogramación
-- No requiere configuración adicional
-- Es completamente transparente para el usuario
-
-### 2. Endpoint API
+### 1. Endpoint API Principal
 
 **`POST /api/priorities/auto-reschedule`**
 
@@ -64,7 +51,14 @@ curl -X POST http://localhost:3000/api/priorities/auto-reschedule
 }
 ```
 
-### 3. Ejecución Manual/Externa
+### 2. Ejecución Manual desde Panel de Admin
+
+El panel de administración en `/admin/auto-reschedule` incluye:
+- Estadísticas en tiempo real de prioridades pendientes
+- Botón "▶️ Ejecutar Ahora" para ejecución manual
+- Visualización de resultados y historial
+
+### 3. Ejecución Externa (Opcional)
 
 **`GET /api/cron/weekly-reschedule`**
 
@@ -82,20 +76,8 @@ Endpoint diseñado para ser llamado por servicios externos de cron.
 
 #### Opción B: Llamada Manual desde Admin Panel
 
-Puedes agregar un botón en el panel de administración que llame al endpoint:
-
-```typescript
-const handleAutoReschedule = async () => {
-  const response = await fetch('/api/cron/weekly-reschedule', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET}`
-    }
-  });
-  const result = await response.json();
-  console.log('Auto-reschedule result:', result);
-};
-```
+El panel de administración en `/admin/auto-reschedule` ya incluye un botón
+"▶️ Ejecutar Ahora" que ejecuta la reprogramación manualmente.
 
 ## Variables de Entorno
 
@@ -191,10 +173,10 @@ Las prioridades reprogramadas se identifican con:
 
 ### Frecuencia de Ejecución
 
-Con la implementación lazy actual:
-- Se ejecuta automáticamente cuando usuarios acceden al dashboard
-- Máximo cada 6 horas (para evitar ejecuciones innecesarias)
-- No hay costo adicional (no usa Vercel Cron slots)
+La reprogramación se ejecuta **únicamente de forma manual**:
+- Desde el panel de admin (`/admin/auto-reschedule`) usando el botón "▶️ Ejecutar Ahora"
+- Opcionalmente, configurando un servicio de cron externo (cron-job.org)
+- Mediante llamadas directas al API endpoint
 
 ### Performance
 
@@ -204,9 +186,8 @@ Con la implementación lazy actual:
 
 ### Limitaciones
 
-- Depende del tráfico de usuarios (lazy execution)
-- Si nadie accede al dashboard por varios días, la reprogramación no se ejecuta
-- Solución: Configurar cron externo en cron-job.org para garantizar ejecución semanal
+- Requiere ejecución manual desde el panel de admin
+- Para automatización semanal, se recomienda configurar cron externo en cron-job.org
 
 ## Próximos Pasos
 
