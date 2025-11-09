@@ -1433,18 +1433,6 @@ export const generateRescheduleByUserReport = async (
 
     // Agregar detalles de cada prioridad
     userPriorities.forEach(priority => {
-      // Obtener nombres de iniciativas
-      let initiativeNames = 'Sin iniciativa';
-      if (priority.initiativeIds && Array.isArray(priority.initiativeIds) && priority.initiativeIds.length > 0) {
-        const priorityInitiatives = priority.initiativeIds
-          .map((id: any) => initiatives.find(i => i._id === id || i._id === id?._id))
-          .filter((init: any) => init !== undefined);
-        initiativeNames = priorityInitiatives.map((init: any) => init.name).join(', ');
-      } else if (priority.initiativeId) {
-        const initiative = initiatives.find(i => i._id === priority.initiativeId || i._id === priority.initiativeId?._id);
-        initiativeNames = initiative?.name || 'Sin iniciativa';
-      }
-
       // Obtener cliente
       const client = clients.find(c => c._id === priority.clientId);
       const clientName = client?.name || 'No especificado';
@@ -1464,7 +1452,6 @@ export const generateRescheduleByUserReport = async (
         estado,
         clientName,
         projectName,
-        initiativeNames,
         weekStart,
         `${priority.completionPercentage}%`
       ]);
@@ -1481,7 +1468,7 @@ export const generateRescheduleByUserReport = async (
   const data: ReportData = {
     title: 'Reporte de Reprogramaciones por Usuario',
     subtitle: filters || 'Análisis de prioridades reprogramadas por usuario',
-    headers: ['Usuario', 'Prioridad', 'Tipo', 'Estado', 'Cliente', 'Proyecto', 'Iniciativas', 'Semana', 'Avance'],
+    headers: ['Usuario', 'Prioridad', 'Tipo', 'Estado', 'Cliente', 'Proyecto', 'Semana', 'Avance'],
     rows: rows,
     summary: [
       { label: 'Total de Prioridades Originales (REPROGRAMADO)', value: totalRescheduled },
@@ -1571,18 +1558,6 @@ export const generateRescheduleByClientProjectReport = async (
         const user = users.find(u => u._id === priority.userId);
         const userName = user?.name || 'Desconocido';
 
-        // Obtener nombres de iniciativas
-        let initiativeNames = 'Sin iniciativa';
-        if (priority.initiativeIds && Array.isArray(priority.initiativeIds) && priority.initiativeIds.length > 0) {
-          const priorityInitiatives = priority.initiativeIds
-            .map((id: any) => initiatives.find(i => i._id === id || i._id === id?._id))
-            .filter((init: any) => init !== undefined);
-          initiativeNames = priorityInitiatives.map((init: any) => init.name).join(', ');
-        } else if (priority.initiativeId) {
-          const initiative = initiatives.find(i => i._id === priority.initiativeId || i._id === priority.initiativeId?._id);
-          initiativeNames = initiative?.name || 'Sin iniciativa';
-        }
-
         const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
         const tipo = priority.isCarriedOver ? 'Reprogramada' : 'Original';
         const estado = priority.status;
@@ -1594,7 +1569,6 @@ export const generateRescheduleByClientProjectReport = async (
           userName,
           tipo,
           estado,
-          initiativeNames,
           weekStart,
           `${priority.completionPercentage}%`
         ]);
@@ -1623,7 +1597,7 @@ export const generateRescheduleByClientProjectReport = async (
   const data: ReportData = {
     title: 'Reporte de Reprogramaciones por Cliente y Proyecto',
     subtitle: filters || 'Análisis de prioridades reprogramadas por cliente y proyecto',
-    headers: ['Cliente', 'Proyecto', 'Prioridad', 'Usuario', 'Tipo', 'Estado', 'Iniciativas', 'Semana', 'Avance'],
+    headers: ['Cliente', 'Proyecto', 'Prioridad', 'Usuario', 'Tipo', 'Estado', 'Semana', 'Avance'],
     rows: rows,
     summary: [
       { label: 'Total de Prioridades Originales (REPROGRAMADO)', value: totalRescheduled },
