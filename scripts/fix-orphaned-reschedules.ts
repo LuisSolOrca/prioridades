@@ -19,6 +19,7 @@ import connectDB from '../lib/mongodb';
 import Priority from '../models/Priority';
 import Comment from '../models/Comment';
 import User from '../models/User';
+import { getWeekDates } from '../lib/utils';
 
 async function main() {
   try {
@@ -87,15 +88,13 @@ async function main() {
     let successCount = 0;
     let failCount = 0;
 
-    // Calculate next week (current week Monday-Friday)
+    // Calculate next week using the same logic as the rest of the app
     const now = new Date();
-    const nextMonday = new Date(now);
-    const daysUntilMonday = (8 - nextMonday.getDay()) % 7 || 7;
-    nextMonday.setDate(nextMonday.getDate() + daysUntilMonday);
-    nextMonday.setHours(0, 0, 0, 0);
-
-    const nextFriday = new Date(nextMonday);
-    nextFriday.setDate(nextMonday.getDate() + 4);
+    const nextWeekDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const nextWeek = getWeekDates(nextWeekDate);
+    const nextMonday = nextWeek.monday;
+    const nextFriday = new Date(nextWeek.friday);
+    nextFriday.setHours(23, 59, 59, 999);
 
     console.log(`📅 Semana de destino: ${nextMonday.toLocaleDateString('es-MX')} - ${nextFriday.toLocaleDateString('es-MX')}\n`);
 

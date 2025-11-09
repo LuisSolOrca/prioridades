@@ -28,6 +28,11 @@ async function main() {
     await connectDB();
     console.log('✅ Conectado a MongoDB\n');
 
+    // Force model registration (needed in some environments)
+    User;
+    Priority;
+    Comment;
+
     // Find all REPROGRAMADO priorities
     const reprogrammedPriorities = await Priority.find({
       status: 'REPROGRAMADO'

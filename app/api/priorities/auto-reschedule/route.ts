@@ -6,6 +6,7 @@ import User from '@/models/User';
 import StrategicInitiative from '@/models/StrategicInitiative';
 import Client from '@/models/Client';
 import Project from '@/models/Project';
+import { getWeekDates } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,17 +28,13 @@ export async function POST() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Calculate next week's Monday and Friday
-    const nextMonday = new Date(today);
-    const daysUntilMonday = (8 - nextMonday.getDay()) % 7;
-    if (daysUntilMonday === 0 && nextMonday.getDay() !== 1) {
-      nextMonday.setDate(nextMonday.getDate() + 7);
-    } else {
-      nextMonday.setDate(nextMonday.getDate() + daysUntilMonday);
-    }
-
-    const nextFriday = new Date(nextMonday);
-    nextFriday.setDate(nextMonday.getDate() + 4);
+    // Calculate next week's Monday and Friday using the same logic as the rest of the app
+    // Add 7 days to get next week from current date
+    const nextWeekDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const nextWeek = getWeekDates(nextWeekDate);
+    const nextMonday = nextWeek.monday;
+    const nextFriday = new Date(nextWeek.friday);
+    nextFriday.setHours(23, 59, 59, 999);
 
     // Find priorities that:
     // 1. Have weekEnd before today (expired)
