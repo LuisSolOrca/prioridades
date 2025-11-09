@@ -6,6 +6,8 @@ import Priority from '@/models/Priority';
 import Comment from '@/models/Comment';
 import User from '@/models/User';
 import StrategicInitiative from '@/models/StrategicInitiative';
+import Client from '@/models/Client';
+import Project from '@/models/Project';
 
 export const dynamic = 'force-dynamic';
 
