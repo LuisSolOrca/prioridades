@@ -1377,3 +1377,272 @@ export const generateProjectBreakdownReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+// Reporte de reprogramaciones por usuario
+export const generateRescheduleByUserReport = async (
+  priorities: any[],
+  users: any[],
+  initiatives: any[],
+  clients: any[],
+  projects: any[],
+  format: 'pdf' | 'doc',
+  filters?: string
+) => {
+  // Filtrar solo prioridades reprogramadas (REPROGRAMADO) o copias (isCarriedOver)
+  const rescheduledPriorities = priorities.filter(p =>
+    p.status === 'REPROGRAMADO' || p.isCarriedOver === true
+  );
+
+  if (rescheduledPriorities.length === 0) {
+    throw new Error('No hay prioridades reprogramadas en el período seleccionado');
+  }
+
+  // Agrupar por usuario
+  const prioritiesByUser = new Map<string, any[]>();
+  rescheduledPriorities.forEach(priority => {
+    const userId = priority.userId;
+    if (!prioritiesByUser.has(userId)) {
+      prioritiesByUser.set(userId, []);
+    }
+    prioritiesByUser.get(userId)!.push(priority);
+  });
+
+  const rows: (string | number)[][] = [];
+  const summaryTableRows: (string | number)[][] = [];
+  let totalRescheduled = 0;
+  let totalCarriedOver = 0;
+
+  // Crear filas agrupadas por usuario
+  prioritiesByUser.forEach((userPriorities, userId) => {
+    const user = users.find(u => u._id === userId);
+    const userName = user?.name || 'Desconocido';
+
+    const userRescheduled = userPriorities.filter(p => p.status === 'REPROGRAMADO').length;
+    const userCarriedOver = userPriorities.filter(p => p.isCarriedOver === true).length;
+
+    totalRescheduled += userRescheduled;
+    totalCarriedOver += userCarriedOver;
+
+    // Agregar fila de resumen de usuario
+    summaryTableRows.push([
+      userName,
+      userRescheduled,
+      userCarriedOver,
+      userPriorities.length
+    ]);
+
+    // Agregar detalles de cada prioridad
+    userPriorities.forEach(priority => {
+      // Obtener nombres de iniciativas
+      let initiativeNames = 'Sin iniciativa';
+      if (priority.initiativeIds && Array.isArray(priority.initiativeIds) && priority.initiativeIds.length > 0) {
+        const priorityInitiatives = priority.initiativeIds
+          .map((id: any) => initiatives.find(i => i._id === id || i._id === id?._id))
+          .filter((init: any) => init !== undefined);
+        initiativeNames = priorityInitiatives.map((init: any) => init.name).join(', ');
+      } else if (priority.initiativeId) {
+        const initiative = initiatives.find(i => i._id === priority.initiativeId || i._id === priority.initiativeId?._id);
+        initiativeNames = initiative?.name || 'Sin iniciativa';
+      }
+
+      // Obtener cliente
+      const client = clients.find(c => c._id === priority.clientId);
+      const clientName = client?.name || 'No especificado';
+
+      // Obtener proyecto
+      const project = projects.find(p => p._id === priority.projectId);
+      const projectName = project?.name || 'No especificado';
+
+      const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
+      const tipo = priority.isCarriedOver ? 'Reprogramada' : 'Original';
+      const estado = priority.status;
+
+      rows.push([
+        userName,
+        priority.title,
+        tipo,
+        estado,
+        clientName,
+        projectName,
+        initiativeNames,
+        weekStart,
+        `${priority.completionPercentage}%`
+      ]);
+    });
+  });
+
+  // Ordenar tabla de resumen por total de reprogramaciones descendente
+  summaryTableRows.sort((a, b) => {
+    const totalA = Number(a[3]);
+    const totalB = Number(b[3]);
+    return totalB - totalA;
+  });
+
+  const data: ReportData = {
+    title: 'Reporte de Reprogramaciones por Usuario',
+    subtitle: filters || 'Análisis de prioridades reprogramadas por usuario',
+    headers: ['Usuario', 'Prioridad', 'Tipo', 'Estado', 'Cliente', 'Proyecto', 'Iniciativas', 'Semana', 'Avance'],
+    rows: rows,
+    summary: [
+      { label: 'Total de Prioridades Originales (REPROGRAMADO)', value: totalRescheduled },
+      { label: 'Total de Copias Reprogramadas (isCarriedOver)', value: totalCarriedOver },
+      { label: 'Total de Registros', value: rescheduledPriorities.length },
+      { label: 'Usuarios con Reprogramaciones', value: prioritiesByUser.size }
+    ],
+    summaryTable: {
+      headers: ['Usuario', 'Originales', 'Copias', 'Total'],
+      rows: summaryTableRows
+    },
+    summaryTableTitle: 'Resumen de Reprogramaciones por Usuario:'
+  };
+
+  const fileName = `Reporte_Reprogramaciones_Usuario_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};
+
+// Reporte de reprogramaciones por cliente y proyecto
+export const generateRescheduleByClientProjectReport = async (
+  priorities: any[],
+  users: any[],
+  initiatives: any[],
+  clients: any[],
+  projects: any[],
+  format: 'pdf' | 'doc',
+  filters?: string
+) => {
+  // Filtrar solo prioridades reprogramadas (REPROGRAMADO) o copias (isCarriedOver)
+  const rescheduledPriorities = priorities.filter(p =>
+    p.status === 'REPROGRAMADO' || p.isCarriedOver === true
+  );
+
+  if (rescheduledPriorities.length === 0) {
+    throw new Error('No hay prioridades reprogramadas en el período seleccionado');
+  }
+
+  // Agrupar por cliente y luego por proyecto
+  const prioritiesByClient = new Map<string, Map<string, any[]>>();
+
+  rescheduledPriorities.forEach(priority => {
+    const clientId = priority.clientId || 'no-client';
+    const projectId = priority.projectId || 'no-project';
+
+    if (!prioritiesByClient.has(clientId)) {
+      prioritiesByClient.set(clientId, new Map());
+    }
+
+    const projectsMap = prioritiesByClient.get(clientId)!;
+    if (!projectsMap.has(projectId)) {
+      projectsMap.set(projectId, []);
+    }
+
+    projectsMap.get(projectId)!.push(priority);
+  });
+
+  const rows: (string | number)[][] = [];
+  const summaryTableRows: (string | number)[][] = [];
+  let totalRescheduled = 0;
+  let totalCarriedOver = 0;
+
+  // Crear filas agrupadas por cliente y proyecto
+  prioritiesByClient.forEach((projectsMap, clientId) => {
+    const client = clients.find(c => c._id === clientId);
+    const clientName = client?.name || 'No especificado';
+
+    let clientRescheduled = 0;
+    let clientCarriedOver = 0;
+
+    projectsMap.forEach((projectPriorities, projectId) => {
+      const project = projects.find(p => p._id === projectId);
+      const projectName = project?.name || 'No especificado';
+
+      const projectRescheduled = projectPriorities.filter(p => p.status === 'REPROGRAMADO').length;
+      const projectCarriedOver = projectPriorities.filter(p => p.isCarriedOver === true).length;
+
+      clientRescheduled += projectRescheduled;
+      clientCarriedOver += projectCarriedOver;
+
+      // Agregar detalles de cada prioridad
+      projectPriorities.forEach(priority => {
+        const user = users.find(u => u._id === priority.userId);
+        const userName = user?.name || 'Desconocido';
+
+        // Obtener nombres de iniciativas
+        let initiativeNames = 'Sin iniciativa';
+        if (priority.initiativeIds && Array.isArray(priority.initiativeIds) && priority.initiativeIds.length > 0) {
+          const priorityInitiatives = priority.initiativeIds
+            .map((id: any) => initiatives.find(i => i._id === id || i._id === id?._id))
+            .filter((init: any) => init !== undefined);
+          initiativeNames = priorityInitiatives.map((init: any) => init.name).join(', ');
+        } else if (priority.initiativeId) {
+          const initiative = initiatives.find(i => i._id === priority.initiativeId || i._id === priority.initiativeId?._id);
+          initiativeNames = initiative?.name || 'Sin iniciativa';
+        }
+
+        const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
+        const tipo = priority.isCarriedOver ? 'Reprogramada' : 'Original';
+        const estado = priority.status;
+
+        rows.push([
+          clientName,
+          projectName,
+          priority.title,
+          userName,
+          tipo,
+          estado,
+          initiativeNames,
+          weekStart,
+          `${priority.completionPercentage}%`
+        ]);
+      });
+    });
+
+    totalRescheduled += clientRescheduled;
+    totalCarriedOver += clientCarriedOver;
+
+    // Agregar fila de resumen de cliente
+    summaryTableRows.push([
+      clientName,
+      clientRescheduled,
+      clientCarriedOver,
+      clientRescheduled + clientCarriedOver
+    ]);
+  });
+
+  // Ordenar tabla de resumen por total descendente
+  summaryTableRows.sort((a, b) => {
+    const totalA = Number(a[3]);
+    const totalB = Number(b[3]);
+    return totalB - totalA;
+  });
+
+  const data: ReportData = {
+    title: 'Reporte de Reprogramaciones por Cliente y Proyecto',
+    subtitle: filters || 'Análisis de prioridades reprogramadas por cliente y proyecto',
+    headers: ['Cliente', 'Proyecto', 'Prioridad', 'Usuario', 'Tipo', 'Estado', 'Iniciativas', 'Semana', 'Avance'],
+    rows: rows,
+    summary: [
+      { label: 'Total de Prioridades Originales (REPROGRAMADO)', value: totalRescheduled },
+      { label: 'Total de Copias Reprogramadas (isCarriedOver)', value: totalCarriedOver },
+      { label: 'Total de Registros', value: rescheduledPriorities.length },
+      { label: 'Clientes con Reprogramaciones', value: prioritiesByClient.size }
+    ],
+    summaryTable: {
+      headers: ['Cliente', 'Originales', 'Copias', 'Total'],
+      rows: summaryTableRows
+    },
+    summaryTableTitle: 'Resumen de Reprogramaciones por Cliente:'
+  };
+
+  const fileName = `Reporte_Reprogramaciones_Cliente_Proyecto_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};

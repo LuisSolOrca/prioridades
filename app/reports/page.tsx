@@ -14,7 +14,9 @@ import {
   generateAzureDevOpsReport,
   generateLocalHoursReport,
   generateClientBreakdownReport,
-  generateProjectBreakdownReport
+  generateProjectBreakdownReport,
+  generateRescheduleByUserReport,
+  generateRescheduleByClientProjectReport
 } from '@/lib/generateReports';
 
 interface User {
@@ -60,9 +62,10 @@ interface Priority {
   clientId?: string;
   projectId?: string;
   checklist?: ChecklistItem[];
+  isCarriedOver?: boolean; // Flag for rescheduled priorities
 }
 
-type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours' | 'clientbreakdown' | 'projectbreakdown';
+type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours' | 'clientbreakdown' | 'projectbreakdown' | 'reschedulebyuser' | 'reschedulebyclient';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -351,6 +354,30 @@ export default function ReportsPage() {
             filterDescription
           );
           break;
+        case 'reschedulebyuser':
+          setReportProgress('Generando reporte de reprogramaciones por usuario...');
+          await generateRescheduleByUserReport(
+            filteredPriorities,
+            users,
+            initiatives,
+            clients,
+            projects,
+            format,
+            filterDescription
+          );
+          break;
+        case 'reschedulebyclient':
+          setReportProgress('Generando reporte de reprogramaciones por cliente/proyecto...');
+          await generateRescheduleByClientProjectReport(
+            filteredPriorities,
+            users,
+            initiatives,
+            clients,
+            projects,
+            format,
+            filterDescription
+          );
+          break;
       }
 
       setReportProgress('¡Reporte generado exitosamente!');
@@ -540,6 +567,36 @@ export default function ReportsPage() {
                 <div className="font-semibold text-gray-800 dark:text-gray-100">Breakdown por Proyecto</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Horas trabajadas y prioridades desglosadas por proyecto
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType('reschedulebyuser')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'reschedulebyuser'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                }`}
+              >
+                <div className="text-3xl mb-2">🔄</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Reprogramaciones por Usuario</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Análisis de prioridades reprogramadas por usuario
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType('reschedulebyclient')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'reschedulebyclient'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                }`}
+              >
+                <div className="text-3xl mb-2">🔄</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Reprogramaciones por Cliente/Proyecto</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Análisis de prioridades reprogramadas por cliente y proyecto
                 </div>
               </button>
             </div>
@@ -739,6 +796,16 @@ export default function ReportsPage() {
                 {reportType === 'projectbreakdown' && (
                   <>
                     <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.length}</span> prioridades serán incluidas en el breakdown por proyecto
+                  </>
+                )}
+                {reportType === 'reschedulebyuser' && (
+                  <>
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.filter(p => p.status === 'REPROGRAMADO' || p.isCarriedOver === true).length}</span> prioridades reprogramadas serán incluidas en el reporte por usuario
+                  </>
+                )}
+                {reportType === 'reschedulebyclient' && (
+                  <>
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">{filteredPriorities.filter(p => p.status === 'REPROGRAMADO' || p.isCarriedOver === true).length}</span> prioridades reprogramadas serán incluidas en el reporte por cliente/proyecto
                   </>
                 )}
               </div>
