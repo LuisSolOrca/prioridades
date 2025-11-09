@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Manual/External Cron Job endpoint for automatic weekly rescheduling
  *

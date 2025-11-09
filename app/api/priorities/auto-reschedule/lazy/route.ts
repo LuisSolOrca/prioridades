@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { lazyAutoReschedule } from '@/lib/autoReschedule';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Lazy auto-reschedule endpoint
  *

@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import Comment from '@/models/Comment';
+import User from '@/models/User';
+import StrategicInitiative from '@/models/StrategicInitiative';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * Get statistics about auto-rescheduling
