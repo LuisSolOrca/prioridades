@@ -172,32 +172,32 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
 
       <div className="pt-16 main-content container mx-auto px-4 py-8 max-w-2xl">
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Mi Perfil</h1>
-            <p className="text-gray-600">Gestiona tu información personal y seguridad</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Mi Perfil</h1>
+            <p className="text-gray-600 dark:text-gray-400">Gestiona tu información personal y seguridad</p>
           </div>
 
           {/* User Info Section */}
-          <div className="border-b border-gray-200 pb-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Información Personal</h2>
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Información Personal</h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-600">Nombre</label>
-                <p className="text-gray-800 font-medium">{session?.user?.name}</p>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Nombre</label>
+                <p className="text-gray-800 dark:text-gray-200 font-medium">{session?.user?.name}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Email</label>
-                <p className="text-gray-800 font-medium">{session?.user?.email}</p>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Email</label>
+                <p className="text-gray-800 dark:text-gray-200 font-medium">{session?.user?.email}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Rol</label>
-                <p className="text-gray-800 font-medium">
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Rol</label>
+                <p className="text-gray-800 dark:text-gray-200 font-medium">
                   {(session?.user as any)?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
                 </p>
               </div>
@@ -205,11 +205,11 @@ export default function ProfilePage() {
           </div>
 
           {/* Gamification Section */}
-          <div className="border-b border-gray-200 pb-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">🏆 Gamificación y Logros</h2>
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">🏆 Gamificación y Logros</h2>
 
             {loadingGamification ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <div className="text-2xl mb-2">⏳</div>
                 <div>Cargando estadísticas...</div>
               </div>
@@ -241,16 +241,16 @@ export default function ProfilePage() {
 
                 {/* Badges Display */}
                 <div>
-                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center">
                     <span className="mr-2">🎖️</span>
                     Mis Badges {badges.length > 0 && `(${badges.length})`}
                   </h3>
 
                   {badges.length === 0 ? (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-6 text-center">
                       <div className="text-4xl mb-2">🎯</div>
-                      <div className="text-gray-600 font-medium mb-1">¡Aún no tienes badges!</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-gray-600 dark:text-gray-300 font-medium mb-1">¡Aún no tienes badges!</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         Completa tareas, comenta y menciona a otros para obtener tus primeros logros
                       </div>
                     </div>
@@ -259,14 +259,14 @@ export default function ProfilePage() {
                       {badges.map((badge: any) => (
                         <div
                           key={badge._id}
-                          className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300 rounded-lg p-4"
+                          className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-4"
                         >
                           <div className="flex items-start">
                             <div className="text-4xl mr-3">{badge.icon}</div>
                             <div className="flex-1">
-                              <h4 className="font-bold text-purple-900 mb-1">{badge.name}</h4>
-                              <p className="text-sm text-purple-700 mb-2">{badge.description}</p>
-                              <div className="text-xs text-purple-600">
+                              <h4 className="font-bold text-purple-900 dark:text-purple-200 mb-1">{badge.name}</h4>
+                              <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">{badge.description}</p>
+                              <div className="text-xs text-purple-600 dark:text-purple-400">
                                 Obtenido: {new Date(badge.earnedAt).toLocaleDateString('es-MX', {
                                   day: 'numeric',
                                   month: 'short',
@@ -282,19 +282,19 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Tips for earning badges */}
-                <div className="mt-4 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4">
+                <div className="mt-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-4">
                   <div className="flex items-start">
                     <span className="text-2xl mr-3">🎮</span>
-                    <div className="text-sm text-gray-800">
+                    <div className="text-sm text-gray-800 dark:text-gray-200">
                       <strong className="text-lg">Sistema de Gamificación</strong>
-                      <p className="mt-2 mb-3 text-gray-700">
+                      <p className="mt-2 mb-3 text-gray-700 dark:text-gray-300">
                         ¡Desbloquea badges usando todas las funcionalidades de la plataforma y manteniendo tus prioridades bajo control!
                       </p>
 
                       <div className="space-y-3">
                         <div>
-                          <strong className="text-blue-800">🎯 Gestión de Prioridades:</strong>
-                          <ul className="mt-1 ml-4 space-y-1 list-disc text-gray-700">
+                          <strong className="text-blue-800 dark:text-blue-300">🎯 Gestión de Prioridades:</strong>
+                          <ul className="mt-1 ml-4 space-y-1 list-disc text-gray-700 dark:text-gray-300">
                             <li>Completa prioridades y mantén rachas</li>
                             <li>Evita y reacciona rápido a riesgos y bloqueos</li>
                             <li>Mantén semanas perfectas al 100%</li>
@@ -302,8 +302,8 @@ export default function ProfilePage() {
                         </div>
 
                         <div>
-                          <strong className="text-purple-800">🤖 Uso de la Plataforma:</strong>
-                          <ul className="mt-1 ml-4 space-y-1 list-disc text-gray-700">
+                          <strong className="text-purple-800 dark:text-purple-300">🤖 Uso de la Plataforma:</strong>
+                          <ul className="mt-1 ml-4 space-y-1 list-disc text-gray-700 dark:text-gray-300">
                             <li>Usa IA para mejorar textos y análisis</li>
                             <li>Exporta datos (Excel, PowerPoint, PDF)</li>
                             <li>Explora Analytics y tablero Kanban</li>
@@ -311,8 +311,8 @@ export default function ProfilePage() {
                           </ul>
                         </div>
 
-                        <div className="mt-3 pt-3 border-t border-blue-200">
-                          <p className="text-xs text-gray-600 italic">
+                        <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 italic">
                             💡 Hay 24 badges diferentes para desbloquear. ¡Explora todas las funcionalidades para convertirte en Power User!
                           </p>
                         </div>
@@ -325,14 +325,14 @@ export default function ProfilePage() {
           </div>
 
           {/* Email Notifications Section */}
-          <div className="border-b border-gray-200 pb-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">📧 Notificaciones por Email</h2>
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">📧 Notificaciones por Email</h2>
 
             {prefsMessage && (
               <div className={`mb-4 p-4 rounded-lg ${
                 prefsMessage.type === 'success'
-                  ? 'bg-green-50 border border-green-200 text-green-800'
-                  : 'bg-red-50 border border-red-200 text-red-800'
+                  ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-200'
+                  : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200'
               }`}>
                 <div className="flex items-center">
                   <span className="text-xl mr-2">
@@ -344,10 +344,10 @@ export default function ProfilePage() {
             )}
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div className="flex-1">
-                  <div className="font-medium text-gray-800">Habilitar notificaciones por email</div>
-                  <div className="text-sm text-gray-600">Activa o desactiva todas las notificaciones por correo</div>
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Habilitar notificaciones por email</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Activa o desactiva todas las notificaciones por correo</div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -362,10 +362,10 @@ export default function ProfilePage() {
 
               {notificationPrefs.enabled && (
                 <>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div className="flex-1">
-                      <div className="font-medium text-gray-800">💬 Nuevos comentarios</div>
-                      <div className="text-sm text-gray-600">Recibe un email cuando alguien comente en tus prioridades</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">💬 Nuevos comentarios</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Recibe un email cuando alguien comente en tus prioridades</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -378,10 +378,10 @@ export default function ProfilePage() {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div className="flex-1">
-                      <div className="font-medium text-gray-800">📋 Prioridad asignada</div>
-                      <div className="text-sm text-gray-600">Recibe un email cuando se te asigne una nueva prioridad</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">📋 Prioridad asignada</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Recibe un email cuando se te asigne una nueva prioridad</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -394,10 +394,10 @@ export default function ProfilePage() {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div className="flex-1">
-                      <div className="font-medium text-gray-800">🔔 Cambios de estado</div>
-                      <div className="text-sm text-gray-600">Recibe un email cuando cambie el estado de tus prioridades</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">🔔 Cambios de estado</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Recibe un email cuando cambie el estado de tus prioridades</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -430,13 +430,13 @@ export default function ProfilePage() {
 
           {/* Change Password Section */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Cambiar Contraseña</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Cambiar Contraseña</h2>
 
             {message && (
               <div className={`mb-4 p-4 rounded-lg ${
                 message.type === 'success'
-                  ? 'bg-green-50 border border-green-200 text-green-800'
-                  : 'bg-red-50 border border-red-200 text-red-800'
+                  ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-200'
+                  : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200'
               }`}>
                 <div className="flex items-center">
                   <span className="text-xl mr-2">
@@ -449,14 +449,14 @@ export default function ProfilePage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Contraseña Actual *
                 </label>
                 <div className="relative">
                   <input
                     type={showCurrentPassword ? 'text' : 'password'}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Ingresa tu contraseña actual"
@@ -464,7 +464,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   >
                     {showCurrentPassword ? '🙈' : '👁️'}
                   </button>
@@ -472,7 +472,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Nueva Contraseña *
                 </label>
                 <div className="relative">
@@ -480,7 +480,7 @@ export default function ProfilePage() {
                     type={showNewPassword ? 'text' : 'password'}
                     required
                     minLength={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Mínimo 6 caracteres"
@@ -488,16 +488,16 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   >
                     {showNewPassword ? '🙈' : '👁️'}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">La contraseña debe tener al menos 6 caracteres</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">La contraseña debe tener al menos 6 caracteres</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Confirmar Nueva Contraseña *
                 </label>
                 <div className="relative">
@@ -505,7 +505,7 @@ export default function ProfilePage() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     required
                     minLength={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirma la nueva contraseña"
@@ -513,7 +513,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   >
                     {showConfirmPassword ? '🙈' : '👁️'}
                   </button>
@@ -538,10 +538,10 @@ export default function ProfilePage() {
         </div>
 
         {/* Security Tips */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mt-6 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
           <div className="flex items-start">
             <span className="text-2xl mr-3">💡</span>
-            <div className="text-sm text-blue-800">
+            <div className="text-sm text-blue-800 dark:text-blue-200">
               <strong>Consejos de seguridad:</strong>
               <ul className="mt-2 space-y-1 list-disc list-inside">
                 <li>Usa una contraseña única que no utilices en otros sitios</li>
