@@ -47,16 +47,14 @@ async function main() {
 
     console.log(`📅 Semana correcta: ${correctMonday.toLocaleDateString('es-MX')} - ${correctFriday.toLocaleDateString('es-MX')}\n`);
 
-    // Find priorities in the wrong week (9-13 November)
-    // Week 9-13 would have been created with weekStart around Nov 9
-    const wrongWeekStart = new Date('2025-11-09T00:00:00.000Z');
-    const wrongWeekEnd = new Date('2025-11-13T23:59:59.999Z');
-
+    // Find priorities in the wrong week
+    // The dates are stored with local timezone offset, so Nov 9 18:00 CST = Nov 10 00:00 UTC
+    // We need to find priorities where weekStart is around Nov 10 00:00 UTC (Nov 9 18:00 local)
     const wrongWeekPriorities = await Priority.find({
       isCarriedOver: true,
       weekStart: {
         $gte: new Date('2025-11-09T00:00:00.000Z'),
-        $lte: new Date('2025-11-09T23:59:59.999Z')
+        $lt: new Date('2025-11-11T00:00:00.000Z') // Before Nov 11 to catch Nov 9-10
       }
     }).populate('userId', 'name email').lean();
 
