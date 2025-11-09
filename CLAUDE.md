@@ -171,10 +171,23 @@ if (session.user.role !== 'ADMIN') {
 - Create user accounts for team members
 - Verify/adjust strategic initiatives
 
+## Automatic Priority Rescheduling
+
+The system automatically reschedules priorities that expire (pass their `weekEnd`) in `EN_TIEMPO` status:
+
+- **How it works**: Just like manual rescheduling in Kanban, the original is marked `REPROGRAMADO` and a copy is created for the next week with `status: EN_TIEMPO`, `isCarriedOver: true`, and progress reset to 0%
+- **Execution**: Runs automatically via lazy execution when users access the dashboard (every 6 hours max)
+- **Manual trigger**: Call `POST /api/priorities/auto-reschedule`
+- **External cron**: Use `GET /api/cron/weekly-reschedule` with free services like cron-job.org
+- **Testing**: Run `npx tsx scripts/test-auto-reschedule.ts`
+
+See `docs/AUTO_RESCHEDULE.md` for detailed documentation.
+
 ## Important Notes
 
 - **Password security**: All passwords are hashed with bcrypt (salt rounds: 10)
 - **Mongoose models**: Always check if model exists before defining (`mongoose.models.ModelName || mongoose.model(...)`) to prevent recompilation errors in development
 - **Weekly periods**: Priorities are tied to week ranges (weekStart/weekEnd)
 - **Maximum priorities**: Recommended limit is 5 per user per week
+- **Auto-rescheduling**: Priorities in `EN_TIEMPO` status are automatically rescheduled when they expire
 - **Language**: All UI and messages are in Spanish

@@ -299,6 +299,13 @@ export default function DashboardPage() {
     if (status === 'authenticated') {
       loadData();
       loadUserStats();
+
+      // Trigger lazy auto-reschedule check (non-blocking)
+      if (typeof window !== 'undefined') {
+        fetch('/api/priorities/auto-reschedule/lazy', {
+          method: 'POST',
+        }).catch(err => console.error('Error triggering lazy auto-reschedule:', err));
+      }
     }
   }, [status, currentWeek]);
 

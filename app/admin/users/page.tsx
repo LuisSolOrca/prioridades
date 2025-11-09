@@ -243,6 +243,13 @@ export default function AdminUsersPage() {
             </div>
             <div className="flex space-x-3">
               <button
+                onClick={() => router.push('/admin/auto-reschedule')}
+                className="bg-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 transition shadow-md"
+                title="Auto-Reprogramación"
+              >
+                🔄 Auto-Reprogramación
+              </button>
+              <button
                 onClick={handleExport}
                 className="bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-md"
                 title="Exportar a Excel"
