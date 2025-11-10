@@ -2,6 +2,7 @@ import User from '@/models/User';
 import Badge from '@/models/Badge';
 import Priority from '@/models/Priority';
 import { sendEmail, emailTemplates } from './email';
+import { DIRECCION_GENERAL_USER_ID } from './direccionGeneralFilter';
 
 // Definición de badges
 export const BADGE_DEFINITIONS = {
@@ -434,7 +435,7 @@ export async function getMonthlyLeaderboard() {
       .select('name email gamification');
 
     // Filtrar Francisco Puente del leaderboard
-    const filteredUsers = users.filter(u => !/Francisco Puente/i.test(u.name));
+    const filteredUsers = users.filter(u => u._id.toString() !== DIRECCION_GENERAL_USER_ID);
 
     // Calcular puntos del mes actual para cada usuario
     const leaderboardData = await Promise.all(

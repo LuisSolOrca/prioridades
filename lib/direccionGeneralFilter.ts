@@ -1,37 +1,14 @@
-import User from '@/models/User';
-
-// Cache para el ID de Francisco Puente (evita múltiples queries)
-let cachedDireccionGeneralUserId: string | null = null;
-let cacheTimestamp: number = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-
 /**
- * Obtiene el ID del usuario de Dirección General (Francisco Puente)
- * con cache para mejorar performance
+ * ID hardcodeado del usuario de Dirección General (Francisco Puente)
+ * Email: fpuente@orcagrc.com
  */
-export async function getDireccionGeneralUserId(): Promise<string | null> {
-  const now = Date.now();
-
-  // Si tenemos cache válido, usarlo
-  if (cachedDireccionGeneralUserId && (now - cacheTimestamp) < CACHE_DURATION) {
-    return cachedDireccionGeneralUserId;
-  }
-
-  // Buscar usuario
-  const direccionGeneralUser = await User.findOne({ name: /Francisco Puente/i }).lean();
-
-  cachedDireccionGeneralUserId = direccionGeneralUser?._id.toString() || null;
-  cacheTimestamp = now;
-
-  return cachedDireccionGeneralUserId;
-}
+export const DIRECCION_GENERAL_USER_ID = '69056261c40e93d1b339a20d';
 
 /**
  * Verifica si un usuario es Francisco Puente
  */
-export async function isDireccionGeneral(userId: string): Promise<boolean> {
-  const direccionGeneralUserId = await getDireccionGeneralUserId();
-  return direccionGeneralUserId === userId;
+export function isDireccionGeneral(userId: string): boolean {
+  return userId === DIRECCION_GENERAL_USER_ID;
 }
 
 /**
@@ -40,16 +17,13 @@ export async function isDireccionGeneral(userId: string): Promise<boolean> {
  */
 export function filterDireccionGeneralFromUsers(
   users: any[],
-  currentUserId: string,
-  direccionGeneralUserId: string | null
+  currentUserId: string
 ): any[] {
-  if (!direccionGeneralUserId) return users;
-
   return users.filter(u => {
     const userId = u._id.toString();
     // Si es Francisco Puente y el usuario actual no es él, ocultarlo
-    if (userId === direccionGeneralUserId) {
-      return currentUserId === direccionGeneralUserId;
+    if (userId === DIRECCION_GENERAL_USER_ID) {
+      return currentUserId === DIRECCION_GENERAL_USER_ID;
     }
     return true;
   });
@@ -61,21 +35,20 @@ export function filterDireccionGeneralFromUsers(
  */
 export function addDireccionGeneralFilter(
   query: any,
-  currentUserId: string,
-  direccionGeneralUserId: string | null
+  currentUserId: string
 ): void {
-  if (!direccionGeneralUserId || currentUserId === direccionGeneralUserId) {
+  if (currentUserId === DIRECCION_GENERAL_USER_ID) {
     return; // Francisco Puente ve todo
   }
 
   // Si ya hay un filtro de userId específico
   if (query.userId) {
     // Si el userId del query ES Francisco Puente, forzar resultado vacío
-    if (query.userId === direccionGeneralUserId) {
+    if (query.userId === DIRECCION_GENERAL_USER_ID) {
       query._id = { $exists: false };
     }
   } else {
     // Si no hay filtro de userId, excluir a Francisco Puente
-    query.userId = { $ne: direccionGeneralUserId };
+    query.userId = { $ne: DIRECCION_GENERAL_USER_ID };
   }
 }

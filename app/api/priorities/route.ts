@@ -3,10 +3,10 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
-import User from '@/models/User';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import { awardBadge } from '@/lib/gamification';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
+import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,9 +24,6 @@ export async function GET(request: NextRequest) {
     const weekEnd = searchParams.get('weekEnd');
     const forDashboard = searchParams.get('forDashboard'); // Nuevo parámetro para indicar que es para el dashboard
 
-    // Obtener el usuario de Dirección General (Francisco Puente)
-    const direccionGeneralUser = await User.findOne({ name: /Francisco Puente/i }).lean();
-    const direccionGeneralUserId = direccionGeneralUser?._id.toString();
     const currentUserId = (session.user as any).id;
 
     let query: any = {};
@@ -61,17 +58,17 @@ export async function GET(request: NextRequest) {
 
     // Filtro de Dirección General: ocultar prioridades de Francisco Puente
     // SOLO él puede verlas, ni siquiera los admins
-    if (direccionGeneralUserId && currentUserId !== direccionGeneralUserId) {
+    if (currentUserId !== DIRECCION_GENERAL_USER_ID) {
       // Si ya hay un filtro de userId específico, verificar que no sea Francisco Puente
       if (query.userId) {
         // Si el userId del query es diferente de Francisco Puente, no hacer nada
         // Si el userId del query ES Francisco Puente, no devolver nada
-        if (query.userId === direccionGeneralUserId) {
+        if (query.userId === DIRECCION_GENERAL_USER_ID) {
           query._id = { $exists: false }; // Forzar resultado vacío
         }
       } else {
         // Si no hay filtro de userId, excluir a Francisco Puente
-        query.userId = { $ne: direccionGeneralUserId };
+        query.userId = { $ne: DIRECCION_GENERAL_USER_ID };
       }
     }
 

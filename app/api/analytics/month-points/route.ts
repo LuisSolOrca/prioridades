@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { calculateCurrentMonthPoints } from '@/lib/gamification';
+import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET() {
     const users = await User.find({ isActive: true }).select('_id name');
 
     // Filtrar Francisco Puente
-    const filteredUsers = users.filter(u => !/Francisco Puente/i.test(u.name));
+    const filteredUsers = users.filter(u => u._id.toString() !== DIRECCION_GENERAL_USER_ID);
 
     const pointsData: { [userId: string]: number } = {};
 

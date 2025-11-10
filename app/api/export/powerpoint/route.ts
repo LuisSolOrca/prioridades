@@ -10,6 +10,7 @@ import pptxgen from 'pptxgenjs';
 import * as fs from 'fs';
 import * as path from 'path';
 import { trackFeatureUsage } from '@/lib/gamification';
+import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,10 +28,6 @@ export async function POST(request: NextRequest) {
     const { weekStart, weekEnd, weekLabel, groupByArea = false } = body;
     const currentUserId = (session.user as any).id;
 
-    // Obtener el usuario de Dirección General
-    const direccionGeneralUser = await User.findOne({ name: /Francisco Puente/i }).lean();
-    const direccionGeneralUserId = direccionGeneralUser?._id.toString();
-
     // Fetch data
     const [users, initiatives, allPriorities] = await Promise.all([
       User.find({ isActive: true }).lean(),
@@ -45,8 +42,8 @@ export async function POST(request: NextRequest) {
     const priorities = allPriorities.filter((p: any) => {
       const pUserId = p.userId.toString();
       // Si es Francisco Puente y el usuario actual no es él, ocultarla
-      if (direccionGeneralUserId && pUserId === direccionGeneralUserId) {
-        return currentUserId === direccionGeneralUserId;
+      if (pUserId === DIRECCION_GENERAL_USER_ID) {
+        return currentUserId === DIRECCION_GENERAL_USER_ID;
       }
       return true;
     });
@@ -54,8 +51,8 @@ export async function POST(request: NextRequest) {
     // Filtrar usuarios para ocultar a Francisco Puente
     const filteredUsers = users.filter(u => {
       const userId = u._id.toString();
-      if (direccionGeneralUserId && userId === direccionGeneralUserId) {
-        return currentUserId === direccionGeneralUserId;
+      if (userId === DIRECCION_GENERAL_USER_ID) {
+        return currentUserId === DIRECCION_GENERAL_USER_ID;
       }
       return true;
     });

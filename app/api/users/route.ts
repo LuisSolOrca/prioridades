@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,11 +31,10 @@ export async function GET(request: NextRequest) {
       .lean();
 
     // Filtrar Francisco Puente de la lista para todos excepto él mismo
-    const direccionGeneralUser = users.find(u => /Francisco Puente/i.test(u.name));
     const filteredUsers = users.filter(u => {
       // Si es Francisco Puente y el usuario actual no es él, ocultarlo
-      if (direccionGeneralUser && u._id.toString() === direccionGeneralUser._id.toString()) {
-        return currentUserId === direccionGeneralUser._id.toString();
+      if (u._id.toString() === DIRECCION_GENERAL_USER_ID) {
+        return currentUserId === DIRECCION_GENERAL_USER_ID;
       }
       return true;
     });
