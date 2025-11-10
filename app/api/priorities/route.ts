@@ -62,7 +62,17 @@ export async function GET(request: NextRequest) {
     // Filtro de Dirección General: ocultar prioridades de Francisco Puente
     // SOLO él puede verlas, ni siquiera los admins
     if (direccionGeneralUserId && currentUserId !== direccionGeneralUserId) {
-      query.userId = { $ne: direccionGeneralUserId };
+      // Si ya hay un filtro de userId específico, verificar que no sea Francisco Puente
+      if (query.userId) {
+        // Si el userId del query es diferente de Francisco Puente, no hacer nada
+        // Si el userId del query ES Francisco Puente, no devolver nada
+        if (query.userId === direccionGeneralUserId) {
+          query._id = { $exists: false }; // Forzar resultado vacío
+        }
+      } else {
+        // Si no hay filtro de userId, excluir a Francisco Puente
+        query.userId = { $ne: direccionGeneralUserId };
+      }
     }
 
     const priorities = await Priority.find(query)
