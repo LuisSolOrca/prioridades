@@ -433,9 +433,12 @@ export async function getMonthlyLeaderboard() {
     const users = await User.find({ isActive: true })
       .select('name email gamification');
 
+    // Filtrar Francisco Puente del leaderboard
+    const filteredUsers = users.filter(u => !/Francisco Puente/i.test(u.name));
+
     // Calcular puntos del mes actual para cada usuario
     const leaderboardData = await Promise.all(
-      users.map(async (user) => {
+      filteredUsers.map(async (user) => {
         const currentMonthPoints = await calculateCurrentMonthPoints(user._id.toString());
         return {
           userId: user._id,

@@ -20,9 +20,12 @@ export async function GET() {
 
     const users = await User.find({ isActive: true }).select('_id name');
 
+    // Filtrar Francisco Puente
+    const filteredUsers = users.filter(u => !/Francisco Puente/i.test(u.name));
+
     const pointsData: { [userId: string]: number } = {};
 
-    for (const user of users) {
+    for (const user of filteredUsers) {
       const points = await calculateCurrentMonthPoints(user._id.toString());
       pointsData[user._id.toString()] = points;
     }

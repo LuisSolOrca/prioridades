@@ -25,9 +25,14 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { weekStart, weekEnd, weekLabel, groupByArea = false } = body;
+    const currentUserId = (session.user as any).id;
+
+    // Obtener el usuario de Dirección General
+    const direccionGeneralUser = await User.findOne({ name: /Francisco Puente/i }).lean();
+    const direccionGeneralUserId = direccionGeneralUser?._id.toString();
 
     // Fetch data
-    const [users, initiatives, priorities] = await Promise.all([
+    const [users, initiatives, allPriorities] = await Promise.all([
       User.find({ isActive: true }).lean(),
       StrategicInitiative.find({ isActive: true }).lean(),
       Priority.find({
@@ -35,6 +40,25 @@ export async function POST(request: NextRequest) {
         weekEnd: { $lte: new Date(weekEnd) },
       }).lean(),
     ]);
+
+    // Filtrar prioridades de Francisco Puente
+    const priorities = allPriorities.filter((p: any) => {
+      const pUserId = p.userId.toString();
+      // Si es Francisco Puente y el usuario actual no es él, ocultarla
+      if (direccionGeneralUserId && pUserId === direccionGeneralUserId) {
+        return currentUserId === direccionGeneralUserId;
+      }
+      return true;
+    });
+
+    // Filtrar usuarios para ocultar a Francisco Puente
+    const filteredUsers = users.filter(u => {
+      const userId = u._id.toString();
+      if (direccionGeneralUserId && userId === direccionGeneralUserId) {
+        return currentUserId === direccionGeneralUserId;
+      }
+      return true;
+    });
 
     // Generate AI insights for PowerPoint
     let aiInsights: string[] = [];
@@ -54,7 +78,7 @@ export async function POST(request: NextRequest) {
           // Prepare context grouped by area
           const areaMap = new Map<string, any>();
 
-          users.forEach((user: any) => {
+          filteredUsers.forEach((user: any) => {
             const areaKey = user.area || 'Sin Área Asignada';
             if (!areaMap.has(areaKey)) {
               areaMap.set(areaKey, {
@@ -80,7 +104,7 @@ export async function POST(request: NextRequest) {
 
           // Add priorities to each area
           priorities.forEach((p: any) => {
-            const user = users.find((u: any) => u._id.toString() === p.userId.toString());
+            const user = filteredUsers.find((u: any) => u._id.toString() === p.userId.toString());
             const userArea = user?.area || 'Sin Área Asignada';
             const areaData = areaMap.get(userArea);
 
@@ -154,7 +178,7 @@ Responde en español con exactamente 5 insights, uno por línea.`;
         } else {
           // Prepare context by user (original behavior)
           const prioritiesContext = priorities.map((p: any) => ({
-            usuario: users.find((u: any) => u._id.toString() === p.userId.toString())?.name || 'Desconocido',
+            usuario: filteredUsers.find((u: any) => u._id.toString() === p.userId.toString())?.name || 'Desconocido',
             titulo: p.title,
             descripcion: p.description || '',
             estado: p.status,
@@ -428,7 +452,7 @@ Responde en español con exactamente 5 insights, uno por línea.`;
     if (groupByArea) {
       // Group by area
       const areaMap = new Map<string, number>();
-      users.forEach((user: any) => {
+      filteredUsers.forEach((user: any) => {
         const areaKey = user.area || 'Sin Área Asignada';
         if (!areaMap.has(areaKey)) {
           areaMap.set(areaKey, 0);
@@ -436,7 +460,7 @@ Responde en español con exactamente 5 insights, uno por línea.`;
       });
 
       priorities.forEach((p: any) => {
-        const user = users.find((u: any) => u._id.toString() === p.userId.toString());
+        const user = filteredUsers.find((u: any) => u._id.toString() === p.userId.toString());
         const areaKey = user?.area || 'Sin Área Asignada';
         areaMap.set(areaKey, (areaMap.get(areaKey) || 0) + 1);
       });
@@ -460,7 +484,7 @@ Responde en español con exactamente 5 insights, uno por línea.`;
       secondChartMaxVal = Math.max(...areaCounts.map((a: any) => a.count)) + 2;
     } else {
       // Group by user
-      const userPriorityCounts = users.map((user: any) => ({
+      const userPriorityCounts = filteredUsers.map((user: any) => ({
         name: user.name,
         count: priorities.filter((p: any) => p.userId.toString() === user._id.toString()).length,
       }));
@@ -548,7 +572,7 @@ Responde en español con exactamente 5 insights, uno por línea.`;
       // Area Detail Slides
       // Group users by area
       const areaMap = new Map<string, any>();
-      users.forEach((user: any) => {
+      filteredUsers.forEach((user: any) => {
         const areaKey = user.area || 'Sin Área Asignada';
         if (!areaMap.has(areaKey)) {
           areaMap.set(areaKey, {
@@ -567,7 +591,7 @@ Responde en español con exactamente 5 insights, uno por línea.`;
 
       // Add priorities to each area
       priorities.forEach((p: any) => {
-        const user = users.find((u: any) => u._id.toString() === p.userId.toString());
+        const user = filteredUsers.find((u: any) => u._id.toString() === p.userId.toString());
         const areaKey = user?.area || 'Sin Área Asignada';
         const areaData = areaMap.get(areaKey);
         if (areaData) {
