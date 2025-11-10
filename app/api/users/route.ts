@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('activeOnly') === 'true';
+    const currentUserId = (session.user as any).id;
 
     let query: any = {};
 
@@ -28,7 +29,17 @@ export async function GET(request: NextRequest) {
       .sort({ name: 1 })
       .lean();
 
-    return NextResponse.json(users);
+    // Filtrar Francisco Puente de la lista para todos excepto él mismo
+    const direccionGeneralUser = users.find(u => /Francisco Puente/i.test(u.name));
+    const filteredUsers = users.filter(u => {
+      // Si es Francisco Puente y el usuario actual no es él, ocultarlo
+      if (direccionGeneralUser && u._id.toString() === direccionGeneralUser._id.toString()) {
+        return currentUserId === direccionGeneralUser._id.toString();
+      }
+      return true;
+    });
+
+    return NextResponse.json(filteredUsers);
   } catch (error: any) {
     console.error('Error fetching users:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

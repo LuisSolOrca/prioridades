@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
+import User from '@/models/User';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import { awardBadge } from '@/lib/gamification';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
@@ -22,6 +23,11 @@ export async function GET(request: NextRequest) {
     const weekStart = searchParams.get('weekStart');
     const weekEnd = searchParams.get('weekEnd');
     const forDashboard = searchParams.get('forDashboard'); // Nuevo parámetro para indicar que es para el dashboard
+
+    // Obtener el usuario de Dirección General (Francisco Puente)
+    const direccionGeneralUser = await User.findOne({ name: /Francisco Puente/i }).lean();
+    const direccionGeneralUserId = direccionGeneralUser?._id.toString();
+    const currentUserId = (session.user as any).id;
 
     let query: any = {};
 
@@ -51,6 +57,12 @@ export async function GET(request: NextRequest) {
         $gte: weekStartDate,
         $lt: nextDay
       };
+    }
+
+    // Filtro de Dirección General: ocultar prioridades de Francisco Puente
+    // SOLO él puede verlas, ni siquiera los admins
+    if (direccionGeneralUserId && currentUserId !== direccionGeneralUserId) {
+      query.userId = { $ne: direccionGeneralUserId };
     }
 
     const priorities = await Priority.find(query)
