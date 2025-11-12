@@ -3,9 +3,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Milestone from '@/models/Milestone';
+import User from '@/models/User';
+import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
 
 /**
- * GET - Obtiene los hitos del usuario
+ * GET - Obtiene los hitos del usuario más los de su líder de área
  */
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +28,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    let query: any = { userId };
+    // Obtener el usuario actual para conocer su área
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Construir lista de IDs de usuarios cuyos hitos se deben mostrar
+    const userIds = [userId]; // Siempre incluir los propios hitos
+
+    // Si el usuario tiene área, buscar el líder de esa área
+    if (currentUser.area) {
+      const areaLeader = await User.findOne({
+        area: currentUser.area,
+        isAreaLeader: true,
+        _id: { $ne: userId } // No incluir al mismo usuario si es líder
+      });
+
+      // Si hay líder y NO es Francisco Puente (Dirección General), incluir sus hitos
+      if (areaLeader && areaLeader._id.toString() !== DIRECCION_GENERAL_USER_ID) {
+        userIds.push(areaLeader._id.toString());
+      }
+    }
+
+    let query: any = { userId: { $in: userIds } };
 
     // Filtrar por rango de fechas si se proporciona
     if (startDate || endDate) {
