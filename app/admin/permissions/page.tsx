@@ -74,7 +74,7 @@ export default function PermissionsManagementPage() {
     }
   };
 
-  const handlePermissionChange = (permission: keyof User['permissions'], value: boolean) => {
+  const handlePermissionChange = (permission: string, value: boolean) => {
     if (!selectedUser) return;
 
     setSelectedUser({
