@@ -11,6 +11,7 @@ import PriorityFormModal from '@/components/PriorityFormModal';
 import CommentsSection from '@/components/CommentsSection';
 import MilestoneNotifications from '@/components/MilestoneNotifications';
 import MilestoneFormModal from '@/components/MilestoneFormModal';
+import { usePermissions } from '@/hooks/usePermissions';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 
 interface Initiative {
@@ -93,6 +94,7 @@ interface Milestone {
 export default function PrioritiesGanttPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -386,13 +388,15 @@ export default function PrioritiesGanttPage() {
               📊 Vista Gantt - Mis Prioridades
             </h1>
             <div className="flex space-x-3">
-              <button
-                onClick={handleNewMilestone}
-                className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 dark:hover:bg-orange-600 transition"
-                title="Crear nuevo hito"
-              >
-                💎 Nuevo Hito
-              </button>
+              {hasPermission('canCreateMilestones') && (
+                <button
+                  onClick={handleNewMilestone}
+                  className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 dark:hover:bg-orange-600 transition"
+                  title="Crear nuevo hito"
+                >
+                  💎 Nuevo Hito
+                </button>
+              )}
               <button
                 onClick={() => router.push('/priorities-kanban')}
                 className="bg-purple-600 dark:bg-purple-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 dark:hover:bg-purple-600 transition"
@@ -1127,12 +1131,14 @@ export default function PrioritiesGanttPage() {
               )}
 
               <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <button
-                  onClick={handleNewMilestone}
-                  className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-2 rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition font-medium"
-                >
-                  💎 Crear Nuevo Hito
-                </button>
+                {hasPermission('canCreateMilestones') && (
+                  <button
+                    onClick={handleNewMilestone}
+                    className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-2 rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition font-medium"
+                  >
+                    💎 Crear Nuevo Hito
+                  </button>
+                )}
                 <button
                   onClick={() => setShowFutureMilestonesModal(false)}
                   className="bg-gray-600 dark:bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-semibold"

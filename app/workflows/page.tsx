@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Plus, Play, Edit, Trash2, Power, PowerOff, History } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import PermissionGuard from '@/components/PermissionGuard';
 
 interface Workflow {
   _id: string;
@@ -139,9 +140,10 @@ export default function WorkflowsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      <div className="pt-16 main-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PermissionGuard permission="viewAutomations">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -314,6 +316,7 @@ export default function WorkflowsPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

@@ -195,94 +195,110 @@ export default function Navbar() {
             {sidebarCollapsed ? (
               // Collapsed view - only icons
               <>
-                <button
-                  onClick={() => handleNavigation('/dashboard')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname === '/dashboard'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="Dashboard"
-                >
-                  <LayoutDashboard size={22} />
-                </button>
-                <button
-                  onClick={() => handleNavigation('/area-dashboard')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname === '/area-dashboard'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="Dashboard por Área"
-                >
-                  <Building2 size={22} />
-                </button>
-                <button
-                  onClick={() => handleNavigation('/priorities')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname === '/priorities'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="Mis Prioridades"
-                >
-                  <ListTodo size={22} />
-                </button>
-                <button
-                  onClick={() => handleNavigation('/reports')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname === '/reports'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="Reportes"
-                >
-                  <BarChart3 size={22} />
-                </button>
-                <button
-                  onClick={() => handleNavigation('/analytics')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname === '/analytics'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="Analítica"
-                >
-                  <LineChart size={22} />
-                </button>
-                <button
-                  onClick={() => handleNavigation('/leaderboard')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname === '/leaderboard'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
+                {hasPermission('viewDashboard') && (
+                  <button
+                    onClick={() => handleNavigation('/dashboard')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/dashboard'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Dashboard"
+                  >
+                    <LayoutDashboard size={22} />
+                  </button>
+                )}
+                {hasPermission('viewAreaDashboard') && (
+                  <button
+                    onClick={() => handleNavigation('/area-dashboard')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/area-dashboard'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Dashboard por Área"
+                  >
+                    <Building2 size={22} />
+                  </button>
+                )}
+                {hasPermission('viewMyPriorities') && (
+                  <button
+                    onClick={() => handleNavigation('/priorities')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/priorities'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Mis Prioridades"
+                  >
+                    <ListTodo size={22} />
+                  </button>
+                )}
+                {hasPermission('viewReports') && (
+                  <button
+                    onClick={() => handleNavigation('/reports')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/reports'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Reportes"
+                  >
+                    <BarChart3 size={22} />
+                  </button>
+                )}
+                {hasPermission('viewAnalytics') && (
+                  <button
+                    onClick={() => handleNavigation('/analytics')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/analytics'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Analítica"
+                  >
+                    <LineChart size={22} />
+                  </button>
+                )}
+                {hasPermission('viewLeaderboard') && (
+                  <button
+                    onClick={() => handleNavigation('/leaderboard')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/leaderboard'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
                   title="Leaderboard"
                 >
                   <Trophy size={22} />
                 </button>
-                <button
-                  onClick={() => handleNavigation('/workflows')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname?.startsWith('/workflows')
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="Automatizaciones"
-                >
-                  <Zap size={22} />
-                </button>
-                <button
-                  onClick={() => handleNavigation('/history')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname === '/history'
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="Historial"
-                >
-                  <History size={22} />
-                </button>
+                )}
+                {hasPermission('viewAutomations') && (
+                  <button
+                    onClick={() => handleNavigation('/workflows')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname?.startsWith('/workflows')
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Automatizaciones"
+                  >
+                    <Zap size={22} />
+                  </button>
+                )}
+                {hasPermission('viewHistory') && (
+                  <button
+                    onClick={() => handleNavigation('/history')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/history'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Historial"
+                  >
+                    <History size={22} />
+                  </button>
+                )}
 
                 {user.area === 'Tecnología' && (
                   <>
@@ -417,54 +433,70 @@ export default function Navbar() {
             ) : (
               // Expanded view - icons and labels
               <>
-                <NavButton
-                  icon={<LayoutDashboard size={20} />}
-                  label="Dashboard"
-                  active={pathname === '/dashboard'}
-                  onClick={() => handleNavigation('/dashboard')}
-                />
-                <NavButton
-                  icon={<Building2 size={20} />}
-                  label="Dashboard por Área"
-                  active={pathname === '/area-dashboard'}
-                  onClick={() => handleNavigation('/area-dashboard')}
-                />
-                <NavButton
-                  icon={<ListTodo size={20} />}
-                  label="Mis Prioridades"
-                  active={pathname === '/priorities'}
-                  onClick={() => handleNavigation('/priorities')}
-                />
-                <NavButton
-                  icon={<BarChart3 size={20} />}
-                  label="Reportes"
-                  active={pathname === '/reports'}
-                  onClick={() => handleNavigation('/reports')}
-                />
-                <NavButton
-                  icon={<LineChart size={20} />}
-                  label="Analítica"
-                  active={pathname === '/analytics'}
-                  onClick={() => handleNavigation('/analytics')}
-                />
-                <NavButton
-                  icon={<Trophy size={20} />}
-                  label="Leaderboard"
-                  active={pathname === '/leaderboard'}
-                  onClick={() => handleNavigation('/leaderboard')}
-                />
-                <NavButton
-                  icon={<Zap size={20} />}
-                  label="Automatizaciones"
-                  active={pathname?.startsWith('/workflows') || false}
-                  onClick={() => handleNavigation('/workflows')}
-                />
-                <NavButton
-                  icon={<History size={20} />}
-                  label="Historial"
-                  active={pathname === '/history'}
-                  onClick={() => handleNavigation('/history')}
-                />
+                {hasPermission('viewDashboard') && (
+                  <NavButton
+                    icon={<LayoutDashboard size={20} />}
+                    label="Dashboard"
+                    active={pathname === '/dashboard'}
+                    onClick={() => handleNavigation('/dashboard')}
+                  />
+                )}
+                {hasPermission('viewAreaDashboard') && (
+                  <NavButton
+                    icon={<Building2 size={20} />}
+                    label="Dashboard por Área"
+                    active={pathname === '/area-dashboard'}
+                    onClick={() => handleNavigation('/area-dashboard')}
+                  />
+                )}
+                {hasPermission('viewMyPriorities') && (
+                  <NavButton
+                    icon={<ListTodo size={20} />}
+                    label="Mis Prioridades"
+                    active={pathname === '/priorities'}
+                    onClick={() => handleNavigation('/priorities')}
+                  />
+                )}
+                {hasPermission('viewReports') && (
+                  <NavButton
+                    icon={<BarChart3 size={20} />}
+                    label="Reportes"
+                    active={pathname === '/reports'}
+                    onClick={() => handleNavigation('/reports')}
+                  />
+                )}
+                {hasPermission('viewAnalytics') && (
+                  <NavButton
+                    icon={<LineChart size={20} />}
+                    label="Analítica"
+                    active={pathname === '/analytics'}
+                    onClick={() => handleNavigation('/analytics')}
+                  />
+                )}
+                {hasPermission('viewLeaderboard') && (
+                  <NavButton
+                    icon={<Trophy size={20} />}
+                    label="Leaderboard"
+                    active={pathname === '/leaderboard'}
+                    onClick={() => handleNavigation('/leaderboard')}
+                  />
+                )}
+                {hasPermission('viewAutomations') && (
+                  <NavButton
+                    icon={<Zap size={20} />}
+                    label="Automatizaciones"
+                    active={pathname?.startsWith('/workflows') || false}
+                    onClick={() => handleNavigation('/workflows')}
+                  />
+                )}
+                {hasPermission('viewHistory') && (
+                  <NavButton
+                    icon={<History size={20} />}
+                    label="Historial"
+                    active={pathname === '/history'}
+                    onClick={() => handleNavigation('/history')}
+                  />
+                )}
 
                 {user.area === 'Tecnología' && (
                   <>

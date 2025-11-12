@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
 import User from '@/models/User';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
+import { hasPermission } from '@/lib/permissions';
 
 export async function PUT(
   request: NextRequest,
@@ -15,6 +16,14 @@ export async function PUT(
 
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar permiso para reasignar prioridades
+    if (!hasPermission(session, 'canReassignPriorities')) {
+      return NextResponse.json(
+        { error: 'No tienes permiso para reasignar prioridades' },
+        { status: 403 }
+      );
     }
 
     const currentUser = session.user as any;

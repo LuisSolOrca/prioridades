@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import CommentsSection from '@/components/CommentsSection';
 import MotivationalBanner from '@/components/MotivationalBanner';
+import PermissionGuard from '@/components/PermissionGuard';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPrioritiesByArea } from '@/lib/exportToExcel';
 import ReactMarkdown from 'react-markdown';
@@ -553,9 +554,10 @@ export default function AreaDashboardPage() {
     currentWeek.monday.toDateString() === getWeekDates().monday.toDateString();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
+    <PermissionGuard permission="viewAreaDashboard">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6 fade-in">
           <MotivationalBanner />
 
@@ -905,6 +907,7 @@ export default function AreaDashboardPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Milestone from '@/models/Milestone';
 import User from '@/models/User';
 import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
+import { hasPermission } from '@/lib/permissions';
 
 /**
  * GET - Obtiene los hitos del usuario más los de su líder de área
@@ -81,6 +82,14 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verificar permiso para crear hitos
+    if (!hasPermission(session, 'canCreateMilestones')) {
+      return NextResponse.json(
+        { error: 'No tienes permiso para crear hitos' },
+        { status: 403 }
+      );
     }
 
     await connectDB();

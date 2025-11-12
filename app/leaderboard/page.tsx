@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import MonthlyLeaderboard from '@/components/MonthlyLeaderboard';
+import PermissionGuard from '@/components/PermissionGuard';
 
 export default function LeaderboardPage() {
   const { data: session, status } = useSession();
@@ -30,9 +31,10 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      <div className="pt-16 main-content container mx-auto px-4 py-8 max-w-4xl">
+    <PermissionGuard permission="viewLeaderboard">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-6">
           {/* Header */}
           <div className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 rounded-xl shadow-lg p-8 text-white">
@@ -189,6 +191,7 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

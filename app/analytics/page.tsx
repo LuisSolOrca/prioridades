@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
+import PermissionGuard from '@/components/PermissionGuard';
 import { exportUserStats, exportInitiativeStats, exportAreaStats } from '@/lib/exportToExcel';
 import { trackFeature } from '@/lib/trackFeature';
 
@@ -408,9 +409,10 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
+    <PermissionGuard permission="viewAnalytics">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
             📊 Analítica y Métricas
@@ -980,6 +982,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

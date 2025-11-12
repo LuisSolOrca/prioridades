@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import ChecklistManager, { ChecklistItem } from './ChecklistManager';
 import EvidenceLinksManager, { EvidenceLink } from './EvidenceLinksManager';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Initiative {
   _id: string;
@@ -93,6 +94,7 @@ export default function PriorityFormModal({
   onUserChange,
   hasAzureDevOpsLink = false
 }: PriorityFormModalProps) {
+  const { hasPermission } = usePermissions();
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
   const [aiSuggestion, setAiSuggestion] = useState<{ type: 'title' | 'description', text: string } | null>(null);
   const [isCreatingNewClient, setIsCreatingNewClient] = useState(false);
@@ -546,8 +548,8 @@ export default function PriorityFormModal({
             )}
           </div>
 
-          {/* Reasignación de Usuario (solo para admins en /history) */}
-          {allowUserReassignment && users.length > 0 && selectedUserId && onUserChange && (
+          {/* Reasignación de Usuario (solo para usuarios con permiso) */}
+          {allowUserReassignment && hasPermission('canReassignPriorities') && users.length > 0 && selectedUserId && onUserChange && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 👤 Reasignar a otro usuario

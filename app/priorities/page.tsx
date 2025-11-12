@@ -12,6 +12,7 @@ import PriorityFormModal from '@/components/PriorityFormModal';
 import MotivationalBanner from '@/components/MotivationalBanner';
 import AzureSyncButton from '@/components/AzureSyncButton';
 import IndividualSyncModal from '@/components/IndividualSyncModal';
+import PermissionGuard from '@/components/PermissionGuard';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 
@@ -480,9 +481,10 @@ export default function PrioritiesPage() {
   const nextWeekAtLimit = nextWeekTotal >= 10;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
-      <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
+    <PermissionGuard permission="viewMyPriorities">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content px-4 py-6 max-w-7xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
@@ -1349,6 +1351,7 @@ export default function PrioritiesPage() {
           onSyncComplete={loadData}
         />
       )}
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

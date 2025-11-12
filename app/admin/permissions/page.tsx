@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import Navbar from '@/components/Navbar';
 
 interface User {
   _id: string;
@@ -138,14 +139,15 @@ export default function PermissionsManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Navbar />
+      <div className="pt-16 main-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => router.push('/admin')}
+            onClick={() => router.push('/dashboard')}
             className="text-blue-600 dark:text-blue-400 hover:underline mb-4 flex items-center gap-2"
           >
-            ← Volver al Panel de Administración
+            ← Volver al Dashboard
           </button>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             🔐 Gestión de Permisos por Usuario
