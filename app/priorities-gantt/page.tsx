@@ -9,6 +9,8 @@ import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import PriorityFormModal from '@/components/PriorityFormModal';
 import CommentsSection from '@/components/CommentsSection';
+import MilestoneNotifications from '@/components/MilestoneNotifications';
+import MilestoneFormModal from '@/components/MilestoneFormModal';
 import { getWeekDates, getWeekLabel } from '@/lib/utils';
 
 interface Initiative {
@@ -72,6 +74,21 @@ interface WeekInfo {
   offset: number; // -2, -1, 0, 1
 }
 
+interface Deliverable {
+  title: string;
+  description?: string;
+  isCompleted: boolean;
+}
+
+interface Milestone {
+  _id?: string;
+  title: string;
+  description?: string;
+  dueDate: string;
+  deliverables: Deliverable[];
+  isCompleted: boolean;
+}
+
 export default function PrioritiesGanttPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -79,6 +96,7 @@ export default function PrioritiesGanttPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [weeks, setWeeks] = useState<WeekInfo[]>([]);
   const [selectedPriorityForView, setSelectedPriorityForView] = useState<Priority | null>(null);
@@ -86,6 +104,14 @@ export default function PrioritiesGanttPage() {
   const [editingPriority, setEditingPriority] = useState<Priority | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [formData, setFormData] = useState<any>(null);
+  const [showMilestoneForm, setShowMilestoneForm] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+  const [milestoneFormData, setMilestoneFormData] = useState<any>({
+    title: '',
+    description: '',
+    dueDate: '',
+    deliverables: []
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -152,17 +178,23 @@ export default function PrioritiesGanttPage() {
           .then(res => res.json())
       );
 
-      const [initiativesRes, clientsRes, projectsRes, ...weeklyPriorities] = await Promise.all([
+      // Calcular rango de fechas para hitos
+      const startDate = weeks[0].weekStart.toISOString();
+      const endDate = weeks[weeks.length - 1].weekEnd.toISOString();
+
+      const [initiativesRes, clientsRes, projectsRes, milestonesRes, ...weeklyPriorities] = await Promise.all([
         fetch('/api/initiatives?activeOnly=true'),
         fetch('/api/clients?activeOnly=true'),
         fetch('/api/projects'),
+        fetch(`/api/milestones?userId=${(session!.user as any).id}&startDate=${startDate}&endDate=${endDate}`),
         ...priorityPromises
       ]);
 
-      const [initiativesData, clientsData, projectsData] = await Promise.all([
+      const [initiativesData, clientsData, projectsData, milestonesData] = await Promise.all([
         initiativesRes.json(),
         clientsRes.json(),
-        projectsRes.json()
+        projectsRes.json(),
+        milestonesRes.json()
       ]);
 
       // Combinar todas las prioridades de las 4 semanas
@@ -172,6 +204,7 @@ export default function PrioritiesGanttPage() {
       setClients(Array.isArray(clientsData) ? clientsData : []);
       setProjects(Array.isArray(projectsData) ? projectsData : []);
       setPriorities(allPriorities);
+      setMilestones(Array.isArray(milestonesData) ? milestonesData : []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -229,6 +262,99 @@ export default function PrioritiesGanttPage() {
     }
   };
 
+  const handleNewMilestone = () => {
+    setMilestoneFormData({
+      title: '',
+      description: '',
+      dueDate: '',
+      deliverables: []
+    });
+    setEditingMilestone(null);
+    setShowMilestoneForm(true);
+  };
+
+  const handleEditMilestone = (milestone: Milestone) => {
+    setMilestoneFormData({
+      title: milestone.title,
+      description: milestone.description || '',
+      dueDate: milestone.dueDate.split('T')[0],
+      deliverables: milestone.deliverables
+    });
+    setEditingMilestone(milestone);
+    setShowMilestoneForm(true);
+  };
+
+  const handleSaveMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!milestoneFormData.title || !milestoneFormData.dueDate) {
+      alert('El título y la fecha son obligatorios');
+      return;
+    }
+
+    try {
+      if (editingMilestone?._id) {
+        const res = await fetch(`/api/milestones/${editingMilestone._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(milestoneFormData)
+        });
+
+        if (!res.ok) throw new Error('Error updating milestone');
+      } else {
+        const res = await fetch('/api/milestones', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(milestoneFormData)
+        });
+
+        if (!res.ok) throw new Error('Error creating milestone');
+      }
+
+      await loadData();
+      setShowMilestoneForm(false);
+      setEditingMilestone(null);
+      setMilestoneFormData({ title: '', description: '', dueDate: '', deliverables: [] });
+    } catch (error) {
+      console.error('Error saving milestone:', error);
+      alert('Error al guardar el hito');
+    }
+  };
+
+  const handleDeleteMilestone = async (id: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este hito?')) return;
+
+    try {
+      const res = await fetch(`/api/milestones/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) throw new Error('Error deleting milestone');
+
+      await loadData();
+    } catch (error) {
+      console.error('Error deleting milestone:', error);
+      alert('Error al eliminar el hito');
+    }
+  };
+
+  const handleToggleMilestoneComplete = async (milestone: Milestone) => {
+    try {
+      const res = await fetch(`/api/milestones/${milestone._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isCompleted: !milestone.isCompleted })
+      });
+
+      if (!res.ok) throw new Error('Error updating milestone');
+
+      await loadData();
+    } catch (error) {
+      console.error('Error updating milestone:', error);
+      alert('Error al actualizar el hito');
+    }
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -254,6 +380,13 @@ export default function PrioritiesGanttPage() {
               📊 Vista Gantt - Mis Prioridades
             </h1>
             <div className="flex space-x-3">
+              <button
+                onClick={handleNewMilestone}
+                className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 dark:hover:bg-orange-600 transition"
+                title="Crear nuevo hito"
+              >
+                💎 Nuevo Hito
+              </button>
               <button
                 onClick={() => router.push('/priorities-kanban')}
                 className="bg-purple-600 dark:bg-purple-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 dark:hover:bg-purple-600 transition"
@@ -316,6 +449,65 @@ export default function PrioritiesGanttPage() {
                 Acciones
               </div>
             </div>
+
+            {/* Fila de Hitos */}
+            {milestones.length > 0 && (
+              <div className="grid grid-cols-[1fr,repeat(4,120px),100px] border-b-2 border-orange-300 dark:border-orange-700 bg-orange-50/30 dark:bg-orange-900/10">
+                <div className="p-3 border-r border-gray-200 dark:border-gray-700 flex items-center">
+                  <span className="text-sm font-semibold text-orange-700 dark:text-orange-300">💎 Hitos</span>
+                </div>
+                {weeks.map((week, weekIndex) => {
+                  const weekMilestones = milestones.filter(m => {
+                    const mDate = new Date(m.dueDate);
+                    return mDate >= week.weekStart && mDate <= week.weekEnd;
+                  });
+
+                  return (
+                    <div
+                      key={weekIndex}
+                      className="p-2 border-r border-gray-200 dark:border-gray-700 relative"
+                    >
+                      {weekMilestones.map((milestone) => (
+                        <div
+                          key={milestone._id}
+                          className="relative group cursor-pointer mb-1"
+                          onClick={() => handleEditMilestone(milestone)}
+                          title={milestone.title}
+                        >
+                          {/* Rombo */}
+                          <div className={`w-6 h-6 mx-auto transform rotate-45 ${
+                            milestone.isCompleted
+                              ? 'bg-green-500 dark:bg-green-600'
+                              : 'bg-orange-500 dark:bg-orange-600'
+                          } shadow-md hover:scale-110 transition`} />
+
+                          {/* Tooltip */}
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10 w-48">
+                            <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-xl">
+                              <div className="font-semibold mb-1">{milestone.title}</div>
+                              {milestone.description && (
+                                <div className="text-gray-300 dark:text-gray-400 mb-1 line-clamp-2">{milestone.description}</div>
+                              )}
+                              <div className="text-gray-400 dark:text-gray-500">
+                                {new Date(milestone.dueDate).toLocaleDateString('es-MX')}
+                              </div>
+                              {milestone.deliverables.length > 0 && (
+                                <div className="mt-1 text-gray-400 dark:text-gray-500">
+                                  {milestone.deliverables.filter(d => d.isCompleted).length}/{milestone.deliverables.length} entregables
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                <div className="p-2 flex items-center justify-center">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{milestones.length}</span>
+                </div>
+              </div>
+            )}
 
             {/* Filas de prioridades */}
             <div>
@@ -444,7 +636,7 @@ export default function PrioritiesGanttPage() {
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
               📌 Leyenda
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600"></div>
                 <span className="text-gray-600 dark:text-gray-400">Semanas pasadas</span>
@@ -463,6 +655,13 @@ export default function PrioritiesGanttPage() {
                   <span className="px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200">O</span>
                 </div>
                 <span className="text-gray-600 dark:text-gray-400">Estratégica / Operativa</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-2">
+                  <div className="w-4 h-4 transform rotate-45 bg-orange-500 dark:bg-orange-600"></div>
+                  <div className="w-4 h-4 transform rotate-45 bg-green-500 dark:bg-green-600"></div>
+                </div>
+                <span className="text-gray-600 dark:text-gray-400">Hito pendiente / completado</span>
               </div>
             </div>
           </div>
@@ -689,6 +888,25 @@ export default function PrioritiesGanttPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Hitos */}
+      {showMilestoneForm && (
+        <MilestoneFormModal
+          isOpen={showMilestoneForm}
+          onClose={() => {
+            setShowMilestoneForm(false);
+            setEditingMilestone(null);
+            setMilestoneFormData({ title: '', description: '', dueDate: '', deliverables: [] });
+          }}
+          formData={milestoneFormData}
+          setFormData={setMilestoneFormData}
+          handleSubmit={handleSaveMilestone}
+          isEditing={!!editingMilestone}
+        />
+      )}
+
+      {/* Notificaciones de Hitos */}
+      <MilestoneNotifications />
     </div>
   );
 }
