@@ -10,6 +10,18 @@ export interface IUser {
   isActive: boolean;
   area?: string;
   isAreaLeader?: boolean;
+  permissions?: {
+    viewDashboard: boolean;
+    viewAreaDashboard: boolean;
+    viewMyPriorities: boolean;
+    viewReports: boolean;
+    viewAnalytics: boolean;
+    viewLeaderboard: boolean;
+    viewAutomations: boolean;
+    viewHistory: boolean;
+    canReassignPriorities: boolean;
+    canCreateMilestones: boolean;
+  };
   emailNotifications?: {
     enabled: boolean;
     newComments: boolean;
@@ -82,6 +94,32 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
   isAreaLeader: {
     type: Boolean,
     default: false,
+  },
+  permissions: {
+    type: {
+      viewDashboard: { type: Boolean, default: true },
+      viewAreaDashboard: { type: Boolean, default: true },
+      viewMyPriorities: { type: Boolean, default: true },
+      viewReports: { type: Boolean, default: true },
+      viewAnalytics: { type: Boolean, default: true },
+      viewLeaderboard: { type: Boolean, default: true },
+      viewAutomations: { type: Boolean, default: true },
+      viewHistory: { type: Boolean, default: true },
+      canReassignPriorities: { type: Boolean, default: false },
+      canCreateMilestones: { type: Boolean, default: true },
+    },
+    default: {
+      viewDashboard: true,
+      viewAreaDashboard: true,
+      viewMyPriorities: true,
+      viewReports: true,
+      viewAnalytics: true,
+      viewLeaderboard: true,
+      viewAutomations: true,
+      viewHistory: true,
+      canReassignPriorities: false,
+      canCreateMilestones: true,
+    },
   },
   emailNotifications: {
     type: {
