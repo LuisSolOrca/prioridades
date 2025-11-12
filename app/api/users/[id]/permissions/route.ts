@@ -31,20 +31,38 @@ export async function PUT(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Actualizar permisos
+    // Asegurar que permissions existe
+    if (!user.permissions) {
+      user.permissions = {
+        viewDashboard: true,
+        viewAreaDashboard: true,
+        viewMyPriorities: true,
+        viewReports: true,
+        viewAnalytics: true,
+        viewLeaderboard: true,
+        viewAutomations: true,
+        viewHistory: true,
+        canReassignPriorities: user.role === 'ADMIN',
+        canCreateMilestones: true,
+      };
+    }
+
+    // Actualizar permisos manteniendo estructura
     user.permissions = {
-      viewDashboard: permissions.viewDashboard ?? true,
-      viewAreaDashboard: permissions.viewAreaDashboard ?? true,
-      viewMyPriorities: permissions.viewMyPriorities ?? true,
-      viewReports: permissions.viewReports ?? true,
-      viewAnalytics: permissions.viewAnalytics ?? true,
-      viewLeaderboard: permissions.viewLeaderboard ?? true,
-      viewAutomations: permissions.viewAutomations ?? true,
-      viewHistory: permissions.viewHistory ?? true,
-      canReassignPriorities: permissions.canReassignPriorities ?? false,
-      canCreateMilestones: permissions.canCreateMilestones ?? true,
+      viewDashboard: permissions.viewDashboard !== undefined ? permissions.viewDashboard : user.permissions.viewDashboard,
+      viewAreaDashboard: permissions.viewAreaDashboard !== undefined ? permissions.viewAreaDashboard : user.permissions.viewAreaDashboard,
+      viewMyPriorities: permissions.viewMyPriorities !== undefined ? permissions.viewMyPriorities : user.permissions.viewMyPriorities,
+      viewReports: permissions.viewReports !== undefined ? permissions.viewReports : user.permissions.viewReports,
+      viewAnalytics: permissions.viewAnalytics !== undefined ? permissions.viewAnalytics : user.permissions.viewAnalytics,
+      viewLeaderboard: permissions.viewLeaderboard !== undefined ? permissions.viewLeaderboard : user.permissions.viewLeaderboard,
+      viewAutomations: permissions.viewAutomations !== undefined ? permissions.viewAutomations : user.permissions.viewAutomations,
+      viewHistory: permissions.viewHistory !== undefined ? permissions.viewHistory : user.permissions.viewHistory,
+      canReassignPriorities: permissions.canReassignPriorities !== undefined ? permissions.canReassignPriorities : user.permissions.canReassignPriorities,
+      canCreateMilestones: permissions.canCreateMilestones !== undefined ? permissions.canCreateMilestones : user.permissions.canCreateMilestones,
     };
 
+    // Marcar como modificado explícitamente
+    user.markModified('permissions');
     await user.save();
 
     return NextResponse.json({

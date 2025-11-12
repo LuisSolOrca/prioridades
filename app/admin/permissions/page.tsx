@@ -48,7 +48,25 @@ export default function PermissionsManagementPage() {
       setLoading(true);
       const response = await fetch('/api/users');
       const data = await response.json();
-      setUsers(Array.isArray(data) ? data : []);
+
+      // Asegurar que todos los usuarios tengan permisos definidos con valores por defecto
+      const usersWithPermissions = (Array.isArray(data) ? data : []).map((user: User) => ({
+        ...user,
+        permissions: user.permissions || {
+          viewDashboard: true,
+          viewAreaDashboard: true,
+          viewMyPriorities: true,
+          viewReports: true,
+          viewAnalytics: true,
+          viewLeaderboard: true,
+          viewAutomations: true,
+          viewHistory: true,
+          canReassignPriorities: user.role === 'ADMIN',
+          canCreateMilestones: true,
+        }
+      }));
+
+      setUsers(usersWithPermissions);
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
