@@ -901,6 +901,10 @@ export default function PrioritiesGanttPage() {
           formData={milestoneFormData}
           setFormData={setMilestoneFormData}
           handleSubmit={handleSaveMilestone}
+          handleDelete={editingMilestone?._id ? () => {
+            setShowMilestoneForm(false);
+            handleDeleteMilestone(editingMilestone._id!);
+          } : undefined}
           isEditing={!!editingMilestone}
         />
       )}
