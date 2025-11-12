@@ -100,6 +100,7 @@ export default function PrioritiesPage() {
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [currentWeekMilestones, setCurrentWeekMilestones] = useState<any[]>([]);
+  const [nextWeekMilestones, setNextWeekMilestones] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingPriority, setEditingPriority] = useState<Priority | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -165,7 +166,7 @@ export default function PrioritiesPage() {
 
       const isAdmin = (session!.user as any)?.role === 'ADMIN';
 
-      // Cargar prioridades de la semana actual y la siguiente, más los hitos de la semana actual
+      // Cargar prioridades de la semana actual y la siguiente, más los hitos de ambas semanas
       const promises = [
         fetch('/api/initiatives?activeOnly=true'),
         fetch('/api/clients?activeOnly=true'),
@@ -173,7 +174,8 @@ export default function PrioritiesPage() {
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${nextWeek.monday.toISOString()}&weekEnd=${nextWeek.friday.toISOString()}`),
         fetch('/api/workflows'),
-        fetch(`/api/milestones?userId=${(session!.user as any).id}&startDate=${currentWeek.monday.toISOString()}&endDate=${currentWeek.friday.toISOString()}`)
+        fetch(`/api/milestones?userId=${(session!.user as any).id}&startDate=${currentWeek.monday.toISOString()}&endDate=${currentWeek.friday.toISOString()}`),
+        fetch(`/api/milestones?userId=${(session!.user as any).id}&startDate=${nextWeek.monday.toISOString()}&endDate=${nextWeek.friday.toISOString()}`)
       ];
 
       // Si es admin, cargar también la lista de usuarios
@@ -182,7 +184,7 @@ export default function PrioritiesPage() {
       }
 
       const responses = await Promise.all(promises);
-      const [initiativesData, clientsData, projectsData, currentWeekPriorities, nextWeekPriorities, workflowsData, milestonesData, usersData] = await Promise.all(
+      const [initiativesData, clientsData, projectsData, currentWeekPriorities, nextWeekPriorities, workflowsData, currentWeekMilestonesData, nextWeekMilestonesData, usersData] = await Promise.all(
         responses.map(r => r.json())
       );
 
@@ -195,7 +197,8 @@ export default function PrioritiesPage() {
         ...(Array.isArray(nextWeekPriorities) ? nextWeekPriorities : [])
       ];
       setPriorities(allPriorities);
-      setCurrentWeekMilestones(Array.isArray(milestonesData) ? milestonesData : []);
+      setCurrentWeekMilestones(Array.isArray(currentWeekMilestonesData) ? currentWeekMilestonesData : []);
+      setNextWeekMilestones(Array.isArray(nextWeekMilestonesData) ? nextWeekMilestonesData : []);
 
       // Filtrar solo workflows activos
       if (Array.isArray(workflowsData)) {
@@ -796,6 +799,44 @@ export default function PrioritiesPage() {
                     </span>
                   </h2>
                 </div>
+
+                {!collapsedWeeks.has('next') && nextWeekMilestones.length > 0 && (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                    <div className="flex items-center">
+                      <span className="text-2xl mr-3">💎</span>
+                      <div className="flex-1">
+                        <div className="font-semibold text-green-900 dark:text-green-200 text-sm">
+                          {nextWeekMilestones.length} {nextWeekMilestones.length === 1 ? 'hito' : 'hitos'} la siguiente semana
+                        </div>
+                        <div className="text-xs text-green-600 dark:text-green-400 mt-1 space-y-1">
+                          {nextWeekMilestones.map((milestone: any) => {
+                            const completedDeliverables = milestone.deliverables?.filter((d: any) => d.isCompleted).length || 0;
+                            const totalDeliverables = milestone.deliverables?.length || 0;
+                            return (
+                              <div key={milestone._id} className="flex items-center gap-2">
+                                <span className={milestone.isCompleted ? 'line-through' : ''}>
+                                  {milestone.title}
+                                </span>
+                                <span className="text-xs">
+                                  ({new Date(milestone.dueDate).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' })})
+                                </span>
+                                {totalDeliverables > 0 && (
+                                  <span className="text-xs">
+                                    • {completedDeliverables}/{totalDeliverables} entregables
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="text-xs text-green-700 dark:text-green-400 mt-1">
+                          💡 Planifica prioridades para cumplir con estos hitos
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {!collapsedWeeks.has('next') && (
                   <div className="grid grid-cols-1 gap-4">
                     {nextWeekPriorities.length === 0 ? (
