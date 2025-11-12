@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/usePermissions';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import {
@@ -60,6 +61,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { hasPermission } = usePermissions();
 
   if (!session) return null;
 
