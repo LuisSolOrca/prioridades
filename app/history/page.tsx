@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import StatusBadge from '@/components/StatusBadge';
 import PriorityFormModal from '@/components/PriorityFormModal';
 import PermissionGuard from '@/components/PermissionGuard';
+import { usePermissions } from '@/hooks/usePermissions';
 import { getWeekLabel } from '@/lib/utils';
 import { exportPriorities } from '@/lib/exportToExcel';
 
@@ -75,6 +76,7 @@ interface Priority {
 export default function HistoryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -312,7 +314,7 @@ export default function HistoryPage() {
     }
   };
 
-  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+  const canEditHistoricalPriorities = hasPermission('canEditHistoricalPriorities');
 
   if (status === 'loading' || loading) {
     return (
@@ -582,7 +584,7 @@ export default function HistoryPage() {
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <StatusBadge status={priority.status as any} />
-                                  {isAdmin && (
+                                  {canEditHistoricalPriorities && (
                                     <div className="flex space-x-1">
                                       <button
                                         onClick={() => handleEdit(priority)}
@@ -660,7 +662,7 @@ export default function HistoryPage() {
         }}
         isEditing={true}
         weekLabel={editingPriority ? getWeekLabel(new Date(editingPriority.weekStart)) : ''}
-        allowUserReassignment={isAdmin}
+        allowUserReassignment={canEditHistoricalPriorities}
         users={users}
         selectedUserId={selectedUserId}
         onUserChange={setSelectedUserId}
