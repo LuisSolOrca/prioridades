@@ -11,6 +11,7 @@ export interface UserPermissions {
   viewHistory: boolean;
   canReassignPriorities: boolean;
   canCreateMilestones: boolean;
+  canEditHistoricalPriorities: boolean;
 }
 
 const DEFAULT_PERMISSIONS: UserPermissions = {
@@ -24,6 +25,7 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   viewHistory: true,
   canReassignPriorities: false,
   canCreateMilestones: true,
+  canEditHistoricalPriorities: false,
 };
 
 export function usePermissions() {

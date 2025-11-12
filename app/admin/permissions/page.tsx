@@ -23,6 +23,7 @@ interface User {
     viewHistory: boolean;
     canReassignPriorities: boolean;
     canCreateMilestones: boolean;
+    canEditHistoricalPriorities: boolean;
   };
 }
 
@@ -64,6 +65,7 @@ export default function PermissionsManagementPage() {
           viewHistory: true,
           canReassignPriorities: user.role === 'ADMIN',
           canCreateMilestones: true,
+          canEditHistoricalPriorities: user.role === 'ADMIN',
         }
       }));
 
@@ -135,6 +137,7 @@ export default function PermissionsManagementPage() {
     viewHistory: 'Historial',
     canReassignPriorities: 'Reasignar Prioridades',
     canCreateMilestones: 'Crear Hitos',
+    canEditHistoricalPriorities: 'Editar Prioridades en Historial',
   };
 
   return (
@@ -323,6 +326,23 @@ export default function PermissionsManagementPage() {
                         </span>
                         <span className="text-xs text-gray-600 dark:text-gray-400">
                           Permite al usuario crear y gestionar hitos
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canEditHistoricalPriorities ?? (selectedUser.role === 'ADMIN')}
+                        onChange={(e) => handlePermissionChange('canEditHistoricalPriorities', e.target.checked)}
+                        className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canEditHistoricalPriorities}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite al usuario editar prioridades en el historial
                         </span>
                       </div>
                     </label>

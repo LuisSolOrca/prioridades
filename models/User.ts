@@ -21,6 +21,7 @@ export interface IUser {
     viewHistory: boolean;
     canReassignPriorities: boolean;
     canCreateMilestones: boolean;
+    canEditHistoricalPriorities: boolean;
   };
   emailNotifications?: {
     enabled: boolean;
@@ -107,18 +108,22 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
       viewHistory: { type: Boolean, default: true },
       canReassignPriorities: { type: Boolean, default: false },
       canCreateMilestones: { type: Boolean, default: true },
+      canEditHistoricalPriorities: { type: Boolean, default: false },
     },
-    default: {
-      viewDashboard: true,
-      viewAreaDashboard: true,
-      viewMyPriorities: true,
-      viewReports: true,
-      viewAnalytics: true,
-      viewLeaderboard: true,
-      viewAutomations: true,
-      viewHistory: true,
-      canReassignPriorities: false,
-      canCreateMilestones: true,
+    default: function() {
+      return {
+        viewDashboard: true,
+        viewAreaDashboard: true,
+        viewMyPriorities: true,
+        viewReports: true,
+        viewAnalytics: true,
+        viewLeaderboard: true,
+        viewAutomations: true,
+        viewHistory: true,
+        canReassignPriorities: this.role === 'ADMIN',
+        canCreateMilestones: true,
+        canEditHistoricalPriorities: this.role === 'ADMIN',
+      };
     },
   },
   emailNotifications: {

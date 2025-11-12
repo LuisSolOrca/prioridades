@@ -10,7 +10,8 @@ export type Permission =
   | 'viewAutomations'
   | 'viewHistory'
   | 'canReassignPriorities'
-  | 'canCreateMilestones';
+  | 'canCreateMilestones'
+  | 'canEditHistoricalPriorities';
 
 /**
  * Verifica si un usuario tiene un permiso específico
@@ -25,9 +26,11 @@ export function hasPermission(session: Session | null, permission: Permission): 
 
   const user = session.user as any;
 
-  // Los admins siempre tienen el permiso de reasignar
-  if (permission === 'canReassignPriorities' && user.role === 'ADMIN') {
-    return true;
+  // Los admins siempre tienen ciertos permisos
+  if (user.role === 'ADMIN') {
+    if (permission === 'canReassignPriorities' || permission === 'canEditHistoricalPriorities') {
+      return true;
+    }
   }
 
   // Verificar permisos del usuario
@@ -47,6 +50,7 @@ export function hasPermission(session: Session | null, permission: Permission): 
     viewHistory: true,
     canReassignPriorities: user.role === 'ADMIN',
     canCreateMilestones: true,
+    canEditHistoricalPriorities: false,
   };
 
   return defaultPermissions[permission] ?? false;

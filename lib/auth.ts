@@ -52,6 +52,7 @@ export const authOptions: NextAuthOptions = {
             viewHistory: true,
             canReassignPriorities: user.role === 'ADMIN',
             canCreateMilestones: true,
+            canEditHistoricalPriorities: user.role === 'ADMIN',
           },
         };
       }
