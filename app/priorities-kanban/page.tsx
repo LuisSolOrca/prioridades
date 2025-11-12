@@ -335,12 +335,21 @@ export default function PrioritiesKanbanPage() {
               <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
                 📊 Vista Kanban - Prioridades
               </h1>
-              <button
-                onClick={() => router.push('/priorities')}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-              >
-                📋 Ver Lista
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => router.push('/priorities-gantt')}
+                  className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 dark:hover:bg-orange-600 transition"
+                  title="Ver Vista Gantt"
+                >
+                  📊 Vista Gantt
+                </button>
+                <button
+                  onClick={() => router.push('/priorities')}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                >
+                  📋 Ver Lista
+                </button>
+              </div>
             </div>
 
             {/* Current Week Board */}

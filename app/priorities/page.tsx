@@ -491,6 +491,13 @@ export default function PrioritiesPage() {
                 📥 Exportar a Excel
               </button>
               <button
+                onClick={() => router.push('/priorities-gantt')}
+                className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-700 dark:hover:bg-orange-600 transition"
+                title="Ver Vista Gantt"
+              >
+                📊 Vista Gantt
+              </button>
+              <button
                 onClick={() => router.push('/priorities-kanban')}
                 className="bg-purple-600 dark:bg-purple-700 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 dark:hover:bg-purple-600 transition"
                 title="Ver Vista Kanban"
