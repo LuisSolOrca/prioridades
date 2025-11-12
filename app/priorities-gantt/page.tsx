@@ -452,7 +452,7 @@ export default function PrioritiesGanttPage() {
 
             {/* Fila de Hitos */}
             {milestones.length > 0 && (
-              <div className="grid grid-cols-[1fr,repeat(4,120px),100px] border-b-2 border-orange-300 dark:border-orange-700 bg-orange-50/30 dark:bg-orange-900/10">
+              <div className="grid grid-cols-[1fr,repeat(4,120px),100px] border-b-2 border-orange-300 dark:border-orange-700 bg-orange-50/30 dark:bg-orange-900/10 relative">
                 <div className="p-3 border-r border-gray-200 dark:border-gray-700 flex items-center">
                   <span className="text-sm font-semibold text-orange-700 dark:text-orange-300">💎 Hitos</span>
                 </div>
@@ -470,7 +470,7 @@ export default function PrioritiesGanttPage() {
                       {weekMilestones.map((milestone) => (
                         <div
                           key={milestone._id}
-                          className="relative group cursor-pointer mb-1"
+                          className="relative group cursor-pointer mb-1 z-30"
                           onClick={() => handleEditMilestone(milestone)}
                           title={milestone.title}
                         >
@@ -482,8 +482,8 @@ export default function PrioritiesGanttPage() {
                           } shadow-md hover:scale-110 transition`} />
 
                           {/* Tooltip */}
-                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10 w-48">
-                            <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-xl">
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-[100] w-48 pointer-events-none">
+                            <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-2xl border border-gray-700 dark:border-gray-600">
                               <div className="font-semibold mb-1">{milestone.title}</div>
                               {milestone.description && (
                                 <div className="text-gray-300 dark:text-gray-400 mb-1 line-clamp-2">{milestone.description}</div>
