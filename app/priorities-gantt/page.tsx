@@ -419,7 +419,7 @@ export default function PrioritiesGanttPage() {
           </div>
 
           {/* Gantt Chart */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-x-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-x-auto overflow-y-visible">
             {/* Header con las semanas */}
             <div className="grid grid-cols-[1fr,repeat(4,120px),100px] border-b border-gray-200 dark:border-gray-700">
               <div className="p-3 font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 text-sm">
@@ -470,34 +470,49 @@ export default function PrioritiesGanttPage() {
                       {weekMilestones.map((milestone) => (
                         <div
                           key={milestone._id}
-                          className="relative group cursor-pointer mb-1 z-30"
+                          className="relative cursor-pointer mb-1"
                           onClick={() => handleEditMilestone(milestone)}
-                          title={milestone.title}
                         >
                           {/* Rombo */}
-                          <div className={`w-6 h-6 mx-auto transform rotate-45 ${
-                            milestone.isCompleted
-                              ? 'bg-green-500 dark:bg-green-600'
-                              : 'bg-orange-500 dark:bg-orange-600'
-                          } shadow-md hover:scale-110 transition`} />
-
-                          {/* Tooltip */}
-                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-[100] w-48 pointer-events-none">
-                            <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-2xl border border-gray-700 dark:border-gray-600">
-                              <div className="font-semibold mb-1">{milestone.title}</div>
-                              {milestone.description && (
-                                <div className="text-gray-300 dark:text-gray-400 mb-1 line-clamp-2">{milestone.description}</div>
-                              )}
-                              <div className="text-gray-400 dark:text-gray-500">
-                                {new Date(milestone.dueDate).toLocaleDateString('es-MX')}
-                              </div>
-                              {milestone.deliverables.length > 0 && (
-                                <div className="mt-1 text-gray-400 dark:text-gray-500">
-                                  {milestone.deliverables.filter(d => d.isCompleted).length}/{milestone.deliverables.length} entregables
+                          <div
+                            className={`w-6 h-6 mx-auto transform rotate-45 ${
+                              milestone.isCompleted
+                                ? 'bg-green-500 dark:bg-green-600'
+                                : 'bg-orange-500 dark:bg-orange-600'
+                            } shadow-md hover:scale-110 transition milestone-diamond`}
+                            data-milestone-title={milestone.title}
+                            data-milestone-description={milestone.description || ''}
+                            data-milestone-date={new Date(milestone.dueDate).toLocaleDateString('es-MX')}
+                            data-milestone-deliverables={`${milestone.deliverables.filter(d => d.isCompleted).length}/${milestone.deliverables.length}`}
+                            onMouseEnter={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const tooltip = document.createElement('div');
+                              tooltip.className = 'milestone-tooltip';
+                              tooltip.style.cssText = `
+                                position: fixed;
+                                left: ${rect.left + rect.width / 2}px;
+                                top: ${rect.top - 10}px;
+                                transform: translate(-50%, -100%);
+                                z-index: 9999;
+                                width: 192px;
+                                pointer-events: none;
+                              `;
+                              tooltip.innerHTML = `
+                                <div class="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-2xl border border-gray-700 dark:border-gray-600">
+                                  <div class="font-semibold mb-1">${milestone.title}</div>
+                                  ${milestone.description ? `<div class="text-gray-300 dark:text-gray-400 mb-1 line-clamp-2">${milestone.description}</div>` : ''}
+                                  <div class="text-gray-400 dark:text-gray-500">${new Date(milestone.dueDate).toLocaleDateString('es-MX')}</div>
+                                  ${milestone.deliverables.length > 0 ? `<div class="mt-1 text-gray-400 dark:text-gray-500">${milestone.deliverables.filter(d => d.isCompleted).length}/${milestone.deliverables.length} entregables</div>` : ''}
                                 </div>
-                              )}
-                            </div>
-                          </div>
+                              `;
+                              document.body.appendChild(tooltip);
+                              e.currentTarget.dataset.tooltipId = String(Date.now());
+                            }}
+                            onMouseLeave={(e) => {
+                              const tooltips = document.querySelectorAll('.milestone-tooltip');
+                              tooltips.forEach(t => t.remove());
+                            }}
+                          />
                         </div>
                       ))}
                     </div>
