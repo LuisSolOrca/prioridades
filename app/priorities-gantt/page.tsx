@@ -112,6 +112,7 @@ export default function PrioritiesGanttPage() {
     dueDate: '',
     deliverables: []
   });
+  const [showFutureMilestonesModal, setShowFutureMilestonesModal] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -519,7 +520,13 @@ export default function PrioritiesGanttPage() {
                   );
                 })}
                 <div className="p-2 flex items-center justify-center">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{milestones.length}</span>
+                  <button
+                    onClick={() => setShowFutureMilestonesModal(true)}
+                    className="text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 px-2 py-1 rounded transition text-xs font-medium"
+                    title="Ver hitos futuros"
+                  >
+                    📅 Ver hitos
+                  </button>
                 </div>
               </div>
             )}
@@ -926,6 +933,194 @@ export default function PrioritiesGanttPage() {
 
       {/* Notificaciones de Hitos */}
       <MilestoneNotifications />
+
+      {/* Modal de Hitos Futuros */}
+      {showFutureMilestonesModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowFutureMilestonesModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <span className="text-3xl">📅</span>
+                Hitos Futuros
+              </h2>
+              <button
+                onClick={() => setShowFutureMilestonesModal(false)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              {milestones.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">💎</div>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">
+                    No hay hitos registrados
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {milestones
+                    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                    .map((milestone) => {
+                      const dueDate = new Date(milestone.dueDate);
+                      const now = new Date();
+                      const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                      const isPast = daysUntil < 0;
+                      const isToday = daysUntil === 0;
+                      const isUpcoming = daysUntil > 0 && daysUntil <= 7;
+
+                      const completedDeliverables = milestone.deliverables.filter(d => d.isCompleted).length;
+                      const totalDeliverables = milestone.deliverables.length;
+
+                      return (
+                        <div
+                          key={milestone._id}
+                          className={`border rounded-lg p-4 cursor-pointer hover:shadow-md transition ${
+                            milestone.isCompleted
+                              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                              : isPast
+                              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                              : isToday
+                              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700'
+                              : isUpcoming
+                              ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                              : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                          }`}
+                          onClick={() => {
+                            setShowFutureMilestonesModal(false);
+                            handleEditMilestone(milestone);
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div
+                                  className={`w-6 h-6 transform rotate-45 flex-shrink-0 ${
+                                    milestone.isCompleted
+                                      ? 'bg-green-500 dark:bg-green-600'
+                                      : 'bg-orange-500 dark:bg-orange-600'
+                                  }`}
+                                />
+                                <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
+                                  {milestone.title}
+                                </h3>
+                                {milestone.isCompleted && (
+                                  <span className="text-xs font-semibold px-2 py-1 rounded bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200">
+                                    ✓ Completado
+                                  </span>
+                                )}
+                              </div>
+
+                              {milestone.description && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 ml-9">
+                                  {milestone.description}
+                                </p>
+                              )}
+
+                              <div className="flex items-center gap-4 ml-9 text-sm">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-gray-500 dark:text-gray-400">📅</span>
+                                  <span className={`font-medium ${
+                                    isToday
+                                      ? 'text-yellow-700 dark:text-yellow-400 font-bold'
+                                      : isPast && !milestone.isCompleted
+                                      ? 'text-red-700 dark:text-red-400'
+                                      : isUpcoming
+                                      ? 'text-orange-700 dark:text-orange-400'
+                                      : 'text-gray-700 dark:text-gray-300'
+                                  }`}>
+                                    {dueDate.toLocaleDateString('es-MX', {
+                                      weekday: 'short',
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                  {isToday && (
+                                    <span className="text-xs font-bold text-yellow-700 dark:text-yellow-400 ml-1">
+                                      (HOY)
+                                    </span>
+                                  )}
+                                  {!milestone.isCompleted && !isToday && (
+                                    <span className={`text-xs ml-1 ${
+                                      isPast
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : isUpcoming
+                                        ? 'text-orange-600 dark:text-orange-400'
+                                        : 'text-gray-500 dark:text-gray-400'
+                                    }`}>
+                                      {isPast
+                                        ? `(Venció hace ${Math.abs(daysUntil)} ${Math.abs(daysUntil) === 1 ? 'día' : 'días'})`
+                                        : `(En ${daysUntil} ${daysUntil === 1 ? 'día' : 'días'})`
+                                      }
+                                    </span>
+                                  )}
+                                </div>
+
+                                {totalDeliverables > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-gray-500 dark:text-gray-400">📋</span>
+                                    <span className={`font-medium ${
+                                      completedDeliverables === totalDeliverables
+                                        ? 'text-green-700 dark:text-green-400'
+                                        : 'text-gray-700 dark:text-gray-300'
+                                    }`}>
+                                      {completedDeliverables}/{totalDeliverables} entregables
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {totalDeliverables > 0 && (
+                                <div className="mt-3 ml-9">
+                                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div
+                                      className={`h-2 rounded-full transition-all ${
+                                        completedDeliverables === totalDeliverables
+                                          ? 'bg-green-500 dark:bg-green-600'
+                                          : 'bg-orange-500 dark:bg-orange-600'
+                                      }`}
+                                      style={{
+                                        width: `${(completedDeliverables / totalDeliverables) * 100}%`
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+
+              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <button
+                  onClick={handleNewMilestone}
+                  className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-2 rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition font-medium"
+                >
+                  💎 Crear Nuevo Hito
+                </button>
+                <button
+                  onClick={() => setShowFutureMilestonesModal(false)}
+                  className="bg-gray-600 dark:bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-semibold"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
