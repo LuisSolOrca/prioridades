@@ -471,11 +471,18 @@ export default function PrioritiesGanttPage() {
                     key={weekIndex}
                     className="p-2 border-r border-gray-200 dark:border-gray-700 relative"
                   >
-                    {weekMilestones.map((milestone) => (
+                    {weekMilestones.map((milestone) => {
+                      const isOwnMilestone = milestone.userId === (session?.user as any)?.id;
+                      return (
                         <div
                           key={milestone._id}
                           className="relative cursor-pointer mb-1"
-                          onClick={() => handleEditMilestone(milestone)}
+                          onClick={() => {
+                            if (isOwnMilestone) {
+                              handleEditMilestone(milestone);
+                            }
+                          }}
+                          title={isOwnMilestone ? "Click para editar" : "Hito del líder de área (solo lectura)"}
                         >
                           {/* Rombo */}
                           <div
@@ -504,9 +511,11 @@ export default function PrioritiesGanttPage() {
                               tooltip.innerHTML = `
                                 <div class="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-2xl border border-gray-700 dark:border-gray-600">
                                   <div class="font-semibold mb-1">${milestone.title}</div>
+                                  ${!isOwnMilestone ? `<div class="text-blue-400 dark:text-blue-300 mb-1 text-xs">👤 Hito del líder de área</div>` : ''}
                                   ${milestone.description ? `<div class="text-gray-300 dark:text-gray-400 mb-1 line-clamp-2">${milestone.description}</div>` : ''}
                                   <div class="text-gray-400 dark:text-gray-500">${new Date(milestone.dueDate).toLocaleDateString('es-MX')}</div>
                                   ${milestone.deliverables.length > 0 ? `<div class="mt-1 text-gray-400 dark:text-gray-500">${milestone.deliverables.filter(d => d.isCompleted).length}/${milestone.deliverables.length} entregables</div>` : ''}
+                                  ${!isOwnMilestone ? `<div class="mt-1 text-gray-500 dark:text-gray-400 text-xs italic">Solo lectura</div>` : ''}
                                 </div>
                               `;
                               document.body.appendChild(tooltip);
@@ -518,7 +527,8 @@ export default function PrioritiesGanttPage() {
                             }}
                           />
                         </div>
-                      ))}
+                      );
+                    })}
                     </div>
                   );
                 })}
@@ -981,11 +991,14 @@ export default function PrioritiesGanttPage() {
 
                       const completedDeliverables = milestone.deliverables.filter(d => d.isCompleted).length;
                       const totalDeliverables = milestone.deliverables.length;
+                      const isOwnMilestone = milestone.userId === (session?.user as any)?.id;
 
                       return (
                         <div
                           key={milestone._id}
-                          className={`border rounded-lg p-4 cursor-pointer hover:shadow-md transition ${
+                          className={`border rounded-lg p-4 transition ${
+                            isOwnMilestone ? 'cursor-pointer hover:shadow-md' : 'cursor-default opacity-80'
+                          } ${
                             milestone.isCompleted
                               ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                               : isPast
@@ -997,8 +1010,10 @@ export default function PrioritiesGanttPage() {
                               : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
                           }`}
                           onClick={() => {
-                            setShowFutureMilestonesModal(false);
-                            handleEditMilestone(milestone);
+                            if (isOwnMilestone) {
+                              setShowFutureMilestonesModal(false);
+                              handleEditMilestone(milestone);
+                            }
                           }}
                         >
                           <div className="flex items-start justify-between">
@@ -1014,6 +1029,11 @@ export default function PrioritiesGanttPage() {
                                 <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
                                   {milestone.title}
                                 </h3>
+                                {!isOwnMilestone && (
+                                  <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                                    👤 Líder de área
+                                  </span>
+                                )}
                                 {milestone.isCompleted && (
                                   <span className="text-xs font-semibold px-2 py-1 rounded bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200">
                                     ✓ Completado
