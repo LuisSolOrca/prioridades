@@ -84,6 +84,13 @@ interface Workflow {
   isActive: boolean;
 }
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 export default function PrioritiesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -91,8 +98,10 @@ export default function PrioritiesPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingPriority, setEditingPriority] = useState<Priority | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [formData, setFormData] = useState<Priority>({
     title: '',
     description: '',
@@ -153,24 +162,27 @@ export default function PrioritiesPage() {
     try {
       setLoading(true);
 
+      const isAdmin = (session!.user as any)?.role === 'ADMIN';
+
       // Cargar prioridades de la semana actual y la siguiente
-      const [initiativesRes, clientsRes, projectsRes, currentWeekPrioritiesRes, nextWeekPrioritiesRes, workflowsRes] = await Promise.all([
+      const promises = [
         fetch('/api/initiatives?activeOnly=true'),
         fetch('/api/clients?activeOnly=true'),
         fetch('/api/projects'),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${currentWeek.monday.toISOString()}&weekEnd=${currentWeek.friday.toISOString()}`),
         fetch(`/api/priorities?userId=${(session!.user as any).id}&weekStart=${nextWeek.monday.toISOString()}&weekEnd=${nextWeek.friday.toISOString()}`),
         fetch('/api/workflows')
-      ]);
+      ];
 
-      const [initiativesData, clientsData, projectsData, currentWeekPriorities, nextWeekPriorities, workflowsData] = await Promise.all([
-        initiativesRes.json(),
-        clientsRes.json(),
-        projectsRes.json(),
-        currentWeekPrioritiesRes.json(),
-        nextWeekPrioritiesRes.json(),
-        workflowsRes.json()
-      ]);
+      // Si es admin, cargar también la lista de usuarios
+      if (isAdmin) {
+        promises.push(fetch('/api/users'));
+      }
+
+      const responses = await Promise.all(promises);
+      const [initiativesData, clientsData, projectsData, currentWeekPriorities, nextWeekPriorities, workflowsData, usersData] = await Promise.all(
+        responses.map(r => r.json())
+      );
 
       setInitiatives(Array.isArray(initiativesData) ? initiativesData : []);
       setClients(Array.isArray(clientsData) ? clientsData : []);
@@ -188,6 +200,11 @@ export default function PrioritiesPage() {
         setWorkflows(activeWorkflows);
       } else {
         setWorkflows([]);
+      }
+
+      // Si es admin, cargar usuarios
+      if (isAdmin && usersData) {
+        setUsers(Array.isArray(usersData) ? usersData : []);
       }
 
       // Cargar conteos de comentarios
@@ -252,6 +269,7 @@ export default function PrioritiesPage() {
   };
 
   const handleNew = () => {
+    const currentUserId = (session!.user as any).id;
     setFormData({
       title: '',
       description: '',
@@ -259,12 +277,13 @@ export default function PrioritiesPage() {
       completionPercentage: 0,
       status: 'EN_TIEMPO',
       type: 'ESTRATEGICA',
-      userId: (session!.user as any).id,
+      userId: currentUserId,
       weekStart: nextWeek.monday.toISOString(),
       weekEnd: nextWeek.friday.toISOString(),
       checklist: [],
       evidenceLinks: []
     });
+    setSelectedUserId(currentUserId); // Establecer el usuario actual por defecto
     setSelectedWeekOffset(1); // Cambiar a siguiente semana por defecto
     setEditingPriority(null);
     setShowForm(true);
@@ -286,6 +305,7 @@ export default function PrioritiesPage() {
     };
 
     setFormData(editFormData);
+    setSelectedUserId(priority.userId); // Establecer el usuario de la prioridad
     setEditingPriority(priority);
     setShowForm(true);
   };
@@ -304,12 +324,18 @@ export default function PrioritiesPage() {
 
     setIsSaving(true);
     try {
+      // Incluir el userId del usuario seleccionado
+      const dataToSave = {
+        ...formData,
+        userId: selectedUserId
+      };
+
       if (editingPriority?._id) {
         // Update
         const res = await fetch(`/api/priorities/${editingPriority._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(dataToSave)
         });
 
         if (!res.ok) {
@@ -321,7 +347,7 @@ export default function PrioritiesPage() {
         const res = await fetch('/api/priorities', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(dataToSave)
         });
 
         if (!res.ok) {
@@ -333,6 +359,7 @@ export default function PrioritiesPage() {
       await loadData();
       setShowForm(false);
       setEditingPriority(null);
+      setSelectedUserId('');
     } catch (error: any) {
       console.error('Error saving priority:', error);
       alert(error.message || 'Error al guardar la prioridad');
@@ -897,6 +924,7 @@ export default function PrioritiesPage() {
         onClose={() => {
           setShowForm(false);
           setEditingPriority(null);
+          setSelectedUserId('');
         }}
         formData={{
           title: formData.title,
@@ -937,6 +965,10 @@ export default function PrioritiesPage() {
         selectedWeekOffset={selectedWeekOffset}
         setSelectedWeekOffset={setSelectedWeekOffset}
         hasAzureDevOpsLink={!!(editingPriority?.azureDevOps)}
+        allowUserReassignment={(session?.user as any)?.role === 'ADMIN'}
+        users={users}
+        selectedUserId={selectedUserId}
+        onUserChange={setSelectedUserId}
       />
 
       {/* Modal de Comentarios */}
