@@ -97,6 +97,7 @@ export default function PrioritiesGanttPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [allMilestones, setAllMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [weeks, setWeeks] = useState<WeekInfo[]>([]);
   const [selectedPriorityForView, setSelectedPriorityForView] = useState<Priority | null>(null);
@@ -179,23 +180,25 @@ export default function PrioritiesGanttPage() {
           .then(res => res.json())
       );
 
-      // Calcular rango de fechas para hitos
+      // Calcular rango de fechas para hitos del Gantt
       const startDate = weeks[0].weekStart.toISOString();
       const endDate = weeks[weeks.length - 1].weekEnd.toISOString();
 
-      const [initiativesRes, clientsRes, projectsRes, milestonesRes, ...weeklyPriorities] = await Promise.all([
+      const [initiativesRes, clientsRes, projectsRes, milestonesRes, allMilestonesRes, ...weeklyPriorities] = await Promise.all([
         fetch('/api/initiatives?activeOnly=true'),
         fetch('/api/clients?activeOnly=true'),
         fetch('/api/projects'),
         fetch(`/api/milestones?userId=${(session!.user as any).id}&startDate=${startDate}&endDate=${endDate}`),
+        fetch(`/api/milestones?userId=${(session!.user as any).id}`), // Todos los hitos sin filtro
         ...priorityPromises
       ]);
 
-      const [initiativesData, clientsData, projectsData, milestonesData] = await Promise.all([
+      const [initiativesData, clientsData, projectsData, milestonesData, allMilestonesData] = await Promise.all([
         initiativesRes.json(),
         clientsRes.json(),
         projectsRes.json(),
-        milestonesRes.json()
+        milestonesRes.json(),
+        allMilestonesRes.json()
       ]);
 
       // Combinar todas las prioridades de las 4 semanas
@@ -206,6 +209,7 @@ export default function PrioritiesGanttPage() {
       setProjects(Array.isArray(projectsData) ? projectsData : []);
       setPriorities(allPriorities);
       setMilestones(Array.isArray(milestonesData) ? milestonesData : []);
+      setAllMilestones(Array.isArray(allMilestonesData) ? allMilestonesData : []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -958,7 +962,7 @@ export default function PrioritiesGanttPage() {
             </div>
 
             <div className="p-6">
-              {milestones.length === 0 ? (
+              {allMilestones.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">💎</div>
                   <p className="text-gray-500 dark:text-gray-400 text-lg">
@@ -967,7 +971,7 @@ export default function PrioritiesGanttPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {milestones
+                  {allMilestones
                     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
                     .map((milestone) => {
                       const dueDate = new Date(milestone.dueDate);
