@@ -456,23 +456,22 @@ export default function PrioritiesGanttPage() {
             </div>
 
             {/* Fila de Hitos */}
-            {milestones.length > 0 && (
-              <div className="grid grid-cols-[1fr,repeat(4,120px),100px] border-b-2 border-orange-300 dark:border-orange-700 bg-orange-50/30 dark:bg-orange-900/10 relative">
-                <div className="p-3 border-r border-gray-200 dark:border-gray-700 flex items-center">
-                  <span className="text-sm font-semibold text-orange-700 dark:text-orange-300">💎 Hitos</span>
-                </div>
-                {weeks.map((week, weekIndex) => {
-                  const weekMilestones = milestones.filter(m => {
-                    const mDate = new Date(m.dueDate);
-                    return mDate >= week.weekStart && mDate <= week.weekEnd;
-                  });
+            <div className="grid grid-cols-[1fr,repeat(4,120px),100px] border-b-2 border-orange-300 dark:border-orange-700 bg-orange-50/30 dark:bg-orange-900/10 relative">
+              <div className="p-3 border-r border-gray-200 dark:border-gray-700 flex items-center">
+                <span className="text-sm font-semibold text-orange-700 dark:text-orange-300">💎 Hitos</span>
+              </div>
+              {weeks.map((week, weekIndex) => {
+                const weekMilestones = milestones.filter(m => {
+                  const mDate = new Date(m.dueDate);
+                  return mDate >= week.weekStart && mDate <= week.weekEnd;
+                });
 
-                  return (
-                    <div
-                      key={weekIndex}
-                      className="p-2 border-r border-gray-200 dark:border-gray-700 relative"
-                    >
-                      {weekMilestones.map((milestone) => (
+                return (
+                  <div
+                    key={weekIndex}
+                    className="p-2 border-r border-gray-200 dark:border-gray-700 relative"
+                  >
+                    {weekMilestones.map((milestone) => (
                         <div
                           key={milestone._id}
                           className="relative cursor-pointer mb-1"
@@ -523,17 +522,16 @@ export default function PrioritiesGanttPage() {
                     </div>
                   );
                 })}
-                <div className="p-2 flex items-center justify-center">
-                  <button
-                    onClick={() => setShowFutureMilestonesModal(true)}
-                    className="text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 px-2 py-1 rounded transition text-xs font-medium"
-                    title="Ver hitos futuros"
-                  >
-                    📅 Ver hitos
-                  </button>
-                </div>
+              <div className="p-2 flex items-center justify-center">
+                <button
+                  onClick={() => setShowFutureMilestonesModal(true)}
+                  className="text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 px-2 py-1 rounded transition text-xs font-medium"
+                  title="Ver hitos futuros"
+                >
+                  📅 Ver hitos
+                </button>
               </div>
-            )}
+            </div>
 
             {/* Filas de prioridades */}
             <div>
