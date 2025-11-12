@@ -82,6 +82,7 @@ interface Deliverable {
 
 interface Milestone {
   _id?: string;
+  userId: string;
   title: string;
   description?: string;
   dueDate: string;
