@@ -6,6 +6,7 @@ import Priority from '@/models/Priority';
 import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import StrategicInitiative from '@/models/StrategicInitiative';
 import Client from '@/models/Client';
+import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
 
 /**
  * GET - Genera reporte de horas trabajadas en prioridades locales (no vinculadas a Azure DevOps)
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
     const clientId = searchParams.get('clientId');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const currentUserId = (session.user as any).id;
 
     // Construir query base
     let query: any = {};
@@ -43,7 +45,21 @@ export async function GET(request: NextRequest) {
       }
       // Si no se especifica userId, incluir todas las prioridades (filtros posteriores aplicarán)
     } else {
-      query.userId = (session.user as any).id;
+      query.userId = currentUserId;
+    }
+
+    // Filtro de Dirección General: ocultar prioridades de Francisco Puente
+    // SOLO él puede verlas, ni siquiera los admins
+    if (currentUserId !== DIRECCION_GENERAL_USER_ID) {
+      if (query.userId) {
+        // Si el userId del query es Francisco Puente, no devolver nada
+        if (query.userId === DIRECCION_GENERAL_USER_ID) {
+          query._id = { $exists: false }; // Forzar resultado vacío
+        }
+      } else {
+        // Si no hay filtro de userId, excluir a Francisco Puente
+        query.userId = { $ne: DIRECCION_GENERAL_USER_ID };
+      }
     }
 
     // Filtrar por rango de fechas si se especifica
