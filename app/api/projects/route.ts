@@ -29,14 +29,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para gestionar proyectos
+    // Todos los usuarios autenticados pueden crear proyectos simples
+    // (útil para creación rápida desde modales de prioridades, hitos, etc.)
     await connectDB();
-    const user = await User.findOne({ email: (session.user as any).email });
-    const canManageProjects = (session.user as any).role === 'ADMIN' || user?.permissions?.canManageProjects;
-
-    if (!canManageProjects) {
-      return NextResponse.json({ error: 'No tienes permiso para gestionar proyectos' }, { status: 403 });
-    }
 
     const body = await req.json();
     const { name, description } = body;
