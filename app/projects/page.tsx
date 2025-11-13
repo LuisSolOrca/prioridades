@@ -38,6 +38,7 @@ export default function ProjectsPage() {
     isActive: true
   });
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
   const [exportMenuOpen, setExportMenuOpen] = useState<string | null>(null);
@@ -189,6 +190,7 @@ export default function ProjectsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
 
     try {
       if (editingProject?._id) {
@@ -226,6 +228,8 @@ export default function ProjectsPage() {
     } catch (error: any) {
       console.error('Error saving project:', error);
       alert(error.message || 'Error al guardar el proyecto');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -509,6 +513,7 @@ export default function ProjectsPage() {
           handleViewSchedule(editingProject._id);
         } : undefined}
         readOnly={!canEditProject(editingProject)}
+        saving={saving}
       />
 
       {/* Schedule Modal */}
