@@ -2317,6 +2317,20 @@ const generateProjectCharterPDF = async (
     doc.setTextColor(0, 0, 0);
   }
 
+  // Agregar números de página en el footer
+  const pageCount = doc.getNumberOfPages();
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.text(
+      `Página ${i} de ${pageCount}`,
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: 'center' }
+    );
+  }
+
   doc.save(`${fileName}.pdf`);
 };
 
