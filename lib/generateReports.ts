@@ -1620,3 +1620,148 @@ export const generateRescheduleByClientProjectReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+/**
+ * Genera reporte de hitos por proyecto
+ */
+export const generateMilestonesReport = async (
+  milestones: any[],
+  users: any[],
+  projects: any[],
+  format: 'pdf' | 'doc',
+  filterDescription: string
+) => {
+  await trackFeature('reportsGenerated');
+
+  // Agrupar hitos por proyecto
+  const milestonesByProject = milestones.reduce((acc: any, milestone: any) => {
+    const projectId = milestone.projectId || 'sin-proyecto';
+    if (!acc[projectId]) {
+      acc[projectId] = [];
+    }
+    acc[projectId].push(milestone);
+    return acc;
+  }, {});
+
+  // Preparar filas de datos
+  const rows: (string | number)[][] = [];
+  const summaryTableRows: (string | number)[][] = [];
+  let totalMilestones = 0;
+  let completedMilestones = 0;
+  let totalDeliverables = 0;
+  let completedDeliverables = 0;
+
+  // Ordenar proyectos alfabéticamente
+  const sortedProjectIds = Object.keys(milestonesByProject).sort((a, b) => {
+    if (a === 'sin-proyecto') return 1;
+    if (b === 'sin-proyecto') return -1;
+    const projectA = projects.find(p => p._id === a);
+    const projectB = projects.find(p => p._id === b);
+    return (projectA?.name || '').localeCompare(projectB?.name || '');
+  });
+
+  sortedProjectIds.forEach(projectId => {
+    const projectMilestones = milestonesByProject[projectId];
+    const project = projectId === 'sin-proyecto'
+      ? { name: 'Sin Proyecto Asignado' }
+      : projects.find(p => p._id === projectId);
+
+    const projectName = project?.name || 'Proyecto Desconocido';
+    const projectCompleted = projectMilestones.filter((m: any) => m.isCompleted).length;
+    const projectTotal = projectMilestones.length;
+    const projectDeliverables = projectMilestones.reduce((sum: number, m: any) =>
+      sum + (m.deliverables?.length || 0), 0);
+    const projectDeliverablesDone = projectMilestones.reduce((sum: number, m: any) =>
+      sum + (m.deliverables?.filter((d: any) => d.isCompleted).length || 0), 0);
+
+    totalMilestones += projectTotal;
+    completedMilestones += projectCompleted;
+    totalDeliverables += projectDeliverables;
+    completedDeliverables += projectDeliverablesDone;
+
+    // Agregar fila resumen del proyecto
+    summaryTableRows.push([
+      projectName,
+      `${projectCompleted}/${projectTotal}`,
+      projectTotal > 0 ? `${Math.round((projectCompleted / projectTotal) * 100)}%` : '0%',
+      `${projectDeliverablesDone}/${projectDeliverables}`,
+      projectDeliverables > 0 ? `${Math.round((projectDeliverablesDone / projectDeliverables) * 100)}%` : '0%'
+    ]);
+
+    // Agregar hitos del proyecto
+    projectMilestones
+      .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .forEach((milestone: any) => {
+        const user = users.find(u => u._id === milestone.userId);
+        const dueDate = new Date(milestone.dueDate).toLocaleDateString('es-MX', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+        const status = milestone.isCompleted ? 'Completado' :
+                      (new Date(milestone.dueDate) < new Date() ? 'Vencido' : 'Pendiente');
+        const deliverableCount = milestone.deliverables?.length || 0;
+        const deliverablesDone = milestone.deliverables?.filter((d: any) => d.isCompleted).length || 0;
+
+        rows.push([
+          projectName,
+          milestone.title,
+          user?.name || 'Usuario desconocido',
+          dueDate,
+          status,
+          `${deliverablesDone}/${deliverableCount}`
+        ]);
+
+        // Agregar entregables como sub-filas si existen
+        if (milestone.deliverables && milestone.deliverables.length > 0) {
+          milestone.deliverables.forEach((deliverable: any) => {
+            rows.push([
+              '',
+          '  |-- ' + deliverable.title,
+              '',
+              '',
+              deliverable.isCompleted ? '[OK]' : '[ ]',
+              ''
+            ]);
+          });
+        }
+      });
+  });
+
+  const completionPercentage = totalMilestones > 0
+    ? Math.round((completedMilestones / totalMilestones) * 100)
+    : 0;
+  const deliverablesPercentage = totalDeliverables > 0
+    ? Math.round((completedDeliverables / totalDeliverables) * 100)
+    : 0;
+
+  const data: ReportData = {
+    title: 'Reporte de Hitos por Proyecto',
+    subtitle: filterDescription,
+    headers: ['Proyecto', 'Hito', 'Usuario', 'Fecha', 'Estado', 'Entregables'],
+    rows,
+    summary: [
+      { label: 'Total de Proyectos', value: sortedProjectIds.length },
+      { label: 'Total de Hitos', value: totalMilestones },
+      { label: 'Hitos Completados', value: completedMilestones },
+      { label: 'Hitos Pendientes', value: totalMilestones - completedMilestones },
+      { label: 'Porcentaje de Completado', value: `${completionPercentage}%` },
+      { label: 'Total de Entregables', value: totalDeliverables },
+      { label: 'Entregables Completados', value: completedDeliverables },
+      { label: 'Porcentaje Entregables', value: `${deliverablesPercentage}%` }
+    ],
+    summaryTable: {
+      headers: ['Proyecto', 'Hitos', '% Hitos', 'Entregables', '% Entregables'],
+      rows: summaryTableRows
+    },
+    summaryTableTitle: 'Resumen por Proyecto:'
+  };
+
+  const fileName = `Reporte_Hitos_Proyecto_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generatePDFReport(data, fileName);
+  } else {
+    await generateDOCReport(data, fileName);
+  }
+};

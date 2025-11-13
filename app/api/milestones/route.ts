@@ -23,36 +23,49 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId') || (session.user as any).id;
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const forReports = searchParams.get('forReports') === 'true';
 
-    // Solo los admins pueden ver hitos de otros usuarios
-    if (userId !== (session.user as any).id && (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Obtener el usuario actual para conocer su área
-    const currentUser = await User.findById(userId);
-    if (!currentUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Construir lista de IDs de usuarios cuyos hitos se deben mostrar
-    const userIds = [userId]; // Siempre incluir los propios hitos
-
-    // Si el usuario tiene área, buscar el líder de esa área
-    if (currentUser.area) {
-      const areaLeader = await User.findOne({
-        area: currentUser.area,
-        isAreaLeader: true,
-        _id: { $ne: userId } // No incluir al mismo usuario si es líder
-      });
-
-      // Si hay líder y NO es Francisco Puente (Dirección General), incluir sus hitos
-      if (areaLeader && areaLeader._id.toString() !== DIRECCION_GENERAL_USER_ID) {
-        userIds.push(areaLeader._id.toString());
+    // Si es para reportes, solo los admins pueden ver todos los hitos
+    if (forReports) {
+      if ((session.user as any).role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else {
+      // Solo los admins pueden ver hitos de otros usuarios
+      if (userId !== (session.user as any).id && (session.user as any).role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
 
-    let query: any = { userId: { $in: userIds } };
+    let query: any = {};
+
+    // Si no es para reportes, filtrar por usuario
+    if (!forReports) {
+      // Obtener el usuario actual para conocer su área
+      const currentUser = await User.findById(userId);
+      if (!currentUser) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      // Construir lista de IDs de usuarios cuyos hitos se deben mostrar
+      const userIds = [userId]; // Siempre incluir los propios hitos
+
+      // Si el usuario tiene área, buscar el líder de esa área
+      if (currentUser.area) {
+        const areaLeader = await User.findOne({
+          area: currentUser.area,
+          isAreaLeader: true,
+          _id: { $ne: userId } // No incluir al mismo usuario si es líder
+        });
+
+        // Si hay líder y NO es Francisco Puente (Dirección General), incluir sus hitos
+        if (areaLeader && areaLeader._id.toString() !== DIRECCION_GENERAL_USER_ID) {
+          userIds.push(areaLeader._id.toString());
+        }
+      }
+
+      query.userId = { $in: userIds };
+    }
 
     // Filtrar por rango de fechas si se proporciona
     if (startDate || endDate) {

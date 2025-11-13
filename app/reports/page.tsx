@@ -17,7 +17,8 @@ import {
   generateClientBreakdownReport,
   generateProjectBreakdownReport,
   generateRescheduleByUserReport,
-  generateRescheduleByClientProjectReport
+  generateRescheduleByClientProjectReport,
+  generateMilestonesReport
 } from '@/lib/generateReports';
 
 interface User {
@@ -66,7 +67,7 @@ interface Priority {
   isCarriedOver?: boolean; // Flag for rescheduled priorities
 }
 
-type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours' | 'clientbreakdown' | 'projectbreakdown' | 'reschedulebyuser' | 'reschedulebyclient';
+type ReportType = 'priorities' | 'performance' | 'initiatives' | 'checklist' | 'azuredevops' | 'localhours' | 'clientbreakdown' | 'projectbreakdown' | 'reschedulebyuser' | 'reschedulebyclient' | 'milestones';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -76,6 +77,7 @@ export default function ReportsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filtros
@@ -107,21 +109,23 @@ export default function ReportsPage() {
     try {
       const currentUserId = (session?.user as any)?.id;
 
-      const [usersRes, initiativesRes, clientsRes, projectsRes, prioritiesRes, currentUserRes] = await Promise.all([
+      const [usersRes, initiativesRes, clientsRes, projectsRes, prioritiesRes, milestonesRes, currentUserRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/initiatives'),
         fetch('/api/clients'),
         fetch('/api/projects'),
         fetch('/api/priorities?forDashboard=true'),
+        fetch('/api/milestones?forReports=true'),
         currentUserId ? fetch(`/api/users/${currentUserId}`) : Promise.resolve(null)
       ]);
 
-      const [usersData, initiativesData, clientsData, projectsData, prioritiesData, currentUserData] = await Promise.all([
+      const [usersData, initiativesData, clientsData, projectsData, prioritiesData, milestonesData, currentUserData] = await Promise.all([
         usersRes.json(),
         initiativesRes.json(),
         clientsRes.json(),
         projectsRes.json(),
         prioritiesRes.json(),
+        milestonesRes.json(),
         currentUserRes ? currentUserRes.json() : null
       ]);
 
@@ -130,6 +134,7 @@ export default function ReportsPage() {
       setClients(clientsData);
       setProjects(projectsData);
       setPriorities(prioritiesData);
+      setMilestones(Array.isArray(milestonesData) ? milestonesData : []);
       setCurrentUser(currentUserData);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -211,6 +216,50 @@ export default function ReportsPage() {
     return users.filter(u => u.role === 'USER');
   }, [users, includeAdmins]);
 
+  const filteredMilestones = useMemo(() => {
+    let filtered = milestones;
+
+    if (selectedUser !== 'all') {
+      filtered = filtered.filter(m => m.userId === selectedUser);
+    }
+
+    if (!includeAdmins) {
+      const userIds = users.filter(u => u.role === 'USER').map(u => u._id);
+      filtered = filtered.filter(m => userIds.includes(m.userId));
+    }
+
+    // Filtro por área
+    if (selectedArea !== 'all') {
+      const areaUserIds = users.filter(u => u.area === selectedArea).map(u => u._id);
+      filtered = filtered.filter(m => areaUserIds.includes(m.userId));
+    }
+
+    // Filtro por proyecto
+    if (selectedProject !== 'all') {
+      filtered = filtered.filter(m => m.projectId === selectedProject);
+    }
+
+    // Filtro por rango de fechas
+    if (dateFrom) {
+      filtered = filtered.filter(m => new Date(m.dueDate) >= new Date(dateFrom));
+    }
+
+    if (dateTo) {
+      filtered = filtered.filter(m => new Date(m.dueDate) <= new Date(dateTo));
+    }
+
+    // Filtro por palabra clave
+    if (searchKeyword) {
+      const keyword = searchKeyword.toLowerCase();
+      filtered = filtered.filter(m =>
+        m.title.toLowerCase().includes(keyword) ||
+        (m.description && m.description.toLowerCase().includes(keyword))
+      );
+    }
+
+    return filtered;
+  }, [milestones, selectedUser, selectedArea, selectedProject, dateFrom, dateTo, searchKeyword, users, includeAdmins]);
+
   // Obtener áreas únicas
   const uniqueAreas = useMemo(() => {
     const areas = users
@@ -260,7 +309,7 @@ export default function ReportsPage() {
       parts.push(`Búsqueda: "${searchKeyword}"`);
     }
 
-    return parts.length > 0 ? parts.join(' | ') : undefined;
+    return parts.length > 0 ? parts.join(' | ') : 'Sin filtros aplicados';
   };
 
   const handleGenerateReport = async (format: 'pdf' | 'doc') => {
@@ -374,6 +423,16 @@ export default function ReportsPage() {
             users,
             initiatives,
             clients,
+            projects,
+            format,
+            filterDescription
+          );
+          break;
+        case 'milestones':
+          setReportProgress('Generando reporte de hitos por proyecto...');
+          await generateMilestonesReport(
+            filteredMilestones,
+            users,
             projects,
             format,
             filterDescription
@@ -599,6 +658,21 @@ export default function ReportsPage() {
                 <div className="font-semibold text-gray-800 dark:text-gray-100">Reprogramaciones por Cliente/Proyecto</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Análisis de prioridades reprogramadas por cliente y proyecto
+                </div>
+              </button>
+
+              <button
+                onClick={() => setReportType('milestones')}
+                className={`p-4 rounded-lg border-2 transition ${
+                  reportType === 'milestones'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                }`}
+              >
+                <div className="text-3xl mb-2">💎</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-100">Hitos por Proyecto</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Reporte detallado de hitos agrupados por proyecto con entregables
                 </div>
               </button>
             </div>
