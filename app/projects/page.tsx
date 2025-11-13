@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ProjectFormModal, { ProjectFormData } from '@/components/ProjectFormModal';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Project extends ProjectFormData {
   _id: string;
@@ -23,6 +24,7 @@ interface User {
 export default function ProjectsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -45,14 +47,14 @@ export default function ProjectsPage() {
     }
 
     if (status === 'authenticated') {
-      // Solo permitir acceso a administradores
-      if ((session?.user as any)?.role !== 'ADMIN') {
+      // Verificar permiso para gestionar proyectos
+      if (!hasPermission('canManageProjects')) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, router, session]);
+  }, [status, router, session, hasPermission]);
 
   const loadData = async () => {
     try {

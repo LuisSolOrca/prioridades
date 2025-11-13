@@ -22,6 +22,7 @@ export interface IUser {
     canReassignPriorities: boolean;
     canCreateMilestones: boolean;
     canEditHistoricalPriorities: boolean;
+    canManageProjects: boolean;
   };
   emailNotifications?: {
     enabled: boolean;
@@ -109,6 +110,7 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
       canReassignPriorities: { type: Boolean, default: false },
       canCreateMilestones: { type: Boolean, default: true },
       canEditHistoricalPriorities: { type: Boolean, default: false },
+      canManageProjects: { type: Boolean, default: false },
     },
     default: function() {
       return {
@@ -123,6 +125,7 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
         canReassignPriorities: this.role === 'ADMIN',
         canCreateMilestones: true,
         canEditHistoricalPriorities: this.role === 'ADMIN',
+        canManageProjects: this.role === 'ADMIN',
       };
     },
   },

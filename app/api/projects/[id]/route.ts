@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Project from '@/models/Project';
+import User from '@/models/User';
 import mongoose from 'mongoose';
 
 export async function PUT(
@@ -16,12 +17,14 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Solo admins pueden editar proyectos
-    if ((session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Solo administradores pueden editar proyectos' }, { status: 403 });
-    }
-
+    // Verificar permiso para gestionar proyectos
     await connectDB();
+    const user = await User.findOne({ email: (session.user as any).email });
+    const canManageProjects = (session.user as any).role === 'ADMIN' || user?.permissions?.canManageProjects;
+
+    if (!canManageProjects) {
+      return NextResponse.json({ error: 'No tienes permiso para gestionar proyectos' }, { status: 403 });
+    }
 
     const body = await request.json();
 
@@ -78,12 +81,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Solo admins pueden eliminar proyectos
-    if ((session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Solo administradores pueden eliminar proyectos' }, { status: 403 });
-    }
-
+    // Verificar permiso para gestionar proyectos
     await connectDB();
+    const user = await User.findOne({ email: (session.user as any).email });
+    const canManageProjects = (session.user as any).role === 'ADMIN' || user?.permissions?.canManageProjects;
+
+    if (!canManageProjects) {
+      return NextResponse.json({ error: 'No tienes permiso para gestionar proyectos' }, { status: 403 });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });

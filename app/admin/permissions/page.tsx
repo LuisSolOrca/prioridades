@@ -24,6 +24,7 @@ interface User {
     canReassignPriorities: boolean;
     canCreateMilestones: boolean;
     canEditHistoricalPriorities: boolean;
+    canManageProjects: boolean;
   };
 }
 
@@ -66,6 +67,7 @@ export default function PermissionsManagementPage() {
           canReassignPriorities: user.role === 'ADMIN',
           canCreateMilestones: true,
           canEditHistoricalPriorities: user.role === 'ADMIN',
+          canManageProjects: user.role === 'ADMIN',
         }
       }));
 
@@ -138,6 +140,7 @@ export default function PermissionsManagementPage() {
     canReassignPriorities: 'Reasignar Prioridades',
     canCreateMilestones: 'Crear Hitos',
     canEditHistoricalPriorities: 'Editar Prioridades en Historial',
+    canManageProjects: 'Gestionar Proyectos',
   };
 
   return (

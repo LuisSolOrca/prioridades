@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import connectDB from '@/lib/mongodb';
 import Project from '@/models/Project';
+import User from '@/models/User';
 
 // GET /api/projects - Obtener todos los proyectos
 export async function GET() {
@@ -28,14 +29,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // Verificar permiso para gestionar proyectos
+    await connectDB();
+    const user = await User.findOne({ email: (session.user as any).email });
+    const canManageProjects = (session.user as any).role === 'ADMIN' || user?.permissions?.canManageProjects;
+
+    if (!canManageProjects) {
+      return NextResponse.json({ error: 'No tienes permiso para gestionar proyectos' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { name, description } = body;
 
     if (!name || name.trim() === '') {
       return NextResponse.json({ error: 'El nombre del proyecto es requerido' }, { status: 400 });
     }
-
-    await connectDB();
 
     // Verificar si ya existe un proyecto con ese nombre
     const existingProject = await Project.findOne({ name: name.trim() });
