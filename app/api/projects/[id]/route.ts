@@ -114,6 +114,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'No tienes permiso para eliminar este proyecto' }, { status: 403 });
     }
 
+    // Verificar si hay hitos usando este proyecto
+    const Milestone = mongoose.models.Milestone || (await import('@/models/Milestone')).default;
+    const milestonesCount = await Milestone.countDocuments({ projectId: params.id });
+
+    if (milestonesCount > 0) {
+      return NextResponse.json({
+        error: `No se puede eliminar el proyecto porque tiene ${milestonesCount} hito(s) asociado(s). Por favor, reasigna o elimina esos hitos primero.`
+      }, { status: 400 });
+    }
+
     // Verificar si hay prioridades usando este proyecto
     const Priority = mongoose.models.Priority || (await import('@/models/Priority')).default;
     const prioritiesCount = await Priority.countDocuments({ projectId: params.id });
