@@ -115,7 +115,8 @@ export default function PrioritiesGanttPage() {
     title: '',
     description: '',
     dueDate: '',
-    deliverables: []
+    deliverables: [],
+    projectId: undefined
   });
   const [showFutureMilestonesModal, setShowFutureMilestonesModal] = useState(false);
 
@@ -287,7 +288,8 @@ export default function PrioritiesGanttPage() {
       title: milestone.title,
       description: milestone.description || '',
       dueDate: milestone.dueDate.split('T')[0],
-      deliverables: milestone.deliverables
+      deliverables: milestone.deliverables,
+      projectId: milestone.projectId
     });
     setEditingMilestone(milestone);
     setShowMilestoneForm(true);
@@ -323,7 +325,7 @@ export default function PrioritiesGanttPage() {
       await loadData();
       setShowMilestoneForm(false);
       setEditingMilestone(null);
-      setMilestoneFormData({ title: '', description: '', dueDate: '', deliverables: [] });
+      setMilestoneFormData({ title: '', description: '', dueDate: '', deliverables: [], projectId: undefined });
     } catch (error) {
       console.error('Error saving milestone:', error);
       alert('Error al guardar el hito');
@@ -938,7 +940,7 @@ export default function PrioritiesGanttPage() {
           onClose={() => {
             setShowMilestoneForm(false);
             setEditingMilestone(null);
-            setMilestoneFormData({ title: '', description: '', dueDate: '', deliverables: [] });
+            setMilestoneFormData({ title: '', description: '', dueDate: '', deliverables: [], projectId: undefined });
           }}
           formData={milestoneFormData}
           setFormData={setMilestoneFormData}
