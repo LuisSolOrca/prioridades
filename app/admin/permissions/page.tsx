@@ -349,6 +349,23 @@ export default function PermissionsManagementPage() {
                         </span>
                       </div>
                     </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canManageProjects ?? (selectedUser.role === 'ADMIN')}
+                        onChange={(e) => handlePermissionChange('canManageProjects', e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canManageProjects}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite al usuario acceder a la página de gestión de proyectos y ver todos los proyectos (solo lectura si no es PM asignado)
+                        </span>
+                      </div>
+                    </label>
                   </div>
                 </div>
 
