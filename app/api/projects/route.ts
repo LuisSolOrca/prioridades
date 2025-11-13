@@ -46,7 +46,18 @@ export async function POST(req: Request) {
     const project = await Project.create({
       name: name.trim(),
       description: description?.trim() || '',
-      isActive: true
+      isActive: body.isActive !== undefined ? body.isActive : true,
+      purpose: body.purpose,
+      objectives: body.objectives,
+      scope: body.scope,
+      requirements: body.requirements,
+      assumptions: body.assumptions,
+      constraints: body.constraints,
+      stakeholders: body.stakeholders,
+      risks: body.risks,
+      budget: body.budget,
+      successCriteria: body.successCriteria,
+      projectManager: body.projectManager,
     });
 
     return NextResponse.json(project, { status: 201 });
