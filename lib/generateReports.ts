@@ -2116,13 +2116,95 @@ const generateProjectCharterPDF = async (
     yPos += 10;
   }
 
-  // 12. Cronograma (Gantt Chart)
+  // 12. Entregables del Proyecto
+  if (yPos > 230) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('12. ENTREGABLES DEL PROYECTO', 20, yPos);
+  yPos += 7;
+
+  // Recopilar todos los entregables de los hitos
+  const allDeliverables: any[] = [];
+  milestones.forEach((m: any) => {
+    if (m.deliverables && m.deliverables.length > 0) {
+      m.deliverables.forEach((d: any) => {
+        allDeliverables.push({
+          milestone: m.title,
+          title: d.title,
+          description: d.description,
+          successCriteria: d.successCriteria,
+          isCompleted: d.isCompleted
+        });
+      });
+    }
+  });
+
+  if (allDeliverables.length > 0) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    allDeliverables.forEach((deliverable, index) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      // Título del entregable
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${index + 1}. ${deliverable.title}`, 25, yPos);
+      yPos += 5;
+
+      // Hito asociado
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Hito: ${deliverable.milestone}`, 30, yPos);
+      yPos += 5;
+
+      // Estado
+      const statusColor: [number, number, number] = deliverable.isCompleted ? [34, 197, 94] : [249, 115, 22];
+      doc.setTextColor(...statusColor);
+      doc.text(`Estado: ${deliverable.isCompleted ? 'Completado' : 'Pendiente'}`, 30, yPos);
+      doc.setTextColor(0, 0, 0);
+      yPos += 5;
+
+      doc.setFontSize(10);
+
+      // Descripción
+      if (deliverable.description) {
+        const descLines = doc.splitTextToSize(`Descripción: ${deliverable.description}`, 160);
+        doc.text(descLines, 30, yPos);
+        yPos += descLines.length * 5;
+      }
+
+      // Criterios de éxito
+      if (deliverable.successCriteria) {
+        const criteriaLines = doc.splitTextToSize(`Criterio de éxito: ${deliverable.successCriteria}`, 160);
+        doc.text(criteriaLines, 30, yPos);
+        yPos += criteriaLines.length * 5;
+      }
+
+      yPos += 5;
+    });
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No se han definido entregables', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // 13. Cronograma (Gantt Chart)
   doc.addPage();
   yPos = 20;
 
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('12. CRONOGRAMA DEL PROYECTO', 20, yPos);
+  doc.text('13. CRONOGRAMA DEL PROYECTO', 20, yPos);
   yPos += 10;
 
   // Combinar hitos y prioridades
@@ -2636,10 +2718,92 @@ const generateProjectCharterDOC = async (
     );
   }
 
-  // 12. Cronograma (Gantt)
+  // 12. Entregables del Proyecto
   children.push(
     new Paragraph({
-      text: '12. CRONOGRAMA DEL PROYECTO',
+      text: '12. ENTREGABLES DEL PROYECTO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  // Recopilar todos los entregables de los hitos
+  const allDeliverablesWord: any[] = [];
+  milestones.forEach((m: any) => {
+    if (m.deliverables && m.deliverables.length > 0) {
+      m.deliverables.forEach((d: any) => {
+        allDeliverablesWord.push({
+          milestone: m.title,
+          title: d.title,
+          description: d.description,
+          successCriteria: d.successCriteria,
+          isCompleted: d.isCompleted
+        });
+      });
+    }
+  });
+
+  if (allDeliverablesWord.length > 0) {
+    // Crear tabla de entregables
+    const deliverableRows: any[] = [
+      // Header
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Entregable', bold: true })] })], width: { size: 25, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Hito', bold: true })] })], width: { size: 20, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Descripción', bold: true })] })], width: { size: 30, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Criterio de Éxito', bold: true })] })], width: { size: 20, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Estado', bold: true })] })], width: { size: 5, type: WidthType.PERCENTAGE } })
+        ]
+      })
+    ];
+
+    // Agregar filas de datos
+    allDeliverablesWord.forEach((deliverable: any) => {
+      deliverableRows.push(
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: deliverable.title })] }),
+            new TableCell({ children: [new Paragraph({ text: deliverable.milestone })] }),
+            new TableCell({ children: [new Paragraph({ text: deliverable.description || 'N/A' })] }),
+            new TableCell({ children: [new Paragraph({ text: deliverable.successCriteria || 'N/A' })] }),
+            new TableCell({ children: [new Paragraph({ text: deliverable.isCompleted ? '✓' : '○' })] })
+          ]
+        })
+      );
+    });
+
+    children.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: deliverableRows
+      })
+    );
+
+    children.push(
+      new Paragraph({
+        text: `Total de entregables: ${allDeliverablesWord.length}`,
+        spacing: { before: 100, after: 200 }
+      })
+    );
+  } else {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No se han definido entregables',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 13. Cronograma (Gantt)
+  children.push(
+    new Paragraph({
+      text: '13. CRONOGRAMA DEL PROYECTO',
       heading: 'Heading3',
       spacing: { before: 200, after: 100 }
     })
