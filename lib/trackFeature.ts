@@ -10,7 +10,8 @@ type FeatureType =
   | 'analyticsVisits'
   | 'reportsGenerated'
   | 'excelExports'
-  | 'kanbanViews';
+  | 'kanbanViews'
+  | 'projectCharterGenerated';
 
 export async function trackFeature(feature: FeatureType): Promise<void> {
   try {

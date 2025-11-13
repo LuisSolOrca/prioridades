@@ -1765,3 +1765,904 @@ export const generateMilestonesReport = async (
     await generateDOCReport(data, fileName);
   }
 };
+
+// Project Charter Export
+export const generateProjectCharter = async (
+  project: any,
+  milestones: any[],
+  priorities: any[],
+  format: 'pdf' | 'doc'
+) => {
+  await trackFeature('projectCharterGenerated');
+
+  const fileName = `Acta_Proyecto_${project.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}`;
+
+  if (format === 'pdf') {
+    await generateProjectCharterPDF(project, milestones, priorities, fileName);
+  } else {
+    await generateProjectCharterDOC(project, milestones, priorities, fileName);
+  }
+};
+
+const generateProjectCharterPDF = async (
+  project: any,
+  milestones: any[],
+  priorities: any[],
+  fileName: string
+) => {
+  const doc = new jsPDF();
+  let yPos = 20;
+
+  // Título
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ACTA DE CONSTITUCIÓN DEL PROYECTO', 105, yPos, { align: 'center' });
+  yPos += 15;
+
+  // Nombre del proyecto
+  doc.setFontSize(16);
+  doc.text(project.name, 105, yPos, { align: 'center' });
+  yPos += 10;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-MX')}`, 105, yPos, { align: 'center' });
+  yPos += 15;
+
+  // Función helper para agregar secciones
+  const addSection = (title: string, content: string | null, isNewPage = false) => {
+    if (isNewPage || yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, 20, yPos);
+    yPos += 7;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    if (content) {
+      const lines = doc.splitTextToSize(content, 170);
+      doc.text(lines, 20, yPos);
+      yPos += lines.length * 5 + 5;
+    } else {
+      doc.setTextColor(150, 150, 150);
+      doc.text('No especificado', 20, yPos);
+      doc.setTextColor(0, 0, 0);
+      yPos += 10;
+    }
+  };
+
+  // 1. Propósito del Proyecto
+  addSection('1. PROPÓSITO DEL PROYECTO', project.purpose);
+
+  // 2. Objetivos SMART
+  if (yPos > 240) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('2. OBJETIVOS DEL PROYECTO', 20, yPos);
+  yPos += 7;
+
+  if (project.objectives && project.objectives.length > 0) {
+    project.objectives.forEach((obj: any, index: number) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Objetivo ${index + 1}:`, 25, yPos);
+      yPos += 5;
+
+      doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(obj.description, 165);
+      doc.text(lines, 25, yPos);
+      yPos += lines.length * 5;
+
+      // SMART indicators
+      const smart = [];
+      if (obj.specific) smart.push('Específico');
+      if (obj.measurable) smart.push('Medible');
+      if (obj.achievable) smart.push('Alcanzable');
+      if (obj.relevant) smart.push('Relevante');
+      if (obj.timeBound) smart.push('Tiempo definido');
+
+      if (smart.length > 0) {
+        doc.setFontSize(9);
+        doc.setTextColor(0, 128, 0);
+        doc.text(`✓ ${smart.join(', ')}`, 25, yPos);
+        doc.setTextColor(0, 0, 0);
+        yPos += 7;
+      }
+    });
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No se han definido objetivos', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // 3. Alcance
+  if (yPos > 230) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('3. ALCANCE DEL PROYECTO', 20, yPos);
+  yPos += 7;
+
+  if (project.scope?.included) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Incluido en el alcance:', 25, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(project.scope.included, 165);
+    doc.text(lines, 25, yPos);
+    yPos += lines.length * 5 + 3;
+  }
+
+  if (project.scope?.excluded) {
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Excluido del alcance:', 25, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(project.scope.excluded, 165);
+    doc.text(lines, 25, yPos);
+    yPos += lines.length * 5 + 5;
+  }
+
+  // 4. Requerimientos
+  addSection('4. REQUERIMIENTOS DE ALTO NIVEL', project.requirements, yPos > 230);
+
+  // 5. Supuestos
+  addSection('5. SUPUESTOS', project.assumptions);
+
+  // 6. Restricciones
+  addSection('6. RESTRICCIONES', project.constraints);
+
+  // 7. Stakeholders
+  if (yPos > 220) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('7. INTERESADOS DEL PROYECTO', 20, yPos);
+  yPos += 10;
+
+  if (project.stakeholders && project.stakeholders.length > 0) {
+    const stakeholderData = project.stakeholders.map((sh: any) => [
+      sh.name || '',
+      sh.role || '',
+      sh.interest || '',
+      sh.influence || ''
+    ]);
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Nombre', 'Rol', 'Interés', 'Influencia']],
+      body: stakeholderData,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 139, 202] },
+      styles: { fontSize: 9 },
+      margin: { left: 20, right: 20 }
+    });
+
+    yPos = (doc as any).lastAutoTable.finalY + 10;
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No se han definido interesados', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // 8. Riesgos
+  if (yPos > 220) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('8. RIESGOS PRINCIPALES', 20, yPos);
+  yPos += 10;
+
+  if (project.risks && project.risks.length > 0) {
+    const riskData = project.risks.map((risk: any) => [
+      risk.description || '',
+      risk.probability || '',
+      risk.impact || '',
+      risk.mitigation || ''
+    ]);
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Descripción', 'Probabilidad', 'Impacto', 'Mitigación']],
+      body: riskData,
+      theme: 'grid',
+      headStyles: { fillColor: [217, 83, 79] },
+      styles: { fontSize: 8 },
+      margin: { left: 20, right: 20 }
+    });
+
+    yPos = (doc as any).lastAutoTable.finalY + 10;
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No se han identificado riesgos', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // 9. Presupuesto
+  if (yPos > 240) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('9. PRESUPUESTO ESTIMADO', 20, yPos);
+  yPos += 7;
+
+  if (project.budget?.estimated) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Monto: ${project.budget.estimated.toLocaleString()} ${project.budget.currency || 'USD'}`, 25, yPos);
+    yPos += 5;
+    if (project.budget.notes) {
+      const lines = doc.splitTextToSize(project.budget.notes, 165);
+      doc.text(lines, 25, yPos);
+      yPos += lines.length * 5 + 5;
+    }
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No especificado', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // 10. Criterios de Éxito
+  if (yPos > 230) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('10. CRITERIOS DE ÉXITO', 20, yPos);
+  yPos += 7;
+
+  if (project.successCriteria && project.successCriteria.length > 0) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    project.successCriteria.forEach((criterion: any, index: number) => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text(`${index + 1}. ${criterion.description}`, 25, yPos);
+      yPos += 6;
+    });
+    yPos += 5;
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No se han definido criterios de éxito', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // 11. Gerente del Proyecto
+  if (yPos > 240) {
+    doc.addPage();
+    yPos = 20;
+  }
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('11. GERENTE DEL PROYECTO', 20, yPos);
+  yPos += 7;
+
+  if (project.projectManager?.name) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Nombre: ${project.projectManager.name}`, 25, yPos);
+    yPos += 5;
+    if (project.projectManager.authority) {
+      const lines = doc.splitTextToSize(`Autoridad: ${project.projectManager.authority}`, 165);
+      doc.text(lines, 25, yPos);
+      yPos += lines.length * 5 + 5;
+    }
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No asignado', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // 12. Cronograma (Gantt Chart)
+  doc.addPage();
+  yPos = 20;
+
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('12. CRONOGRAMA DEL PROYECTO', 20, yPos);
+  yPos += 10;
+
+  // Combinar hitos y prioridades
+  const timelineItems: any[] = [];
+
+  milestones.forEach((m: any) => {
+    timelineItems.push({
+      type: 'milestone',
+      title: m.title,
+      date: new Date(m.dueDate),
+      isCompleted: m.isCompleted
+    });
+  });
+
+  priorities.forEach((p: any) => {
+    timelineItems.push({
+      type: 'priority',
+      title: p.title,
+      startDate: new Date(p.weekStart),
+      endDate: new Date(p.weekEnd),
+      progress: p.completionPercentage || 0
+    });
+  });
+
+  if (timelineItems.length > 0) {
+    // Ordenar por fecha
+    timelineItems.sort((a, b) => {
+      const dateA = a.type === 'milestone' ? a.date : a.startDate;
+      const dateB = b.type === 'milestone' ? b.date : b.startDate;
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    // Calcular rango de fechas
+    const allDates = timelineItems.flatMap(item =>
+      item.type === 'milestone' ? [item.date] : [item.startDate, item.endDate]
+    );
+    const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+    const timeRange = maxDate.getTime() - minDate.getTime();
+
+    // Dibujar eje de tiempo
+    const chartStartX = 70;
+    const chartWidth = 120;
+    const chartStartY = yPos;
+    const rowHeight = 10;
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(minDate.toLocaleDateString('es-MX'), chartStartX, chartStartY - 2);
+    doc.text(maxDate.toLocaleDateString('es-MX'), chartStartX + chartWidth - 20, chartStartY - 2);
+
+    // Dibujar línea base
+    doc.setDrawColor(200, 200, 200);
+    doc.line(chartStartX, chartStartY, chartStartX + chartWidth, chartStartY);
+
+    timelineItems.forEach((item, index) => {
+      const itemY = chartStartY + 5 + (index * rowHeight);
+
+      if (itemY > 270) {
+        doc.addPage();
+        return;
+      }
+
+      // Título del item
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      const label = item.title.substring(0, 25) + (item.title.length > 25 ? '...' : '');
+      doc.text(label, 20, itemY);
+
+      if (item.type === 'milestone') {
+        // Dibujar diamante para hito
+        const xPos = chartStartX + ((item.date.getTime() - minDate.getTime()) / timeRange) * chartWidth;
+        const color: [number, number, number] = item.isCompleted ? [34, 197, 94] : [249, 115, 22];
+        doc.setFillColor(...color);
+
+        // Diamante
+        doc.triangle(xPos, itemY - 2, xPos + 2, itemY, xPos, itemY + 2, 'F');
+        doc.triangle(xPos, itemY - 2, xPos - 2, itemY, xPos, itemY + 2, 'F');
+      } else {
+        // Dibujar barra para prioridad
+        const startX = chartStartX + ((item.startDate.getTime() - minDate.getTime()) / timeRange) * chartWidth;
+        const endX = chartStartX + ((item.endDate.getTime() - minDate.getTime()) / timeRange) * chartWidth;
+        const barWidth = Math.max(endX - startX, 2);
+
+        // Barra de fondo
+        doc.setFillColor(200, 200, 200);
+        doc.rect(startX, itemY - 2, barWidth, 3, 'F');
+
+        // Barra de progreso
+        const progressWidth = (barWidth * item.progress) / 100;
+        doc.setFillColor(59, 130, 246);
+        doc.rect(startX, itemY - 2, progressWidth, 3, 'F');
+      }
+    });
+  } else {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text('No hay elementos en el cronograma', 20, yPos);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  doc.save(`${fileName}.pdf`);
+};
+
+const generateProjectCharterDOC = async (
+  project: any,
+  milestones: any[],
+  priorities: any[],
+  fileName: string
+) => {
+  const children: any[] = [];
+
+  // Título
+  children.push(
+    new Paragraph({
+      text: 'ACTA DE CONSTITUCIÓN DEL PROYECTO',
+      heading: 'Heading1',
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 }
+    }),
+    new Paragraph({
+      text: project.name,
+      heading: 'Heading2',
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 100 }
+    }),
+    new Paragraph({
+      text: `Fecha de generación: ${new Date().toLocaleDateString('es-MX')}`,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 }
+    })
+  );
+
+  // Helper function para agregar secciones
+  const addSection = (title: string, content: string | null) => {
+    children.push(
+      new Paragraph({
+        text: title,
+        heading: 'Heading3',
+        spacing: { before: 200, after: 100 }
+      })
+    );
+
+    if (content) {
+      children.push(
+        new Paragraph({
+          text: content,
+          spacing: { after: 200 }
+        })
+      );
+    } else {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: 'No especificado',
+              italics: true
+            })
+          ],
+          spacing: { after: 200 }
+        })
+      );
+    }
+  };
+
+  // 1. Propósito
+  addSection('1. PROPÓSITO DEL PROYECTO', project.purpose);
+
+  // 2. Objetivos
+  children.push(
+    new Paragraph({
+      text: '2. OBJETIVOS DEL PROYECTO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  if (project.objectives && project.objectives.length > 0) {
+    project.objectives.forEach((obj: any, index: number) => {
+      children.push(
+        new Paragraph({
+          text: `Objetivo ${index + 1}: ${obj.description}`,
+          spacing: { after: 50 }
+        })
+      );
+
+      const smart = [];
+      if (obj.specific) smart.push('Específico');
+      if (obj.measurable) smart.push('Medible');
+      if (obj.achievable) smart.push('Alcanzable');
+      if (obj.relevant) smart.push('Relevante');
+      if (obj.timeBound) smart.push('Tiempo definido');
+
+      if (smart.length > 0) {
+        children.push(
+          new Paragraph({
+            text: `✓ ${smart.join(', ')}`,
+            spacing: { after: 150 }
+          })
+        );
+      }
+    });
+  } else {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No se han definido objetivos',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 3. Alcance
+  children.push(
+    new Paragraph({
+      text: '3. ALCANCE DEL PROYECTO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  if (project.scope?.included) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Incluido en el alcance:',
+            bold: true
+          })
+        ],
+        spacing: { after: 50 }
+      }),
+      new Paragraph({
+        text: project.scope.included,
+        spacing: { after: 150 }
+      })
+    );
+  }
+
+  if (project.scope?.excluded) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Excluido del alcance:',
+            bold: true
+          })
+        ],
+        spacing: { after: 50 }
+      }),
+      new Paragraph({
+        text: project.scope.excluded,
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 4-6. Otras secciones
+  addSection('4. REQUERIMIENTOS DE ALTO NIVEL', project.requirements);
+  addSection('5. SUPUESTOS', project.assumptions);
+  addSection('6. RESTRICCIONES', project.constraints);
+
+  // 7. Stakeholders
+  children.push(
+    new Paragraph({
+      text: '7. INTERESADOS DEL PROYECTO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  if (project.stakeholders && project.stakeholders.length > 0) {
+    const stakeholderRows = project.stakeholders.map((sh: any) =>
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph(sh.name || '')] }),
+          new TableCell({ children: [new Paragraph(sh.role || '')] }),
+          new TableCell({ children: [new Paragraph(sh.interest || '')] }),
+          new TableCell({ children: [new Paragraph(sh.influence || '')] })
+        ]
+      })
+    );
+
+    children.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Nombre', bold: true })] })] }),
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Rol', bold: true })] })] }),
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Interés', bold: true })] })] }),
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Influencia', bold: true })] })] })
+            ]
+          }),
+          ...stakeholderRows
+        ]
+      })
+    );
+  } else {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No se han definido interesados',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 8. Riesgos
+  children.push(
+    new Paragraph({
+      text: '8. RIESGOS PRINCIPALES',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  if (project.risks && project.risks.length > 0) {
+    const riskRows = project.risks.map((risk: any) =>
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph(risk.description || '')] }),
+          new TableCell({ children: [new Paragraph(risk.probability || '')] }),
+          new TableCell({ children: [new Paragraph(risk.impact || '')] }),
+          new TableCell({ children: [new Paragraph(risk.mitigation || '')] })
+        ]
+      })
+    );
+
+    children.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Descripción', bold: true })] })] }),
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Probabilidad', bold: true })] })] }),
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Impacto', bold: true })] })] }),
+              new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Mitigación', bold: true })] })] })
+            ]
+          }),
+          ...riskRows
+        ]
+      })
+    );
+  } else {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No se han identificado riesgos',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 9. Presupuesto
+  children.push(
+    new Paragraph({
+      text: '9. PRESUPUESTO ESTIMADO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  if (project.budget?.estimated) {
+    children.push(
+      new Paragraph({
+        text: `Monto: ${project.budget.estimated.toLocaleString()} ${project.budget.currency || 'USD'}`,
+        spacing: { after: 50 }
+      })
+    );
+    if (project.budget.notes) {
+      children.push(
+        new Paragraph({
+          text: project.budget.notes,
+          spacing: { after: 200 }
+        })
+      );
+    }
+  } else {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No especificado',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 10. Criterios de Éxito
+  children.push(
+    new Paragraph({
+      text: '10. CRITERIOS DE ÉXITO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  if (project.successCriteria && project.successCriteria.length > 0) {
+    project.successCriteria.forEach((criterion: any, index: number) => {
+      children.push(
+        new Paragraph({
+          text: `${index + 1}. ${criterion.description}`,
+          spacing: { after: 100 }
+        })
+      );
+    });
+  } else {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No se han definido criterios de éxito',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 11. Gerente del Proyecto
+  children.push(
+    new Paragraph({
+      text: '11. GERENTE DEL PROYECTO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  if (project.projectManager?.name) {
+    children.push(
+      new Paragraph({
+        text: `Nombre: ${project.projectManager.name}`,
+        spacing: { after: 50 }
+      })
+    );
+    if (project.projectManager.authority) {
+      children.push(
+        new Paragraph({
+          text: `Autoridad: ${project.projectManager.authority}`,
+          spacing: { after: 200 }
+        })
+      );
+    }
+  } else {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No asignado',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  // 12. Cronograma
+  children.push(
+    new Paragraph({
+      text: '12. CRONOGRAMA DEL PROYECTO',
+      heading: 'Heading3',
+      spacing: { before: 200, after: 100 }
+    })
+  );
+
+  // Listar hitos
+  if (milestones.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Hitos:',
+            bold: true
+          })
+        ],
+        spacing: { after: 100 }
+      })
+    );
+
+    milestones.forEach((m: any) => {
+      children.push(
+        new Paragraph({
+          text: `💎 ${m.title} - ${new Date(m.dueDate).toLocaleDateString('es-MX')} ${m.isCompleted ? '(Completado)' : ''}`,
+          spacing: { after: 50 }
+        })
+      );
+    });
+  }
+
+  // Listar prioridades
+  if (priorities.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Prioridades:',
+            bold: true
+          })
+        ],
+        spacing: { before: 150, after: 100 }
+      })
+    );
+
+    priorities.forEach((p: any) => {
+      children.push(
+        new Paragraph({
+          text: `• ${p.title} - ${new Date(p.weekStart).toLocaleDateString('es-MX')} a ${new Date(p.weekEnd).toLocaleDateString('es-MX')} (${p.completionPercentage || 0}%)`,
+          spacing: { after: 50 }
+        })
+      );
+    });
+  }
+
+  if (milestones.length === 0 && priorities.length === 0) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'No hay elementos en el cronograma',
+            italics: true
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    );
+  }
+
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children
+    }]
+  });
+
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `${fileName}.docx`);
+};

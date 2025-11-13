@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ProjectFormModal, { ProjectFormData } from '@/components/ProjectFormModal';
 import { usePermissions } from '@/hooks/usePermissions';
+import { generateProjectCharter } from '@/lib/generateReports';
 
 interface Project extends ProjectFormData {
   _id: string;
@@ -39,6 +40,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
+  const [exportMenuOpen, setExportMenuOpen] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -158,6 +160,31 @@ export default function ProjectsPage() {
     setSelectedProjectId(projectId);
     await loadScheduleData(projectId);
     setShowSchedule(true);
+  };
+
+  const handleExportCharter = async (project: Project, format: 'pdf' | 'doc') => {
+    try {
+      // Cargar datos del proyecto
+      const [milestonesRes, prioritiesRes] = await Promise.all([
+        fetch('/api/milestones?forReports=true'),
+        fetch('/api/priorities?forDashboard=true')
+      ]);
+
+      const [allMilestones, allPriorities] = await Promise.all([
+        milestonesRes.json(),
+        prioritiesRes.json()
+      ]);
+
+      // Filtrar por proyecto
+      const projectMilestones = allMilestones.filter((m: any) => m.projectId === project._id);
+      const projectPriorities = allPriorities.filter((p: any) => p.projectId === project._id);
+
+      // Generar reporte
+      await generateProjectCharter(project, projectMilestones, projectPriorities, format);
+    } catch (error) {
+      console.error('Error exporting charter:', error);
+      alert('Error al exportar el acta de proyecto');
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -400,6 +427,43 @@ export default function ProjectsPage() {
                     >
                       Cronograma
                     </button>
+                    <div className="relative">
+                      <button
+                        onClick={() => setExportMenuOpen(exportMenuOpen === project._id ? null : project._id)}
+                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+                        title="Exportar acta de proyecto"
+                      >
+                        📄
+                      </button>
+                      {exportMenuOpen === project._id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setExportMenuOpen(null)}
+                          />
+                          <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-20 overflow-hidden">
+                            <button
+                              onClick={() => {
+                                handleExportCharter(project, 'pdf');
+                                setExportMenuOpen(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                            >
+                              PDF
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleExportCharter(project, 'doc');
+                                setExportMenuOpen(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+                            >
+                              Word
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
