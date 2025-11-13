@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface Objective {
@@ -28,6 +28,22 @@ interface Risk {
 
 interface SuccessCriterion {
   description: string;
+}
+
+interface Deliverable {
+  title: string;
+  description?: string;
+  successCriteria?: string;
+  isCompleted: boolean;
+}
+
+interface Milestone {
+  _id: string;
+  title: string;
+  description?: string;
+  dueDate: string;
+  deliverables: Deliverable[];
+  isCompleted: boolean;
 }
 
 export interface ProjectFormData {
@@ -90,6 +106,36 @@ export default function ProjectFormModal({
   onViewSchedule
 }: ProjectFormModalProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'planning' | 'management'>('basic');
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(false);
+
+  // Cargar hitos cuando se abre el modal con un proyecto existente
+  useEffect(() => {
+    if (isOpen && isEditing && projectId) {
+      loadMilestones();
+    } else if (!isOpen) {
+      setMilestones([]);
+    }
+  }, [isOpen, isEditing, projectId]);
+
+  const loadMilestones = async () => {
+    if (!projectId) return;
+
+    setLoadingMilestones(true);
+    try {
+      const res = await fetch('/api/milestones');
+      if (res.ok) {
+        const allMilestones = await res.json();
+        // Filtrar solo los hitos de este proyecto
+        const projectMilestones = allMilestones.filter((m: any) => m.projectId === projectId);
+        setMilestones(projectMilestones);
+      }
+    } catch (error) {
+      console.error('Error loading milestones:', error);
+    } finally {
+      setLoadingMilestones(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -409,11 +455,86 @@ export default function ProjectFormModal({
                 </div>
               </div>
 
-              {/* Deliverables Info */}
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                <p className="text-sm text-purple-800 dark:text-purple-200">
-                  💡 <strong>Entregables del Proyecto:</strong> Los entregables se definen en los hitos asociados a este proyecto. Ve a la pestaña "Planificación" para ver el cronograma con todos los entregables.
-                </p>
+              {/* Deliverables from Milestones */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Entregables del Proyecto
+                </label>
+                {loadingMilestones ? (
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    Cargando entregables...
+                  </div>
+                ) : milestones.length === 0 ? (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      💡 <strong>Sin entregables:</strong> Este proyecto no tiene hitos asociados. Los entregables se definen en los hitos del proyecto.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {milestones.map((milestone) => (
+                      <div key={milestone._id} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                        {/* Milestone Header */}
+                        <div className="bg-gray-100 dark:bg-gray-700 px-4 py-2 border-b border-gray-200 dark:border-gray-600">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">💎</span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200">{milestone.title}</span>
+                              {milestone.isCompleted && (
+                                <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded">
+                                  Completado
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(milestone.dueDate).toLocaleDateString('es-MX')}
+                            </span>
+                          </div>
+                          {milestone.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{milestone.description}</p>
+                          )}
+                        </div>
+
+                        {/* Deliverables List */}
+                        {milestone.deliverables.length > 0 ? (
+                          <div className="divide-y divide-gray-200 dark:divide-gray-600">
+                            {milestone.deliverables.map((deliverable, idx) => (
+                              <div key={idx} className="p-3 bg-white dark:bg-gray-800">
+                                <div className="flex items-start gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={deliverable.isCompleted}
+                                    disabled
+                                    className="mt-1 rounded text-blue-600"
+                                  />
+                                  <div className="flex-1">
+                                    <p className={`font-medium text-sm ${deliverable.isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                                      {deliverable.title}
+                                    </p>
+                                    {deliverable.description && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        <strong>Descripción:</strong> {deliverable.description}
+                                      </p>
+                                    )}
+                                    {deliverable.successCriteria && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        <strong>Criterios de Éxito:</strong> {deliverable.successCriteria}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-3 text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800">
+                            Este hito no tiene entregables definidos
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Requirements */}
