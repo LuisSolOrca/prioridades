@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IDeliverable {
   title: string;
   description?: string;
+  successCriteria?: string;
   isCompleted: boolean;
   completedAt?: Date;
 }
@@ -28,6 +29,10 @@ const DeliverableSchema = new Schema<IDeliverable>({
     maxlength: 200
   },
   description: {
+    type: String,
+    maxlength: 500
+  },
+  successCriteria: {
     type: String,
     maxlength: 500
   },

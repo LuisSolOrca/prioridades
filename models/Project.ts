@@ -34,10 +34,6 @@ const ProjectSchema = new mongoose.Schema({
     included: { type: String, maxlength: 2000 },
     excluded: { type: String, maxlength: 2000 }
   },
-  deliverables: [{
-    name: { type: String, maxlength: 200 },
-    description: { type: String, maxlength: 500 }
-  }],
   requirements: {
     type: String,
     maxlength: 2000

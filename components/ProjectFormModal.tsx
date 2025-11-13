@@ -12,11 +12,6 @@ interface Objective {
   timeBound: boolean;
 }
 
-interface Deliverable {
-  name: string;
-  description: string;
-}
-
 interface Stakeholder {
   name: string;
   role: string;
@@ -45,7 +40,6 @@ export interface ProjectFormData {
     included?: string;
     excluded?: string;
   };
-  deliverables?: Deliverable[];
   requirements?: string;
   assumptions?: string;
   constraints?: string;
@@ -126,28 +120,6 @@ export default function ProjectFormModal({
     const objectives = [...(formData.objectives || [])];
     objectives[index] = { ...objectives[index], [field]: value };
     setFormData({ ...formData, objectives });
-  };
-
-  const addDeliverable = () => {
-    const deliverables = formData.deliverables || [];
-    setFormData({
-      ...formData,
-      deliverables: [...deliverables, { name: '', description: '' }]
-    });
-  };
-
-  const removeDeliverable = (index: number) => {
-    const deliverables = formData.deliverables || [];
-    setFormData({
-      ...formData,
-      deliverables: deliverables.filter((_, i) => i !== index)
-    });
-  };
-
-  const updateDeliverable = (index: number, field: keyof Deliverable, value: string) => {
-    const deliverables = [...(formData.deliverables || [])];
-    deliverables[index] = { ...deliverables[index], [field]: value };
-    setFormData({ ...formData, deliverables });
   };
 
   const addStakeholder = () => {
@@ -437,51 +409,11 @@ export default function ProjectFormModal({
                 </div>
               </div>
 
-              {/* Deliverables */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Entregables Clave
-                  </label>
-                  <button
-                    type="button"
-                    onClick={addDeliverable}
-                    className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
-                  >
-                    + Agregar Entregable
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {(formData.deliverables || []).map((deliv, index) => (
-                    <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
-                      <div className="flex items-start gap-2">
-                        <input
-                          type="text"
-                          value={deliv.name}
-                          onChange={(e) => updateDeliverable(index, 'name', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                          placeholder="Nombre del entregable"
-                          maxLength={200}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeDeliverable(index)}
-                          className="text-red-600 hover:text-red-800 dark:hover:text-red-400"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <textarea
-                        value={deliv.description}
-                        onChange={(e) => updateDeliverable(index, 'description', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        rows={2}
-                        maxLength={500}
-                        placeholder="Descripción"
-                      />
-                    </div>
-                  ))}
-                </div>
+              {/* Deliverables Info */}
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <p className="text-sm text-purple-800 dark:text-purple-200">
+                  💡 <strong>Entregables del Proyecto:</strong> Los entregables se definen en los hitos asociados a este proyecto. Ve a la pestaña "Planificación" para ver el cronograma con todos los entregables.
+                </p>
               </div>
 
               {/* Requirements */}

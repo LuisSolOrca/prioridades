@@ -104,7 +104,6 @@ export default function ProjectsPage() {
       description: '',
       isActive: true,
       objectives: [],
-      deliverables: [],
       stakeholders: [],
       risks: [],
       successCriteria: [],
@@ -124,7 +123,6 @@ export default function ProjectsPage() {
       purpose: project.purpose,
       objectives: project.objectives || [],
       scope: project.scope || {},
-      deliverables: project.deliverables || [],
       requirements: project.requirements,
       assumptions: project.assumptions,
       constraints: project.constraints,
@@ -235,14 +233,12 @@ export default function ProjectsPage() {
       o.specific && o.measurable && o.achievable && o.relevant && o.timeBound
     ).length || 0;
 
-    const deliverablesTotal = project.deliverables?.length || 0;
     const risksTotal = project.risks?.length || 0;
     const stakeholdersTotal = project.stakeholders?.length || 0;
 
     return {
       objectivesTotal,
       objectivesComplete,
-      deliverablesTotal,
       risksTotal,
       stakeholdersTotal,
       hasPM: !!project.projectManager?.name || !!project.projectManager?.userId
@@ -333,14 +329,6 @@ export default function ProjectsPage() {
                         <span className="text-gray-600 dark:text-gray-400">Objetivos SMART:</span>
                         <span className="font-medium text-gray-800 dark:text-gray-200">
                           {stats.objectivesComplete}/{stats.objectivesTotal}
-                        </span>
-                      </div>
-                    )}
-                    {stats.deliverablesTotal > 0 && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Entregables:</span>
-                        <span className="font-medium text-gray-800 dark:text-gray-200">
-                          {stats.deliverablesTotal}
                         </span>
                       </div>
                     )}
@@ -459,130 +447,189 @@ export default function ProjectsPage() {
             </div>
 
             <div className="p-6">
-              {/* Milestones Section */}
-              <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">💎</span>
-                  Hitos ({milestones.length})
-                </h3>
-                {milestones.length > 0 ? (
-                  <div className="space-y-3">
-                    {milestones
-                      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-                      .map((milestone) => {
-                        const user = users.find(u => u._id === milestone.userId);
-                        const dueDate = new Date(milestone.dueDate);
-                        const isPast = dueDate < new Date() && !milestone.isCompleted;
+              {(() => {
+                // Combinar y ordenar todos los items
+                const allItems = [
+                  ...milestones.map((m: any) => ({
+                    type: 'milestone',
+                    title: m.title,
+                    user: users.find(u => u._id === m.userId)?.name || 'N/A',
+                    date: new Date(m.dueDate),
+                    endDate: new Date(m.dueDate),
+                    isCompleted: m.isCompleted,
+                    deliverables: m.deliverables || [],
+                    status: m.isCompleted ? 'completado' : 'pendiente'
+                  })),
+                  ...priorities.map((p: any) => ({
+                    type: 'priority',
+                    title: p.title,
+                    user: users.find(u => u._id === p.userId)?.name || 'N/A',
+                    date: new Date(p.weekStart),
+                    endDate: new Date(p.weekEnd),
+                    isCompleted: p.status === 'COMPLETADO',
+                    status: p.status,
+                    progress: p.completionPercentage
+                  }))
+                ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
-                        return (
-                          <div
-                            key={milestone._id}
-                            className="border border-gray-300 dark:border-gray-600 rounded-lg p-4"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-800 dark:text-gray-100">
-                                  {milestone.title}
-                                </h4>
-                                {milestone.description && (
-                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    {milestone.description}
-                                  </p>
-                                )}
-                              </div>
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                milestone.isCompleted
-                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                                  : isPast
-                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-                                  : 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200'
-                              }`}>
-                                {milestone.isCompleted ? 'Completado' : isPast ? 'Vencido' : 'Pendiente'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                              <span>👤 {user?.name}</span>
-                              <span>📅 {dueDate.toLocaleDateString('es-MX')}</span>
-                              {milestone.deliverables?.length > 0 && (
-                                <span>
-                                  📦 {milestone.deliverables.filter((d: any) => d.isCompleted).length}/{milestone.deliverables.length} entregables
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-                    No hay hitos asociados a este proyecto
-                  </p>
-                )}
-              </div>
+                if (allItems.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4">📊</div>
+                      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                        No hay elementos en el cronograma
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Asocia hitos y prioridades a este proyecto para verlos aquí
+                      </p>
+                    </div>
+                  );
+                }
 
-              {/* Priorities Section */}
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">📋</span>
-                  Prioridades ({priorities.length})
-                </h3>
-                {priorities.length > 0 ? (
-                  <div className="space-y-3">
-                    {priorities
-                      .sort((a, b) => new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime())
-                      .map((priority) => {
-                        const user = users.find(u => u._id === priority.userId);
+                // Calcular rango de fechas
+                const minDate = new Date(Math.min(...allItems.map(i => i.date.getTime())));
+                const maxDate = new Date(Math.max(...allItems.map(i => i.endDate.getTime())));
+                const daysDiff = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                const today = new Date();
 
-                        return (
-                          <div
-                            key={priority._id}
-                            className="border border-gray-300 dark:border-gray-600 rounded-lg p-4"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-800 dark:text-gray-100">
-                                  {priority.title}
-                                </h4>
-                                {priority.description && (
-                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    {priority.description}
-                                  </p>
-                                )}
-                              </div>
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                priority.status === 'COMPLETADO'
-                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                                  : priority.status === 'EN_RIESGO'
-                                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
-                                  : priority.status === 'BLOQUEADO'
-                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-                                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-                              }`}>
-                                {priority.status.replace('_', ' ')}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                              <span>👤 {user?.name}</span>
-                              <span>📅 Semana {new Date(priority.weekStart).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })}</span>
-                              <span>📊 {priority.completionPercentage}%</span>
+                return (
+                  <div className="space-y-6">
+                    {/* Header */}
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+                        Diagrama de Gantt
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {milestones.length} hitos, {priorities.length} prioridades | Del {minDate.toLocaleDateString('es-MX')} al {maxDate.toLocaleDateString('es-MX')}
+                      </p>
+                    </div>
+
+                    {/* Gantt Chart */}
+                    <div className="overflow-x-auto">
+                      <div className="min-w-[800px]">
+                        {/* Timeline header */}
+                        <div className="flex border-b-2 border-gray-300 dark:border-gray-600 mb-4 pb-2">
+                          <div className="w-64 flex-shrink-0 font-semibold text-gray-700 dark:text-gray-300">Elemento</div>
+                          <div className="flex-1 relative">
+                            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                              {Array.from({ length: Math.min(daysDiff, 30) }, (_, i) => {
+                                const date = new Date(minDate);
+                                date.setDate(date.getDate() + Math.floor(i * daysDiff / 30));
+                                return (
+                                  <span key={i} className="text-center">
+                                    {date.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })}
+                                  </span>
+                                );
+                              })}
                             </div>
                           </div>
-                        );
-                      })}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-                    No hay prioridades asociadas a este proyecto
-                  </p>
-                )}
-              </div>
+                        </div>
 
-              {/* Info message */}
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  💡 <strong>Tip:</strong> Los hitos y prioridades se asocian a proyectos desde sus respectivas páginas de gestión.
-                </p>
-              </div>
+                        {/* Items */}
+                        <div className="space-y-3">
+                          {allItems.map((item, idx) => {
+                            const startPercent = ((item.date.getTime() - minDate.getTime()) / (maxDate.getTime() - minDate.getTime())) * 100;
+                            const duration = ((item.endDate.getTime() - item.date.getTime()) / (maxDate.getTime() - minDate.getTime())) * 100;
+                            const isMilestone = item.type === 'milestone';
+                            const totalDeliverables = isMilestone && 'deliverables' in item ? item.deliverables.length : 0;
+                            const completedDeliverables = isMilestone && 'deliverables' in item ? item.deliverables.filter((d: any) => d.isCompleted).length : 0;
+
+                            return (
+                              <div key={idx} className="flex items-center group">
+                                {/* Label */}
+                                <div className="w-64 flex-shrink-0 pr-4">
+                                  <div className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate" title={item.title}>
+                                    {isMilestone ? '💎' : '📋'} {item.title}
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {item.user}
+                                  </div>
+                                </div>
+
+                                {/* Bar */}
+                                <div className="flex-1 relative h-10">
+                                  {/* Background */}
+                                  <div className="absolute inset-0 bg-gray-100 dark:bg-gray-700/30 rounded"></div>
+
+                                  {/* Timeline bar or diamond */}
+                                  {isMilestone ? (
+                                    // Milestone diamond
+                                    <div
+                                      className="absolute top-1/2 -translate-y-1/2 transform rotate-45 w-6 h-6 cursor-pointer"
+                                      style={{ left: `${startPercent}%` }}
+                                      title={`${item.title} - ${item.date.toLocaleDateString('es-MX')}\n${totalDeliverables > 0 ? `Entregables: ${completedDeliverables}/${totalDeliverables}` : ''}`}
+                                    >
+                                      <div className={`w-full h-full ${
+                                        item.isCompleted
+                                          ? 'bg-green-500 dark:bg-green-600'
+                                          : item.date < today
+                                          ? 'bg-red-500 dark:bg-red-600'
+                                          : 'bg-orange-500 dark:bg-orange-600'
+                                      } shadow-md group-hover:scale-110 transition`}></div>
+                                    </div>
+                                  ) : (
+                                    // Priority bar
+                                    <div
+                                      className="absolute top-1/2 -translate-y-1/2 h-6 rounded cursor-pointer"
+                                      style={{
+                                        left: `${startPercent}%`,
+                                        width: `${Math.max(duration, 2)}%`
+                                      }}
+                                      title={`${item.title}\n${item.date.toLocaleDateString('es-MX')} - ${item.endDate.toLocaleDateString('es-MX')}${!isMilestone && 'progress' in item ? `\nProgreso: ${item.progress}%` : ''}`}
+                                    >
+                                      <div className={`h-full rounded ${
+                                        item.status === 'COMPLETADO'
+                                          ? 'bg-green-500 dark:bg-green-600'
+                                          : item.status === 'EN_RIESGO'
+                                          ? 'bg-yellow-500 dark:bg-yellow-600'
+                                          : item.status === 'BLOQUEADO'
+                                          ? 'bg-red-500 dark:bg-red-600'
+                                          : 'bg-blue-500 dark:bg-blue-600'
+                                      } group-hover:opacity-80 transition`}></div>
+                                      {/* Progress overlay */}
+                                      {!isMilestone && 'progress' in item && item.progress < 100 && (
+                                        <div className="absolute inset-0 flex items-center">
+                                          <div
+                                            className="h-full bg-opacity-30 bg-white dark:bg-gray-800 rounded-r"
+                                            style={{ width: `${100 - item.progress}%`, marginLeft: `${item.progress}%` }}
+                                          ></div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex flex-wrap gap-4 text-sm pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 transform rotate-45 bg-orange-500"></div>
+                        <span className="text-gray-700 dark:text-gray-300">Hito Pendiente</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 transform rotate-45 bg-green-500"></div>
+                        <span className="text-gray-700 dark:text-gray-300">Hito Completado</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-3 rounded bg-blue-500"></div>
+                        <span className="text-gray-700 dark:text-gray-300">Prioridad</span>
+                      </div>
+                    </div>
+
+                    {/* Info message */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        💡 <strong>Tip:</strong> Los entregables están en los hitos (rombos 💎). Las barras representan prioridades con su duración.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

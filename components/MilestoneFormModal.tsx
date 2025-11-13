@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 interface Deliverable {
   title: string;
   description?: string;
+  successCriteria?: string;
   isCompleted: boolean;
 }
 
@@ -48,6 +49,7 @@ export default function MilestoneFormModal({
   onProjectCreated
 }: MilestoneFormModalProps) {
   const [newDeliverable, setNewDeliverable] = useState('');
+  const [expandedDeliverable, setExpandedDeliverable] = useState<number | null>(null);
   const [isCreatingNewProject, setIsCreatingNewProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [projectCreating, setProjectCreating] = useState(false);
@@ -118,6 +120,12 @@ export default function MilestoneFormModal({
   const toggleDeliverable = (index: number) => {
     const updated = [...formData.deliverables];
     updated[index].isCompleted = !updated[index].isCompleted;
+    setFormData({ ...formData, deliverables: updated });
+  };
+
+  const updateDeliverable = (index: number, field: keyof Deliverable, value: any) => {
+    const updated = [...formData.deliverables];
+    updated[index] = { ...updated[index], [field]: value };
     setFormData({ ...formData, deliverables: updated });
   };
 
@@ -266,24 +274,70 @@ export default function MilestoneFormModal({
               {formData.deliverables.map((deliverable, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"
                 >
-                  <input
-                    type="checkbox"
-                    checked={deliverable.isCompleted}
-                    onChange={() => toggleDeliverable(index)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className={`flex-1 text-sm ${deliverable.isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
-                    {deliverable.title}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeDeliverable(index)}
-                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
-                  >
-                    ✕
-                  </button>
+                  {/* Encabezado del entregable */}
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={deliverable.isCompleted}
+                      onChange={() => toggleDeliverable(index)}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className={`flex-1 text-sm font-medium ${deliverable.isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                      {deliverable.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedDeliverable(expandedDeliverable === index ? null : index)}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm px-2"
+                      title="Ver detalles"
+                    >
+                      {expandedDeliverable === index ? '▲' : '▼'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeDeliverable(index)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Detalles expandidos */}
+                  {expandedDeliverable === index && (
+                    <div className="p-3 space-y-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600">
+                      {/* Descripción */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Descripción
+                        </label>
+                        <textarea
+                          value={deliverable.description || ''}
+                          onChange={(e) => updateDeliverable(index, 'description', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          rows={2}
+                          maxLength={500}
+                          placeholder="Describe el entregable..."
+                        />
+                      </div>
+
+                      {/* Criterios de Éxito */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Criterios de Éxito
+                        </label>
+                        <textarea
+                          value={deliverable.successCriteria || ''}
+                          onChange={(e) => updateDeliverable(index, 'successCriteria', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          rows={2}
+                          maxLength={500}
+                          placeholder="Define cómo se medirá el éxito de este entregable..."
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 
