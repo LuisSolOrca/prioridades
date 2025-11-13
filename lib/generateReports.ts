@@ -2163,60 +2163,70 @@ const generateProjectCharterPDF = async (
     const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
     const timeRange = maxDate.getTime() - minDate.getTime();
 
-    // Dibujar eje de tiempo
+    // Configuración del Gantt
     const chartStartX = 70;
     const chartWidth = 120;
-    const chartStartY = yPos;
-    const rowHeight = 10;
+    const rowHeight = 8;
+    const itemsPerPage = 25; // Máximo de items por página
 
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text(minDate.toLocaleDateString('es-MX'), chartStartX, chartStartY - 2);
-    doc.text(maxDate.toLocaleDateString('es-MX'), chartStartX + chartWidth - 20, chartStartY - 2);
-
-    // Dibujar línea base
-    doc.setDrawColor(200, 200, 200);
-    doc.line(chartStartX, chartStartY, chartStartX + chartWidth, chartStartY);
-
-    timelineItems.forEach((item, index) => {
-      const itemY = chartStartY + 5 + (index * rowHeight);
-
-      if (itemY > 270) {
+    // Dibujar Gantt con paginación
+    for (let pageStart = 0; pageStart < timelineItems.length; pageStart += itemsPerPage) {
+      if (pageStart > 0) {
         doc.addPage();
-        return;
+        yPos = 20;
       }
 
-      // Título del item
+      const pageItems = timelineItems.slice(pageStart, pageStart + itemsPerPage);
+
+      // Header con fechas
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      const label = item.title.substring(0, 25) + (item.title.length > 25 ? '...' : '');
-      doc.text(label, 20, itemY);
+      doc.text(minDate.toLocaleDateString('es-MX'), chartStartX, yPos);
+      doc.text(maxDate.toLocaleDateString('es-MX'), chartStartX + chartWidth - 20, yPos);
+      yPos += 5;
 
-      if (item.type === 'milestone') {
-        // Dibujar diamante para hito
-        const xPos = chartStartX + ((item.date.getTime() - minDate.getTime()) / timeRange) * chartWidth;
-        const color: [number, number, number] = item.isCompleted ? [34, 197, 94] : [249, 115, 22];
-        doc.setFillColor(...color);
+      // Línea base
+      doc.setDrawColor(200, 200, 200);
+      doc.line(chartStartX, yPos, chartStartX + chartWidth, yPos);
+      yPos += 5;
 
-        // Diamante
-        doc.triangle(xPos, itemY - 2, xPos + 2, itemY, xPos, itemY + 2, 'F');
-        doc.triangle(xPos, itemY - 2, xPos - 2, itemY, xPos, itemY + 2, 'F');
-      } else {
-        // Dibujar barra para prioridad
-        const startX = chartStartX + ((item.startDate.getTime() - minDate.getTime()) / timeRange) * chartWidth;
-        const endX = chartStartX + ((item.endDate.getTime() - minDate.getTime()) / timeRange) * chartWidth;
-        const barWidth = Math.max(endX - startX, 2);
+      // Dibujar items de esta página
+      pageItems.forEach((item, index) => {
+        const itemY = yPos + (index * rowHeight);
 
-        // Barra de fondo
-        doc.setFillColor(200, 200, 200);
-        doc.rect(startX, itemY - 2, barWidth, 3, 'F');
+        // Título del item
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        const label = item.title.substring(0, 20) + (item.title.length > 20 ? '...' : '');
+        doc.text(label, 20, itemY);
 
-        // Barra de progreso
-        const progressWidth = (barWidth * item.progress) / 100;
-        doc.setFillColor(59, 130, 246);
-        doc.rect(startX, itemY - 2, progressWidth, 3, 'F');
-      }
-    });
+        if (item.type === 'milestone') {
+          // Dibujar diamante para hito
+          const xPos = chartStartX + ((item.date.getTime() - minDate.getTime()) / timeRange) * chartWidth;
+          const color: [number, number, number] = item.isCompleted ? [34, 197, 94] : [249, 115, 22];
+          doc.setFillColor(...color);
+
+          // Diamante (más pequeño)
+          doc.triangle(xPos, itemY - 1.5, xPos + 1.5, itemY, xPos, itemY + 1.5, 'F');
+          doc.triangle(xPos, itemY - 1.5, xPos - 1.5, itemY, xPos, itemY + 1.5, 'F');
+        } else {
+          // Dibujar barra para prioridad
+          const startX = chartStartX + ((item.startDate.getTime() - minDate.getTime()) / timeRange) * chartWidth;
+          const endX = chartStartX + ((item.endDate.getTime() - minDate.getTime()) / timeRange) * chartWidth;
+          const barWidth = Math.max(endX - startX, 2);
+
+          // Barra de fondo
+          doc.setFillColor(200, 200, 200);
+          doc.rect(startX, itemY - 1.5, barWidth, 2.5, 'F');
+
+          // Barra de progreso
+          const progressWidth = (barWidth * item.progress) / 100;
+          doc.setFillColor(59, 130, 246);
+          doc.rect(startX, itemY - 1.5, progressWidth, 2.5, 'F');
+        }
+      });
+    }
   } else {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -2626,7 +2636,7 @@ const generateProjectCharterDOC = async (
     );
   }
 
-  // 12. Cronograma
+  // 12. Cronograma (Gantt)
   children.push(
     new Paragraph({
       text: '12. CRONOGRAMA DEL PROYECTO',
@@ -2635,55 +2645,103 @@ const generateProjectCharterDOC = async (
     })
   );
 
-  // Listar hitos
-  if (milestones.length > 0) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: 'Hitos:',
-            bold: true
-          })
-        ],
-        spacing: { after: 100 }
-      })
-    );
+  // Combinar y ordenar todos los items
+  const allTimelineItems: any[] = [];
 
-    milestones.forEach((m: any) => {
-      children.push(
-        new Paragraph({
-          text: `💎 ${m.title} - ${new Date(m.dueDate).toLocaleDateString('es-MX')} ${m.isCompleted ? '(Completado)' : ''}`,
-          spacing: { after: 50 }
+  milestones.forEach((m: any) => {
+    allTimelineItems.push({
+      type: 'Hito',
+      title: m.title,
+      startDate: new Date(m.dueDate),
+      endDate: new Date(m.dueDate),
+      status: m.isCompleted ? 'Completado' : 'Pendiente',
+      progress: m.isCompleted ? 100 : 0
+    });
+  });
+
+  priorities.forEach((p: any) => {
+    allTimelineItems.push({
+      type: 'Prioridad',
+      title: p.title,
+      startDate: new Date(p.weekStart),
+      endDate: new Date(p.weekEnd),
+      status: p.status || 'EN_TIEMPO',
+      progress: p.completionPercentage || 0
+    });
+  });
+
+  if (allTimelineItems.length > 0) {
+    // Ordenar por fecha
+    allTimelineItems.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+    // Calcular rango de fechas para el Gantt
+    const minDate = new Date(Math.min(...allTimelineItems.map(i => i.startDate.getTime())));
+    const maxDate = new Date(Math.max(...allTimelineItems.map(i => i.endDate.getTime())));
+    const totalDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Crear tabla de Gantt
+    const ganttRows: any[] = [
+      // Header
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Elemento', bold: true })] })], width: { size: 30, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Tipo', bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Inicio', bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Fin', bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Estado', bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Progreso', bold: true })] })], width: { size: 10, type: WidthType.PERCENTAGE } })
+        ]
+      })
+    ];
+
+    // Agregar filas de datos
+    allTimelineItems.forEach((item: any) => {
+      ganttRows.push(
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: item.title })] }),
+            new TableCell({ children: [new Paragraph({ text: item.type })] }),
+            new TableCell({ children: [new Paragraph({ text: item.startDate.toLocaleDateString('es-MX') })] }),
+            new TableCell({ children: [new Paragraph({ text: item.endDate.toLocaleDateString('es-MX') })] }),
+            new TableCell({ children: [new Paragraph({ text: item.status })] }),
+            new TableCell({ children: [new Paragraph({ text: `${item.progress}%` })] })
+          ]
         })
       );
     });
-  }
 
-  // Listar prioridades
-  if (priorities.length > 0) {
     children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: 'Prioridades:',
-            bold: true
-          })
-        ],
-        spacing: { before: 150, after: 100 }
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: ganttRows
       })
     );
 
-    priorities.forEach((p: any) => {
-      children.push(
-        new Paragraph({
-          text: `• ${p.title} - ${new Date(p.weekStart).toLocaleDateString('es-MX')} a ${new Date(p.weekEnd).toLocaleDateString('es-MX')} (${p.completionPercentage || 0}%)`,
-          spacing: { after: 50 }
-        })
-      );
-    });
-  }
-
-  if (milestones.length === 0 && priorities.length === 0) {
+    // Agregar leyenda
+    children.push(
+      new Paragraph({
+        text: '',
+        spacing: { before: 200, after: 100 }
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: 'Leyenda:',
+            bold: true
+          })
+        ],
+        spacing: { after: 50 }
+      }),
+      new Paragraph({
+        text: `💎 Hitos: ${milestones.length} | 📋 Prioridades: ${priorities.length}`,
+        spacing: { after: 50 }
+      }),
+      new Paragraph({
+        text: `Período: ${minDate.toLocaleDateString('es-MX')} - ${maxDate.toLocaleDateString('es-MX')} (${totalDays} días)`,
+        spacing: { after: 200 }
+      })
+    );
+  } else {
     children.push(
       new Paragraph({
         children: [
