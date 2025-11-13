@@ -70,13 +70,14 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, description, dueDate, deliverables, isCompleted } = body;
+    const { title, description, dueDate, deliverables, isCompleted, projectId } = body;
 
     // Actualizar campos
     if (title !== undefined) milestone.title = title;
     if (description !== undefined) milestone.description = description;
     if (dueDate !== undefined) milestone.dueDate = new Date(dueDate);
     if (deliverables !== undefined) milestone.deliverables = deliverables;
+    if (projectId !== undefined) milestone.projectId = projectId || undefined;
     if (isCompleted !== undefined) {
       milestone.isCompleted = isCompleted;
       if (isCompleted && !milestone.completedAt) {

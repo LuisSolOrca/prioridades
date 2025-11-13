@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { title, description, dueDate, deliverables } = body;
+    const { title, description, dueDate, deliverables, projectId } = body;
 
     // Validaciones
     if (!title || !dueDate) {
@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
 
     const milestone = await Milestone.create({
       userId: (session.user as any).id,
+      projectId: projectId || undefined,
       title,
       description,
       dueDate: new Date(dueDate),

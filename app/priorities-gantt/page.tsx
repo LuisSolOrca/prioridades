@@ -84,6 +84,7 @@ interface Deliverable {
 interface Milestone {
   _id?: string;
   userId: string;
+  projectId?: string;
   title: string;
   description?: string;
   dueDate: string;
@@ -513,10 +514,12 @@ export default function PrioritiesGanttPage() {
                                 width: 192px;
                                 pointer-events: none;
                               `;
+                              const milestoneProject = milestone.projectId ? projects.find(p => p._id === milestone.projectId) : null;
                               tooltip.innerHTML = `
                                 <div class="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg p-2 shadow-2xl border border-gray-700 dark:border-gray-600">
                                   <div class="font-semibold mb-1">${milestone.title}</div>
                                   ${!isOwnMilestone ? `<div class="text-blue-400 dark:text-blue-300 mb-1 text-xs">👤 Hito del líder de área</div>` : ''}
+                                  ${milestoneProject ? `<div class="text-purple-400 dark:text-purple-300 mb-1 text-xs">📂 ${milestoneProject.name}</div>` : ''}
                                   ${milestone.description ? `<div class="text-gray-300 dark:text-gray-400 mb-1 line-clamp-2">${milestone.description}</div>` : ''}
                                   <div class="text-gray-400 dark:text-gray-500">${new Date(milestone.dueDate).toLocaleDateString('es-MX')}</div>
                                   ${milestone.deliverables.length > 0 ? `<div class="mt-1 text-gray-400 dark:text-gray-500">${milestone.deliverables.filter(d => d.isCompleted).length}/${milestone.deliverables.length} entregables</div>` : ''}
@@ -945,6 +948,10 @@ export default function PrioritiesGanttPage() {
             handleDeleteMilestone(editingMilestone._id!);
           } : undefined}
           isEditing={!!editingMilestone}
+          projects={projects}
+          onProjectCreated={(newProject) => {
+            setProjects([...projects, newProject]);
+          }}
         />
       )}
 
@@ -1050,6 +1057,14 @@ export default function PrioritiesGanttPage() {
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 ml-9">
                                   {milestone.description}
                                 </p>
+                              )}
+
+                              {milestone.projectId && (
+                                <div className="ml-9 mb-2">
+                                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded">
+                                    📂 {projects.find(p => p._id === milestone.projectId)?.name || 'Proyecto desconocido'}
+                                  </span>
+                                </div>
                               )}
 
                               <div className="flex items-center gap-4 ml-9 text-sm">

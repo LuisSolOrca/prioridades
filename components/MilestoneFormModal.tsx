@@ -9,11 +9,19 @@ interface Deliverable {
   isCompleted: boolean;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
 interface MilestoneFormData {
   title: string;
   description: string;
   dueDate: string;
   deliverables: Deliverable[];
+  projectId?: string;
 }
 
 interface MilestoneFormModalProps {
@@ -24,6 +32,8 @@ interface MilestoneFormModalProps {
   handleSubmit: (e: React.FormEvent) => void;
   handleDelete?: () => void;
   isEditing: boolean;
+  projects?: Project[];
+  onProjectCreated?: (project: Project) => void;
 }
 
 export default function MilestoneFormModal({
@@ -33,11 +43,60 @@ export default function MilestoneFormModal({
   setFormData,
   handleSubmit,
   handleDelete,
-  isEditing
+  isEditing,
+  projects = [],
+  onProjectCreated
 }: MilestoneFormModalProps) {
   const [newDeliverable, setNewDeliverable] = useState('');
+  const [isCreatingNewProject, setIsCreatingNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [projectCreating, setProjectCreating] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) {
+      alert('Por favor ingresa el nombre del proyecto');
+      return;
+    }
+
+    setProjectCreating(true);
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newProjectName.trim(),
+          isActive: true
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Error al crear el proyecto');
+      }
+
+      const newProject = await res.json();
+
+      // Actualizar formData con el nuevo proyecto
+      setFormData({ ...formData, projectId: newProject._id });
+
+      // Resetear estados
+      setIsCreatingNewProject(false);
+      setNewProjectName('');
+
+      // Notificar al componente padre para actualizar la lista de proyectos
+      if (onProjectCreated) {
+        onProjectCreated(newProject);
+      }
+
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      alert(error.message || 'Error al crear el proyecto');
+    } finally {
+      setProjectCreating(false);
+    }
+  };
 
   const addDeliverable = () => {
     if (!newDeliverable.trim()) return;
@@ -110,6 +169,77 @@ export default function MilestoneFormModal({
               maxLength={1000}
               placeholder="Describe el hito y su importancia"
             />
+          </div>
+
+          {/* Selector de Proyecto */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Proyecto (opcional)
+            </label>
+            {!isCreatingNewProject ? (
+              <div className="flex gap-2">
+                <select
+                  value={formData.projectId || ''}
+                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value || undefined })}
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Sin proyecto</option>
+                  {projects.filter(p => p.isActive).map((project) => (
+                    <option key={project._id} value={project._id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingNewProject(true)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium whitespace-nowrap"
+                >
+                  + Nuevo
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCreateProject();
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="Nombre del proyecto"
+                    maxLength={100}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateProject}
+                    disabled={projectCreating}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {projectCreating ? '...' : '✓'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingNewProject(false);
+                      setNewProjectName('');
+                    }}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm font-medium"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Presiona Enter o ✓ para crear el proyecto
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Fecha */}

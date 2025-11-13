@@ -9,6 +9,7 @@ export interface IDeliverable {
 
 export interface IMilestone extends Document {
   userId: mongoose.Types.ObjectId;
+  projectId?: mongoose.Types.ObjectId;
   title: string;
   description?: string;
   dueDate: Date;
@@ -44,6 +45,12 @@ const MilestoneSchema = new Schema<IMilestone>({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    index: true
+  },
+  projectId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Project',
+    required: false,
     index: true
   },
   title: {
