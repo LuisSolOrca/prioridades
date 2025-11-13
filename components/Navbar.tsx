@@ -299,6 +299,19 @@ export default function Navbar() {
                     <History size={22} />
                   </button>
                 )}
+                {hasPermission('canManageProjects') && (
+                  <button
+                    onClick={() => handleNavigation('/projects')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname === '/projects'
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Proyectos"
+                  >
+                    <FolderKanban size={22} />
+                  </button>
+                )}
 
                 {user.area === 'Tecnología' && (
                   <>
@@ -406,17 +419,6 @@ export default function Navbar() {
                       <Briefcase size={22} />
                     </button>
                     <button
-                      onClick={() => handleNavigation('/projects')}
-                      className={`w-full flex justify-center p-3 rounded-lg transition ${
-                        pathname === '/projects'
-                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                      title="Proyectos"
-                    >
-                      <FolderKanban size={22} />
-                    </button>
-                    <button
                       onClick={() => handleNavigation('/admin/bulk-assignment')}
                       className={`w-full flex justify-center p-3 rounded-lg transition ${
                         pathname === '/admin/bulk-assignment'
@@ -497,6 +499,14 @@ export default function Navbar() {
                     onClick={() => handleNavigation('/history')}
                   />
                 )}
+                {hasPermission('canManageProjects') && (
+                  <NavButton
+                    icon={<FolderKanban size={20} />}
+                    label="Proyectos"
+                    active={pathname === '/projects'}
+                    onClick={() => handleNavigation('/projects')}
+                  />
+                )}
 
                 {user.area === 'Tecnología' && (
                   <>
@@ -574,12 +584,6 @@ export default function Navbar() {
                       label="Clientes"
                       active={pathname === '/clients'}
                       onClick={() => handleNavigation('/clients')}
-                    />
-                    <NavButton
-                      icon={<FolderKanban size={20} />}
-                      label="Proyectos"
-                      active={pathname === '/projects'}
-                      onClick={() => handleNavigation('/projects')}
                     />
                     <NavButton
                       icon={<ClipboardList size={20} />}
