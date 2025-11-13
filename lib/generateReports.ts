@@ -1811,17 +1811,17 @@ const generateProjectCharterPDF = async (
   // Título
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('ACTA DE CONSTITUCIÓN DEL PROYECTO', 105, yPos, { align: 'center' });
+  doc.text(cleanTextForPDF('ACTA DE CONSTITUCIÓN DEL PROYECTO'), 105, yPos, { align: 'center' });
   yPos += 15;
 
   // Nombre del proyecto
   doc.setFontSize(16);
-  doc.text(project.name, 105, yPos, { align: 'center' });
+  doc.text(cleanTextForPDF(project.name), 105, yPos, { align: 'center' });
   yPos += 10;
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-MX')}`, 105, yPos, { align: 'center' });
+  doc.text(cleanTextForPDF(`Fecha de generación: ${new Date().toLocaleDateString('es-MX')}`), 105, yPos, { align: 'center' });
   yPos += 15;
 
   // Función helper para agregar secciones
@@ -1833,19 +1833,19 @@ const generateProjectCharterPDF = async (
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(title, 20, yPos);
+    doc.text(cleanTextForPDF(title), 20, yPos);
     yPos += 7;
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
 
     if (content) {
-      const lines = doc.splitTextToSize(content, 170);
+      const lines = doc.splitTextToSize(cleanTextForPDF(content), 170);
       doc.text(lines, 20, yPos);
       yPos += lines.length * 5 + 5;
     } else {
       doc.setTextColor(150, 150, 150);
-      doc.text('No especificado', 20, yPos);
+      doc.text(cleanTextForPDF('No especificado'), 20, yPos);
       doc.setTextColor(0, 0, 0);
       yPos += 10;
     }
@@ -1861,7 +1861,7 @@ const generateProjectCharterPDF = async (
   }
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('2. OBJETIVOS DEL PROYECTO', 20, yPos);
+  doc.text(cleanTextForPDF('2. OBJETIVOS DEL PROYECTO'), 20, yPos);
   yPos += 7;
 
   if (project.objectives && project.objectives.length > 0) {
@@ -1873,17 +1873,17 @@ const generateProjectCharterPDF = async (
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Objetivo ${index + 1}:`, 25, yPos);
+      doc.text(cleanTextForPDF(`Objetivo ${index + 1}:`), 25, yPos);
       yPos += 5;
 
       doc.setFont('helvetica', 'normal');
-      const lines = doc.splitTextToSize(obj.description, 165);
+      const lines = doc.splitTextToSize(cleanTextForPDF(obj.description), 165);
       doc.text(lines, 25, yPos);
       yPos += lines.length * 5;
 
       // SMART indicators
       const smart = [];
-      if (obj.specific) smart.push('Específico');
+      if (obj.specific) smart.push('Especifico');
       if (obj.measurable) smart.push('Medible');
       if (obj.achievable) smart.push('Alcanzable');
       if (obj.relevant) smart.push('Relevante');
@@ -1892,7 +1892,7 @@ const generateProjectCharterPDF = async (
       if (smart.length > 0) {
         doc.setFontSize(9);
         doc.setTextColor(0, 128, 0);
-        doc.text(`✓ ${smart.join(', ')}`, 25, yPos);
+        doc.text(cleanTextForPDF(`[OK] ${smart.join(', ')}`), 25, yPos);
         doc.setTextColor(0, 0, 0);
         yPos += 7;
       }
@@ -1901,7 +1901,7 @@ const generateProjectCharterPDF = async (
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(150, 150, 150);
-    doc.text('No se han definido objetivos', 20, yPos);
+    doc.text(cleanTextForPDF('No se han definido objetivos'), 20, yPos);
     doc.setTextColor(0, 0, 0);
     yPos += 10;
   }
@@ -1913,16 +1913,16 @@ const generateProjectCharterPDF = async (
   }
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('3. ALCANCE DEL PROYECTO', 20, yPos);
+  doc.text(cleanTextForPDF('3. ALCANCE DEL PROYECTO'), 20, yPos);
   yPos += 7;
 
   if (project.scope?.included) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Incluido en el alcance:', 25, yPos);
+    doc.text(cleanTextForPDF('Incluido en el alcance:'), 25, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
-    const lines = doc.splitTextToSize(project.scope.included, 165);
+    const lines = doc.splitTextToSize(cleanTextForPDF(project.scope.included), 165);
     doc.text(lines, 25, yPos);
     yPos += lines.length * 5 + 3;
   }
@@ -1934,10 +1934,10 @@ const generateProjectCharterPDF = async (
     }
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Excluido del alcance:', 25, yPos);
+    doc.text(cleanTextForPDF('Excluido del alcance:'), 25, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
-    const lines = doc.splitTextToSize(project.scope.excluded, 165);
+    const lines = doc.splitTextToSize(cleanTextForPDF(project.scope.excluded), 165);
     doc.text(lines, 25, yPos);
     yPos += lines.length * 5 + 5;
   }
@@ -2074,7 +2074,7 @@ const generateProjectCharterPDF = async (
         doc.addPage();
         yPos = 20;
       }
-      doc.text(`${index + 1}. ${criterion.description}`, 25, yPos);
+      doc.text(cleanTextForPDF(`${index + 1}. ${criterion.description}`), 25, yPos);
       yPos += 6;
     });
     yPos += 5;
@@ -2082,7 +2082,7 @@ const generateProjectCharterPDF = async (
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(150, 150, 150);
-    doc.text('No se han definido criterios de éxito', 20, yPos);
+    doc.text(cleanTextForPDF('No se han definido criterios de exito'), 20, yPos);
     doc.setTextColor(0, 0, 0);
     yPos += 10;
   }
@@ -2094,16 +2094,16 @@ const generateProjectCharterPDF = async (
   }
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('11. GERENTE DEL PROYECTO', 20, yPos);
+  doc.text(cleanTextForPDF('11. GERENTE DEL PROYECTO'), 20, yPos);
   yPos += 7;
 
   if (project.projectManager?.name) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Nombre: ${project.projectManager.name}`, 25, yPos);
+    doc.text(cleanTextForPDF(`Nombre: ${project.projectManager.name}`), 25, yPos);
     yPos += 5;
     if (project.projectManager.authority) {
-      const lines = doc.splitTextToSize(`Autoridad: ${project.projectManager.authority}`, 165);
+      const lines = doc.splitTextToSize(cleanTextForPDF(`Autoridad: ${project.projectManager.authority}`), 165);
       doc.text(lines, 25, yPos);
       yPos += lines.length * 5 + 5;
     }
@@ -2111,7 +2111,7 @@ const generateProjectCharterPDF = async (
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(150, 150, 150);
-    doc.text('No asignado', 20, yPos);
+    doc.text(cleanTextForPDF('No asignado'), 20, yPos);
     doc.setTextColor(0, 0, 0);
     yPos += 10;
   }
@@ -2123,7 +2123,7 @@ const generateProjectCharterPDF = async (
   }
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('12. ENTREGABLES DEL PROYECTO', 20, yPos);
+  doc.text(cleanTextForPDF('12. ENTREGABLES DEL PROYECTO'), 20, yPos);
   yPos += 7;
 
   // Recopilar todos los entregables de los hitos
@@ -2154,20 +2154,20 @@ const generateProjectCharterPDF = async (
 
       // Título del entregable
       doc.setFont('helvetica', 'bold');
-      doc.text(`${index + 1}. ${deliverable.title}`, 25, yPos);
+      doc.text(cleanTextForPDF(`${index + 1}. ${deliverable.title}`), 25, yPos);
       yPos += 5;
 
       // Hito asociado
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(100, 100, 100);
-      doc.text(`Hito: ${deliverable.milestone}`, 30, yPos);
+      doc.text(cleanTextForPDF(`Hito: ${deliverable.milestone}`), 30, yPos);
       yPos += 5;
 
       // Estado
       const statusColor: [number, number, number] = deliverable.isCompleted ? [34, 197, 94] : [249, 115, 22];
       doc.setTextColor(...statusColor);
-      doc.text(`Estado: ${deliverable.isCompleted ? 'Completado' : 'Pendiente'}`, 30, yPos);
+      doc.text(cleanTextForPDF(`Estado: ${deliverable.isCompleted ? 'Completado' : 'Pendiente'}`), 30, yPos);
       doc.setTextColor(0, 0, 0);
       yPos += 5;
 
@@ -2175,14 +2175,14 @@ const generateProjectCharterPDF = async (
 
       // Descripción
       if (deliverable.description) {
-        const descLines = doc.splitTextToSize(`Descripción: ${deliverable.description}`, 160);
+        const descLines = doc.splitTextToSize(cleanTextForPDF(`Descripcion: ${deliverable.description}`), 160);
         doc.text(descLines, 30, yPos);
         yPos += descLines.length * 5;
       }
 
       // Criterios de éxito
       if (deliverable.successCriteria) {
-        const criteriaLines = doc.splitTextToSize(`Criterio de éxito: ${deliverable.successCriteria}`, 160);
+        const criteriaLines = doc.splitTextToSize(cleanTextForPDF(`Criterio de exito: ${deliverable.successCriteria}`), 160);
         doc.text(criteriaLines, 30, yPos);
         yPos += criteriaLines.length * 5;
       }
@@ -2193,7 +2193,7 @@ const generateProjectCharterPDF = async (
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(150, 150, 150);
-    doc.text('No se han definido entregables', 20, yPos);
+    doc.text(cleanTextForPDF('No se han definido entregables'), 20, yPos);
     doc.setTextColor(0, 0, 0);
     yPos += 10;
   }
@@ -2204,7 +2204,7 @@ const generateProjectCharterPDF = async (
 
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('13. CRONOGRAMA DEL PROYECTO', 20, yPos);
+  doc.text(cleanTextForPDF('13. CRONOGRAMA DEL PROYECTO'), 20, yPos);
   yPos += 10;
 
   // Combinar hitos y prioridades
@@ -2280,7 +2280,7 @@ const generateProjectCharterPDF = async (
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
-        const label = item.title.substring(0, 20) + (item.title.length > 20 ? '...' : '');
+        const label = cleanTextForPDF(item.title.substring(0, 20) + (item.title.length > 20 ? '...' : ''));
         doc.text(label, 20, itemY);
 
         if (item.type === 'milestone') {
@@ -2313,7 +2313,7 @@ const generateProjectCharterPDF = async (
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(150, 150, 150);
-    doc.text('No hay elementos en el cronograma', 20, yPos);
+    doc.text(cleanTextForPDF('No hay elementos en el cronograma'), 20, yPos);
     doc.setTextColor(0, 0, 0);
   }
 
@@ -2324,7 +2324,7 @@ const generateProjectCharterPDF = async (
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.text(
-      `Página ${i} de ${pageCount}`,
+      cleanTextForPDF(`Pagina ${i} de ${pageCount}`),
       doc.internal.pageSize.getWidth() / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }
