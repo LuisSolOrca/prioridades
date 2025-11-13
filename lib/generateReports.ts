@@ -1793,6 +1793,21 @@ const generateProjectCharterPDF = async (
   const doc = new jsPDF();
   let yPos = 20;
 
+  // Agregar logotipo ORCA
+  try {
+    const logoPath = '/orca-logo.png';
+    const logoImg = await fetch(logoPath).then(res => res.blob()).then(blob => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    });
+    doc.addImage(logoImg, 'PNG', 15, 10, 30, 30);
+  } catch (error) {
+    console.error('Error loading logo:', error);
+  }
+
   // Título
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
@@ -2220,6 +2235,32 @@ const generateProjectCharterDOC = async (
   fileName: string
 ) => {
   const children: any[] = [];
+
+  // Agregar logotipo ORCA
+  try {
+    const logoPath = '/orca-logo.png';
+    const logoBlob = await fetch(logoPath).then(res => res.arrayBuffer());
+    const logoData = new Uint8Array(logoBlob);
+
+    children.push(
+      new Paragraph({
+        children: [
+          new ImageRun({
+            data: logoData,
+            transformation: {
+              width: 100,
+              height: 100
+            },
+            type: 'png'
+          } as any)
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 }
+      })
+    );
+  } catch (error) {
+    console.error('Error loading logo for Word doc:', error);
+  }
 
   // Título
   children.push(
