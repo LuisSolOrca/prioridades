@@ -17,20 +17,30 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para gestionar proyectos
+    // Verificar permiso para editar proyectos
     await connectDB();
     const user = await User.findOne({ email: (session.user as any).email });
-    const canManageProjects = (session.user as any).role === 'ADMIN' || user?.permissions?.canManageProjects;
+    const isAdmin = (session.user as any).role === 'ADMIN';
 
-    if (!canManageProjects) {
-      return NextResponse.json({ error: 'No tienes permiso para gestionar proyectos' }, { status: 403 });
-    }
-
-    const body = await request.json();
-
+    // Validar ID
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
+
+    // Obtener el proyecto para verificar si es el PM asignado
+    const existingProject = await Project.findById(params.id);
+    if (!existingProject) {
+      return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
+    }
+
+    const isProjectManager = existingProject.projectManager?.userId?.toString() === user?._id.toString();
+
+    // Solo ADMIN o el PM asignado pueden editar
+    if (!isAdmin && !isProjectManager) {
+      return NextResponse.json({ error: 'No tienes permiso para editar este proyecto' }, { status: 403 });
+    }
+
+    const body = await request.json();
 
     const project = await Project.findByIdAndUpdate(
       params.id,
@@ -81,17 +91,27 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para gestionar proyectos
+    // Verificar permiso para eliminar proyectos (solo ADMIN o PM del proyecto)
     await connectDB();
     const user = await User.findOne({ email: (session.user as any).email });
-    const canManageProjects = (session.user as any).role === 'ADMIN' || user?.permissions?.canManageProjects;
+    const isAdmin = (session.user as any).role === 'ADMIN';
 
-    if (!canManageProjects) {
-      return NextResponse.json({ error: 'No tienes permiso para gestionar proyectos' }, { status: 403 });
-    }
-
+    // Validar ID
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
+    // Obtener el proyecto para verificar si es el PM asignado
+    const existingProject = await Project.findById(params.id);
+    if (!existingProject) {
+      return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
+    }
+
+    const isProjectManager = existingProject.projectManager?.userId?.toString() === user?._id.toString();
+
+    // Solo ADMIN o el PM asignado pueden eliminar
+    if (!isAdmin && !isProjectManager) {
+      return NextResponse.json({ error: 'No tienes permiso para eliminar este proyecto' }, { status: 403 });
     }
 
     // Verificar si hay prioridades usando este proyecto

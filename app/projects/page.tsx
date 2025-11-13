@@ -100,6 +100,22 @@ export default function ProjectsPage() {
     }
   };
 
+  const canEditProject = (project: Project | null): boolean => {
+    if (!session || !session.user) return false;
+    const user = session.user as any;
+
+    // ADMIN puede editar todo
+    if (user.role === 'ADMIN') return true;
+
+    // Si no hay proyecto (nuevo), solo ADMIN puede crear
+    if (!project) return false;
+
+    // El Project Manager asignado puede editar su proyecto
+    if (project.projectManager?.userId === user.id) return true;
+
+    return false;
+  };
+
   const handleNew = () => {
     setFormData({
       name: '',
@@ -274,13 +290,15 @@ export default function ProjectsPage() {
               Administra los proyectos con metodología PM BOOK
             </p>
           </div>
-          <button
-            onClick={handleNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-          >
-            <span className="text-xl">+</span>
-            Nuevo Proyecto
-          </button>
+          {canEditProject(null) && (
+            <button
+              onClick={handleNew}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <span className="text-xl">+</span>
+              Nuevo Proyecto
+            </button>
+          )}
         </div>
 
         {/* Projects List */}
@@ -426,6 +444,7 @@ export default function ProjectsPage() {
           setShowForm(false);
           handleViewSchedule(editingProject._id);
         } : undefined}
+        readOnly={!canEditProject(editingProject)}
       />
 
       {/* Schedule Modal */}

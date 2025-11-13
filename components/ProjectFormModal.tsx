@@ -91,6 +91,7 @@ interface ProjectFormModalProps {
   users: User[];
   projectId?: string;
   onViewSchedule?: () => void;
+  readOnly?: boolean;
 }
 
 export default function ProjectFormModal({
@@ -103,7 +104,8 @@ export default function ProjectFormModal({
   isEditing,
   users,
   projectId,
-  onViewSchedule
+  onViewSchedule,
+  readOnly = false
 }: ProjectFormModalProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'planning' | 'management'>('basic');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -299,6 +301,18 @@ export default function ProjectFormModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Read-Only Banner */}
+          {readOnly && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg pointer-events-auto">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                👁️ <strong>Modo de solo lectura:</strong> No tienes permisos para editar este proyecto. Solo el administrador y el gerente del proyecto asignado pueden realizar cambios.
+              </p>
+            </div>
+          )}
+
+          {/* Form Fields Container */}
+          <div className={readOnly ? 'pointer-events-none opacity-70' : ''}>
+
           {/* Basic Tab */}
           {activeTab === 'basic' && (
             <div className="space-y-6">
@@ -310,9 +324,10 @@ export default function ProjectFormModal({
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
                   required
                   maxLength={100}
+                  disabled={readOnly}
                 />
               </div>
 
@@ -928,10 +943,11 @@ export default function ProjectFormModal({
               </div>
             </div>
           )}
+          </div>
 
           {/* Buttons */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-            {isEditing && handleDelete ? (
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 pointer-events-auto">
+            {isEditing && handleDelete && !readOnly ? (
               <button
                 type="button"
                 onClick={handleDelete}
@@ -948,14 +964,16 @@ export default function ProjectFormModal({
                 onClick={onClose}
                 className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
               >
-                Cancelar
+                {readOnly ? 'Cerrar' : 'Cancelar'}
               </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                {isEditing ? 'Guardar Cambios' : 'Crear Proyecto'}
-              </button>
+              {!readOnly && (
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  {isEditing ? 'Guardar Cambios' : 'Crear Proyecto'}
+                </button>
+              )}
             </div>
           </div>
         </form>
