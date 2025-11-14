@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
+import SessionRefreshButton from './SessionRefreshButton';
 import {
   LayoutDashboard,
   ListTodo,
@@ -151,6 +152,9 @@ export default function Navbar() {
                     <User size={16} />
                     <span>Mi Perfil</span>
                   </button>
+                  <div className="px-4 py-2">
+                    <SessionRefreshButton />
+                  </div>
                   <button
                     onClick={handleSignOut}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-2"
