@@ -9,15 +9,53 @@ interface FormulaEditorProps {
 }
 
 const FORMULA_FUNCTIONS = [
-  { name: 'SUM', description: 'Suma de valores', example: 'SUM(A, B, C)' },
-  { name: 'AVERAGE', description: 'Promedio', example: 'AVERAGE(A, B, C)' },
-  { name: 'MAX', description: 'Valor máximo', example: 'MAX(A, B, C)' },
-  { name: 'MIN', description: 'Valor mínimo', example: 'MIN(A, B, C)' },
-  { name: 'IF', description: 'Condicional', example: 'IF(A>100, "Alto", "Bajo")' },
-  { name: 'ABS', description: 'Valor absoluto', example: 'ABS(A)' },
-  { name: 'ROUND', description: 'Redondear', example: 'ROUND(A, 2)' },
-  { name: 'SQRT', description: 'Raíz cuadrada', example: 'SQRT(A)' },
-  { name: 'POW', description: 'Potencia', example: 'POW(A, 2)' },
+  // Matemáticas básicas
+  { name: 'SUM', description: 'Suma de valores', example: 'SUM(A, B, C)', category: 'Matemáticas' },
+  { name: 'AVERAGE', description: 'Promedio', example: 'AVERAGE(A, B, C)', category: 'Estadísticas' },
+  { name: 'MEDIAN', description: 'Mediana', example: 'MEDIAN(A, B, C)', category: 'Estadísticas' },
+  { name: 'MAX', description: 'Valor máximo', example: 'MAX(A, B, C)', category: 'Matemáticas' },
+  { name: 'MIN', description: 'Valor mínimo', example: 'MIN(A, B, C)', category: 'Matemáticas' },
+
+  // Lógica
+  { name: 'IF', description: 'Condicional', example: 'IF(A>100, "Alto", "Bajo")', category: 'Lógica' },
+  { name: 'AND', description: 'Y lógico', example: 'AND(A>10, B<20)', category: 'Lógica' },
+  { name: 'OR', description: 'O lógico', example: 'OR(A>100, B>100)', category: 'Lógica' },
+  { name: 'NOT', description: 'Negación', example: 'NOT(A>100)', category: 'Lógica' },
+
+  // Redondeo y valores absolutos
+  { name: 'ABS', description: 'Valor absoluto', example: 'ABS(A)', category: 'Matemáticas' },
+  { name: 'ROUND', description: 'Redondear', example: 'ROUND(A, 2)', category: 'Matemáticas' },
+  { name: 'CEILING', description: 'Redondear hacia arriba', example: 'CEILING(A)', category: 'Matemáticas' },
+  { name: 'FLOOR', description: 'Redondear hacia abajo', example: 'FLOOR(A)', category: 'Matemáticas' },
+
+  // Potencias y raíces
+  { name: 'SQRT', description: 'Raíz cuadrada', example: 'SQRT(A)', category: 'Matemáticas' },
+  { name: 'POWER', description: 'Potencia', example: 'POWER(A, 2)', category: 'Matemáticas' },
+  { name: 'EXP', description: 'Exponencial e^x', example: 'EXP(A)', category: 'Matemáticas' },
+  { name: 'LOG', description: 'Logaritmo', example: 'LOG(A, 10)', category: 'Matemáticas' },
+  { name: 'LN', description: 'Logaritmo natural', example: 'LN(A)', category: 'Matemáticas' },
+
+  // Estadísticas avanzadas
+  { name: 'STDEV', description: 'Desviación estándar', example: 'STDEV(A, B, C)', category: 'Estadísticas' },
+  { name: 'VAR', description: 'Varianza', example: 'VAR(A, B, C)', category: 'Estadísticas' },
+  { name: 'COUNT', description: 'Contar valores', example: 'COUNT(A, B, C)', category: 'Estadísticas' },
+  { name: 'COUNTA', description: 'Contar no vacíos', example: 'COUNTA(A, B, C)', category: 'Estadísticas' },
+
+  // Porcentajes
+  { name: 'PERCENTILE', description: 'Percentil', example: 'PERCENTILE(A, 0.95)', category: 'Estadísticas' },
+  { name: 'QUARTILE', description: 'Cuartil', example: 'QUARTILE(A, 1)', category: 'Estadísticas' },
+
+  // Texto
+  { name: 'CONCATENATE', description: 'Concatenar texto', example: 'CONCATENATE(A, " ", B)', category: 'Texto' },
+  { name: 'UPPER', description: 'Mayúsculas', example: 'UPPER(A)', category: 'Texto' },
+  { name: 'LOWER', description: 'Minúsculas', example: 'LOWER(A)', category: 'Texto' },
+
+  // Fechas
+  { name: 'TODAY', description: 'Fecha actual', example: 'TODAY()', category: 'Fechas' },
+  { name: 'NOW', description: 'Fecha y hora actual', example: 'NOW()', category: 'Fechas' },
+  { name: 'YEAR', description: 'Año de una fecha', example: 'YEAR(A)', category: 'Fechas' },
+  { name: 'MONTH', description: 'Mes de una fecha', example: 'MONTH(A)', category: 'Fechas' },
+  { name: 'DAY', description: 'Día de una fecha', example: 'DAY(A)', category: 'Fechas' },
 ];
 
 const OPERATORS = [
@@ -170,31 +208,46 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
           </div>
 
           <div>
-            <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Funciones:</h5>
-            <div className="space-y-2">
-              {FORMULA_FUNCTIONS.map((func) => (
-                <div
-                  key={func.name}
-                  className="flex items-start justify-between bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600"
-                >
-                  <div className="flex-1">
-                    <div className="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {func.name}
-                    </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{func.description}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">
-                      {func.example}
-                    </div>
+            <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Funciones disponibles (33 funciones):
+            </h5>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {/* Agrupar por categoría */}
+              {['Matemáticas', 'Estadísticas', 'Lógica', 'Texto', 'Fechas'].map((category) => {
+                const funcsInCategory = FORMULA_FUNCTIONS.filter(f => f.category === category);
+                if (funcsInCategory.length === 0) return null;
+
+                return (
+                  <div key={category} className="space-y-2">
+                    <h6 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      {category}
+                    </h6>
+                    {funcsInCategory.map((func) => (
+                      <div
+                        key={func.name}
+                        className="flex items-start justify-between bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600"
+                      >
+                        <div className="flex-1">
+                          <div className="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {func.name}
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">{func.description}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">
+                            {func.example}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => insertText(func.name + '()')}
+                          className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs hover:bg-blue-200 dark:hover:bg-blue-800"
+                        >
+                          Insertar
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => insertText(func.name + '()')}
-                    className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs hover:bg-blue-200 dark:hover:bg-blue-800"
-                  >
-                    Insertar
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -203,6 +256,21 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
             <p className="text-blue-800 dark:text-blue-200 mt-1">
               Las variables deben ser definidas al momento de registrar valores para el KPI.
               Puedes usar operadores matemáticos y funciones para crear fórmulas complejas.
+            </p>
+            <p className="text-blue-800 dark:text-blue-200 mt-2">
+              <strong>Más funciones:</strong> El motor de fórmulas (hot-formula-parser) soporta más de 600 funciones,
+              incluyendo funciones financieras (NPV, IRR, PMT), trigonométricas avanzadas (SIN, COS, TAN),
+              conversión de bases (BIN2DEC, DEC2HEX), expresiones regulares (REGEXMATCH), y muchas más.
+              Consulta la{' '}
+              <a
+                href="https://www.npmjs.com/package/hot-formula-parser"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-blue-900 dark:hover:text-blue-100"
+              >
+                documentación oficial
+              </a>{' '}
+              para ver la lista completa.
             </p>
           </div>
         </div>
