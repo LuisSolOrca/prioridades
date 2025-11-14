@@ -10,6 +10,7 @@ import {
   extractVariablesWithTypes,
   calculateFormulaWithTypes,
   convertVariableValue,
+  usesSystemFunctions,
   type VariableInfo
 } from '@/lib/kpi-utils/formula-parser';
 import { calculateCurrentPeriod, getPeriodName } from '@/lib/kpi-utils/period-calculator';
@@ -73,6 +74,8 @@ export default function KPITrackingPage() {
   const [variableValues, setVariableValues] = useState<{ [key: string]: string }>({});
   const [detectedVariables, setDetectedVariables] = useState<VariableInfo[]>([]);
   const [calculatedValue, setCalculatedValue] = useState<number | null>(null);
+  const [isAutoCalculated, setIsAutoCalculated] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -131,17 +134,52 @@ export default function KPITrackingPage() {
     setDetectedVariables(vars);
   };
 
-  const handleNewValue = () => {
+  const handleNewValue = async () => {
     setValue('');
     setNotes('');
     setVariableValues({});
     setCalculatedValue(null);
+    setIsAutoCalculated(false);
 
     // Calcular período automáticamente basado en la periodicidad del KPI
     if (selectedKpi) {
       const period = calculateCurrentPeriod(selectedKpi.periodicity);
       setPeriodStart(period.start);
       setPeriodEnd(period.end);
+
+      // Detectar si la fórmula no tiene variables o usa funciones del sistema
+      const vars = extractVariablesWithTypes(selectedKpi.formula);
+      const hasSystemFunctions = usesSystemFunctions(selectedKpi.formula);
+
+      if (vars.length === 0 || hasSystemFunctions) {
+        // Auto-calcular la fórmula
+        setIsCalculating(true);
+        try {
+          const res = await fetch('/api/kpis/evaluate-formula', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              formula: selectedKpi.formula,
+              variables: {}
+            })
+          });
+
+          const data = await res.json();
+
+          if (data.success && data.result !== undefined) {
+            setCalculatedValue(data.result);
+            setValue(data.result.toString());
+            setIsAutoCalculated(true);
+          } else {
+            alert(`Error al calcular la fórmula: ${data.error || 'Desconocido'}`);
+          }
+        } catch (error) {
+          console.error('Error calculating formula:', error);
+          alert('Error al calcular la fórmula automáticamente');
+        } finally {
+          setIsCalculating(false);
+        }
+      }
     }
 
     setShowValueForm(true);
@@ -463,7 +501,7 @@ export default function KPITrackingPage() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          {detectedVariables.length > 0 ? 'Valor calculado *' : 'Valor *'}
+                          {detectedVariables.length > 0 || isAutoCalculated ? 'Valor calculado *' : 'Valor *'}
                         </label>
                         <div className="flex">
                           <input
@@ -472,9 +510,10 @@ export default function KPITrackingPage() {
                             value={value}
                             onChange={(e) => setValue(e.target.value)}
                             className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            placeholder="Ej: 92.5"
+                            placeholder={isCalculating ? "Calculando..." : "Ej: 92.5"}
                             required
-                            readOnly={detectedVariables.length > 0}
+                            readOnly={detectedVariables.length > 0 || isAutoCalculated}
+                            disabled={isCalculating}
                           />
                           <div className="px-3 py-2 bg-gray-100 dark:bg-gray-600 border border-l-0 border-gray-300 dark:border-gray-600 rounded-r-lg text-gray-900 dark:text-gray-100">
                             {selectedKpi.unit}
@@ -483,6 +522,11 @@ export default function KPITrackingPage() {
                         {detectedVariables.length > 0 && (
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Este valor se calcula automáticamente usando las variables de la fórmula
+                          </p>
+                        )}
+                        {isAutoCalculated && (
+                          <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
+                            ✓ Este valor se calculó automáticamente usando funciones del sistema
                           </p>
                         )}
                       </div>
