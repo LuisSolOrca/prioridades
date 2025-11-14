@@ -313,6 +313,19 @@ export default function Navbar() {
                     <FolderKanban size={22} />
                   </button>
                 )}
+                {hasPermission('canManageKPIs') && (
+                  <button
+                    onClick={() => handleNavigation('/admin/kpis')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname?.startsWith('/admin/kpis')
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Gestión de KPIs"
+                  >
+                    <TrendingUp size={22} />
+                  </button>
+                )}
                 <button
                   onClick={() => handleNavigation('/kpi-tracking')}
                   className={`w-full flex justify-center p-3 rounded-lg transition ${
@@ -443,21 +456,6 @@ export default function Navbar() {
                     </button>
                   </>
                 )}
-
-                {/* Gestión de KPIs - mostrar si tiene permiso */}
-                {hasPermission('canManageKPIs') && (
-                  <button
-                    onClick={() => handleNavigation('/admin/kpis')}
-                    className={`w-full flex justify-center p-3 rounded-lg transition ${
-                      pathname?.startsWith('/admin/kpis')
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                    title="Gestión de KPIs"
-                  >
-                    <TrendingUp size={22} />
-                  </button>
-                )}
               </>
             ) : (
               // Expanded view - icons and labels
@@ -532,6 +530,14 @@ export default function Navbar() {
                     label="Proyectos"
                     active={pathname === '/projects'}
                     onClick={() => handleNavigation('/projects')}
+                  />
+                )}
+                {hasPermission('canManageKPIs') && (
+                  <NavButton
+                    icon={<TrendingUp size={20} />}
+                    label="Gestión de KPIs"
+                    active={pathname?.startsWith('/admin/kpis') || false}
+                    onClick={() => handleNavigation('/admin/kpis')}
                   />
                 )}
                 <NavButton
@@ -625,16 +631,6 @@ export default function Navbar() {
                       onClick={() => handleNavigation('/admin/bulk-assignment')}
                     />
                   </>
-                )}
-
-                {/* Gestión de KPIs - mostrar si tiene permiso */}
-                {hasPermission('canManageKPIs') && (
-                  <NavButton
-                    icon={<TrendingUp size={20} />}
-                    label="Gestión de KPIs"
-                    active={pathname?.startsWith('/admin/kpis') || false}
-                    onClick={() => handleNavigation('/admin/kpis')}
-                  />
                 )}
               </>
             )}
