@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { dataType, filters = {}, fields = [] } = body;
 
+    console.log('[system-data] Query received:', { dataType, filters, fields });
+
     let query: any = {};
     let model: any;
     let populateFields: string[] = [];
@@ -117,6 +119,8 @@ export async function POST(request: NextRequest) {
     }
 
     const results = await queryBuilder.lean();
+
+    console.log('[system-data] Query executed:', { dataType, query, count: results.length });
 
     return NextResponse.json({
       dataType,

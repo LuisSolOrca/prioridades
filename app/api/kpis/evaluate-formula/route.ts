@@ -119,7 +119,9 @@ export async function POST(request: NextRequest) {
               result = await COUNT_USERS(evalArgs);
               break;
             case 'COMPLETION_RATE':
+              console.log('[COMPLETION_RATE] Evaluando con filtros:', evalArgs);
               result = await COMPLETION_RATE(evalArgs);
+              console.log('[COMPLETION_RATE] Resultado:', result);
               break;
             case 'PERCENTAGE':
               // PERCENTAGE(parte, total)

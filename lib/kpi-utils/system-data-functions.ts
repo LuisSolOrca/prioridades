@@ -211,7 +211,12 @@ export function PERCENTAGE(part: number, total: number): number {
  * Función helper para tasa de cumplimiento
  */
 export async function COMPLETION_RATE(filters: SystemDataFilter = {}): Promise<number> {
+  console.log('[COMPLETION_RATE] Filtros recibidos:', filters);
   const total = await COUNT_PRIORITIES(filters);
+  console.log('[COMPLETION_RATE] Total prioridades:', total);
   const completed = await COUNT_PRIORITIES({ ...filters, status: 'COMPLETADO' });
-  return PERCENTAGE(completed, total);
+  console.log('[COMPLETION_RATE] Prioridades completadas:', completed);
+  const rate = PERCENTAGE(completed, total);
+  console.log('[COMPLETION_RATE] Tasa calculada:', rate);
+  return rate;
 }
