@@ -107,9 +107,9 @@ export async function POST(request: NextRequest) {
     const periodStart = new Date(body.periodStart);
     const periodEnd = new Date(body.periodEnd);
 
-    if (periodStart >= periodEnd) {
+    if (periodStart > periodEnd) {
       return NextResponse.json(
-        { error: 'La fecha de inicio debe ser anterior a la fecha de fin' },
+        { error: 'La fecha de inicio no puede ser posterior a la fecha de fin' },
         { status: 400 }
       );
     }
