@@ -263,11 +263,148 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
             </div>
           </div>
 
+          {/* Ejemplos de tipos de datos */}
+          <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+            <h5 className="text-sm font-semibold text-green-900 dark:text-green-300 mb-3">
+              📝 Tipos de datos y ejemplos de uso
+            </h5>
+
+            <div className="space-y-3 text-sm">
+              {/* Números */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-green-700">
+                <div className="flex items-center mb-2">
+                  <span className="font-semibold text-green-900 dark:text-green-300">🔢 Variables numéricas</span>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  Usa nombres descriptivos. Al registrar valores, ingresarás números.
+                </p>
+                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                  <div className="text-gray-600 dark:text-gray-400">Ejemplo:</div>
+                  <div className="text-gray-900 dark:text-gray-100 mt-1">
+                    (Ventas - Costos) / Ventas * 100
+                  </div>
+                  <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                    → Variables: Ventas, Costos (números como 1000, 750)
+                  </div>
+                </div>
+              </div>
+
+              {/* Fechas */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-green-700">
+                <div className="flex items-center mb-2">
+                  <span className="font-semibold text-green-900 dark:text-green-300">📅 Variables de fecha</span>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  Usa palabras como: <code className="px-1 bg-gray-200 dark:bg-gray-700 rounded">fecha, date, dia, inicio, fin, desde, hasta</code>.
+                  Se mostrará un selector de fecha.
+                </p>
+                <div className="space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 1: Días entre fechas</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      DAYS(FechaFin, FechaInicio)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Variables: FechaFin, FechaInicio (calendario)
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 2: Edad en días</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      DAYS(TODAY(), FechaNacimiento)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Variable: FechaNacimiento (calendario)
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 3: Días laborables</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      NETWORKDAYS(FechaInicio, FechaFin)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Calcula días hábiles (excluye fines de semana)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Arrays */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-green-700">
+                <div className="flex items-center mb-2">
+                  <span className="font-semibold text-green-900 dark:text-green-300">📊 Variables de lista/array</span>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  Usa la variable dentro de funciones agregadas. Al registrar valores, ingresarás números separados por comas.
+                </p>
+                <div className="space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 1: Promedio de valores</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      AVERAGE(Calificaciones)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Variable: Calificaciones (ingresas: 85, 90, 88, 92)
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 2: Suma de ventas</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      SUM(VentasMensuales)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Variable: VentasMensuales (ingresas: 1000, 1200, 980, 1100)
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 3: Desviación estándar</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      STDEV(TiemposRespuesta)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Mide variabilidad en tiempos
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mixtos */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-green-700">
+                <div className="flex items-center mb-2">
+                  <span className="font-semibold text-green-900 dark:text-green-300">🔀 Fórmulas combinadas</span>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  Combina diferentes tipos de datos en una misma fórmula.
+                </p>
+                <div className="space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 1: Promedio diario</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      SUM(Ventas) / DAYS(FechaFin, FechaInicio)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Array (Ventas) y fechas (FechaFin, FechaInicio)
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Ejemplo 2: Eficiencia por día</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">
+                      (CompletadoTotal / ObjetivoTotal) * 100 / DAYS(FechaFin, FechaInicio)
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                      → Números y fechas combinados
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
             <strong className="text-blue-900 dark:text-blue-300">Nota:</strong>
             <p className="text-blue-800 dark:text-blue-200 mt-1">
-              Las variables deben ser definidas al momento de registrar valores para el KPI.
-              Puedes usar operadores matemáticos y funciones para crear fórmulas complejas.
+              Las variables se detectan automáticamente según su nombre y contexto.
+              El sistema mostrará el tipo de input apropiado (número, fecha, o lista) al registrar valores.
             </p>
             <p className="text-blue-800 dark:text-blue-200 mt-2">
               <strong>Más funciones:</strong> El motor de fórmulas (hot-formula-parser) soporta más de 600 funciones,
