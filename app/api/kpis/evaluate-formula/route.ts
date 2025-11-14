@@ -65,13 +65,25 @@ export async function POST(request: NextRequest) {
       // Pre-procesar: Evaluar funciones del sistema y reemplazarlas con sus resultados
       let processedFormula = formula;
 
-      // Buscar todas las llamadas a funciones del sistema usando regex
-      const systemFunctionPattern = /(COUNT_PRIORITIES|SUM_PRIORITIES|AVG_PRIORITIES|COUNT_MILESTONES|COUNT_PROJECTS|COUNT_USERS|COMPLETION_RATE|PERCENTAGE)\s*\(([^)]*)\)/g;
+      // Procesar funciones anidadas múltiples veces hasta que no haya más funciones del sistema
+      let maxIterations = 10; // Prevenir loops infinitos
+      let iteration = 0;
 
-      const matches = [...formula.matchAll(systemFunctionPattern)];
+      while (iteration < maxIterations) {
+        // Buscar funciones del sistema que NO contengan otras funciones del sistema en sus argumentos
+        // Esto nos permite procesar de adentro hacia afuera
+        const systemFunctions = 'COUNT_PRIORITIES|SUM_PRIORITIES|AVG_PRIORITIES|COUNT_MILESTONES|COUNT_PROJECTS|COUNT_USERS|COMPLETION_RATE|PERCENTAGE';
 
-      // Evaluar cada función del sistema y reemplazarla con su resultado
-      for (const match of matches) {
+        // Primero, buscamos funciones que solo tienen argumentos simples (sin otras funciones del sistema)
+        const simpleFunctionPattern = new RegExp(`(${systemFunctions})\\s*\\(([^()]*)\\)`, 'g');
+
+        const matches = [...processedFormula.matchAll(simpleFunctionPattern)];
+
+        // Si no hay más matches, terminamos
+        if (matches.length === 0) break;
+
+        // Evaluar cada función del sistema y reemplazarla con su resultado
+        for (const match of matches) {
         const fullMatch = match[0];
         const functionName = match[1];
         const argsString = match[2];
@@ -146,6 +158,9 @@ export async function POST(request: NextRequest) {
           console.error(`Error evaluando ${functionName}:`, err);
           throw new Error(`Error en ${functionName}: ${err.message}`);
         }
+      }
+
+        iteration++;
       }
 
       // Ahora que las funciones del sistema están evaluadas,
