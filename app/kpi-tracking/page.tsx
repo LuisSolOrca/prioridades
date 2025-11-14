@@ -14,6 +14,7 @@ import {
   type VariableInfo
 } from '@/lib/kpi-utils/formula-parser';
 import { calculateCurrentPeriod, getPeriodName } from '@/lib/kpi-utils/period-calculator';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 interface KPI {
   _id: string;
@@ -76,6 +77,7 @@ export default function KPITrackingPage() {
   const [calculatedValue, setCalculatedValue] = useState<number | null>(null);
   const [isAutoCalculated, setIsAutoCalculated] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [showTrendsModal, setShowTrendsModal] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -411,12 +413,24 @@ export default function KPITrackingPage() {
                     <code className="text-sm font-mono text-gray-900 dark:text-gray-100">{selectedKpi.formula}</code>
                   </div>
 
-                  <button
-                    onClick={handleNewValue}
-                    className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                  >
-                    + Registrar nuevo valor
-                  </button>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setShowTrendsModal(true)}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 flex items-center justify-center gap-2"
+                      disabled={values.length === 0}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                      </svg>
+                      Ver tendencias
+                    </button>
+                    <button
+                      onClick={handleNewValue}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    >
+                      + Registrar valor
+                    </button>
+                  </div>
                 </div>
 
                 {/* Formulario de nuevo valor */}
@@ -671,6 +685,181 @@ export default function KPITrackingPage() {
             )}
           </div>
         </div>
+
+        {/* Modal de tendencias */}
+        {showTrendsModal && selectedKpi && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    Tendencia: {selectedKpi.name}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Evolución de los valores en el tiempo
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowTrendsModal(false)}
+                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6">
+                {values.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    No hay datos suficientes para mostrar la tendencia
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Gráfico */}
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <ResponsiveContainer width="100%" height={400}>
+                        <LineChart
+                          data={values
+                            .slice()
+                            .reverse()
+                            .map((val) => ({
+                              fecha: new Date(val.periodEnd).toLocaleDateString('es-ES', {
+                                month: 'short',
+                                day: 'numeric',
+                              }),
+                              valor: val.value,
+                              meta: selectedKpi.target,
+                              minimo: selectedKpi.tolerance.minimum,
+                            }))}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-600" />
+                          <XAxis
+                            dataKey="fecha"
+                            className="text-sm"
+                            tick={{ fill: 'currentColor' }}
+                          />
+                          <YAxis
+                            className="text-sm"
+                            tick={{ fill: 'currentColor' }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '0.5rem',
+                            }}
+                            labelStyle={{ color: '#111827', fontWeight: 'bold' }}
+                          />
+                          <Legend />
+                          <ReferenceLine
+                            y={selectedKpi.target}
+                            stroke="#10b981"
+                            strokeDasharray="5 5"
+                            label={{ value: 'Meta', position: 'right', fill: '#10b981' }}
+                          />
+                          <ReferenceLine
+                            y={selectedKpi.tolerance.minimum}
+                            stroke="#f59e0b"
+                            strokeDasharray="5 5"
+                            label={{ value: 'Mínimo', position: 'right', fill: '#f59e0b' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="valor"
+                            name={`Valor (${selectedKpi.unit})`}
+                            stroke="#3b82f6"
+                            strokeWidth={3}
+                            dot={{ fill: '#3b82f6', r: 5 }}
+                            activeDot={{ r: 7 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Estadísticas */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">Último valor</div>
+                        <div className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
+                          {values[0]?.value} {selectedKpi.unit}
+                        </div>
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                        <div className="text-sm text-green-600 dark:text-green-400 font-medium">Promedio</div>
+                        <div className="text-2xl font-bold text-green-900 dark:text-green-100 mt-1">
+                          {(values.reduce((sum, v) => sum + v.value, 0) / values.length).toFixed(2)} {selectedKpi.unit}
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                        <div className="text-sm text-purple-600 dark:text-purple-400 font-medium">Máximo</div>
+                        <div className="text-2xl font-bold text-purple-900 dark:text-purple-100 mt-1">
+                          {Math.max(...values.map(v => v.value))} {selectedKpi.unit}
+                        </div>
+                      </div>
+                      <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                        <div className="text-sm text-orange-600 dark:text-orange-400 font-medium">Mínimo</div>
+                        <div className="text-2xl font-bold text-orange-900 dark:text-orange-100 mt-1">
+                          {Math.min(...values.map(v => v.value))} {selectedKpi.unit}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tabla de datos */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Fecha
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Valor
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Estado
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Notas
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {values.map((val) => {
+                            const status = getValueStatus(val.value, selectedKpi);
+                            return (
+                              <tr key={val._id}>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                  {new Date(val.periodEnd).toLocaleDateString('es-ES', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                  })}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {val.value} {selectedKpi.unit}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${status.color}`}>
+                                    {status.label}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                                  {val.notes || '-'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
