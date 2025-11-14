@@ -110,21 +110,9 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
   const downloadPDF = async () => {
     try {
       setIsDownloading(true);
-      const response = await fetch('/api/kpis/system-data-docs');
-
-      if (!response.ok) {
-        throw new Error('Error al descargar el PDF');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'Funciones-Sistema-KPIs.pdf';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Importar dinámicamente para evitar problemas en SSR
+      const { generateSystemDataDocsPDF } = await import('@/lib/kpi-utils/generate-docs-pdf');
+      generateSystemDataDocsPDF();
     } catch (error) {
       console.error('Error downloading PDF:', error);
       alert('Error al descargar el PDF');

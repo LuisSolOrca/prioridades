@@ -60,89 +60,117 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // La fórmula usa funciones del sistema - evaluarla con contexto del sistema
+    // La fórmula usa funciones del sistema - evaluarlas primero y luego pasar a hot-formula-parser
     try {
-      // Crear un contexto seguro con las funciones del sistema
-      const context: any = {
-        ...variables,
-        COUNT_PRIORITIES,
-        SUM_PRIORITIES,
-        AVG_PRIORITIES,
-        COUNT_MILESTONES,
-        COUNT_PROJECTS,
-        COUNT_USERS,
-        COMPLETION_RATE,
-        PERCENTAGE,
-        // Funciones matemáticas estándar
-        Math,
-        // Funciones de agregación para compatibilidad
-        SUM: (...args: number[]) => args.reduce((a, b) => a + b, 0),
-        AVERAGE: (...args: number[]) => args.reduce((a, b) => a + b, 0) / args.length,
-        MAX: Math.max,
-        MIN: Math.min,
-        ROUND: Math.round,
-        ABS: Math.abs,
-        SQRT: Math.sqrt,
-        POW: Math.pow,
-      };
-
-      // Evaluar la fórmula de manera segura
-      // Reemplazar las llamadas a funciones del sistema con await
+      // Pre-procesar: Evaluar funciones del sistema y reemplazarlas con sus resultados
       let processedFormula = formula;
 
-      // Lista de funciones async del sistema
-      const asyncFunctions = [
-        'COUNT_PRIORITIES',
-        'SUM_PRIORITIES',
-        'AVG_PRIORITIES',
-        'COUNT_MILESTONES',
-        'COUNT_PROJECTS',
-        'COUNT_USERS',
-        'COMPLETION_RATE'
-      ];
+      // Buscar todas las llamadas a funciones del sistema usando regex
+      const systemFunctionPattern = /(COUNT_PRIORITIES|SUM_PRIORITIES|AVG_PRIORITIES|COUNT_MILESTONES|COUNT_PROJECTS|COUNT_USERS|COMPLETION_RATE|PERCENTAGE)\s*\(([^)]*)\)/g;
 
-      // Detectar si tiene funciones async
-      const hasAsyncFunctions = asyncFunctions.some(fn =>
-        processedFormula.includes(fn)
-      );
+      const matches = [...formula.matchAll(systemFunctionPattern)];
 
-      if (hasAsyncFunctions) {
-        // Evaluar usando async function
-        const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      // Evaluar cada función del sistema y reemplazarla con su resultado
+      for (const match of matches) {
+        const fullMatch = match[0];
+        const functionName = match[1];
+        const argsString = match[2];
 
-        // Preparar los parámetros de la función
-        const paramNames = Object.keys(context);
-        const paramValues = Object.values(context);
+        let result: number;
 
-        // Crear función async con el contexto
-        const evalFunc = new AsyncFunction(
-          ...paramNames,
-          `return (${processedFormula})`
-        );
+        try {
+          // Evaluar los argumentos de la función
+          const evalArgs = new Function('return ' + (argsString.trim() || '{}'))();
 
-        // Ejecutar la función
-        const result = await evalFunc(...paramValues);
+          // Llamar a la función correspondiente
+          switch (functionName) {
+            case 'COUNT_PRIORITIES':
+              result = await COUNT_PRIORITIES(evalArgs);
+              break;
+            case 'SUM_PRIORITIES':
+              // Extraer campo y filtros: SUM_PRIORITIES("campo", {filtros})
+              const sumMatch = argsString.match(/"([^"]+)"\s*,?\s*(.*)/);
+              if (sumMatch) {
+                const field = sumMatch[1];
+                const filters = sumMatch[2] ? new Function('return ' + sumMatch[2])() : {};
+                result = await SUM_PRIORITIES(field, filters);
+              } else {
+                throw new Error(`Argumentos inválidos para SUM_PRIORITIES: ${argsString}`);
+              }
+              break;
+            case 'AVG_PRIORITIES':
+              // Extraer campo y filtros: AVG_PRIORITIES("campo", {filtros})
+              const avgMatch = argsString.match(/"([^"]+)"\s*,?\s*(.*)/);
+              if (avgMatch) {
+                const field = avgMatch[1];
+                const filters = avgMatch[2] ? new Function('return ' + avgMatch[2])() : {};
+                result = await AVG_PRIORITIES(field, filters);
+              } else {
+                throw new Error(`Argumentos inválidos para AVG_PRIORITIES: ${argsString}`);
+              }
+              break;
+            case 'COUNT_MILESTONES':
+              result = await COUNT_MILESTONES(evalArgs);
+              break;
+            case 'COUNT_PROJECTS':
+              result = await COUNT_PROJECTS(evalArgs);
+              break;
+            case 'COUNT_USERS':
+              result = await COUNT_USERS(evalArgs);
+              break;
+            case 'COMPLETION_RATE':
+              result = await COMPLETION_RATE(evalArgs);
+              break;
+            case 'PERCENTAGE':
+              // PERCENTAGE(parte, total)
+              const percentageArgs = argsString.split(',').map((arg: string) => {
+                const trimmed = arg.trim();
+                return parseFloat(trimmed);
+              });
+              if (percentageArgs.length === 2) {
+                result = PERCENTAGE(percentageArgs[0], percentageArgs[1]);
+              } else {
+                throw new Error(`PERCENTAGE requiere 2 argumentos: ${argsString}`);
+              }
+              break;
+            default:
+              throw new Error(`Función desconocida: ${functionName}`);
+          }
 
-        return NextResponse.json({
-          success: true,
-          result: typeof result === 'number' ? result : parseFloat(result),
-          usesSystemFunctions: true
-        });
-      } else {
-        // Evaluar sincrónicamente (solo PERCENTAGE)
-        const func = new Function(
-          ...Object.keys(context),
-          `return (${processedFormula})`
-        );
+          // Reemplazar la llamada con el resultado numérico
+          processedFormula = processedFormula.replace(fullMatch, result.toString());
 
-        const result = func(...Object.values(context));
-
-        return NextResponse.json({
-          success: true,
-          result: typeof result === 'number' ? result : parseFloat(result),
-          usesSystemFunctions: true
-        });
+        } catch (err: any) {
+          console.error(`Error evaluando ${functionName}:`, err);
+          throw new Error(`Error en ${functionName}: ${err.message}`);
+        }
       }
+
+      // Ahora que las funciones del sistema están evaluadas,
+      // pasar la fórmula procesada a hot-formula-parser para funciones Excel
+      const Parser = require('hot-formula-parser').Parser;
+      const parser = new Parser();
+
+      // Registrar variables
+      Object.keys(variables).forEach(varName => {
+        parser.setVariable(varName, variables[varName]);
+      });
+
+      const parseResult = parser.parse(processedFormula);
+
+      if (parseResult.error) {
+        return NextResponse.json({
+          success: false,
+          error: parseResult.error
+        }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        result: parseResult.result,
+        usesSystemFunctions: true,
+        processedFormula // Para debugging
+      });
 
     } catch (evalError: any) {
       console.error('Error evaluating system formula:', evalError);
