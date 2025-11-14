@@ -1,4 +1,23 @@
 /**
+ * Obtiene la lista completa de funciones soportadas por hot-formula-parser
+ */
+function getSupportedFormulas(): string[] {
+  try {
+    const { SUPPORTED_FORMULAS } = require('hot-formula-parser');
+    return SUPPORTED_FORMULAS || [];
+  } catch (error) {
+    // Fallback si no se puede cargar la lista dinámica
+    console.warn('No se pudo cargar SUPPORTED_FORMULAS, usando lista básica');
+    return [
+      'SUM', 'AVERAGE', 'MAX', 'MIN', 'IF', 'ABS', 'ROUND', 'CEILING', 'FLOOR',
+      'SQRT', 'POWER', 'EXP', 'LOG', 'LN', 'MEDIAN', 'STDEV', 'VAR', 'COUNT',
+      'AND', 'OR', 'NOT', 'TRUE', 'FALSE', 'CONCATENATE', 'UPPER', 'LOWER',
+      'TODAY', 'NOW', 'DATE', 'YEAR', 'MONTH', 'DAY', 'DAYS', 'EDATE'
+    ];
+  }
+}
+
+/**
  * Extrae las variables de una fórmula
  * Las variables son palabras que comienzan con letra y pueden contener letras, números y guiones bajos
  * Excluye palabras reservadas de las funciones
@@ -8,40 +27,11 @@ export function extractVariablesFromFormula(formula: string): string[] {
     return [];
   }
 
-  // Funciones reservadas que no son variables
-  // Incluye las funciones más comunes de hot-formula-parser
-  const reservedFunctions = [
-    // Matemáticas básicas
-    'SUM', 'AVERAGE', 'AVG', 'MAX', 'MIN', 'ABS', 'ROUND', 'CEILING', 'FLOOR',
-    'SQRT', 'POW', 'POWER', 'EXP', 'LOG', 'LN', 'LOG10',
+  // Obtener todas las funciones soportadas por hot-formula-parser (385+ funciones)
+  const supportedFormulas = getSupportedFormulas();
 
-    // Estadísticas
-    'MEDIAN', 'MODE', 'STDEV', 'VAR', 'COUNT', 'COUNTA', 'COUNTBLANK',
-    'PERCENTILE', 'QUARTILE', 'RANK', 'CORREL', 'COVARIANCE',
-
-    // Lógica
-    'IF', 'AND', 'OR', 'NOT', 'TRUE', 'FALSE', 'XOR', 'SWITCH',
-
-    // Texto
-    'CONCAT', 'CONCATENATE', 'LEN', 'UPPER', 'LOWER', 'TRIM', 'LEFT',
-    'RIGHT', 'MID', 'REPLACE', 'FIND', 'SEARCH', 'SUBSTITUTE', 'TEXT',
-
-    // Fechas
-    'TODAY', 'NOW', 'DATE', 'YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 'SECOND',
-    'WEEKDAY', 'DAYS', 'DAYS360', 'EDATE', 'EOMONTH', 'NETWORKDAYS', 'WORKDAY',
-    'DATEDIF', 'DATEVALUE', 'TIMEVALUE',
-
-    // Trigonométricas
-    'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'ATAN2',
-    'SINH', 'COSH', 'TANH', 'ASINH', 'ACOSH', 'ATANH',
-
-    // Financieras
-    'NPV', 'IRR', 'PMT', 'PV', 'FV', 'RATE', 'NPER', 'XIRR', 'XNPV',
-
-    // Otras comunes
-    'PI', 'E', 'RAND', 'RANDBETWEEN', 'MOD', 'GCD', 'LCM',
-    'FACT', 'COMBIN', 'PERMUT', 'SIGN', 'QUOTIENT'
-  ];
+  // Normalizar a mayúsculas para comparación case-insensitive
+  const reservedFunctions = new Set(supportedFormulas.map(f => f.toUpperCase()));
 
   // Extraer todas las palabras que podrían ser variables
   // Una variable es una palabra que empieza con letra y contiene letras, números o guiones bajos
@@ -50,7 +40,7 @@ export function extractVariablesFromFormula(formula: string): string[] {
 
   // Filtrar funciones reservadas y duplicados
   const variables = [...new Set(matches)]
-    .filter(word => !reservedFunctions.includes(word.toUpperCase()))
+    .filter(word => !reservedFunctions.has(word.toUpperCase()))
     .sort();
 
   return variables;
