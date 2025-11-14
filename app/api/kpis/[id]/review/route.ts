@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import KPI from '@/models/KPI';
+import User from '@/models/User';
 
 export async function POST(
   request: NextRequest,
@@ -22,6 +23,7 @@ export async function POST(
 
     await connectDB();
 
+    const body = await request.json();
     const kpi = await KPI.findById(params.id);
 
     if (!kpi) {
@@ -36,8 +38,19 @@ export async function POST(
       );
     }
 
+    // Validar que el revisor exista (si se especificó)
+    const reviewerId = body.reviewedBy || (session.user as any).id;
+    const reviewerExists = await User.exists({ _id: reviewerId });
+
+    if (!reviewerExists) {
+      return NextResponse.json(
+        { error: 'El usuario revisor no existe' },
+        { status: 400 }
+      );
+    }
+
     kpi.status = 'EN_REVISION';
-    kpi.reviewedBy = (session.user as any).id;
+    kpi.reviewedBy = reviewerId;
     kpi.reviewedAt = new Date();
 
     await kpi.save();

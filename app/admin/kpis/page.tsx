@@ -7,6 +7,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 interface KPI {
   _id: string;
   name: string;
@@ -66,6 +72,14 @@ export default function AdminKPIsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterInitiative, setFilterInitiative] = useState<string>('');
   const [initiatives, setInitiatives] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+
+  // Estados para diálogos de cambio de estado
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [selectedKpiId, setSelectedKpiId] = useState<string>('');
+  const [selectedReviewer, setSelectedReviewer] = useState<string>('');
+  const [selectedApprover, setSelectedApprover] = useState<string>('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -84,16 +98,19 @@ export default function AdminKPIsPage() {
 
   const loadData = async () => {
     try {
-      const [kpisRes, initiativesRes] = await Promise.all([
+      const [kpisRes, initiativesRes, usersRes] = await Promise.all([
         fetch('/api/kpis?activeOnly=false'),
         fetch('/api/initiatives?activeOnly=true'),
+        fetch('/api/users'),
       ]);
 
       const kpisData = await kpisRes.json();
       const initiativesData = await initiativesRes.json();
+      const usersData = await usersRes.json();
 
       setKpis(kpisData);
       setInitiatives(initiativesData);
+      setUsers(usersData.filter((u: User) => u._id)); // Solo usuarios activos
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -109,15 +126,27 @@ export default function AdminKPIsPage() {
     router.push(`/admin/kpis/${id}`);
   };
 
-  const handleReview = async (id: string) => {
-    if (!confirm('¿Marcar este KPI como "En Revisión"?')) return;
+  const handleReview = (id: string) => {
+    setSelectedKpiId(id);
+    setSelectedReviewer((session?.user as any)?.id || '');
+    setShowReviewDialog(true);
+  };
+
+  const confirmReview = async () => {
+    if (!selectedReviewer) {
+      alert('Selecciona un revisor');
+      return;
+    }
 
     try {
-      const res = await fetch(`/api/kpis/${id}/review`, {
+      const res = await fetch(`/api/kpis/${selectedKpiId}/review`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewedBy: selectedReviewer }),
       });
 
       if (res.ok) {
+        setShowReviewDialog(false);
         loadData();
       } else {
         const error = await res.json();
@@ -129,15 +158,27 @@ export default function AdminKPIsPage() {
     }
   };
 
-  const handleApprove = async (id: string) => {
-    if (!confirm('¿Aprobar este KPI?')) return;
+  const handleApprove = (id: string) => {
+    setSelectedKpiId(id);
+    setSelectedApprover((session?.user as any)?.id || '');
+    setShowApproveDialog(true);
+  };
+
+  const confirmApprove = async () => {
+    if (!selectedApprover) {
+      alert('Selecciona un aprobador');
+      return;
+    }
 
     try {
-      const res = await fetch(`/api/kpis/${id}/approve`, {
+      const res = await fetch(`/api/kpis/${selectedKpiId}/approve`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvedBy: selectedApprover }),
       });
 
       if (res.ok) {
+        setShowApproveDialog(false);
         loadData();
       } else {
         const error = await res.json();
@@ -410,6 +451,98 @@ export default function AdminKPIsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Modal para seleccionar revisor */}
+        {showReviewDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Marcar como "En Revisión"
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Selecciona quién será el revisor de este KPI:
+              </p>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Revisor *
+                </label>
+                <select
+                  value={selectedReviewer}
+                  onChange={(e) => setSelectedReviewer(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Seleccionar revisor...</option>
+                  {users.map((user) => (
+                    <option key={user._id} value={user._id}>
+                      {user.name} ({user.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowReviewDialog(false)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmReview}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600"
+                  disabled={!selectedReviewer}
+                >
+                  Confirmar Revisión
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para seleccionar aprobador */}
+        {showApproveDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Aprobar KPI
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Selecciona quién aprobará este KPI:
+              </p>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Aprobador *
+                </label>
+                <select
+                  value={selectedApprover}
+                  onChange={(e) => setSelectedApprover(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Seleccionar aprobador...</option>
+                  {users.map((user) => (
+                    <option key={user._id} value={user._id}>
+                      {user.name} ({user.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowApproveDialog(false)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmApprove}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                  disabled={!selectedApprover}
+                >
+                  Confirmar Aprobación
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

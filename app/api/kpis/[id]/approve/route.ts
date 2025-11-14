@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import KPI from '@/models/KPI';
+import User from '@/models/User';
 
 export async function POST(
   request: NextRequest,
@@ -22,6 +23,7 @@ export async function POST(
 
     await connectDB();
 
+    const body = await request.json();
     const kpi = await KPI.findById(params.id);
 
     if (!kpi) {
@@ -36,8 +38,19 @@ export async function POST(
       );
     }
 
+    // Validar que el aprobador exista (si se especificó)
+    const approverId = body.approvedBy || (session.user as any).id;
+    const approverExists = await User.exists({ _id: approverId });
+
+    if (!approverExists) {
+      return NextResponse.json(
+        { error: 'El usuario aprobador no existe' },
+        { status: 400 }
+      );
+    }
+
     kpi.status = 'APROBADO';
-    kpi.approvedBy = (session.user as any).id;
+    kpi.approvedBy = approverId;
     kpi.approvedAt = new Date();
 
     await kpi.save();
