@@ -184,6 +184,14 @@ function AreaPriorityCard({
           </div>
           <div className="flex items-center space-x-6">
             <div className="text-right">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Horas</div>
+              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                ⏱️ {areaData.priorities.reduce((total, p) =>
+                  total + (p.checklist?.reduce((sum, item) => sum + (item.completedHours || 0), 0) || 0), 0
+                ).toFixed(1)} hrs
+              </div>
+            </div>
+            <div className="text-right">
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tasa Completado</div>
               <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{completionRate}%</div>
             </div>
@@ -275,7 +283,14 @@ function AreaPriorityCard({
                     <div className="mt-2">
                       <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                         <span>Avance</span>
-                        <span className="font-semibold">{priority.completionPercentage}%</span>
+                        <div className="flex items-center gap-2">
+                          {priority.checklist && priority.checklist.length > 0 && (
+                            <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                              ⏱️ {priority.checklist.reduce((total, item) => total + (item.completedHours || 0), 0).toFixed(1)} hrs
+                            </span>
+                          )}
+                          <span className="font-semibold">{priority.completionPercentage}%</span>
+                        </div>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                         <div

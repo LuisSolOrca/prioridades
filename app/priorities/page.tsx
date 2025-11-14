@@ -780,7 +780,14 @@ export default function PrioritiesPage() {
                             <div>
                               <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
                                 <span className="font-medium">Porcentaje de Completado</span>
-                                <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{priority.completionPercentage}%</span>
+                                <div className="flex items-center gap-3">
+                                  {priority.checklist && priority.checklist.length > 0 && (
+                                    <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                                      ⏱️ {priority.checklist.reduce((total, item) => total + (item.completedHours || 0), 0).toFixed(1)} hrs
+                                    </span>
+                                  )}
+                                  <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{priority.completionPercentage}%</span>
+                                </div>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                                 <div
@@ -1007,7 +1014,14 @@ export default function PrioritiesPage() {
                             <div>
                               <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
                                 <span className="font-medium">Porcentaje de Completado</span>
-                                <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{priority.completionPercentage}%</span>
+                                <div className="flex items-center gap-3">
+                                  {priority.checklist && priority.checklist.length > 0 && (
+                                    <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                                      ⏱️ {priority.checklist.reduce((total, item) => total + (item.completedHours || 0), 0).toFixed(1)} hrs
+                                    </span>
+                                  )}
+                                  <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{priority.completionPercentage}%</span>
+                                </div>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                                 <div
@@ -1267,6 +1281,9 @@ export default function PrioritiesPage() {
                     ✓ Lista de Tareas
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       ({selectedPriorityForView.checklist.filter(item => item.completed).length}/{selectedPriorityForView.checklist.length})
+                    </span>
+                    <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold ml-auto">
+                      ⏱️ {selectedPriorityForView.checklist.reduce((total, item) => total + (item.completedHours || 0), 0).toFixed(1)} hrs total
                     </span>
                   </h3>
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
