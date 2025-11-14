@@ -46,6 +46,7 @@ export async function PUT(
         canCreateMilestones: true,
         canEditHistoricalPriorities: user.role === 'ADMIN',
         canManageProjects: user.role === 'ADMIN',
+        canManageKPIs: user.role === 'ADMIN',
       };
     }
 
@@ -63,6 +64,7 @@ export async function PUT(
       canCreateMilestones: permissions.canCreateMilestones !== undefined ? permissions.canCreateMilestones : user.permissions.canCreateMilestones,
       canEditHistoricalPriorities: permissions.canEditHistoricalPriorities !== undefined ? permissions.canEditHistoricalPriorities : (user.permissions.canEditHistoricalPriorities ?? (user.role === 'ADMIN')),
       canManageProjects: permissions.canManageProjects !== undefined ? permissions.canManageProjects : (user.permissions.canManageProjects ?? (user.role === 'ADMIN')),
+      canManageKPIs: permissions.canManageKPIs !== undefined ? permissions.canManageKPIs : (user.permissions.canManageKPIs ?? (user.role === 'ADMIN')),
     };
 
     // Marcar como modificado explícitamente
