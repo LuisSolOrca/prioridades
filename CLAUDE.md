@@ -46,7 +46,7 @@ Required environment variables (see `.env.example`):
 
 ### Database Models (Mongoose)
 
-**Three main collections:**
+**Main collections:**
 
 1. **User** (`models/User.ts`)
    - Fields: name, email, password (bcrypt hashed), role (ADMIN/USER), isActive
@@ -61,6 +61,17 @@ Required environment variables (see `.env.example`):
 3. **StrategicInitiative** (`models/StrategicInitiative.ts`)
    - Fields: name, description, color (hex), order, isActive
    - Used to categorize priorities
+
+4. **KPI** (`models/KPI.ts`)
+   - Fields: name, description, strategicObjective, initiativeId (ref), unit, periodicity, responsible (ref), formula, dataSource, target, tolerance, kpiType, tags, status, currentVersion, versions, createdBy (ref), isActive
+   - Statuses: BORRADOR, EN_REVISION, APROBADO, ACTIVO, INACTIVO, ARCHIVADO
+   - Includes versioning system for formula/target changes
+   - Uses hot-formula-parser for formula calculations
+
+5. **KPIValue** (`models/KPIValue.ts`)
+   - Fields: kpiId (ref), kpiVersion, value, calculatedValue, variables, periodStart, periodEnd, status, registeredBy (ref), notes, approvedBy (ref)
+   - Statuses: PRELIMINAR, CONFIRMADO, REVISADO, APROBADO
+   - Stores manual or calculated values for KPIs
 
 ### Database Connection
 
@@ -183,6 +194,41 @@ The system can reschedule priorities that expire (pass their `weekEnd`) in `EN_T
 
 See `docs/AUTO_RESCHEDULE.md` for detailed documentation.
 
+## KPI Management System
+
+The application includes a comprehensive KPI (Key Performance Indicators) management system:
+
+### Key Features
+
+- **KPI Definition**: Name, description, strategic objective, initiative, unit, periodicity, responsible, formula, target, tolerance, type, tags
+- **Lifecycle Management**: BORRADOR → EN_REVISION → APROBADO → ACTIVO
+- **Versioning**: Automatic versioning when formula, target, or tolerance changes
+- **Formula Editor**: WYSIWYG editor with hot-formula-parser integration
+  - Supports functions: SUM, AVERAGE, MAX, MIN, IF, ABS, ROUND, SQRT, POW
+  - Real-time validation
+  - Code completion
+- **Manual Value Entry**: Users can register values for active KPIs with period tracking
+- **Status Tracking**: Automatic calculation of status vs targets (En meta, En alerta, Por debajo, Crítico)
+
+### Admin Pages
+
+- `/admin/kpis` - KPI management dashboard
+- `/admin/kpis/new` - Create new KPI
+
+### User Pages
+
+- `/kpi-tracking` - View active KPIs and register values
+
+### API Routes
+
+- `/api/kpis` - CRUD operations for KPIs
+- `/api/kpis/[id]/review` - Mark KPI for review
+- `/api/kpis/[id]/approve` - Approve KPI
+- `/api/kpis/[id]/activate` - Activate KPI
+- `/api/kpi-values` - CRUD operations for KPI values
+
+See `docs/KPI_MANAGEMENT.md` for detailed documentation.
+
 ## Important Notes
 
 - **Password security**: All passwords are hashed with bcrypt (salt rounds: 10)
@@ -190,4 +236,5 @@ See `docs/AUTO_RESCHEDULE.md` for detailed documentation.
 - **Weekly periods**: Priorities are tied to week ranges (weekStart/weekEnd)
 - **Maximum priorities**: Recommended limit is 5 per user per week
 - **Auto-rescheduling**: Priorities in `EN_TIEMPO` status are automatically rescheduled when they expire
+- **KPI formulas**: Use hot-formula-parser syntax; formulas are validated in real-time
 - **Language**: All UI and messages are in Spanish

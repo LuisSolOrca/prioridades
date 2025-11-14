@@ -28,7 +28,8 @@ import {
   Link,
   Briefcase,
   ClipboardList,
-  FolderKanban
+  FolderKanban,
+  TrendingUp
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -312,6 +313,17 @@ export default function Navbar() {
                     <FolderKanban size={22} />
                   </button>
                 )}
+                <button
+                  onClick={() => handleNavigation('/kpi-tracking')}
+                  className={`w-full flex justify-center p-3 rounded-lg transition ${
+                    pathname === '/kpi-tracking'
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  title="Seguimiento de KPIs"
+                >
+                  <TrendingUp size={22} />
+                </button>
 
                 {user.area === 'Tecnología' && (
                   <>
@@ -429,6 +441,17 @@ export default function Navbar() {
                     >
                       <ClipboardList size={22} />
                     </button>
+                    <button
+                      onClick={() => handleNavigation('/admin/kpis')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname?.startsWith('/admin/kpis')
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Gestión de KPIs"
+                    >
+                      <TrendingUp size={22} />
+                    </button>
                   </>
                 )}
               </>
@@ -507,6 +530,12 @@ export default function Navbar() {
                     onClick={() => handleNavigation('/projects')}
                   />
                 )}
+                <NavButton
+                  icon={<TrendingUp size={20} />}
+                  label="Seguimiento de KPIs"
+                  active={pathname === '/kpi-tracking'}
+                  onClick={() => handleNavigation('/kpi-tracking')}
+                />
 
                 {user.area === 'Tecnología' && (
                   <>
@@ -590,6 +619,12 @@ export default function Navbar() {
                       label="Asignación Masiva"
                       active={pathname === '/admin/bulk-assignment'}
                       onClick={() => handleNavigation('/admin/bulk-assignment')}
+                    />
+                    <NavButton
+                      icon={<TrendingUp size={20} />}
+                      label="Gestión de KPIs"
+                      active={pathname?.startsWith('/admin/kpis') || false}
+                      onClick={() => handleNavigation('/admin/kpis')}
                     />
                   </>
                 )}
