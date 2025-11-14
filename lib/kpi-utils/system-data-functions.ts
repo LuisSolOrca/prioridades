@@ -46,20 +46,27 @@ export async function querySystemData(
   fields: string[] = []
 ): Promise<any[]> {
   try {
+    console.log('[querySystemData] Llamando API:', { dataType, filters, fields });
+
     const response = await fetch('/api/kpis/system-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dataType, filters, fields })
     });
 
+    console.log('[querySystemData] Response status:', response.status);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[querySystemData] Error response:', errorText);
       throw new Error(`Error querying ${dataType}: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log('[querySystemData] Results:', { count: data.count, dataType });
     return data.results || [];
   } catch (error) {
-    console.error('Error in querySystemData:', error);
+    console.error('[querySystemData] Error in querySystemData:', error);
     return [];
   }
 }

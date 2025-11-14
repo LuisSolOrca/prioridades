@@ -11,7 +11,7 @@ import {
   COUNT_USERS,
   COMPLETION_RATE,
   PERCENTAGE
-} from '@/lib/kpi-utils/system-data-functions';
+} from '@/lib/kpi-utils/system-data-functions-server';
 
 /**
  * POST - Evalúa una fórmula que puede contener funciones del sistema
