@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface User {
   _id: string;
@@ -67,6 +68,7 @@ const PERIODICITY_LABELS: { [key: string]: string } = {
 export default function AdminKPIsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('');
@@ -88,13 +90,13 @@ export default function AdminKPIsPage() {
     }
 
     if (status === 'authenticated') {
-      if ((session.user as any).role !== 'ADMIN') {
+      if (!hasPermission('canManageKPIs')) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, session, router]);
+  }, [status, session, router, hasPermission]);
 
   const loadData = async () => {
     try {

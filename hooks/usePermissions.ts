@@ -13,6 +13,7 @@ export interface UserPermissions {
   canCreateMilestones: boolean;
   canEditHistoricalPriorities: boolean;
   canManageProjects: boolean;
+  canManageKPIs: boolean;
 }
 
 const DEFAULT_PERMISSIONS: UserPermissions = {
@@ -28,6 +29,7 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   canCreateMilestones: true,
   canEditHistoricalPriorities: false,
   canManageProjects: false,
+  canManageKPIs: false,
 };
 
 export function usePermissions() {
@@ -41,9 +43,10 @@ export function usePermissions() {
   const permissions: UserPermissions = {
     ...DEFAULT_PERMISSIONS,
     ...(user?.permissions || {}),
-    // Admin siempre puede reasignar y gestionar proyectos
+    // Admin siempre puede reasignar, gestionar proyectos y gestionar KPIs
     canReassignPriorities: isAdmin || user?.permissions?.canReassignPriorities || false,
     canManageProjects: isAdmin || user?.permissions?.canManageProjects || false,
+    canManageKPIs: isAdmin || user?.permissions?.canManageKPIs || false,
   };
 
   const hasPermission = (permission: keyof UserPermissions): boolean => {

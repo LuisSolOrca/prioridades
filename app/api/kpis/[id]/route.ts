@@ -6,6 +6,12 @@ import KPI from '@/models/KPI';
 import KPIValue from '@/models/KPIValue';
 import mongoose from 'mongoose';
 
+// Helper para verificar permiso de gestión de KPIs
+function hasKPIManagementPermission(session: any): boolean {
+  const user = session.user as any;
+  return user.role === 'ADMIN' || user.permissions?.canManageKPIs === true;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -50,8 +56,8 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Solo admins pueden modificar KPIs
-    if ((session.user as any).role !== 'ADMIN') {
+    // Solo admins o usuarios con permiso pueden modificar KPIs
+    if (!hasKPIManagementPermission(session)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

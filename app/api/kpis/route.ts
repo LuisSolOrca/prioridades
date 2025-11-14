@@ -7,6 +7,12 @@ import StrategicInitiative from '@/models/StrategicInitiative';
 import User from '@/models/User';
 import mongoose from 'mongoose';
 
+// Helper para verificar permiso de gestión de KPIs
+function hasKPIManagementPermission(session: any): boolean {
+  const user = session.user as any;
+  return user.role === 'ADMIN' || user.permissions?.canManageKPIs === true;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -65,8 +71,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Solo admins pueden crear KPIs
-    if ((session.user as any).role !== 'ADMIN') {
+    // Solo admins o usuarios con permiso canManageKPIs pueden crear KPIs
+    if (!hasKPIManagementPermission(session)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

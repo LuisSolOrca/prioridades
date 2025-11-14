@@ -25,6 +25,7 @@ interface User {
     canCreateMilestones: boolean;
     canEditHistoricalPriorities: boolean;
     canManageProjects: boolean;
+    canManageKPIs: boolean;
   };
 }
 
@@ -68,6 +69,7 @@ export default function PermissionsManagementPage() {
           canCreateMilestones: true,
           canEditHistoricalPriorities: user.role === 'ADMIN',
           canManageProjects: user.role === 'ADMIN',
+          canManageKPIs: user.role === 'ADMIN',
         }
       }));
 
@@ -141,6 +143,7 @@ export default function PermissionsManagementPage() {
     canCreateMilestones: 'Crear Hitos',
     canEditHistoricalPriorities: 'Editar Prioridades en Historial',
     canManageProjects: 'Gestionar Proyectos',
+    canManageKPIs: 'Gestionar KPIs',
   };
 
   return (
@@ -363,6 +366,23 @@ export default function PermissionsManagementPage() {
                         </span>
                         <span className="text-xs text-gray-600 dark:text-gray-400">
                           Permite al usuario acceder a la página de gestión de proyectos y ver todos los proyectos (solo lectura si no es PM asignado)
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canManageKPIs ?? (selectedUser.role === 'ADMIN')}
+                        onChange={(e) => handlePermissionChange('canManageKPIs', e.target.checked)}
+                        className="w-5 h-5 text-teal-600 rounded focus:ring-2 focus:ring-teal-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canManageKPIs}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite al usuario acceder a la gestión de KPIs: crear, editar, revisar, aprobar y activar indicadores
                         </span>
                       </div>
                     </label>
