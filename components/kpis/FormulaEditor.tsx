@@ -93,6 +93,7 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [detectedVariables, setDetectedVariables] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Extraer variables automáticamente cuando cambia la fórmula
   useEffect(() => {
@@ -104,6 +105,32 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
     const newValue = value.slice(0, cursorPosition) + text + value.slice(cursorPosition);
     onChange(newValue);
     setCursorPosition(cursorPosition + text.length);
+  };
+
+  const downloadPDF = async () => {
+    try {
+      setIsDownloading(true);
+      const response = await fetch('/api/kpis/system-data-docs');
+
+      if (!response.ok) {
+        throw new Error('Error al descargar el PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Funciones-Sistema-KPIs.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Error al descargar el PDF');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -144,13 +171,26 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Fórmula de cálculo
           </label>
-          <button
-            type="button"
-            onClick={() => setShowHelp(!showHelp)}
-            className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            {showHelp ? 'Ocultar' : 'Mostrar'} ayuda
-          </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={downloadPDF}
+              disabled={isDownloading}
+              className="text-sm text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 flex items-center gap-1 disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {isDownloading ? 'Descargando...' : 'Descargar PDF'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowHelp(!showHelp)}
+              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              {showHelp ? 'Ocultar' : 'Mostrar'} ayuda
+            </button>
+          </div>
         </div>
 
         <textarea
