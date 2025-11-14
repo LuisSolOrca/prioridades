@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import KPI from '@/models/KPI';
+import StrategicInitiative from '@/models/StrategicInitiative';
+import User from '@/models/User';
 import mongoose from 'mongoose';
 
 export async function GET(request: NextRequest) {
@@ -73,13 +75,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validar que la iniciativa existe
-    const initiativeExists = await mongoose.model('StrategicInitiative').exists({ _id: body.initiativeId });
+    const initiativeExists = await StrategicInitiative.exists({ _id: body.initiativeId });
     if (!initiativeExists) {
       return NextResponse.json({ error: 'La iniciativa estratégica no existe' }, { status: 400 });
     }
 
     // Validar que el responsable existe
-    const responsibleExists = await mongoose.model('User').exists({ _id: body.responsible });
+    const responsibleExists = await User.exists({ _id: body.responsible });
     if (!responsibleExists) {
       return NextResponse.json({ error: 'El usuario responsable no existe' }, { status: 400 });
     }

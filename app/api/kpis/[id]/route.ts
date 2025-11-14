@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import KPI from '@/models/KPI';
+import KPIValue from '@/models/KPIValue';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -151,7 +152,7 @@ export async function DELETE(
       await KPI.deleteOne({ _id: params.id });
 
       // También eliminar valores asociados
-      await mongoose.model('KPIValue').deleteMany({ kpiId: params.id });
+      await KPIValue.deleteMany({ kpiId: params.id });
 
       return NextResponse.json({ message: 'KPI eliminado permanentemente' });
     } else {
