@@ -14,7 +14,8 @@ export interface IKPIValue {
   calculatedValue?: number; // Si aplica fórmula
 
   // Variables de la fórmula (si las hay)
-  variables?: { [key: string]: number };
+  // Puede contener números, arrays, fechas, etc.
+  variables?: { [key: string]: any };
 
   // Período del valor
   periodStart: Date;
@@ -55,7 +56,7 @@ const KPIValueSchema = new Schema<IKPIValue>({
   },
   variables: {
     type: Map,
-    of: Number,
+    of: Schema.Types.Mixed, // Soporta cualquier tipo: number, array, date, etc.
   },
   periodStart: {
     type: Date,
