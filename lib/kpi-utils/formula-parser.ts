@@ -9,11 +9,38 @@ export function extractVariablesFromFormula(formula: string): string[] {
   }
 
   // Funciones reservadas que no son variables
+  // Incluye las funciones más comunes de hot-formula-parser
   const reservedFunctions = [
-    'SUM', 'AVERAGE', 'AVG', 'MAX', 'MIN', 'IF', 'ABS', 'ROUND',
-    'SQRT', 'POW', 'POWER', 'COUNT', 'MEDIAN', 'MODE', 'STDEV',
-    'VAR', 'CONCAT', 'LEN', 'UPPER', 'LOWER', 'TRIM', 'LEFT',
-    'RIGHT', 'MID', 'REPLACE', 'FIND', 'AND', 'OR', 'NOT', 'TRUE', 'FALSE'
+    // Matemáticas básicas
+    'SUM', 'AVERAGE', 'AVG', 'MAX', 'MIN', 'ABS', 'ROUND', 'CEILING', 'FLOOR',
+    'SQRT', 'POW', 'POWER', 'EXP', 'LOG', 'LN', 'LOG10',
+
+    // Estadísticas
+    'MEDIAN', 'MODE', 'STDEV', 'VAR', 'COUNT', 'COUNTA', 'COUNTBLANK',
+    'PERCENTILE', 'QUARTILE', 'RANK', 'CORREL', 'COVARIANCE',
+
+    // Lógica
+    'IF', 'AND', 'OR', 'NOT', 'TRUE', 'FALSE', 'XOR', 'SWITCH',
+
+    // Texto
+    'CONCAT', 'CONCATENATE', 'LEN', 'UPPER', 'LOWER', 'TRIM', 'LEFT',
+    'RIGHT', 'MID', 'REPLACE', 'FIND', 'SEARCH', 'SUBSTITUTE', 'TEXT',
+
+    // Fechas
+    'TODAY', 'NOW', 'DATE', 'YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 'SECOND',
+    'WEEKDAY', 'DAYS', 'DAYS360', 'EDATE', 'EOMONTH', 'NETWORKDAYS', 'WORKDAY',
+    'DATEDIF', 'DATEVALUE', 'TIMEVALUE',
+
+    // Trigonométricas
+    'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'ATAN2',
+    'SINH', 'COSH', 'TANH', 'ASINH', 'ACOSH', 'ATANH',
+
+    // Financieras
+    'NPV', 'IRR', 'PMT', 'PV', 'FV', 'RATE', 'NPER', 'XIRR', 'XNPV',
+
+    // Otras comunes
+    'PI', 'E', 'RAND', 'RANDBETWEEN', 'MOD', 'GCD', 'LCM',
+    'FACT', 'COMBIN', 'PERMUT', 'SIGN', 'QUOTIENT'
   ];
 
   // Extraer todas las palabras que podrían ser variables
