@@ -53,9 +53,21 @@ const FORMULA_FUNCTIONS = [
   // Fechas
   { name: 'TODAY', description: 'Fecha actual', example: 'TODAY()', category: 'Fechas' },
   { name: 'NOW', description: 'Fecha y hora actual', example: 'NOW()', category: 'Fechas' },
+  { name: 'DATE', description: 'Crear fecha', example: 'DATE(2025, 1, 15)', category: 'Fechas' },
   { name: 'YEAR', description: 'Año de una fecha', example: 'YEAR(A)', category: 'Fechas' },
   { name: 'MONTH', description: 'Mes de una fecha', example: 'MONTH(A)', category: 'Fechas' },
   { name: 'DAY', description: 'Día de una fecha', example: 'DAY(A)', category: 'Fechas' },
+  { name: 'HOUR', description: 'Hora de una fecha', example: 'HOUR(A)', category: 'Fechas' },
+  { name: 'MINUTE', description: 'Minutos de una fecha', example: 'MINUTE(A)', category: 'Fechas' },
+  { name: 'SECOND', description: 'Segundos de una fecha', example: 'SECOND(A)', category: 'Fechas' },
+  { name: 'WEEKDAY', description: 'Día de la semana', example: 'WEEKDAY(A)', category: 'Fechas' },
+  { name: 'DAYS', description: 'Días entre fechas', example: 'DAYS(FechaFinal, FechaInicio)', category: 'Fechas' },
+  { name: 'DAYS360', description: 'Días entre fechas (año 360)', example: 'DAYS360(FechaInicio, FechaFinal)', category: 'Fechas' },
+  { name: 'EDATE', description: 'Sumar/restar meses', example: 'EDATE(Fecha, 3)', category: 'Fechas' },
+  { name: 'EOMONTH', description: 'Último día del mes', example: 'EOMONTH(Fecha, 0)', category: 'Fechas' },
+  { name: 'NETWORKDAYS', description: 'Días laborables', example: 'NETWORKDAYS(Inicio, Fin)', category: 'Fechas' },
+  { name: 'WORKDAY', description: 'Fecha laboral futura', example: 'WORKDAY(Inicio, Dias)', category: 'Fechas' },
+  { name: 'DATEDIF', description: 'Diferencia entre fechas', example: 'DATEDIF(Inicio, Fin, "D")', category: 'Fechas' },
 ];
 
 const OPERATORS = [
@@ -209,7 +221,7 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
 
           <div>
             <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Funciones disponibles (33 funciones):
+              Funciones disponibles (45 funciones):
             </h5>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {/* Agrupar por categoría */}
