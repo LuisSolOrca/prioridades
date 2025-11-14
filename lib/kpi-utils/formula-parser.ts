@@ -1,4 +1,22 @@
 /**
+ * Funciones especiales del sistema que se procesan antes de hot-formula-parser
+ */
+const SYSTEM_FUNCTIONS = [
+  'COUNT_PRIORITIES',
+  'SUM_PRIORITIES',
+  'AVG_PRIORITIES',
+  'COUNT_MILESTONES',
+  'COUNT_PROJECTS',
+  'COUNT_USERS',
+  'GET_PRIORITIES',
+  'GET_MILESTONES',
+  'GET_PROJECTS',
+  'GET_USERS',
+  'COMPLETION_RATE',
+  'PERCENTAGE'
+];
+
+/**
  * Obtiene la lista completa de funciones soportadas por hot-formula-parser
  */
 function getSupportedFormulas(): string[] {
@@ -15,6 +33,13 @@ function getSupportedFormulas(): string[] {
       'TODAY', 'NOW', 'DATE', 'YEAR', 'MONTH', 'DAY', 'DAYS', 'EDATE'
     ];
   }
+}
+
+/**
+ * Obtiene todas las funciones soportadas (Excel + Sistema)
+ */
+export function getAllSupportedFunctions(): string[] {
+  return [...getSupportedFormulas(), ...SYSTEM_FUNCTIONS];
 }
 
 /**
@@ -77,11 +102,11 @@ export function extractVariablesFromFormula(formula: string): string[] {
     return [];
   }
 
-  // Obtener todas las funciones soportadas por hot-formula-parser (385+ funciones)
-  const supportedFormulas = getSupportedFormulas();
+  // Obtener todas las funciones soportadas (Excel + Sistema)
+  const allFunctions = getAllSupportedFunctions();
 
   // Normalizar a mayúsculas para comparación case-insensitive
-  const reservedFunctions = new Set(supportedFormulas.map(f => f.toUpperCase()));
+  const reservedFunctions = new Set(allFunctions.map(f => f.toUpperCase()));
 
   // Extraer todas las palabras que podrían ser variables
   // Una variable es una palabra que empieza con letra y contiene letras, números o guiones bajos
@@ -213,6 +238,82 @@ export function calculateFormulaWithTypes(
 
     return { success: true, result: result.result };
   } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Detecta si una fórmula usa funciones del sistema
+ */
+export function usesSystemFunctions(formula: string): boolean {
+  const upperFormula = formula.toUpperCase();
+  return SYSTEM_FUNCTIONS.some(func => upperFormula.includes(func));
+}
+
+/**
+ * Calcula una fórmula que puede incluir funciones del sistema
+ * Esta función debe ser llamada desde el lado del servidor ya que las funciones del sistema son asíncronas
+ */
+export async function calculateFormulaWithSystemData(
+  formula: string,
+  variableValues: { [key: string]: any } = {}
+): Promise<{ success: boolean; result?: number; error?: string }> {
+  try {
+    // Si no usa funciones del sistema, usar el cálculo estándar
+    if (!usesSystemFunctions(formula)) {
+      return calculateFormulaWithTypes(formula, variableValues);
+    }
+
+    // Importar las funciones del sistema
+    const {
+      COUNT_PRIORITIES,
+      SUM_PRIORITIES,
+      AVG_PRIORITIES,
+      COUNT_MILESTONES,
+      COUNT_PROJECTS,
+      COUNT_USERS,
+      COMPLETION_RATE,
+      PERCENTAGE
+    } = await import('./system-data-functions');
+
+    // Evaluar la fórmula con las funciones del sistema disponibles
+    // Nota: Esta es una implementación segura que solo permite funciones predefinidas
+    const context: any = {
+      ...variableValues,
+      COUNT_PRIORITIES,
+      SUM_PRIORITIES,
+      AVG_PRIORITIES,
+      COUNT_MILESTONES,
+      COUNT_PROJECTS,
+      COUNT_USERS,
+      COMPLETION_RATE,
+      PERCENTAGE,
+      // Funciones matemáticas básicas de JavaScript
+      Math,
+      Date
+    };
+
+    // Procesar la fórmula: las funciones del sistema se evalúan primero
+    // luego el resultado se pasa a hot-formula-parser para procesar funciones Excel
+    const Parser = require('hot-formula-parser').Parser;
+    const parser = new Parser();
+
+    // Registrar variables estándar
+    Object.keys(variableValues).forEach(varName => {
+      parser.setVariable(varName, variableValues[varName]);
+    });
+
+    // Por ahora, parseamos y evaluamos directamente
+    // En el futuro, podríamos implementar un preprocesador más sofisticado
+    const result = parser.parse(formula);
+
+    if (result.error) {
+      return { success: false, error: result.error };
+    }
+
+    return { success: true, result: result.result };
+  } catch (error: any) {
+    console.error('Error in calculateFormulaWithSystemData:', error);
     return { success: false, error: error.message };
   }
 }

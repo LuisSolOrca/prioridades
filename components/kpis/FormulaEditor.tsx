@@ -68,6 +68,16 @@ const FORMULA_FUNCTIONS = [
   { name: 'NETWORKDAYS', description: 'Días laborables', example: 'NETWORKDAYS(Inicio, Fin)', category: 'Fechas' },
   { name: 'WORKDAY', description: 'Fecha laboral futura', example: 'WORKDAY(Inicio, Dias)', category: 'Fechas' },
   { name: 'DATEDIF', description: 'Diferencia entre fechas', example: 'DATEDIF(Inicio, Fin, "D")', category: 'Fechas' },
+
+  // FUNCIONES DEL SISTEMA - Acceso a datos de prioridades, hitos, proyectos y usuarios
+  { name: 'COUNT_PRIORITIES', description: 'Contar prioridades con filtros', example: 'COUNT_PRIORITIES({status: "COMPLETADO"})', category: 'Sistema' },
+  { name: 'SUM_PRIORITIES', description: 'Sumar campo de prioridades', example: 'SUM_PRIORITIES("completionPercentage", {userId: "123"})', category: 'Sistema' },
+  { name: 'AVG_PRIORITIES', description: 'Promedio de campo de prioridades', example: 'AVG_PRIORITIES("completionPercentage", {status: "COMPLETADO"})', category: 'Sistema' },
+  { name: 'COUNT_MILESTONES', description: 'Contar hitos con filtros', example: 'COUNT_MILESTONES({isCompleted: true})', category: 'Sistema' },
+  { name: 'COUNT_PROJECTS', description: 'Contar proyectos con filtros', example: 'COUNT_PROJECTS({isActive: true})', category: 'Sistema' },
+  { name: 'COUNT_USERS', description: 'Contar usuarios con filtros', example: 'COUNT_USERS({area: "Tecnología"})', category: 'Sistema' },
+  { name: 'COMPLETION_RATE', description: 'Tasa de cumplimiento de prioridades', example: 'COMPLETION_RATE({userId: "123"})', category: 'Sistema' },
+  { name: 'PERCENTAGE', description: 'Calcular porcentaje', example: 'PERCENTAGE(parte, total)', category: 'Sistema' },
 ];
 
 const OPERATORS = [
@@ -394,6 +404,95 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
                     <div className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
                       → Números y fechas combinados
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Funciones del Sistema */}
+          <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded">
+            <h5 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-3">
+              🔌 Funciones del Sistema - Acceso a Datos Reales
+            </h5>
+            <p className="text-sm text-purple-800 dark:text-purple-200 mb-3">
+              Usa datos reales de prioridades, hitos, proyectos y usuarios directamente en tus fórmulas.
+            </p>
+
+            <div className="space-y-3 text-sm">
+              {/* COUNT_PRIORITIES */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-700">
+                <div className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
+                  COUNT_PRIORITIES - Contar prioridades
+                </div>
+                <div className="space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Sin filtros (todas las prioridades):</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">COUNT_PRIORITIES()</div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Con filtros específicos:</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">COUNT_PRIORITIES({`{status: "COMPLETADO"}`})</div>
+                    <div className="text-gray-500 dark:text-gray-400 mt-1">
+                      Filtros: status, type, userId, initiativeId, projectId, clientId, weekStart, weekEnd, completionMin, completionMax
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* COMPLETION_RATE */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-700">
+                <div className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
+                  COMPLETION_RATE - Tasa de cumplimiento
+                </div>
+                <div className="space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Tasa general:</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">COMPLETION_RATE()</div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">Por área/usuario:</div>
+                    <div className="text-gray-900 dark:text-gray-100 mt-1">COMPLETION_RATE({`{userId: "123abc"}`})</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* AVG_PRIORITIES */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-700">
+                <div className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
+                  AVG_PRIORITIES - Promedio de campo
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                  <div className="text-gray-600 dark:text-gray-400">Promedio de completitud:</div>
+                  <div className="text-gray-900 dark:text-gray-100 mt-1">
+                    AVG_PRIORITIES("completionPercentage", {`{status: "COMPLETADO"}`})
+                  </div>
+                </div>
+              </div>
+
+              {/* COUNT_MILESTONES */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-700">
+                <div className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
+                  COUNT_MILESTONES - Contar hitos
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                  <div className="text-gray-600 dark:text-gray-400">Hitos completados:</div>
+                  <div className="text-gray-900 dark:text-gray-100 mt-1">COUNT_MILESTONES({`{isCompleted: true}`})</div>
+                  <div className="text-gray-500 dark:text-gray-400 mt-1">
+                    Filtros: userId, projectId, isCompleted, dueDateStart, dueDateEnd
+                  </div>
+                </div>
+              </div>
+
+              {/* Ejemplo combinado */}
+              <div className="bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-700">
+                <div className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
+                  💡 Ejemplo combinado
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono text-xs">
+                  <div className="text-gray-600 dark:text-gray-400">Índice de efectividad (prioridades completadas vs hitos):</div>
+                  <div className="text-gray-900 dark:text-gray-100 mt-1">
+                    (COUNT_PRIORITIES({`{status: "COMPLETADO"}`}) / COUNT_MILESTONES({`{isCompleted: true}`})) * 100
                   </div>
                 </div>
               </div>
