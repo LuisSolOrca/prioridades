@@ -441,18 +441,22 @@ export default function Navbar() {
                     >
                       <ClipboardList size={22} />
                     </button>
-                    <button
-                      onClick={() => handleNavigation('/admin/kpis')}
-                      className={`w-full flex justify-center p-3 rounded-lg transition ${
-                        pathname?.startsWith('/admin/kpis')
-                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                      title="Gestión de KPIs"
-                    >
-                      <TrendingUp size={22} />
-                    </button>
                   </>
+                )}
+
+                {/* Gestión de KPIs - mostrar si tiene permiso */}
+                {hasPermission('canManageKPIs') && (
+                  <button
+                    onClick={() => handleNavigation('/admin/kpis')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname?.startsWith('/admin/kpis')
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="Gestión de KPIs"
+                  >
+                    <TrendingUp size={22} />
+                  </button>
                 )}
               </>
             ) : (
@@ -620,13 +624,17 @@ export default function Navbar() {
                       active={pathname === '/admin/bulk-assignment'}
                       onClick={() => handleNavigation('/admin/bulk-assignment')}
                     />
-                    <NavButton
-                      icon={<TrendingUp size={20} />}
-                      label="Gestión de KPIs"
-                      active={pathname?.startsWith('/admin/kpis') || false}
-                      onClick={() => handleNavigation('/admin/kpis')}
-                    />
                   </>
+                )}
+
+                {/* Gestión de KPIs - mostrar si tiene permiso */}
+                {hasPermission('canManageKPIs') && (
+                  <NavButton
+                    icon={<TrendingUp size={20} />}
+                    label="Gestión de KPIs"
+                    active={pathname?.startsWith('/admin/kpis') || false}
+                    onClick={() => handleNavigation('/admin/kpis')}
+                  />
                 )}
               </>
             )}
