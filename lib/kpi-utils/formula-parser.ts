@@ -18,6 +18,56 @@ function getSupportedFormulas(): string[] {
 }
 
 /**
+ * Tipo de variable detectado
+ */
+export type VariableType = 'number' | 'date' | 'array';
+
+export interface VariableInfo {
+  name: string;
+  type: VariableType;
+}
+
+/**
+ * Detecta el tipo de una variable basándose en su nombre y contexto en la fórmula
+ */
+function detectVariableType(varName: string, formula: string): VariableType {
+  const lowerName = varName.toLowerCase();
+
+  // Detectar fechas por nombre
+  const datePatterns = [
+    'fecha', 'date', 'dia', 'day', 'inicio', 'fin', 'start', 'end',
+    'desde', 'hasta', 'from', 'to', 'when', 'tiempo', 'time'
+  ];
+
+  if (datePatterns.some(pattern => lowerName.includes(pattern))) {
+    return 'date';
+  }
+
+  // Detectar arrays por contexto (funciones que típicamente reciben arrays)
+  const arrayFunctions = ['SUM', 'AVERAGE', 'MEDIAN', 'MAX', 'MIN', 'COUNT', 'STDEV', 'VAR'];
+  const varPattern = new RegExp(`(${arrayFunctions.join('|')})\\s*\\([^)]*\\b${varName}\\b[^)]*\\)`, 'i');
+
+  if (varPattern.test(formula)) {
+    return 'array';
+  }
+
+  // Por defecto, es un número
+  return 'number';
+}
+
+/**
+ * Extrae las variables de una fórmula con información de tipo
+ */
+export function extractVariablesWithTypes(formula: string): VariableInfo[] {
+  const varNames = extractVariablesFromFormula(formula);
+
+  return varNames.map(name => ({
+    name,
+    type: detectVariableType(name, formula)
+  }));
+}
+
+/**
  * Extrae las variables de una fórmula
  * Las variables son palabras que comienzan con letra y pueden contener letras, números y guiones bajos
  * Excluye palabras reservadas de las funciones
@@ -77,6 +127,40 @@ export function validateFormulaSyntax(formula: string): { valid: boolean; error?
 }
 
 /**
+ * Convierte un valor de string al tipo apropiado para hot-formula-parser
+ */
+export function convertVariableValue(value: string, type: VariableType): any {
+  if (!value || value.trim() === '') {
+    return null;
+  }
+
+  switch (type) {
+    case 'date':
+      // Convertir string de fecha a objeto Date
+      const dateValue = new Date(value);
+      return isNaN(dateValue.getTime()) ? null : dateValue;
+
+    case 'array':
+      // Convertir string separado por comas a array de números
+      try {
+        const items = value.split(',').map(item => {
+          const trimmed = item.trim();
+          const num = parseFloat(trimmed);
+          return isNaN(num) ? trimmed : num;
+        });
+        return items;
+      } catch {
+        return null;
+      }
+
+    case 'number':
+    default:
+      const num = parseFloat(value);
+      return isNaN(num) ? null : num;
+  }
+}
+
+/**
  * Calcula el resultado de una fórmula con valores específicos de variables
  */
 export function calculateFormulaValue(
@@ -90,6 +174,35 @@ export function calculateFormulaValue(
     // Registrar todas las variables con sus valores
     Object.keys(variableValues).forEach(varName => {
       parser.setVariable(varName, variableValues[varName]);
+    });
+
+    const result = parser.parse(formula);
+
+    if (result.error) {
+      return { success: false, error: result.error };
+    }
+
+    return { success: true, result: result.result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Calcula el resultado de una fórmula con valores de diferentes tipos
+ */
+export function calculateFormulaWithTypes(
+  formula: string,
+  variableValues: { [key: string]: any }
+): { success: boolean; result?: number; error?: string } {
+  try {
+    const Parser = require('hot-formula-parser').Parser;
+    const parser = new Parser();
+
+    // Registrar todas las variables con sus valores (soporta Date, arrays, etc.)
+    Object.keys(variableValues).forEach(varName => {
+      const value = variableValues[varName];
+      parser.setVariable(varName, value);
     });
 
     const result = parser.parse(formula);

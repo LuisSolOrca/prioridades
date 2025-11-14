@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import KPIValue from '@/models/KPIValue';
 import KPI from '@/models/KPI';
-import { calculateFormulaValue } from '@/lib/kpi-utils/formula-parser';
+import { calculateFormulaWithTypes } from '@/lib/kpi-utils/formula-parser';
 
 export async function GET(request: NextRequest) {
   try {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     // Calcular valor si se proporcionan variables y hay fórmula
     let calculatedValue = body.value;
     if (body.variables && Object.keys(body.variables).length > 0) {
-      const result = calculateFormulaValue(kpi.formula, body.variables);
+      const result = calculateFormulaWithTypes(kpi.formula, body.variables);
 
       if (!result.success) {
         return NextResponse.json(

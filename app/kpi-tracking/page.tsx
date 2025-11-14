@@ -6,7 +6,12 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { extractVariablesFromFormula, calculateFormulaValue } from '@/lib/kpi-utils/formula-parser';
+import {
+  extractVariablesWithTypes,
+  calculateFormulaWithTypes,
+  convertVariableValue,
+  type VariableInfo
+} from '@/lib/kpi-utils/formula-parser';
 import { calculateCurrentPeriod, getPeriodName } from '@/lib/kpi-utils/period-calculator';
 
 interface KPI {
@@ -66,7 +71,7 @@ export default function KPITrackingPage() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [variableValues, setVariableValues] = useState<{ [key: string]: string }>({});
-  const [detectedVariables, setDetectedVariables] = useState<string[]>([]);
+  const [detectedVariables, setDetectedVariables] = useState<VariableInfo[]>([]);
   const [calculatedValue, setCalculatedValue] = useState<number | null>(null);
 
   useEffect(() => {
@@ -121,8 +126,8 @@ export default function KPITrackingPage() {
     loadValues(kpi._id);
     setShowValueForm(false);
 
-    // Extraer variables de la fórmula
-    const vars = extractVariablesFromFormula(kpi.formula);
+    // Extraer variables de la fórmula con tipos
+    const vars = extractVariablesWithTypes(kpi.formula);
     setDetectedVariables(vars);
   };
 
@@ -151,7 +156,7 @@ export default function KPITrackingPage() {
 
     // Verificar que todas las variables tengan valor
     const allVariablesFilled = detectedVariables.every(
-      varName => variableValues[varName] && variableValues[varName].trim() !== ''
+      varInfo => variableValues[varInfo.name] && variableValues[varInfo.name].trim() !== ''
     );
 
     if (!allVariablesFilled) {
@@ -159,19 +164,21 @@ export default function KPITrackingPage() {
       return;
     }
 
-    // Convertir valores string a number
-    const numericValues: { [key: string]: number } = {};
-    for (const varName of detectedVariables) {
-      const numValue = parseFloat(variableValues[varName]);
-      if (isNaN(numValue)) {
+    // Convertir valores string al tipo apropiado
+    const convertedValues: { [key: string]: any } = {};
+    for (const varInfo of detectedVariables) {
+      const rawValue = variableValues[varInfo.name];
+      const converted = convertVariableValue(rawValue, varInfo.type);
+
+      if (converted === null) {
         setCalculatedValue(null);
         return;
       }
-      numericValues[varName] = numValue;
+      convertedValues[varInfo.name] = converted;
     }
 
     // Calcular el resultado
-    const result = calculateFormulaValue(selectedKpi.formula, numericValues);
+    const result = calculateFormulaWithTypes(selectedKpi.formula, convertedValues);
     if (result.success && result.result !== undefined) {
       setCalculatedValue(result.result);
       setValue(result.result.toString());
@@ -194,13 +201,13 @@ export default function KPITrackingPage() {
       return;
     }
 
-    // Convertir variables a números
-    const numericVariables: { [key: string]: number } = {};
-    for (const varName of detectedVariables) {
-      if (variableValues[varName]) {
-        const numValue = parseFloat(variableValues[varName]);
-        if (!isNaN(numValue)) {
-          numericVariables[varName] = numValue;
+    // Convertir variables a sus tipos apropiados
+    const convertedVariables: { [key: string]: any } = {};
+    for (const varInfo of detectedVariables) {
+      if (variableValues[varInfo.name]) {
+        const converted = convertVariableValue(variableValues[varInfo.name], varInfo.type);
+        if (converted !== null) {
+          convertedVariables[varInfo.name] = converted;
         }
       }
     }
@@ -214,7 +221,7 @@ export default function KPITrackingPage() {
         body: JSON.stringify({
           kpiId: selectedKpi._id,
           value: valueNum,
-          variables: Object.keys(numericVariables).length > 0 ? numericVariables : undefined,
+          variables: Object.keys(convertedVariables).length > 0 ? convertedVariables : undefined,
           periodStart,
           periodEnd,
           notes,
@@ -387,25 +394,60 @@ export default function KPITrackingPage() {
                             Variables de la fórmula
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {detectedVariables.map((varName) => (
-                              <div key={varName}>
+                            {detectedVariables.map((varInfo) => (
+                              <div key={varInfo.name}>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                  {varName} *
+                                  {varInfo.name} *
+                                  {varInfo.type === 'date' && (
+                                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Fecha)</span>
+                                  )}
+                                  {varInfo.type === 'array' && (
+                                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Lista separada por comas)</span>
+                                  )}
                                 </label>
-                                <input
-                                  type="number"
-                                  step="any"
-                                  value={variableValues[varName] || ''}
-                                  onChange={(e) =>
-                                    setVariableValues({
-                                      ...variableValues,
-                                      [varName]: e.target.value,
-                                    })
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                  placeholder={`Valor de ${varName}`}
-                                  required
-                                />
+                                {varInfo.type === 'date' ? (
+                                  <input
+                                    type="date"
+                                    value={variableValues[varInfo.name] || ''}
+                                    onChange={(e) =>
+                                      setVariableValues({
+                                        ...variableValues,
+                                        [varInfo.name]: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    required
+                                  />
+                                ) : varInfo.type === 'array' ? (
+                                  <input
+                                    type="text"
+                                    value={variableValues[varInfo.name] || ''}
+                                    onChange={(e) =>
+                                      setVariableValues({
+                                        ...variableValues,
+                                        [varInfo.name]: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    placeholder="Ej: 10, 20, 30, 40"
+                                    required
+                                  />
+                                ) : (
+                                  <input
+                                    type="number"
+                                    step="any"
+                                    value={variableValues[varInfo.name] || ''}
+                                    onChange={(e) =>
+                                      setVariableValues({
+                                        ...variableValues,
+                                        [varInfo.name]: e.target.value,
+                                      })
+                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    placeholder={`Valor de ${varInfo.name}`}
+                                    required
+                                  />
+                                )}
                               </div>
                             ))}
                           </div>
