@@ -138,7 +138,54 @@ export default function FormulaEditor({ value, onChange }: FormulaEditorProps) {
         parser.setVariable(varName, 100);
       });
 
-      const result = parser.parse(value);
+      // Pre-procesar funciones del sistema (reemplazarlas con valores de prueba)
+      let processedFormula = value;
+      const systemFunctions = 'COUNT_PRIORITIES|SUM_PRIORITIES|AVG_PRIORITIES|COUNT_MILESTONES|COUNT_PROJECTS|COUNT_USERS|COMPLETION_RATE|PERCENTAGE';
+      const simpleFunctionPattern = new RegExp(`(${systemFunctions})\\s*\\(([^()]*)\\)`, 'g');
+
+      // Reemplazar funciones del sistema con valores de prueba
+      let maxIterations = 10;
+      let iteration = 0;
+
+      while (iteration < maxIterations) {
+        const matches = [...processedFormula.matchAll(simpleFunctionPattern)];
+        if (matches.length === 0) break;
+
+        for (const match of matches) {
+          const fullMatch = match[0];
+          const functionName = match[1];
+
+          // Asignar valores de prueba según el tipo de función
+          let testValue = 50; // Valor por defecto
+
+          switch (functionName) {
+            case 'COUNT_PRIORITIES':
+            case 'COUNT_MILESTONES':
+            case 'COUNT_PROJECTS':
+            case 'COUNT_USERS':
+              testValue = 100; // Conteo ejemplo
+              break;
+            case 'COMPLETION_RATE':
+              testValue = 75.5; // Porcentaje ejemplo
+              break;
+            case 'PERCENTAGE':
+              testValue = 50; // Porcentaje ejemplo
+              break;
+            case 'SUM_PRIORITIES':
+              testValue = 500; // Suma ejemplo
+              break;
+            case 'AVG_PRIORITIES':
+              testValue = 65.3; // Promedio ejemplo
+              break;
+          }
+
+          processedFormula = processedFormula.replace(fullMatch, testValue.toString());
+        }
+
+        iteration++;
+      }
+
+      const result = parser.parse(processedFormula);
 
       if (result.error) {
         return { valid: false, error: result.error };
