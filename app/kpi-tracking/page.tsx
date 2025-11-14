@@ -328,7 +328,7 @@ export default function KPITrackingPage() {
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">KPIs Activos</h2>
               </div>
-              <div className="divide-y max-h-[600px] overflow-y-auto">
+              <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-[600px] overflow-y-auto">
                 {kpis.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                     {(session?.user as any)?.role === 'ADMIN'
@@ -340,8 +340,8 @@ export default function KPITrackingPage() {
                     <button
                       key={kpi._id}
                       onClick={() => handleSelectKPI(kpi)}
-                      className={`w-full p-4 text-left hover:bg-gray-50 transition ${
-                        selectedKpi?._id === kpi._id ? 'bg-blue-50' : ''
+                      className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition ${
+                        selectedKpi?._id === kpi._id ? 'bg-blue-50 dark:bg-blue-900/30' : ''
                       }`}
                     >
                       <div className="font-medium text-gray-900 dark:text-gray-100">{kpi.name}</div>
@@ -367,7 +367,7 @@ export default function KPITrackingPage() {
           {/* Detalle y valores */}
           <div className="lg:col-span-2">
             {!selectedKpi ? (
-              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
                 Selecciona un KPI para ver su detalle y registrar valores
               </div>
             ) : (
@@ -407,7 +407,7 @@ export default function KPITrackingPage() {
                   </div>
 
                   <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded">
-                    <div className="text-sm text-gray-500 mb-1">Fórmula</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Fórmula</div>
                     <code className="text-sm font-mono text-gray-900 dark:text-gray-100">{selectedKpi.formula}</code>
                   </div>
 
@@ -628,7 +628,7 @@ export default function KPITrackingPage() {
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Historial de valores</h3>
                   </div>
-                  <div className="divide-y">
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
                     {values.length === 0 ? (
                       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                         No hay valores registrados
@@ -650,7 +650,7 @@ export default function KPITrackingPage() {
                                     {status.label}
                                   </span>
                                 </div>
-                                <div className="text-sm text-gray-500 mt-1">
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                   {new Date(val.periodStart).toLocaleDateString()} -{' '}
                                   {new Date(val.periodEnd).toLocaleDateString()}
                                 </div>
