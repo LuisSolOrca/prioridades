@@ -53,6 +53,8 @@ export const authOptions: NextAuthOptions = {
             canReassignPriorities: user.role === 'ADMIN',
             canCreateMilestones: true,
             canEditHistoricalPriorities: user.role === 'ADMIN',
+            canManageProjects: user.role === 'ADMIN',
+            canManageKPIs: user.role === 'ADMIN',
           },
         };
       }
