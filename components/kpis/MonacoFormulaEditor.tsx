@@ -1053,6 +1053,23 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         console.log('%c[Monaco] ⚡ TRIGGERING SUGGEST', 'color: #89d185; font-weight: bold', word.word);
         setTimeout(() => {
           monacoEditor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+
+          // DEBUG: Verificar estado del suggest widget
+          setTimeout(() => {
+            try {
+              const suggestController = monacoEditor.getContribution('editor.contrib.suggestController');
+              if (suggestController) {
+                // @ts-ignore - accedemos a propiedades internas para debugging
+                const state = suggestController.model?.state;
+                console.log('%c[Monaco Widget State]', 'color: #f48771', {
+                  state: state, // 0 = closed, 1 = loading, 2 = open
+                  isVisible: state === 2,
+                });
+              }
+            } catch (e) {
+              console.error('Error checking suggest state:', e);
+            }
+          }, 50);
         }, 1);
       } else {
         console.log('%c[Monaco] No trigger needed', 'color: #888', 'word length:', word.word.length);
