@@ -1302,13 +1302,18 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 showIcons: true,
                 showFunctions: true,
                 showVariables: false,
-                preview: true,
-                previewMode: 'subwordSmart',
+                preview: false, // CAMBIO: false para evitar inline preview
+                previewMode: 'prefix', // CAMBIO: prefix en lugar de subwordSmart
                 selectionMode: 'always',
-                showStatusBar: true, // Mostrar barra de estado del suggest
+                showStatusBar: true,
               },
-              quickSuggestions: true, // CAMBIO CRÍTICO: true simple en lugar de objeto
+              quickSuggestions: {
+                other: true,
+                comments: false,
+                strings: false,
+              },
               quickSuggestionsDelay: 0,
+              inlineSuggest: { enabled: false }, // CRÍTICO: deshabilitar inline suggestions
               parameterHints: {
                 enabled: true,
               },
