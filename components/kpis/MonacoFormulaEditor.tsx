@@ -865,6 +865,10 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         } else if (!insideQuotes() && !insideObjectBraces()) {
           // No estamos dentro de una función del sistema NI dentro de comillas NI dentro de {}
           // Aquí sí podemos sugerir funciones
+
+          // Obtener el texto de la palabra actual para filtrar
+          const wordText = word.word.toUpperCase();
+
           const systemSuggestions = SYSTEM_FUNCTIONS.map(func => ({
             label: func.name,
             kind: monaco.languages.CompletionItemKind.Function,
@@ -876,6 +880,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
             insertText: func.insertText,
             range: range,
             sortText: '0' + func.name,
+            filterText: func.name, // Asegurar que Monaco use el nombre completo para filtrar
           }));
 
           const excelSuggestions = EXCEL_FUNCTIONS.map(func => ({
@@ -889,6 +894,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
             insertText: func.insertText,
             range: range,
             sortText: '1' + func.name,
+            filterText: func.name, // Asegurar que Monaco use el nombre completo para filtrar
           }));
 
           suggestions = [...systemSuggestions, ...excelSuggestions];
@@ -920,48 +926,75 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         parser.setVariable(varName, 100);
       });
 
+      // Reemplazar funciones del sistema con valores de prueba
+      // Usando un enfoque más robusto que maneja anidamiento
       let processedFormula = value;
-      const systemFunctions = 'COUNT_PRIORITIES|SUM_PRIORITIES|AVG_PRIORITIES|COUNT_MILESTONES|COUNT_PROJECTS|COUNT_USERS|COMPLETION_RATE|PERCENTAGE';
-      const simpleFunctionPattern = new RegExp(`(${systemFunctions})\\s*\\(([^()]*)\\)`, 'g');
 
-      let maxIterations = 10;
-      let iteration = 0;
-
-      while (iteration < maxIterations) {
-        const matches = [...processedFormula.matchAll(simpleFunctionPattern)];
-        if (matches.length === 0) break;
-
-        for (const match of matches) {
-          const fullMatch = match[0];
-          const functionName = match[1];
-
-          let testValue = 50;
-
-          switch (functionName) {
-            case 'COUNT_PRIORITIES':
-            case 'COUNT_MILESTONES':
-            case 'COUNT_PROJECTS':
-            case 'COUNT_USERS':
-              testValue = 100;
-              break;
-            case 'COMPLETION_RATE':
-              testValue = 75.5;
-              break;
-            case 'PERCENTAGE':
-              testValue = 50;
-              break;
-            case 'SUM_PRIORITIES':
-              testValue = 500;
-              break;
-            case 'AVG_PRIORITIES':
-              testValue = 65.3;
-              break;
+      // Función helper para encontrar el cierre de paréntesis correcto
+      const findClosingParen = (str: string, startIndex: number): number => {
+        let depth = 1;
+        for (let i = startIndex; i < str.length; i++) {
+          if (str[i] === '(') depth++;
+          else if (str[i] === ')') {
+            depth--;
+            if (depth === 0) return i;
           }
-
-          processedFormula = processedFormula.replace(fullMatch, testValue.toString());
         }
+        return -1;
+      };
 
+      const systemFunctionNames = [
+        'COUNT_PRIORITIES', 'SUM_PRIORITIES', 'AVG_PRIORITIES',
+        'COUNT_MILESTONES', 'COUNT_PROJECTS', 'COUNT_USERS',
+        'COMPLETION_RATE', 'PERCENTAGE'
+      ];
+
+      // Reemplazar desde el más interno hacia afuera (máximo 20 iteraciones para evitar loops infinitos)
+      let maxIterations = 20;
+      let iteration = 0;
+      let foundSystemFunction = true;
+
+      while (foundSystemFunction && iteration < maxIterations) {
+        foundSystemFunction = false;
         iteration++;
+
+        for (const funcName of systemFunctionNames) {
+          const funcIndex = processedFormula.indexOf(funcName + '(');
+          if (funcIndex !== -1) {
+            foundSystemFunction = true;
+            const openParenIndex = funcIndex + funcName.length;
+            const closeParenIndex = findClosingParen(processedFormula, openParenIndex + 1);
+
+            if (closeParenIndex !== -1) {
+              const fullMatch = processedFormula.substring(funcIndex, closeParenIndex + 1);
+
+              let testValue = 50;
+              switch (funcName) {
+                case 'COUNT_PRIORITIES':
+                case 'COUNT_MILESTONES':
+                case 'COUNT_PROJECTS':
+                case 'COUNT_USERS':
+                  testValue = 100;
+                  break;
+                case 'COMPLETION_RATE':
+                  testValue = 75.5;
+                  break;
+                case 'PERCENTAGE':
+                  testValue = 50;
+                  break;
+                case 'SUM_PRIORITIES':
+                  testValue = 500;
+                  break;
+                case 'AVG_PRIORITIES':
+                  testValue = 65.3;
+                  break;
+              }
+
+              processedFormula = processedFormula.replace(fullMatch, testValue.toString());
+              break; // Salir del loop de funciones para recalcular índices
+            }
+          }
+        }
       }
 
       const result = parser.parse(processedFormula);
