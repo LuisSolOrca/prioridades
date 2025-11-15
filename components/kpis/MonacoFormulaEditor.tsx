@@ -572,7 +572,7 @@ const EXCEL_FUNCTIONS = [
 ];
 
 export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEditorProps) {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<any>(null);
   const [detectedVariables, setDetectedVariables] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [autocompleteData, setAutocompleteData] = useState<AutocompleteData | null>(null);
