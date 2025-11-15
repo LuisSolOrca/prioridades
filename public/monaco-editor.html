@@ -56,53 +56,159 @@
         // Recibir fórmula inicial desde el parent
         const initialValue = new URLSearchParams(window.location.search).get('value') || '';
 
-        // Funciones del sistema con sus parámetros completos
+        // Funciones del sistema con sus parámetros y documentación completa
         const SYSTEM_FUNCTIONS = [
             {
                 name: 'COUNT_PRIORITIES',
                 signature: 'COUNT_PRIORITIES(filtros?)',
+                description: 'Cuenta prioridades que cumplen ciertos criterios',
+                documentation: `Cuenta el número de prioridades según los criterios especificados.
+
+**Filtros disponibles:**
+• status: Estado de la prioridad (usa autocompletado)
+• type: Tipo de prioridad
+• userName: Nombre del usuario (usa autocompletado)
+• initiativeName: Nombre de iniciativa (usa autocompletado)
+• projectName: Nombre del proyecto (usa autocompletado)
+• clientName: Nombre del cliente (usa autocompletado)
+• isCarriedOver: Prioridades arrastradas (true/false)
+• weekStart: Fecha inicio "YYYY-MM-DD"
+• weekEnd: Fecha fin "YYYY-MM-DD"
+• completionMin: % mínimo (0-100)
+• completionMax: % máximo (0-100)
+
+**Ejemplos:**
+COUNT_PRIORITIES()
+COUNT_PRIORITIES({status: "COMPLETADO"})
+COUNT_PRIORITIES({userName: "Juan Pérez", status: "EN_RIESGO"})
+COUNT_PRIORITIES({initiativeName: "Generación de ingresos"})`,
                 detail: '📊 Sistema',
                 params: ['status', 'type', 'userName', 'initiativeName', 'projectName', 'clientName', 'isCarriedOver', 'weekStart', 'weekEnd', 'completionMin', 'completionMax']
             },
             {
                 name: 'SUM_PRIORITIES',
                 signature: 'SUM_PRIORITIES(campo, filtros?)',
+                description: 'Suma un campo numérico de las prioridades',
+                documentation: `Suma el valor de un campo numérico en las prioridades filtradas.
+
+**Parámetros:**
+• campo: "completionPercentage" (entre comillas)
+• filtros: Objeto con filtros (opcional)
+
+**Filtros disponibles:**
+• status, userName, initiativeName, projectName, etc.
+
+**Ejemplos:**
+SUM_PRIORITIES("completionPercentage")
+SUM_PRIORITIES("completionPercentage", {status: "COMPLETADO"})
+SUM_PRIORITIES("completionPercentage", {userName: "María López"})`,
                 detail: '📊 Sistema',
                 params: ['status', 'type', 'userName', 'initiativeName', 'projectName']
             },
             {
                 name: 'AVG_PRIORITIES',
                 signature: 'AVG_PRIORITIES(campo, filtros?)',
+                description: 'Calcula el promedio de un campo numérico',
+                documentation: `Calcula el promedio de un campo numérico en las prioridades filtradas.
+
+**Parámetros:**
+• campo: "completionPercentage" (entre comillas)
+• filtros: Objeto con filtros (opcional)
+
+**Ejemplos:**
+AVG_PRIORITIES("completionPercentage")
+AVG_PRIORITIES("completionPercentage", {status: "COMPLETADO"})
+AVG_PRIORITIES("completionPercentage", {projectName: "Proyecto Alpha"})`,
                 detail: '📊 Sistema',
                 params: ['status', 'type', 'userName', 'initiativeName', 'projectName']
             },
             {
                 name: 'COUNT_MILESTONES',
                 signature: 'COUNT_MILESTONES(filtros?)',
+                description: 'Cuenta hitos que cumplen ciertos criterios',
+                documentation: `Cuenta hitos según los criterios especificados.
+
+**Filtros disponibles:**
+• userName: Nombre del usuario (usa autocompletado)
+• projectName: Nombre del proyecto (usa autocompletado)
+• isCompleted: Hitos completados (true/false)
+• dueDateStart: Fecha desde "YYYY-MM-DD"
+• dueDateEnd: Fecha hasta "YYYY-MM-DD"
+
+**Ejemplos:**
+COUNT_MILESTONES({isCompleted: true})
+COUNT_MILESTONES({projectName: "Proyecto Beta"})
+COUNT_MILESTONES({userName: "Carlos Ruiz", isCompleted: false})`,
                 detail: '📊 Sistema',
                 params: ['userName', 'projectName', 'isCompleted', 'dueDateStart', 'dueDateEnd']
             },
             {
                 name: 'COUNT_PROJECTS',
                 signature: 'COUNT_PROJECTS(filtros?)',
+                description: 'Cuenta proyectos',
+                documentation: `Cuenta proyectos según los criterios especificados.
+
+**Filtros disponibles:**
+• isActive: Proyectos activos (true/false)
+• projectManagerName: Nombre del gerente (usa autocompletado)
+
+**Ejemplos:**
+COUNT_PROJECTS({isActive: true})
+COUNT_PROJECTS({projectManagerName: "Ana García"})`,
                 detail: '📊 Sistema',
                 params: ['isActive', 'projectManagerName']
             },
             {
                 name: 'COUNT_USERS',
                 signature: 'COUNT_USERS(filtros?)',
+                description: 'Cuenta usuarios del sistema',
+                documentation: `Cuenta usuarios según los criterios especificados.
+
+**Filtros disponibles:**
+• role: Rol del usuario (usa autocompletado)
+• area: Área o departamento (usa autocompletado)
+• isActive: Usuarios activos (true/false)
+• isAreaLeader: Líderes de área (true/false)
+
+**Ejemplos:**
+COUNT_USERS({area: "Tecnología"})
+COUNT_USERS({role: "ADMIN"})
+COUNT_USERS({area: "Ventas", isActive: true})`,
                 detail: '📊 Sistema',
                 params: ['role', 'area', 'isActive', 'isAreaLeader']
             },
             {
                 name: 'COMPLETION_RATE',
                 signature: 'COMPLETION_RATE(filtros?)',
+                description: 'Calcula tasa de cumplimiento (%)',
+                documentation: `Calcula el porcentaje de prioridades completadas.
+
+**Filtros disponibles:** (mismos que COUNT_PRIORITIES)
+• userName, initiativeName, projectName, weekStart, weekEnd, etc.
+
+**Ejemplos:**
+COMPLETION_RATE()
+COMPLETION_RATE({userName: "Pedro Sánchez"})
+COMPLETION_RATE({initiativeName: "Eficiencia Operativa"})
+COMPLETION_RATE({weekStart: "2025-01-01", weekEnd: "2025-01-31"})`,
                 detail: '📊 Sistema',
                 params: ['userName', 'initiativeName', 'projectName', 'weekStart', 'weekEnd', 'status']
             },
             {
                 name: 'PERCENTAGE',
                 signature: 'PERCENTAGE(parte, total)',
+                description: 'Calcula porcentaje: (parte / total) * 100',
+                documentation: `Función auxiliar para calcular porcentajes.
+
+**Parámetros:**
+• parte: Valor parcial (número)
+• total: Valor total (número)
+
+**Retorna:** (parte / total) * 100
+
+**Ejemplo:**
+PERCENTAGE(25, 100) // = 25
+PERCENTAGE(COUNT_PRIORITIES({status: "COMPLETADO"}), COUNT_PRIORITIES())`,
                 detail: '📊 Sistema',
                 params: []
             }
@@ -673,6 +779,11 @@
                                 },
                                 kind: monaco.languages.CompletionItemKind.Function,
                                 detail: func.detail,
+                                documentation: {
+                                    value: func.documentation || func.description,
+                                    isTrusted: true,
+                                    supportHtml: false
+                                },
                                 insertText: func.name + '()',
                                 range: range,
                                 sortText: '!' + func.name,
