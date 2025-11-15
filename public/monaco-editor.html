@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Fórmulas KPI</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            overflow: hidden;
+        }
+        #editor {
+            width: 100%;
+            height: 100vh;
+        }
+        .toolbar {
+            background: #252526;
+            padding: 8px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toolbar button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .toolbar button:hover {
+            background: #1177bb;
+        }
+        .toolbar .info {
+            color: #d4d4d4;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="info">
+            💡 Escribe una letra para ver sugerencias automáticas
+        </div>
+        <button onclick="saveAndClose()">✓ Guardar</button>
+    </div>
+    <div id="editor"></div>
+
+    <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+    <script>
+        // Recibir fórmula inicial desde el parent
+        const initialValue = new URLSearchParams(window.location.search).get('value') || '';
+
+        // Funciones del sistema (las mismas que en React)
+        const SYSTEM_FUNCTIONS = [
+            { name: 'AVG_PRIORITIES', signature: 'AVG_PRIORITIES({filters})', detail: '📊 Sistema' },
+            { name: 'SUM_PRIORITIES', signature: 'SUM_PRIORITIES({filters})', detail: '📊 Sistema' },
+            { name: 'COUNT_PRIORITIES', signature: 'COUNT_PRIORITIES({filters})', detail: '📊 Sistema' },
+            { name: 'COUNT_MILESTONES', signature: 'COUNT_MILESTONES({filters})', detail: '📊 Sistema' },
+            { name: 'COUNT_PROJECTS', signature: 'COUNT_PROJECTS({filters})', detail: '📊 Sistema' },
+            { name: 'COUNT_USERS', signature: 'COUNT_USERS({filters})', detail: '📊 Sistema' },
+            { name: 'COMPLETION_RATE', signature: 'COMPLETION_RATE({filters})', detail: '📊 Sistema' },
+            { name: 'PERCENTAGE', signature: 'PERCENTAGE(value, total)', detail: '📊 Sistema' },
+        ];
+
+        // Funciones de Excel (subset común)
+        const EXCEL_FUNCTIONS = [
+            { name: 'ABS', signature: 'ABS(number)', detail: '🔢 Excel' },
+            { name: 'ACOS', signature: 'ACOS(number)', detail: '🔢 Excel' },
+            { name: 'SUM', signature: 'SUM(numbers...)', detail: '🔢 Excel' },
+            { name: 'AVERAGE', signature: 'AVERAGE(numbers...)', detail: '🔢 Excel' },
+            { name: 'COUNT', signature: 'COUNT(values...)', detail: '🔢 Excel' },
+            { name: 'MAX', signature: 'MAX(numbers...)', detail: '🔢 Excel' },
+            { name: 'MIN', signature: 'MIN(numbers...)', detail: '🔢 Excel' },
+            { name: 'ROUND', signature: 'ROUND(number, decimals)', detail: '🔢 Excel' },
+            { name: 'SQRT', signature: 'SQRT(number)', detail: '🔢 Excel' },
+            { name: 'POWER', signature: 'POWER(base, exponent)', detail: '🔢 Excel' },
+            { name: 'IF', signature: 'IF(condition, true_value, false_value)', detail: '🔢 Excel' },
+        ];
+
+        let editor;
+
+        require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@latest/min/vs' } });
+
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: decodeURIComponent(initialValue),
+                language: 'plaintext',
+                theme: 'vs-dark',
+                fontSize: 14,
+                minimap: { enabled: false },
+                lineNumbers: 'off',
+                wordWrap: 'on',
+                quickSuggestions: {
+                    other: true,
+                    comments: false,
+                    strings: false,
+                },
+                quickSuggestionsDelay: 10,
+                suggestOnTriggerCharacters: true,
+                wordBasedSuggestions: 'off',
+                suggest: {
+                    showWords: false,
+                    showSnippets: true,
+                    filterGraceful: true,
+                },
+            });
+
+            // Registrar provider
+            monaco.languages.registerCompletionItemProvider('plaintext', {
+                triggerCharacters: ['(', ',', ' '],
+
+                provideCompletionItems: function(model, position) {
+                    const word = model.getWordUntilPosition(position);
+                    const range = {
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn,
+                    };
+
+                    const wordUpper = word.word.toUpperCase();
+
+                    // Filtrar funciones
+                    const systemSuggestions = SYSTEM_FUNCTIONS
+                        .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+                        .slice(0, 5)
+                        .map(func => ({
+                            label: {
+                                label: func.name,
+                                description: func.signature,
+                            },
+                            kind: monaco.languages.CompletionItemKind.Function,
+                            detail: func.detail,
+                            insertText: func.name + '()',
+                            range: range,
+                            sortText: '!' + func.name,
+                            filterText: func.name,
+                        }));
+
+                    const excelSuggestions = EXCEL_FUNCTIONS
+                        .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+                        .slice(0, 5)
+                        .map(func => ({
+                            label: {
+                                label: func.name,
+                                description: func.signature,
+                            },
+                            kind: monaco.languages.CompletionItemKind.Function,
+                            detail: func.detail,
+                            insertText: func.name + '()',
+                            range: range,
+                            sortText: '!!' + func.name,
+                            filterText: func.name,
+                        }));
+
+                    return {
+                        suggestions: [...systemSuggestions, ...excelSuggestions],
+                        incomplete: false,
+                    };
+                },
+            });
+
+            // Auto-resize
+            window.addEventListener('resize', () => {
+                editor.layout();
+            });
+        });
+
+        function saveAndClose() {
+            const value = editor.getValue();
+            // Enviar mensaje al parent (React)
+            window.parent.postMessage({ type: 'FORMULA_SAVE', value: value }, '*');
+        }
+
+        // Permitir que el parent pida el valor actual
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'GET_VALUE') {
+                const value = editor.getValue();
+                event.source.postMessage({ type: 'FORMULA_VALUE', value: value }, event.origin);
+            }
+        });
+    </script>
+</body>
+</html>
