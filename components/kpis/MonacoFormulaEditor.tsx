@@ -885,7 +885,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
             },
             insertText: func.insertText,
             range: range,
-            sortText: '0' + func.name,
+            sortText: '!' + func.name, // ! da máxima prioridad en el ordenamiento
             filterText: func.name, // Asegurar que Monaco use el nombre completo para filtrar
           }));
 
@@ -902,7 +902,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
             },
             insertText: func.insertText,
             range: range,
-            sortText: '1' + func.name,
+            sortText: '!!' + func.name, // !! para Excel (después de funciones del sistema)
             filterText: func.name, // Asegurar que Monaco use el nombre completo para filtrar
           }));
 
@@ -925,7 +925,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
             },
             insertText: func.insertText,
             range: range,
-            sortText: '0' + func.name,
+            sortText: '!' + func.name, // ! da máxima prioridad
             filterText: func.name,
           }));
 
@@ -942,14 +942,17 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
             },
             insertText: func.insertText,
             range: range,
-            sortText: '1' + func.name,
+            sortText: '!!' + func.name, // !! para Excel
             filterText: func.name,
           }));
 
           suggestions = [...systemSuggestions, ...excelSuggestions];
         }
 
-        return { suggestions };
+        return {
+          suggestions: suggestions,
+          incomplete: false, // IMPORTANTE: false = lista completa, Monaco no buscará más providers
+        };
       },
     });
 
@@ -1156,11 +1159,12 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 comments: false,
                 strings: true,
               },
-              quickSuggestionsDelay: 0,
+              quickSuggestionsDelay: 10, // Pequeño delay para mejor UX
               parameterHints: {
                 enabled: true,
               },
               suggestOnTriggerCharacters: true,
+              acceptSuggestionOnCommitCharacter: false, // Evitar que caracteres especiales confirmen sugerencias
               acceptSuggestionOnEnter: 'on',
               tabCompletion: 'on',
               wordBasedSuggestions: 'off',

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monaco - Solución Final</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .editor-wrapper {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #007acc;
+            margin: 20px 0;
+        }
+        h1 { color: #569cd6; }
+        h2 { color: #4ec9b0; }
+        .info-box {
+            background: #252526;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007acc;
+        }
+        .success { border-left-color: #89d185; background: #1e3a1e; }
+        .warning { border-left-color: #f48771; background: #3a1e1e; }
+        code {
+            background: #1e1e1e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ce9178;
+        }
+        .test-results {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2d2d2d;
+            border-radius: 4px;
+        }
+        .test-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 3px solid #555;
+        }
+        .test-item.pass { border-left-color: #89d185; }
+        .test-item.fail { border-left-color: #f48771; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Monaco Editor - Solución de Autocomplete</h1>
+
+        <div class="info-box warning">
+            <h3>🐛 Problema Detectado</h3>
+            <p>El autocomplete solo funciona con J, K, Y pero no con otras letras como A, S, C, etc.</p>
+            <p><strong>Hipótesis:</strong> Monaco está usando <code>wordBasedSuggestions</code> internamente y filtrando nuestras sugerencias.</p>
+        </div>
+
+        <h2>📝 Editor de Prueba</h2>
+        <div class="info-box">
+            <p><strong>Instrucciones:</strong></p>
+            <ol>
+                <li>Escribe una letra: <code>A</code>, <code>S</code>, <code>C</code></li>
+                <li>Verifica si aparece el dropdown de autocomplete</li>
+                <li>Prueba también con <code>J</code>, <code>K</code>, <code>Y</code> para comparar</li>
+                <li>Mira los logs en la consola del navegador (F12)</li>
+            </ol>
+        </div>
+
+        <div class="editor-wrapper" id="editor"></div>
+
+        <div id="testResults" class="test-results">
+            <h3>🧪 Resultados de Pruebas Automáticas</h3>
+            <div id="testList"></div>
+        </div>
+
+        <div class="info-box success">
+            <h3>💡 Solución Propuesta</h3>
+            <p>Basado en la documentación de Monaco, la solución correcta es:</p>
+            <ol>
+                <li><strong>NO</strong> usar <code>triggerCharacters</code> para letras (solo para símbolos)</li>
+                <li>Asegurar que <code>quickSuggestions.other = true</code></li>
+                <li>Configurar <code>acceptSuggestionOnCommitCharacter: false</code> para evitar conflictos</li>
+                <li>Usar <code>suggest.snippetsPreventQuickSuggestions = false</code></li>
+                <li><strong>CRÍTICO:</strong> Retornar sugerencias con <code>incomplete: false</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+    <script>
+        const TEST_FUNCTIONS = [
+            { name: 'ABS', signature: 'ABS(number)' },
+            { name: 'ACOS', signature: 'ACOS(number)' },
+            { name: 'SUM', signature: 'SUM(numbers...)' },
+            { name: 'SQRT', signature: 'SQRT(number)' },
+            { name: 'COUNT', signature: 'COUNT(values...)' },
+            { name: 'CEILING', signature: 'CEILING(number)' },
+            { name: 'JOHN', signature: 'JOHN()' },
+            { name: 'KEVIN', signature: 'KEVIN()' },
+            { name: 'YELLOW', signature: 'YELLOW()' },
+        ];
+
+        let providerCallCount = 0;
+        let lastWordProvided = '';
+
+        function logTest(letter, hasResults, details = '') {
+            const testList = document.getElementById('testList');
+            const item = document.createElement('div');
+            item.className = `test-item ${hasResults ? 'pass' : 'fail'}`;
+            item.innerHTML = `
+                <strong>${hasResults ? '✅' : '❌'} Letra "${letter}"</strong>:
+                ${hasResults ? 'Sugerencias mostradas' : 'NO aparecieron sugerencias'}
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            testList.appendChild(item);
+        }
+
+        require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@latest/min/vs' } });
+
+        require(['vs/editor/editor.main'], function () {
+            console.log('✅ Monaco Editor cargado');
+
+            const editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '// Escribe aquí: A, S, C, J, K, Y\n',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+
+                // CONFIGURACIÓN CRÍTICA PARA AUTOCOMPLETE
+                quickSuggestions: {
+                    other: true,  // DEBE estar en true
+                    comments: false,
+                    strings: true,
+                },
+                quickSuggestionsDelay: 10, // Reducir delay para testing
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnCommitCharacter: false, // IMPORTANTE
+
+                // Desactivar sugerencias basadas en palabras
+                wordBasedSuggestions: 'off',
+
+                suggest: {
+                    showWords: false,
+                    showSnippets: true,
+                    snippetsPreventQuickSuggestions: false, // IMPORTANTE
+                    filterGraceful: true,
+                    localityBonus: false,
+                    shareSuggestSelections: false,
+                },
+            });
+
+            // Registrar provider CON LA SOLUCIÓN CORRECTA
+            monaco.languages.registerCompletionItemProvider('plaintext', {
+                // Solo caracteres especiales, NO letras
+                triggerCharacters: ['(', ',', ' '],
+
+                provideCompletionItems: function(model, position) {
+                    providerCallCount++;
+
+                    const word = model.getWordUntilPosition(position);
+                    lastWordProvided = word.word;
+
+                    console.log(`%c[Provider #${providerCallCount}] Palabra: "${word.word}"`, 'color: #89d185; font-weight: bold');
+
+                    const range = {
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn,
+                    };
+
+                    const suggestions = TEST_FUNCTIONS.map(func => ({
+                        label: {
+                            label: func.name,
+                            description: func.signature,
+                        },
+                        kind: monaco.languages.CompletionItemKind.Function,
+                        detail: '📊 Función',
+                        insertText: func.name + '()',
+                        range: range,
+                        sortText: '!' + func.name, // ! para que aparezca primero
+                        filterText: func.name,
+                    }));
+
+                    console.log(`%c[Provider] Retornando ${suggestions.length} sugerencias`, 'color: #4ec9b0');
+
+                    // CRÍTICO: Retornar objeto completo con incomplete
+                    return {
+                        suggestions: suggestions,
+                        incomplete: false, // IMPORTANTE: false significa que la lista está completa
+                    };
+                },
+            });
+
+            console.log('✅ CompletionItemProvider registrado');
+
+            // Monitor de teclas presionadas
+            let lastKey = '';
+            editor.onDidChangeModelContent((e) => {
+                const changes = e.changes;
+                if (changes.length > 0) {
+                    const lastChange = changes[changes.length - 1];
+                    if (lastChange.text && lastChange.text.length === 1) {
+                        const char = lastChange.text;
+                        if (char.match(/[A-Za-z]/)) {
+                            lastKey = char;
+                            console.log(`%c[Tecla] Presionada: "${char}"`, 'color: #569cd6; font-weight: bold');
+
+                            // Verificar después de un delay si el provider fue llamado
+                            setTimeout(() => {
+                                if (lastWordProvided.startsWith(char)) {
+                                    logTest(char, true, `Provider llamado con palabra "${lastWordProvided}"`);
+                                } else {
+                                    logTest(char, false, `Provider NO fue llamado o no reconoció la palabra`);
+                                }
+                            }, 500);
+                        }
+                    }
+                }
+            });
+
+            // Info adicional
+            console.log('%c📋 Configuración del editor:', 'color: #ce9178; font-weight: bold');
+            console.log('  - quickSuggestions.other:', editor.getOption(monaco.editor.EditorOption.quickSuggestions).other);
+            console.log('  - wordBasedSuggestions:', editor.getOption(monaco.editor.EditorOption.wordBasedSuggestions));
+            console.log('  - suggestOnTriggerCharacters:', editor.getOption(monaco.editor.EditorOption.suggestOnTriggerCharacters));
+
+            console.log('%c🎯 Listo para probar!', 'color: #89d185; font-size: 16px; font-weight: bold');
+            console.log('Escribe letras en el editor y observa la consola.');
+        });
+    </script>
+</body>
+</html>

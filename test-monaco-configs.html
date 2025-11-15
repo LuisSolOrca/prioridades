@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Monaco Configurations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .test-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #252526;
+            border-radius: 8px;
+        }
+        .editor-wrapper {
+            width: 100%;
+            height: 200px;
+            border: 2px solid #444;
+            margin: 10px 0;
+        }
+        h2 {
+            color: #569cd6;
+            margin-top: 0;
+        }
+        h3 {
+            color: #4ec9b0;
+        }
+        .config-info {
+            background: #1e1e1e;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .result.working {
+            background: #1e3a1e;
+            border-left: 4px solid #89d185;
+        }
+        .result.broken {
+            background: #3a1e1e;
+            border-left: 4px solid #f48771;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Monaco Editor - Test de Configuraciones de Autocomplete</h1>
+
+    <div class="test-container">
+        <h2>Prueba 1: Configuración ACTUAL (la que está fallando)</h2>
+        <div class="config-info">
+triggerCharacters: ['(', '{', ',', ' ', '"', ':']
+quickSuggestions: { other: true }
+wordBasedSuggestions: 'off'
+showWords: false
+        </div>
+        <div class="editor-wrapper" id="editor1"></div>
+        <div id="result1" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Prueba 2: SIN triggerCharacters (provider siempre activo)</h2>
+        <div class="config-info">
+triggerCharacters: undefined
+quickSuggestions: { other: true }
+wordBasedSuggestions: 'off'
+        </div>
+        <div class="editor-wrapper" id="editor2"></div>
+        <div id="result2" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Prueba 3: Todas las letras como triggerCharacters</h2>
+        <div class="config-info">
+triggerCharacters: ['a-z', 'A-Z', '(', '{', ',', ' ']
+quickSuggestions: { other: true }
+wordBasedSuggestions: 'off'
+        </div>
+        <div class="editor-wrapper" id="editor3"></div>
+        <div id="result3" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Prueba 4: quickSuggestions = false, solo manual (Ctrl+Space)</h2>
+        <div class="config-info">
+triggerCharacters: ['(', '{', ',', ' ']
+quickSuggestions: false
+suggestOnTriggerCharacters: true
+        </div>
+        <div class="editor-wrapper" id="editor4"></div>
+        <div id="result4" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Prueba 5: Con suggest.showWords = true (comparación)</h2>
+        <div class="config-info">
+triggerCharacters: ['(', '{', ',', ' ']
+quickSuggestions: { other: true }
+showWords: true
+wordBasedSuggestions: 'currentDocument'
+        </div>
+        <div class="editor-wrapper" id="editor5"></div>
+        <div id="result5" class="result"></div>
+    </div>
+
+    <button onclick="runTests()">🔄 Ejecutar Todas las Pruebas</button>
+    <button onclick="clearResults()">🗑️ Limpiar Resultados</button>
+
+    <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+    <script>
+        const TEST_FUNCTIONS = [
+            { name: 'ABS', signature: 'ABS(number)', detail: '🔢 Matemáticas' },
+            { name: 'SUM', signature: 'SUM(numbers...)', detail: '🔢 Matemáticas' },
+            { name: 'AVERAGE', signature: 'AVERAGE(numbers...)', detail: '📊 Estadísticas' },
+            { name: 'COUNT', signature: 'COUNT(values...)', detail: '📊 Estadísticas' },
+            { name: 'JOHN', signature: 'JOHN()', detail: '🧪 Test J' },
+            { name: 'KEVIN', signature: 'KEVIN()', detail: '🧪 Test K' },
+            { name: 'YELLOW', signature: 'YELLOW()', detail: '🧪 Test Y' },
+        ];
+
+        const editors = {};
+        const providerCallCounts = {};
+
+        function createProvider(testId) {
+            return {
+                provideCompletionItems: function(model, position) {
+                    providerCallCounts[testId] = (providerCallCounts[testId] || 0) + 1;
+
+                    const word = model.getWordUntilPosition(position);
+                    console.log(`[Test ${testId}] Provider called for word: "${word.word}"`);
+
+                    const range = {
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn,
+                    };
+
+                    const suggestions = TEST_FUNCTIONS.map(func => ({
+                        label: {
+                            label: func.name,
+                            description: func.signature,
+                        },
+                        kind: monaco.languages.CompletionItemKind.Function,
+                        detail: func.detail,
+                        insertText: func.name + '()',
+                        range: range,
+                        sortText: '0' + func.name,
+                        filterText: func.name,
+                    }));
+
+                    return { suggestions };
+                },
+            };
+        }
+
+        function updateResult(testId, message, isWorking) {
+            const resultDiv = document.getElementById(`result${testId}`);
+            resultDiv.className = `result ${isWorking ? 'working' : 'broken'}`;
+            resultDiv.innerHTML = `
+                <strong>${isWorking ? '✅ FUNCIONA' : '❌ NO FUNCIONA'}</strong><br>
+                ${message}<br>
+                <small>Provider llamado ${providerCallCounts[testId] || 0} veces</small>
+            `;
+        }
+
+        function runTests() {
+            alert('📝 Escribe las letras A, S, J, K, Y en cada editor y verifica si aparecen sugerencias.');
+        }
+
+        function clearResults() {
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`result${i}`).innerHTML = '';
+                providerCallCounts[i] = 0;
+            }
+        }
+
+        require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@latest/min/vs' } });
+
+        require(['vs/editor/editor.main'], function () {
+            // Test 1: Configuración actual
+            editors[1] = monaco.editor.create(document.getElementById('editor1'), {
+                value: '// Prueba 1: Escribe A, S, J, K, Y\n',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 12,
+                quickSuggestions: { other: true, comments: false, strings: true },
+                suggestOnTriggerCharacters: true,
+                wordBasedSuggestions: 'off',
+                suggest: { showWords: false },
+            });
+            const provider1 = createProvider(1);
+            provider1.triggerCharacters = ['(', '{', ',', ' ', '"', ':'];
+            monaco.languages.registerCompletionItemProvider('plaintext', provider1);
+
+            // Test 2: Sin triggerCharacters
+            editors[2] = monaco.editor.create(document.getElementById('editor2'), {
+                value: '// Prueba 2: Escribe A, S, J, K, Y\n',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 12,
+                quickSuggestions: { other: true, comments: false, strings: true },
+                suggestOnTriggerCharacters: true,
+                wordBasedSuggestions: 'off',
+            });
+            monaco.languages.registerCompletionItemProvider('plaintext', createProvider(2));
+
+            // Test 3: Todas las letras
+            editors[3] = monaco.editor.create(document.getElementById('editor3'), {
+                value: '// Prueba 3: Escribe A, S, J, K, Y\n',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 12,
+                quickSuggestions: { other: true, comments: false, strings: true },
+                suggestOnTriggerCharacters: true,
+                wordBasedSuggestions: 'off',
+            });
+            const provider3 = createProvider(3);
+            const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            provider3.triggerCharacters = [...letters, '(', '{', ',', ' '];
+            monaco.languages.registerCompletionItemProvider('plaintext', provider3);
+
+            // Test 4: Sin quickSuggestions
+            editors[4] = monaco.editor.create(document.getElementById('editor4'), {
+                value: '// Prueba 4: Presiona Ctrl+Space\n',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 12,
+                quickSuggestions: false,
+                suggestOnTriggerCharacters: true,
+            });
+            const provider4 = createProvider(4);
+            provider4.triggerCharacters = ['(', '{', ',', ' '];
+            monaco.languages.registerCompletionItemProvider('plaintext', provider4);
+
+            // Test 5: Con showWords
+            editors[5] = monaco.editor.create(document.getElementById('editor5'), {
+                value: '// Prueba 5: Escribe A, S, J, K, Y\n',
+                language: 'plaintext',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 12,
+                quickSuggestions: { other: true, comments: false, strings: true },
+                suggestOnTriggerCharacters: true,
+                wordBasedSuggestions: 'currentDocument',
+                suggest: { showWords: true },
+            });
+            const provider5 = createProvider(5);
+            provider5.triggerCharacters = ['(', '{', ',', ' '];
+            monaco.languages.registerCompletionItemProvider('plaintext', provider5);
+
+            // Monitor changes for all editors
+            for (let i = 1; i <= 5; i++) {
+                editors[i].onDidChangeModelContent(() => {
+                    const value = editors[i].getValue();
+                    const lastChar = value[value.length - 1];
+                    if (lastChar && lastChar.match(/[A-Za-z]/)) {
+                        setTimeout(() => {
+                            updateResult(i, `Última letra escrita: "${lastChar}"`, providerCallCounts[i] > 0);
+                        }, 500);
+                    }
+                });
+            }
+
+            console.log('✅ Todos los editores creados. Listo para probar!');
+        });
+    </script>
+</body>
+</html>
