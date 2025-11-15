@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { OnMount } from '@monaco-editor/react';
 import { extractVariablesFromFormula } from '@/lib/kpi-utils/formula-parser';
 
 interface MonacoFormulaEditorProps {
