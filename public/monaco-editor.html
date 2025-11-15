@@ -56,17 +56,74 @@
         // Recibir fórmula inicial desde el parent
         const initialValue = new URLSearchParams(window.location.search).get('value') || '';
 
-        // Funciones del sistema (las mismas que en React)
+        // Funciones del sistema con sus parámetros completos
         const SYSTEM_FUNCTIONS = [
-            { name: 'AVG_PRIORITIES', signature: 'AVG_PRIORITIES({filters})', detail: '📊 Sistema' },
-            { name: 'SUM_PRIORITIES', signature: 'SUM_PRIORITIES({filters})', detail: '📊 Sistema' },
-            { name: 'COUNT_PRIORITIES', signature: 'COUNT_PRIORITIES({filters})', detail: '📊 Sistema' },
-            { name: 'COUNT_MILESTONES', signature: 'COUNT_MILESTONES({filters})', detail: '📊 Sistema' },
-            { name: 'COUNT_PROJECTS', signature: 'COUNT_PROJECTS({filters})', detail: '📊 Sistema' },
-            { name: 'COUNT_USERS', signature: 'COUNT_USERS({filters})', detail: '📊 Sistema' },
-            { name: 'COMPLETION_RATE', signature: 'COMPLETION_RATE({filters})', detail: '📊 Sistema' },
-            { name: 'PERCENTAGE', signature: 'PERCENTAGE(value, total)', detail: '📊 Sistema' },
+            {
+                name: 'COUNT_PRIORITIES',
+                signature: 'COUNT_PRIORITIES(filtros?)',
+                detail: '📊 Sistema',
+                params: ['status', 'type', 'userName', 'initiativeName', 'projectName', 'clientName', 'isCarriedOver', 'weekStart', 'weekEnd', 'completionMin', 'completionMax']
+            },
+            {
+                name: 'SUM_PRIORITIES',
+                signature: 'SUM_PRIORITIES(campo, filtros?)',
+                detail: '📊 Sistema',
+                params: ['status', 'type', 'userName', 'initiativeName', 'projectName']
+            },
+            {
+                name: 'AVG_PRIORITIES',
+                signature: 'AVG_PRIORITIES(campo, filtros?)',
+                detail: '📊 Sistema',
+                params: ['status', 'type', 'userName', 'initiativeName', 'projectName']
+            },
+            {
+                name: 'COUNT_MILESTONES',
+                signature: 'COUNT_MILESTONES(filtros?)',
+                detail: '📊 Sistema',
+                params: ['userName', 'projectName', 'isCompleted', 'dueDateStart', 'dueDateEnd']
+            },
+            {
+                name: 'COUNT_PROJECTS',
+                signature: 'COUNT_PROJECTS(filtros?)',
+                detail: '📊 Sistema',
+                params: ['isActive', 'projectManagerName']
+            },
+            {
+                name: 'COUNT_USERS',
+                signature: 'COUNT_USERS(filtros?)',
+                detail: '📊 Sistema',
+                params: ['role', 'area', 'isActive', 'isAreaLeader']
+            },
+            {
+                name: 'COMPLETION_RATE',
+                signature: 'COMPLETION_RATE(filtros?)',
+                detail: '📊 Sistema',
+                params: ['userName', 'initiativeName', 'projectName', 'weekStart', 'weekEnd', 'status']
+            },
+            {
+                name: 'PERCENTAGE',
+                signature: 'PERCENTAGE(parte, total)',
+                detail: '📊 Sistema',
+                params: []
+            }
         ];
+
+        // Datos de autocompletado (se cargarán del servidor)
+        let autocompleteData = null;
+
+        // Cargar datos de autocompletado
+        async function loadAutocompleteData() {
+            try {
+                const response = await fetch('/api/kpis/autocomplete-data');
+                if (response.ok) {
+                    autocompleteData = await response.json();
+                }
+            } catch (error) {
+                console.warn('No se pudieron cargar datos de autocompletado:', error);
+            }
+        }
+
+        loadAutocompleteData();
 
         // Funciones de Excel completas (382 funciones de hot-formula-parser)
         const EXCEL_FUNCTIONS = [
@@ -435,9 +492,9 @@
                 },
             });
 
-            // Registrar provider
+            // Registrar provider con autocompletado de parámetros
             monaco.languages.registerCompletionItemProvider('plaintext', {
-                triggerCharacters: ['(', ',', ' '],
+                triggerCharacters: ['(', ',', ' ', ':', '"', '{'],
 
                 provideCompletionItems: function(model, position) {
                     const word = model.getWordUntilPosition(position);
@@ -448,43 +505,201 @@
                         endColumn: word.endColumn,
                     };
 
+                    const textUntilPosition = model.getValueInRange({
+                        startLineNumber: 1,
+                        startColumn: 1,
+                        endLineNumber: position.lineNumber,
+                        endColumn: position.column,
+                    });
+
+                    const lineText = model.getLineContent(position.lineNumber);
+                    const beforeCursor = lineText.substring(0, position.column - 1);
                     const wordUpper = word.word.toUpperCase();
 
-                    // Filtrar funciones
-                    const systemSuggestions = SYSTEM_FUNCTIONS
-                        .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-                        .slice(0, 5)
-                        .map(func => ({
-                            label: {
-                                label: func.name,
-                                description: func.signature,
-                            },
-                            kind: monaco.languages.CompletionItemKind.Function,
-                            detail: func.detail,
-                            insertText: func.name + '()',
-                            range: range,
-                            sortText: '!' + func.name,
-                            filterText: func.name,
-                        }));
+                    let suggestions = [];
 
-                    const excelSuggestions = EXCEL_FUNCTIONS
-                        .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-                        .slice(0, 5)
-                        .map(func => ({
-                            label: {
-                                label: func.name,
-                                description: func.signature,
-                            },
-                            kind: monaco.languages.CompletionItemKind.Function,
-                            detail: func.detail,
-                            insertText: func.name + '()',
-                            range: range,
-                            sortText: '!!' + func.name,
-                            filterText: func.name,
-                        }));
+                    // Detectar si estamos dentro de una función del sistema
+                    const inSystemFunction = SYSTEM_FUNCTIONS.find(fn => {
+                        const functionStart = textUntilPosition.lastIndexOf(fn.name + '(');
+                        if (functionStart === -1) return false;
+
+                        const afterFunction = textUntilPosition.substring(functionStart);
+                        const openParens = (afterFunction.match(/\(/g) || []).length;
+                        const closeParens = (afterFunction.match(/\)/g) || []).length;
+
+                        return openParens > closeParens;
+                    });
+
+                    // Detectar si estamos dentro de {}
+                    const insideObjectBraces = () => {
+                        let braceCount = 0;
+                        for (let i = textUntilPosition.length - 1; i >= 0; i--) {
+                            if (textUntilPosition[i] === '}') braceCount++;
+                            if (textUntilPosition[i] === '{') {
+                                braceCount--;
+                                if (braceCount < 0) return true;
+                            }
+                        }
+                        return false;
+                    };
+
+                    // Detectar si estamos dentro de ""
+                    const insideQuotes = () => {
+                        const quotesBeforeCursor = (beforeCursor.match(/"/g) || []).length;
+                        return quotesBeforeCursor % 2 === 1;
+                    };
+
+                    if (inSystemFunction && autocompleteData) {
+                        // Estamos dentro de una función del sistema
+
+                        // Detectar si estamos escribiendo el valor de un parámetro (después de ":")
+                        const paramValueMatch = beforeCursor.match(/(\w+):\s*"([^"]*)$/);
+
+                        if (paramValueMatch) {
+                            const paramName = paramValueMatch[1];
+
+                            // Autocompletar valores según el parámetro
+                            if (paramName === 'status') {
+                                suggestions = autocompleteData.statuses.map(status => ({
+                                    label: status.label,
+                                    kind: monaco.languages.CompletionItemKind.EnumMember,
+                                    detail: status.description,
+                                    insertText: status.value,
+                                    range: range,
+                                    sortText: '0' + status.label,
+                                }));
+                            } else if (paramName === 'userName' || paramName === 'projectManagerName') {
+                                suggestions = autocompleteData.users.map(user => ({
+                                    label: user.label,
+                                    kind: monaco.languages.CompletionItemKind.User,
+                                    detail: `Área: ${user.area || 'N/A'}`,
+                                    insertText: user.value,
+                                    range: range,
+                                    sortText: '0' + user.name,
+                                }));
+                            } else if (paramName === 'projectName') {
+                                suggestions = autocompleteData.projects.map(project => ({
+                                    label: project.label,
+                                    kind: monaco.languages.CompletionItemKind.Module,
+                                    detail: 'Proyecto',
+                                    insertText: project.value,
+                                    range: range,
+                                    sortText: '0' + project.name,
+                                }));
+                            } else if (paramName === 'initiativeName') {
+                                suggestions = autocompleteData.initiatives.map(initiative => ({
+                                    label: initiative.label,
+                                    kind: monaco.languages.CompletionItemKind.Class,
+                                    detail: 'Iniciativa Estratégica',
+                                    insertText: initiative.value,
+                                    range: range,
+                                    sortText: '0' + initiative.name,
+                                }));
+                            } else if (paramName === 'clientName') {
+                                suggestions = autocompleteData.clients.map(client => ({
+                                    label: client.label,
+                                    kind: monaco.languages.CompletionItemKind.Reference,
+                                    detail: 'Cliente',
+                                    insertText: client.value,
+                                    range: range,
+                                    sortText: '0' + client.name,
+                                }));
+                            } else if (paramName === 'area') {
+                                suggestions = autocompleteData.areas.map(area => ({
+                                    label: area.label,
+                                    kind: monaco.languages.CompletionItemKind.Folder,
+                                    detail: 'Área',
+                                    insertText: area.value,
+                                    range: range,
+                                    sortText: '0' + area.value,
+                                }));
+                            } else if (paramName === 'role') {
+                                suggestions = autocompleteData.roles.map(role => ({
+                                    label: role.label,
+                                    kind: monaco.languages.CompletionItemKind.EnumMember,
+                                    detail: role.description,
+                                    insertText: role.value,
+                                    range: range,
+                                    sortText: '0' + role.label,
+                                }));
+                            }
+                        } else if (insideObjectBraces() && !insideQuotes()) {
+                            // Estamos dentro de {} pero NO dentro de comillas
+                            // Sugerir nombres de parámetros
+                            const availableParams = inSystemFunction.params;
+
+                            suggestions = availableParams.map(param => {
+                                let detail = 'Parámetro';
+                                let insertText = `${param}: `;
+
+                                if (param.includes('Name')) {
+                                    detail = 'Nombre (autocompletado disponible)';
+                                    insertText = `${param}: ""`;
+                                } else if (param === 'status') {
+                                    detail = 'Estado (autocompletado disponible)';
+                                    insertText = `${param}: ""`;
+                                } else if (param.startsWith('is')) {
+                                    detail = 'Booleano (true/false)';
+                                    insertText = `${param}: true`;
+                                } else if (param.includes('Date') || param.includes('week')) {
+                                    detail = 'Fecha (formato: "YYYY-MM-DD")';
+                                    insertText = `${param}: "2025-01-01"`;
+                                } else if (param.includes('Min') || param.includes('Max')) {
+                                    detail = 'Número (0-100)';
+                                    insertText = `${param}: 0`;
+                                }
+
+                                return {
+                                    label: param,
+                                    kind: monaco.languages.CompletionItemKind.Property,
+                                    detail: detail,
+                                    insertText: insertText,
+                                    range: range,
+                                    sortText: '0' + param,
+                                };
+                            });
+                        }
+                    }
+
+                    // Si no hay sugerencias contextuales, mostrar funciones
+                    if (suggestions.length === 0) {
+                        const systemSuggestions = SYSTEM_FUNCTIONS
+                            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+                            .slice(0, 5)
+                            .map(func => ({
+                                label: {
+                                    label: func.name,
+                                    description: func.signature,
+                                },
+                                kind: monaco.languages.CompletionItemKind.Function,
+                                detail: func.detail,
+                                insertText: func.name + '()',
+                                range: range,
+                                sortText: '!' + func.name,
+                                filterText: func.name,
+                            }));
+
+                        const excelSuggestions = EXCEL_FUNCTIONS
+                            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+                            .slice(0, 5)
+                            .map(func => ({
+                                label: {
+                                    label: func.name,
+                                    description: func.signature,
+                                },
+                                kind: monaco.languages.CompletionItemKind.Function,
+                                detail: func.detail,
+                                insertText: func.name + '()',
+                                range: range,
+                                sortText: '!!' + func.name,
+                                filterText: func.name,
+                            }));
+
+                        suggestions = [...systemSuggestions, ...excelSuggestions];
+                    }
 
                     return {
-                        suggestions: [...systemSuggestions, ...excelSuggestions],
+                        suggestions: suggestions,
                         incomplete: false,
                     };
                 },
