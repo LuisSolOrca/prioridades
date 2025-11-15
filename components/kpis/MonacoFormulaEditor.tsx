@@ -1220,17 +1220,28 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
       <style jsx global>{`
         .monaco-editor .suggest-widget {
           z-index: 9999 !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          display: flex !important;
         }
         .monaco-editor .suggest-widget .monaco-list {
           max-height: 250px !important;
           min-height: 40px !important;
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         }
         .monaco-editor .suggest-widget .monaco-list .monaco-list-row {
           height: auto !important;
           min-height: 24px !important;
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         }
         .monaco-editor .suggest-widget .monaco-list .monaco-list-row .label {
           display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         }
         .monaco-editor .suggest-widget .details {
           display: block !important;
