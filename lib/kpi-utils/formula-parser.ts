@@ -108,14 +108,71 @@ export function extractVariablesFromFormula(formula: string): string[] {
   // Normalizar a mayúsculas para comparación case-insensitive
   const reservedFunctions = new Set(allFunctions.map(f => f.toUpperCase()));
 
+  // Agregar palabras reservadas adicionales que NO son variables
+  const reservedWords = new Set([
+    'TRUE', 'FALSE', 'NULL', 'UNDEFINED',
+    // Nombres de parámetros comunes que no son variables
+    'STATUS', 'TYPE', 'USERNAME', 'INITIATIVENAME', 'PROJECTNAME',
+    'CLIENTNAME', 'ISCARRIEDOVER', 'WEEKSTART', 'WEEKEND',
+    'COMPLETIONMIN', 'COMPLETIONMAX', 'ISCOMPLETED', 'DUEDATESTART',
+    'DUEDATEEND', 'ISACTIVE', 'PROJECTMANAGERNAME', 'ROLE', 'AREA',
+    'ISAREALEADER',
+    // Valores de estado comunes
+    'COMPLETADO', 'EN_TIEMPO', 'EN_RIESGO', 'BLOQUEADO', 'REPROGRAMADO',
+    'ADMIN', 'USER'
+  ]);
+
+  // Primero, eliminar todo el contenido entre comillas para no detectarlo como variables
+  let cleanFormula = formula;
+
+  // Remover strings entre comillas dobles
+  cleanFormula = cleanFormula.replace(/"[^"]*"/g, '""');
+
+  // Remover strings entre comillas simples
+  cleanFormula = cleanFormula.replace(/'[^']*'/g, "''");
+
+  // Remover contenido de objetos {} para evitar detectar nombres de parámetros
+  // Esto es un poco más complejo porque pueden estar anidados
+  let depth = 0;
+  let inObject = false;
+  let cleanedChars: string[] = [];
+
+  for (let i = 0; i < cleanFormula.length; i++) {
+    const char = cleanFormula[i];
+
+    if (char === '{') {
+      depth++;
+      inObject = true;
+      cleanedChars.push(char);
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0) inObject = false;
+      cleanedChars.push(char);
+    } else if (inObject) {
+      // Dentro de un objeto, solo preservar espacios y caracteres especiales
+      if (char === ' ' || char === ',' || char === ':') {
+        cleanedChars.push(char);
+      } else {
+        cleanedChars.push(' '); // Reemplazar con espacio
+      }
+    } else {
+      cleanedChars.push(char);
+    }
+  }
+
+  cleanFormula = cleanedChars.join('');
+
   // Extraer todas las palabras que podrían ser variables
   // Una variable es una palabra que empieza con letra y contiene letras, números o guiones bajos
   const variablePattern = /\b[a-zA-Z_][a-zA-Z0-9_]*\b/g;
-  const matches = formula.match(variablePattern) || [];
+  const matches = cleanFormula.match(variablePattern) || [];
 
-  // Filtrar funciones reservadas y duplicados
+  // Filtrar funciones reservadas, palabras reservadas y duplicados
   const variables = [...new Set(matches)]
-    .filter(word => !reservedFunctions.has(word.toUpperCase()))
+    .filter(word => {
+      const upperWord = word.toUpperCase();
+      return !reservedFunctions.has(upperWord) && !reservedWords.has(upperWord);
+    })
     .sort();
 
   return variables;
