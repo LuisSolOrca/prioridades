@@ -167,10 +167,13 @@ export function extractVariablesFromFormula(formula: string): string[] {
   const variablePattern = /\b[a-zA-Z_][a-zA-Z0-9_]*\b/g;
   const matches = cleanFormula.match(variablePattern) || [];
 
-  // Filtrar funciones reservadas, palabras reservadas y duplicados
+  // Filtrar funciones reservadas, palabras reservadas, palabras de 1 letra y duplicados
   const variables = [...new Set(matches)]
     .filter(word => {
       const upperWord = word.toUpperCase();
+      // Ignorar palabras de 1 sola letra (no son variables válidas)
+      if (word.length === 1) return false;
+      // Filtrar funciones y palabras reservadas
       return !reservedFunctions.has(upperWord) && !reservedWords.has(upperWord);
     })
     .sort();
