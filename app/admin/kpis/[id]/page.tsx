@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import MonacoFormulaEditor from '@/components/kpis/MonacoFormulaEditor';
+import IframeFormulaEditor from '@/components/kpis/IframeFormulaEditor';
 
 interface Initiative {
   _id: string;
@@ -413,7 +413,7 @@ export default function EditKPIPage() {
           {/* Fórmula */}
           <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Fórmula de Cálculo</h2>
-            <MonacoFormulaEditor value={formula} onChange={setFormula} />
+            <IframeFormulaEditor value={formula} onChange={setFormula} />
           </div>
 
           {/* Metas y Tolerancias */}
