@@ -1241,23 +1241,21 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 showKeywords: false,
                 showSnippets: true,
                 insertMode: 'replace',
-                snippetsPreventQuickSuggestions: false, // IMPORTANTE
-                filterGraceful: false, // CAMBIO: false para que no filtre agresivamente
-                showWords: false, // No mostrar palabras aleatorias del documento
-                localityBonus: false, // No dar prioridad a palabras cercanas
+                snippetsPreventQuickSuggestions: false,
+                filterGraceful: true,
+                showWords: false,
+                localityBonus: false,
                 shareSuggestSelections: false,
                 showIcons: true,
                 showFunctions: true,
-                showVariables: false, // IMPORTANTE: no mostrar variables
-                preview: true, // NUEVO: mostrar preview
-                previewMode: 'subwordSmart', // NUEVO: modo de preview
+                showVariables: false,
+                preview: true,
+                previewMode: 'subwordSmart',
+                selectionMode: 'always',
+                showStatusBar: true, // Mostrar barra de estado del suggest
               },
-              quickSuggestions: {
-                other: 'on',  // CAMBIO: 'on' en lugar de true
-                comments: false,
-                strings: false,
-              },
-              quickSuggestionsDelay: 0, // Sin delay
+              quickSuggestions: true, // CAMBIO CRÍTICO: true simple en lugar de objeto
+              quickSuggestionsDelay: 0,
               parameterHints: {
                 enabled: true,
               },
