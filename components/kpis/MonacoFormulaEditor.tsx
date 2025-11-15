@@ -987,8 +987,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
     // DIAGNÓSTICO: Logs detallados para entender qué está pasando
     console.log('%c[Monaco Setup] Editor montado y configurado', 'color: #4ec9b0; font-weight: bold');
-    console.log('  - quickSuggestions.other:', monacoEditor.getOption(monaco.editor.EditorOption.quickSuggestions));
-    console.log('  - wordBasedSuggestions:', monacoEditor.getOption(monaco.editor.EditorOption.wordBasedSuggestions));
+    console.log('  - quickSuggestions:', monacoEditor.getOption(monaco.editor.EditorOption.quickSuggestions));
     console.log('  - suggestOnTriggerCharacters:', monacoEditor.getOption(monaco.editor.EditorOption.suggestOnTriggerCharacters));
 
     // SOLUCIÓN: Forzar que Monaco muestre sugerencias incluso con 1 carácter
