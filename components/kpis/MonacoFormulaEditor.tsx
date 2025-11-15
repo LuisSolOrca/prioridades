@@ -621,6 +621,13 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
       triggerCharacters: ['(', ',', ' ', ':', '"', '{'], // Solo símbolos, NO letras
       provideCompletionItems: (model, position) => {
         const word = model.getWordUntilPosition(position);
+
+        // LOG: Provider fue llamado
+        console.log('%c[Provider Called]', 'color: #d7ba7d; font-weight: bold', {
+          word: word.word,
+          position: { line: position.lineNumber, column: position.column },
+        });
+
         const range = {
           startLineNumber: position.lineNumber,
           endLineNumber: position.lineNumber,
@@ -954,6 +961,13 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           suggestions = [...systemSuggestions, ...excelSuggestions];
         }
 
+        // LOG: Qué estamos retornando
+        console.log('%c[Provider Return]', 'color: #89d185; font-weight: bold', {
+          suggestionCount: suggestions.length,
+          firstFew: suggestions.slice(0, 3).map(s => typeof s.label === 'object' ? s.label.label : s.label),
+          incomplete: false,
+        });
+
         return {
           suggestions: suggestions,
           incomplete: false, // IMPORTANTE: false = lista completa, Monaco no buscará más providers
@@ -971,25 +985,64 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
       },
     });
 
+    // DIAGNÓSTICO: Logs detallados para entender qué está pasando
+    console.log('%c[Monaco Setup] Editor montado y configurado', 'color: #4ec9b0; font-weight: bold');
+    console.log('  - quickSuggestions.other:', monacoEditor.getOption(monaco.editor.EditorOption.quickSuggestions));
+    console.log('  - wordBasedSuggestions:', monacoEditor.getOption(monaco.editor.EditorOption.wordBasedSuggestions));
+    console.log('  - suggestOnTriggerCharacters:', monacoEditor.getOption(monaco.editor.EditorOption.suggestOnTriggerCharacters));
+
     // SOLUCIÓN: Forzar que Monaco muestre sugerencias incluso con 1 carácter
-    // Sobrescribir el comportamiento por defecto
-    monacoEditor.onDidChangeModelContent(() => {
+    let lastTriggerTime = 0;
+    monacoEditor.onDidChangeModelContent((e) => {
+      // Log de cambios
+      const changes = e.changes;
+      if (changes.length > 0) {
+        const lastChange = changes[changes.length - 1];
+        console.log('%c[Monaco Change]', 'color: #569cd6; font-weight: bold', {
+          text: lastChange.text,
+          isLetter: /[a-zA-Z]/.test(lastChange.text),
+        });
+      }
+
       // Obtener la posición del cursor
       const position = monacoEditor.getPosition();
-      if (!position) return;
+      if (!position) {
+        console.log('%c[Monaco] No position', 'color: #f48771');
+        return;
+      }
 
       const model = monacoEditor.getModel();
-      if (!model) return;
+      if (!model) {
+        console.log('%c[Monaco] No model', 'color: #f48771');
+        return;
+      }
 
       // Obtener la palabra actual
       const word = model.getWordUntilPosition(position);
+      console.log('%c[Monaco Word]', 'color: #ce9178', {
+        word: word.word,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
+        length: word.word.length,
+      });
 
-      // Si hay una palabra (aunque sea de 1 letra) y no hay widget visible
+      // Si hay una palabra (aunque sea de 1 letra)
       if (word.word.length > 0 && word.word.length <= 2) {
+        // Evitar triggers repetidos demasiado rápido
+        const now = Date.now();
+        if (now - lastTriggerTime < 50) {
+          console.log('%c[Monaco] Trigger skipped (too soon)', 'color: #f48771');
+          return;
+        }
+        lastTriggerTime = now;
+
         // Forzar trigger de sugerencias
+        console.log('%c[Monaco] ⚡ TRIGGERING SUGGEST', 'color: #89d185; font-weight: bold', word.word);
         setTimeout(() => {
           monacoEditor.trigger('keyboard', 'editor.action.triggerSuggest', {});
         }, 1);
+      } else {
+        console.log('%c[Monaco] No trigger needed', 'color: #888', 'word length:', word.word.length);
       }
     });
   };
