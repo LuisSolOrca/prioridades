@@ -187,19 +187,131 @@ PERCENTAGE(COUNT_PRIORITIES({status: "COMPLETADO"}), COUNT_PRIORITIES())`,
   }
 ];
 
-// Funciones matemáticas y estadísticas
+// Funciones matemáticas y estadísticas de Excel/hot-formula-parser
 const EXCEL_FUNCTIONS = [
+  // Matemáticas Básicas
   { name: 'SUM', signature: 'SUM(...values)', description: 'Suma de valores', insertText: 'SUM()', detail: '🔢 Matemática' },
-  { name: 'AVERAGE', signature: 'AVERAGE(...values)', description: 'Promedio', insertText: 'AVERAGE()', detail: '📊 Estadística' },
+  { name: 'AVERAGE', signature: 'AVERAGE(...values)', description: 'Promedio aritmético', insertText: 'AVERAGE()', detail: '📊 Estadística' },
+  { name: 'AVERAGEA', signature: 'AVERAGEA(...values)', description: 'Promedio incluyendo texto y lógicos', insertText: 'AVERAGEA()', detail: '📊 Estadística' },
   { name: 'MAX', signature: 'MAX(...values)', description: 'Valor máximo', insertText: 'MAX()', detail: '🔢 Matemática' },
   { name: 'MIN', signature: 'MIN(...values)', description: 'Valor mínimo', insertText: 'MIN()', detail: '🔢 Matemática' },
-  { name: 'IF', signature: 'IF(condition, ifTrue, ifFalse)', description: 'Condicional', insertText: 'IF(, , )', detail: '🔀 Lógica' },
-  { name: 'ROUND', signature: 'ROUND(number, decimals)', description: 'Redondear', insertText: 'ROUND(, 2)', detail: '🔢 Matemática' },
+  { name: 'MAXA', signature: 'MAXA(...values)', description: 'Máximo incluyendo texto y lógicos', insertText: 'MAXA()', detail: '🔢 Matemática' },
+  { name: 'MINA', signature: 'MINA(...values)', description: 'Mínimo incluyendo texto y lógicos', insertText: 'MINA()', detail: '🔢 Matemática' },
+  { name: 'PRODUCT', signature: 'PRODUCT(...values)', description: 'Multiplicación de valores', insertText: 'PRODUCT()', detail: '🔢 Matemática' },
+  { name: 'SUMPRODUCT', signature: 'SUMPRODUCT(array1, array2, ...)', description: 'Suma de productos', insertText: 'SUMPRODUCT(, )', detail: '🔢 Matemática' },
+
+  // Redondeo
+  { name: 'ROUND', signature: 'ROUND(number, decimals)', description: 'Redondear a decimales', insertText: 'ROUND(, 2)', detail: '🔢 Matemática' },
+  { name: 'ROUNDUP', signature: 'ROUNDUP(number, decimals)', description: 'Redondear hacia arriba', insertText: 'ROUNDUP(, 2)', detail: '🔢 Matemática' },
+  { name: 'ROUNDDOWN', signature: 'ROUNDDOWN(number, decimals)', description: 'Redondear hacia abajo', insertText: 'ROUNDDOWN(, 2)', detail: '🔢 Matemática' },
+  { name: 'CEILING', signature: 'CEILING(number)', description: 'Redondear al entero superior', insertText: 'CEILING()', detail: '🔢 Matemática' },
+  { name: 'FLOOR', signature: 'FLOOR(number)', description: 'Redondear al entero inferior', insertText: 'FLOOR()', detail: '🔢 Matemática' },
+  { name: 'INT', signature: 'INT(number)', description: 'Parte entera', insertText: 'INT()', detail: '🔢 Matemática' },
+  { name: 'TRUNC', signature: 'TRUNC(number, decimals)', description: 'Truncar decimales', insertText: 'TRUNC()', detail: '🔢 Matemática' },
+
+  // Valor Absoluto y Signos
   { name: 'ABS', signature: 'ABS(number)', description: 'Valor absoluto', insertText: 'ABS()', detail: '🔢 Matemática' },
+  { name: 'SIGN', signature: 'SIGN(number)', description: 'Signo del número (-1, 0, 1)', insertText: 'SIGN()', detail: '🔢 Matemática' },
+
+  // Potencias y Raíces
   { name: 'SQRT', signature: 'SQRT(number)', description: 'Raíz cuadrada', insertText: 'SQRT()', detail: '🔢 Matemática' },
-  { name: 'POWER', signature: 'POWER(base, exp)', description: 'Potencia', insertText: 'POWER(, 2)', detail: '🔢 Matemática' },
+  { name: 'POWER', signature: 'POWER(base, exponent)', description: 'Potencia', insertText: 'POWER(, 2)', detail: '🔢 Matemática' },
+  { name: 'EXP', signature: 'EXP(number)', description: 'Exponencial e^x', insertText: 'EXP()', detail: '🔢 Matemática' },
+
+  // Logaritmos
+  { name: 'LOG', signature: 'LOG(number, base)', description: 'Logaritmo en base especificada', insertText: 'LOG(, 10)', detail: '🔢 Matemática' },
+  { name: 'LOG10', signature: 'LOG10(number)', description: 'Logaritmo base 10', insertText: 'LOG10()', detail: '🔢 Matemática' },
+  { name: 'LN', signature: 'LN(number)', description: 'Logaritmo natural (base e)', insertText: 'LN()', detail: '🔢 Matemática' },
+
+  // Trigonométricas
+  { name: 'SIN', signature: 'SIN(angle)', description: 'Seno (ángulo en radianes)', insertText: 'SIN()', detail: '📐 Trigonométrica' },
+  { name: 'COS', signature: 'COS(angle)', description: 'Coseno (ángulo en radianes)', insertText: 'COS()', detail: '📐 Trigonométrica' },
+  { name: 'TAN', signature: 'TAN(angle)', description: 'Tangente (ángulo en radianes)', insertText: 'TAN()', detail: '📐 Trigonométrica' },
+  { name: 'ASIN', signature: 'ASIN(number)', description: 'Arcoseno', insertText: 'ASIN()', detail: '📐 Trigonométrica' },
+  { name: 'ACOS', signature: 'ACOS(number)', description: 'Arcocoseno', insertText: 'ACOS()', detail: '📐 Trigonométrica' },
+  { name: 'ATAN', signature: 'ATAN(number)', description: 'Arcotangente', insertText: 'ATAN()', detail: '📐 Trigonométrica' },
+  { name: 'ATAN2', signature: 'ATAN2(x, y)', description: 'Arcotangente de y/x', insertText: 'ATAN2(, )', detail: '📐 Trigonométrica' },
+  { name: 'SINH', signature: 'SINH(number)', description: 'Seno hiperbólico', insertText: 'SINH()', detail: '📐 Trigonométrica' },
+  { name: 'COSH', signature: 'COSH(number)', description: 'Coseno hiperbólico', insertText: 'COSH()', detail: '📐 Trigonométrica' },
+  { name: 'TANH', signature: 'TANH(number)', description: 'Tangente hiperbólica', insertText: 'TANH()', detail: '📐 Trigonométrica' },
+
+  // Estadísticas
+  { name: 'COUNT', signature: 'COUNT(...values)', description: 'Contar valores numéricos', insertText: 'COUNT()', detail: '📊 Estadística' },
+  { name: 'COUNTA', signature: 'COUNTA(...values)', description: 'Contar valores no vacíos', insertText: 'COUNTA()', detail: '📊 Estadística' },
+  { name: 'COUNTBLANK', signature: 'COUNTBLANK(range)', description: 'Contar celdas vacías', insertText: 'COUNTBLANK()', detail: '📊 Estadística' },
+  { name: 'COUNTIF', signature: 'COUNTIF(range, criteria)', description: 'Contar con criterio', insertText: 'COUNTIF(, )', detail: '📊 Estadística' },
+  { name: 'MEDIAN', signature: 'MEDIAN(...values)', description: 'Mediana', insertText: 'MEDIAN()', detail: '📊 Estadística' },
+  { name: 'MODE', signature: 'MODE(...values)', description: 'Moda (valor más frecuente)', insertText: 'MODE()', detail: '📊 Estadística' },
+  { name: 'STDEV', signature: 'STDEV(...values)', description: 'Desviación estándar (muestra)', insertText: 'STDEV()', detail: '📊 Estadística' },
+  { name: 'STDEVP', signature: 'STDEVP(...values)', description: 'Desviación estándar (población)', insertText: 'STDEVP()', detail: '📊 Estadística' },
+  { name: 'VAR', signature: 'VAR(...values)', description: 'Varianza (muestra)', insertText: 'VAR()', detail: '📊 Estadística' },
+  { name: 'VARP', signature: 'VARP(...values)', description: 'Varianza (población)', insertText: 'VARP()', detail: '📊 Estadística' },
+  { name: 'PERCENTILE', signature: 'PERCENTILE(array, k)', description: 'Percentil (k entre 0 y 1)', insertText: 'PERCENTILE(, 0.95)', detail: '📊 Estadística' },
+  { name: 'QUARTILE', signature: 'QUARTILE(array, quart)', description: 'Cuartil (1, 2, 3)', insertText: 'QUARTILE(, 1)', detail: '📊 Estadística' },
+
+  // Lógicas
+  { name: 'IF', signature: 'IF(condition, valueIfTrue, valueIfFalse)', description: 'Condicional', insertText: 'IF(, , )', detail: '🔀 Lógica' },
+  { name: 'AND', signature: 'AND(...conditions)', description: 'Y lógico', insertText: 'AND()', detail: '🔀 Lógica' },
+  { name: 'OR', signature: 'OR(...conditions)', description: 'O lógico', insertText: 'OR()', detail: '🔀 Lógica' },
+  { name: 'NOT', signature: 'NOT(logical)', description: 'Negación lógica', insertText: 'NOT()', detail: '🔀 Lógica' },
+  { name: 'XOR', signature: 'XOR(...conditions)', description: 'O exclusivo', insertText: 'XOR()', detail: '🔀 Lógica' },
+  { name: 'TRUE', signature: 'TRUE()', description: 'Valor verdadero', insertText: 'TRUE()', detail: '🔀 Lógica' },
+  { name: 'FALSE', signature: 'FALSE()', description: 'Valor falso', insertText: 'FALSE()', detail: '🔀 Lógica' },
+
+  // Fechas
   { name: 'TODAY', signature: 'TODAY()', description: 'Fecha actual', insertText: 'TODAY()', detail: '📅 Fecha' },
+  { name: 'NOW', signature: 'NOW()', description: 'Fecha y hora actual', insertText: 'NOW()', detail: '📅 Fecha' },
+  { name: 'DATE', signature: 'DATE(year, month, day)', description: 'Crear fecha', insertText: 'DATE(2025, 1, 15)', detail: '📅 Fecha' },
+  { name: 'TIME', signature: 'TIME(hour, minute, second)', description: 'Crear hora', insertText: 'TIME(12, 30, 0)', detail: '📅 Fecha' },
+  { name: 'YEAR', signature: 'YEAR(date)', description: 'Año de una fecha', insertText: 'YEAR()', detail: '📅 Fecha' },
+  { name: 'MONTH', signature: 'MONTH(date)', description: 'Mes de una fecha', insertText: 'MONTH()', detail: '📅 Fecha' },
+  { name: 'DAY', signature: 'DAY(date)', description: 'Día de una fecha', insertText: 'DAY()', detail: '📅 Fecha' },
+  { name: 'HOUR', signature: 'HOUR(time)', description: 'Hora', insertText: 'HOUR()', detail: '📅 Fecha' },
+  { name: 'MINUTE', signature: 'MINUTE(time)', description: 'Minutos', insertText: 'MINUTE()', detail: '📅 Fecha' },
+  { name: 'SECOND', signature: 'SECOND(time)', description: 'Segundos', insertText: 'SECOND()', detail: '📅 Fecha' },
+  { name: 'WEEKDAY', signature: 'WEEKDAY(date)', description: 'Día de la semana (1-7)', insertText: 'WEEKDAY()', detail: '📅 Fecha' },
   { name: 'DAYS', signature: 'DAYS(endDate, startDate)', description: 'Días entre fechas', insertText: 'DAYS(, )', detail: '📅 Fecha' },
+  { name: 'DAYS360', signature: 'DAYS360(startDate, endDate)', description: 'Días entre fechas (año 360)', insertText: 'DAYS360(, )', detail: '📅 Fecha' },
+  { name: 'EDATE', signature: 'EDATE(startDate, months)', description: 'Sumar/restar meses', insertText: 'EDATE(, 3)', detail: '📅 Fecha' },
+  { name: 'EOMONTH', signature: 'EOMONTH(startDate, months)', description: 'Último día del mes', insertText: 'EOMONTH(, 0)', detail: '📅 Fecha' },
+  { name: 'NETWORKDAYS', signature: 'NETWORKDAYS(startDate, endDate)', description: 'Días laborables', insertText: 'NETWORKDAYS(, )', detail: '📅 Fecha' },
+  { name: 'WORKDAY', signature: 'WORKDAY(startDate, days)', description: 'Fecha laboral futura', insertText: 'WORKDAY(, )', detail: '📅 Fecha' },
+
+  // Texto
+  { name: 'CONCATENATE', signature: 'CONCATENATE(...texts)', description: 'Concatenar textos', insertText: 'CONCATENATE()', detail: '📝 Texto' },
+  { name: 'CONCAT', signature: 'CONCAT(...texts)', description: 'Concatenar (moderno)', insertText: 'CONCAT()', detail: '📝 Texto' },
+  { name: 'UPPER', signature: 'UPPER(text)', description: 'Convertir a mayúsculas', insertText: 'UPPER()', detail: '📝 Texto' },
+  { name: 'LOWER', signature: 'LOWER(text)', description: 'Convertir a minúsculas', insertText: 'LOWER()', detail: '📝 Texto' },
+  { name: 'PROPER', signature: 'PROPER(text)', description: 'Capitalizar cada palabra', insertText: 'PROPER()', detail: '📝 Texto' },
+  { name: 'LEN', signature: 'LEN(text)', description: 'Longitud del texto', insertText: 'LEN()', detail: '📝 Texto' },
+  { name: 'LEFT', signature: 'LEFT(text, numChars)', description: 'Caracteres desde izquierda', insertText: 'LEFT(, )', detail: '📝 Texto' },
+  { name: 'RIGHT', signature: 'RIGHT(text, numChars)', description: 'Caracteres desde derecha', insertText: 'RIGHT(, )', detail: '📝 Texto' },
+  { name: 'MID', signature: 'MID(text, start, numChars)', description: 'Caracteres del medio', insertText: 'MID(, , )', detail: '📝 Texto' },
+  { name: 'TRIM', signature: 'TRIM(text)', description: 'Eliminar espacios extras', insertText: 'TRIM()', detail: '📝 Texto' },
+  { name: 'SUBSTITUTE', signature: 'SUBSTITUTE(text, oldText, newText)', description: 'Sustituir texto', insertText: 'SUBSTITUTE(, , )', detail: '📝 Texto' },
+  { name: 'REPLACE', signature: 'REPLACE(oldText, start, numChars, newText)', description: 'Reemplazar caracteres', insertText: 'REPLACE(, , , )', detail: '📝 Texto' },
+  { name: 'FIND', signature: 'FIND(findText, withinText)', description: 'Buscar texto (case sensitive)', insertText: 'FIND(, )', detail: '📝 Texto' },
+  { name: 'SEARCH', signature: 'SEARCH(findText, withinText)', description: 'Buscar texto (case insensitive)', insertText: 'SEARCH(, )', detail: '📝 Texto' },
+
+  // Búsqueda y Referencia
+  { name: 'CHOOSE', signature: 'CHOOSE(index, value1, value2, ...)', description: 'Elegir valor por índice', insertText: 'CHOOSE(, , )', detail: '🔍 Búsqueda' },
+  { name: 'INDEX', signature: 'INDEX(array, row, col)', description: 'Valor en posición', insertText: 'INDEX(, , )', detail: '🔍 Búsqueda' },
+  { name: 'MATCH', signature: 'MATCH(lookupValue, lookupArray, matchType)', description: 'Posición de valor', insertText: 'MATCH(, , 0)', detail: '🔍 Búsqueda' },
+
+  // Conversión
+  { name: 'TEXT', signature: 'TEXT(value, format)', description: 'Convertir a texto con formato', insertText: 'TEXT(, )', detail: '🔄 Conversión' },
+  { name: 'VALUE', signature: 'VALUE(text)', description: 'Convertir texto a número', insertText: 'VALUE()', detail: '🔄 Conversión' },
+  { name: 'NUMBERVALUE', signature: 'NUMBERVALUE(text)', description: 'Convertir a número', insertText: 'NUMBERVALUE()', detail: '🔄 Conversión' },
+
+  // Utilidades
+  { name: 'ISBLANK', signature: 'ISBLANK(value)', description: 'Verificar si está vacío', insertText: 'ISBLANK()', detail: '✅ Validación' },
+  { name: 'ISNUMBER', signature: 'ISNUMBER(value)', description: 'Verificar si es número', insertText: 'ISNUMBER()', detail: '✅ Validación' },
+  { name: 'ISTEXT', signature: 'ISTEXT(value)', description: 'Verificar si es texto', insertText: 'ISTEXT()', detail: '✅ Validación' },
+  { name: 'ISERROR', signature: 'ISERROR(value)', description: 'Verificar si hay error', insertText: 'ISERROR()', detail: '✅ Validación' },
+  { name: 'IFERROR', signature: 'IFERROR(value, valueIfError)', description: 'Manejar errores', insertText: 'IFERROR(, )', detail: '✅ Validación' },
+  { name: 'MOD', signature: 'MOD(number, divisor)', description: 'Resto de división', insertText: 'MOD(, )', detail: '🔢 Matemática' },
+  { name: 'RAND', signature: 'RAND()', description: 'Número aleatorio entre 0 y 1', insertText: 'RAND()', detail: '🎲 Aleatorio' },
+  { name: 'RANDBETWEEN', signature: 'RANDBETWEEN(bottom, top)', description: 'Entero aleatorio en rango', insertText: 'RANDBETWEEN(1, 100)', detail: '🎲 Aleatorio' },
 ];
 
 export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEditorProps) {
