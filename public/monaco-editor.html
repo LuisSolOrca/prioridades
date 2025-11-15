@@ -817,41 +817,53 @@ PERCENTAGE(COUNT_PRIORITIES({status: "COMPLETADO"}), COUNT_PRIORITIES())`,
                     // Si no hay sugerencias contextuales, mostrar funciones
                     if (suggestions.length === 0) {
                         const systemSuggestions = SYSTEM_FUNCTIONS
-                            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-                            .slice(0, 5)
-                            .map(func => ({
-                                label: {
-                                    label: func.name,
-                                    description: func.signature,
-                                },
-                                kind: monaco.languages.CompletionItemKind.Function,
-                                detail: func.detail,
-                                documentation: {
-                                    value: func.documentation || func.description,
-                                    isTrusted: true,
-                                    supportHtml: false
-                                },
-                                insertText: func.name + '()',
-                                range: range,
-                                sortText: '!' + func.name,
-                                filterText: func.name,
-                            }));
+                            .filter(func => wordUpper === '' || func.name.toUpperCase().includes(wordUpper))
+                            .map(func => {
+                                // Coincidencia exacta = 0, empieza con = 1, contiene = 2
+                                const exactMatch = func.name.toUpperCase() === wordUpper;
+                                const startsWithMatch = func.name.toUpperCase().startsWith(wordUpper);
+                                const priority = exactMatch ? '0' : (startsWithMatch ? '1' : '2');
+
+                                return {
+                                    label: {
+                                        label: func.name,
+                                        description: func.signature,
+                                    },
+                                    kind: monaco.languages.CompletionItemKind.Function,
+                                    detail: func.detail,
+                                    documentation: {
+                                        value: func.documentation || func.description,
+                                        isTrusted: true,
+                                        supportHtml: false
+                                    },
+                                    insertText: func.name + '()',
+                                    range: range,
+                                    sortText: priority + '!' + func.name,
+                                    filterText: func.name,
+                                };
+                            });
 
                         const excelSuggestions = EXCEL_FUNCTIONS
-                            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-                            .slice(0, 5)
-                            .map(func => ({
-                                label: {
-                                    label: func.name,
-                                    description: func.signature,
-                                },
-                                kind: monaco.languages.CompletionItemKind.Function,
-                                detail: func.detail,
-                                insertText: func.name + '()',
-                                range: range,
-                                sortText: '!!' + func.name,
-                                filterText: func.name,
-                            }));
+                            .filter(func => wordUpper === '' || func.name.toUpperCase().includes(wordUpper))
+                            .map(func => {
+                                // Coincidencia exacta = 0, empieza con = 1, contiene = 2
+                                const exactMatch = func.name.toUpperCase() === wordUpper;
+                                const startsWithMatch = func.name.toUpperCase().startsWith(wordUpper);
+                                const priority = exactMatch ? '0' : (startsWithMatch ? '1' : '2');
+
+                                return {
+                                    label: {
+                                        label: func.name,
+                                        description: func.signature,
+                                    },
+                                    kind: monaco.languages.CompletionItemKind.Function,
+                                    detail: func.detail,
+                                    insertText: func.name + '()',
+                                    range: range,
+                                    sortText: priority + '!!' + func.name,
+                                    filterText: func.name,
+                                };
+                            });
 
                         suggestions = [...systemSuggestions, ...excelSuggestions];
                     }
