@@ -965,6 +965,30 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         'editor.background': '#1f2937',
       },
     });
+
+    // CRÍTICO: Forzar trigger de sugerencias cuando se escribe una letra sola
+    // Monaco por defecto requiere 2+ caracteres para activar quickSuggestions
+    monacoEditor.onDidChangeModelContent((e) => {
+      const changes = e.changes;
+      if (changes.length > 0) {
+        const lastChange = changes[changes.length - 1];
+        // Si se agregó un solo carácter que es una letra
+        if (lastChange.text && lastChange.text.length === 1 && /[a-zA-Z]/.test(lastChange.text)) {
+          const model = monacoEditor.getModel();
+          if (model) {
+            const position = monacoEditor.getPosition();
+            if (position) {
+              const word = model.getWordUntilPosition(position);
+              // Si la palabra actual es de 1 solo carácter, forzar trigger
+              if (word.word.length === 1) {
+                // Trigger sugerencias manualmente
+                monacoEditor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+              }
+            }
+          }
+        }
+      }
+    });
   };
 
   const validateFormula = () => {
@@ -1153,6 +1177,9 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 showWords: false, // No mostrar palabras aleatorias del documento
                 localityBonus: false, // No dar prioridad a palabras cercanas
                 shareSuggestSelections: false,
+                showIcons: true,
+                showFunctions: true,
+                showVariables: false, // IMPORTANTE: no mostrar variables
               },
               quickSuggestions: {
                 other: true,
