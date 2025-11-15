@@ -1,5 +1,163 @@
 import jsPDF from 'jspdf';
 
+// Funciones de Excel disponibles (importadas desde el componente)
+const EXCEL_FUNCTIONS_DATA = `
+## Funciones de Excel Soportadas
+
+El sistema soporta 382 funciones estándar de Excel a través de la librería hot-formula-parser.
+Estas funciones se pueden combinar con las Funciones del Sistema para crear fórmulas complejas.
+
+### Categorías de Funciones
+
+#### [MATEMATICAS] Matemáticas y Trigonométricas
+ABS, ACOS, ACOSH, ACOT, ACOTH, ASIN, ASINH, ATAN, ATAN2, ATANH, CEILING, COS, COSH, COT, COTH, CSC, CSCH, DEGREES, EVEN, EXP, FACT, FLOOR, GCD, INT, LCM, LN, LOG, LOG10, MOD, MROUND, ODD, PI, POWER, PRODUCT, QUOTIENT, RADIANS, RAND, RANDBETWEEN, ROUND, ROUNDDOWN, ROUNDUP, SEC, SECH, SIGN, SIN, SINH, SQRT, SQRTPI, SUM, SUMIF, SUMIFS, SUMPRODUCT, SUMSQ, SUMX2MY2, SUMX2PY2, SUMXMY2, TAN, TANH, TRUNC
+
+#### [ESTADISTICAS] Estadísticas
+AVEDEV, AVERAGE, AVERAGEA, AVERAGEIF, AVERAGEIFS, BINOM.DIST, BINOMDIST, CORREL, COUNT, COUNTA, COUNTBLANK, COUNTIF, COUNTIFS, COVARIANCE.P, COVARIANCE.S, DEVSQ, EXPON.DIST, EXPONDIST, FISHER, FISHERINV, FORECAST, FREQUENCY, GAMMA, GAMMA.DIST, GAMMADIST, GAMMA.INV, GAMMAINV, GAMMALN, GAUSS, GEOMEAN, HARMEAN, HYPGEOM.DIST, HYPGEOMDIST, INTERCEPT, KURT, LARGE, LOGNORM.DIST, LOGNORMDIST, LOGNORM.INV, LOGNORMINV, MAX, MAXA, MAXIFS, MEDIAN, MIN, MINA, MINIFS, MODE, MODE.MULT, MODE.SNGL, NEGBINOM.DIST, NEGBINOMDIST, NORM.DIST, NORMDIST, NORM.INV, NORMINV, NORM.S.DIST, NORMSDIST, NORM.S.INV, NORMSINV, PEARSON, PERCENTILE, PERCENTILE.EXC, PERCENTILE.INC, PERCENTRANK, PERCENTRANK.EXC, PERCENTRANK.INC, PERMUT, PERMUTATIONA, PHI, POISSON, POISSON.DIST, PROB, QUARTILE, QUARTILE.EXC, QUARTILE.INC, RANK, RANK.AVG, RANK.EQ, RSQ, SKEW, SKEW.P, SLOPE, SMALL, STANDARDIZE, STDEV, STDEV.P, STDEV.S, STDEVA, STDEVP, STDEVPA, STDEVS, STEYX, T.DIST, T.DIST.2T, T.DIST.RT, T.INV, T.INV.2T, TDIST, TDIST2T, TDISTRT, TINV, TINV2T, TREND, TRIMMEAN, VAR.P, VAR.S, VARA, VARP, VARPA, VARS, WEIBULL.DIST, WEIBULLDIST
+
+#### [LOGICAS] Lógicas
+AND, FALSE, IF, IFERROR, IFNA, IFS, NOT, OR, SWITCH, TRUE, XOR
+
+#### [TEXTO] Texto
+CHAR, CLEAN, CODE, CONCATENATE, EXACT, FIND, LEFT, LEN, LOWER, MID, PROPER, REPLACE, REPT, RIGHT, SEARCH, SUBSTITUTE, T, TEXT, TRIM, UNICHAR, UNICODE, UPPER, VALUE
+
+#### [FECHAS] Fechas y Horas
+DATE, DATEDIF, DATEVALUE, DAY, DAYS, DAYS360, EDATE, EOMONTH, HOUR, ISOWEEKNUM, MINUTE, MONTH, NETWORKDAYS, NOW, SECOND, TIME, TIMEVALUE, TODAY, WEEKDAY, WEEKNUM, WORKDAY, YEAR, YEARFRAC
+
+#### [BUSQUEDA] Búsqueda y Referencia
+CHOOSE, COLUMN, COLUMNS, HLOOKUP, INDEX, LOOKUP, MATCH, ROW, ROWS, VLOOKUP
+
+#### [FINANZAS] Financieras
+ACCRINT, CUMIPMT, CUMPRINC, DB, DDB, DOLLARDE, DOLLARFR, EFFECT, FV, FVSCHEDULE, IPMT, IRR, ISPMT, MIRR, NOMINAL, NPER, NPV, PMT, PPMT, PV, RATE, RRI, SLN, SYD, TBILLEQ, TBILLPRICE, TBILLYIELD, XIRR, XNPV
+
+#### [DISTRIBUCIONES] Distribuciones
+BETA.DIST, BETADIST, BETA.INV, BETAINV, CHISQ.DIST, CHISQ.DIST.RT, CHISQ.INV, CHISQ.INV.RT, CONFIDENCE, CONFIDENCE.NORM, CONFIDENCE.T, F.DIST, F.DIST.RT, F.INV, F.INV.RT, FDIST, FDISTRT, FINV, FINVRT
+
+#### [UTILIDADES] Utilidades
+ARRAYTOTEXT, BASE, CELL, DECIMAL, DELTA, ERF, ERFC, GESTEP, ISBLANK, ISERR, ISERROR, ISEVEN, ISLOGICAL, ISNA, ISNONTEXT, ISNUMBER, ISODD, ISREF, ISTEXT, N, NA, SERIESSUM, SHEET, SHEETS, TRANSPOSE, UNIQUE
+
+### Ejemplos de Uso con Funciones de Excel
+
+#### Combinando Funciones del Sistema con Excel
+
+1. Promedio de completitud redondeado:
+   ROUND(AVG_PRIORITIES("completionPercentage"), 2)
+
+2. Máximo entre meta y resultado:
+   MAX(50, COUNT_PRIORITIES({status: "COMPLETADO"}))
+
+3. Calcular días desde inicio de año:
+   DAYS(TODAY(), DATE(2025, 1, 1))
+
+4. Condicional basado en tasa de cumplimiento:
+   IF(COMPLETION_RATE() > 80, "Excelente", "Mejorar")
+
+5. Suma condicional con múltiples criterios:
+   SUMIF(GET_PRIORITIES(), ">50")
+
+6. Promedio móvil:
+   AVERAGE(
+     COUNT_PRIORITIES({weekStart: "2025-01-01"}),
+     COUNT_PRIORITIES({weekStart: "2025-01-08"}),
+     COUNT_PRIORITIES({weekStart: "2025-01-15"})
+   )
+
+7. Desviación estándar de completitud:
+   STDEV(AVG_PRIORITIES("completionPercentage"))
+
+8. Búsqueda de valor:
+   VLOOKUP("criterio", rango, 2, FALSE)
+
+9. Texto concatenado con resultado:
+   CONCATENATE("Tasa: ", ROUND(COMPLETION_RATE(), 2), "%")
+
+10. Fecha de fin de mes:
+    EOMONTH(TODAY(), 0)
+
+### Funciones Matemáticas Comunes
+
+• ABS(número): Valor absoluto
+• ROUND(número, decimales): Redondear
+• ROUNDUP(número, decimales): Redondear hacia arriba
+• ROUNDDOWN(número, decimales): Redondear hacia abajo
+• CEILING(número): Redondear al entero superior
+• FLOOR(número): Redondear al entero inferior
+• MOD(número, divisor): Módulo (resto)
+• POWER(base, exponente): Potencia
+• SQRT(número): Raíz cuadrada
+• SUM(número1, número2, ...): Suma
+• AVERAGE(número1, número2, ...): Promedio
+• MAX(número1, número2, ...): Máximo
+• MIN(número1, número2, ...): Mínimo
+• COUNT(valor1, valor2, ...): Contar valores
+
+### Funciones de Texto Comunes
+
+• CONCATENATE(texto1, texto2, ...): Concatenar textos
+• LEFT(texto, n): Primeros n caracteres
+• RIGHT(texto, n): Últimos n caracteres
+• MID(texto, inicio, largo): Substring
+• LEN(texto): Longitud del texto
+• UPPER(texto): Mayúsculas
+• LOWER(texto): Minúsculas
+• TRIM(texto): Eliminar espacios extra
+• REPLACE(texto, inicio, largo, nuevo): Reemplazar
+• SUBSTITUTE(texto, viejo, nuevo): Sustituir
+
+### Funciones de Fecha Comunes
+
+• TODAY(): Fecha actual
+• NOW(): Fecha y hora actual
+• DATE(año, mes, día): Crear fecha
+• YEAR(fecha): Extraer año
+• MONTH(fecha): Extraer mes
+• DAY(fecha): Extraer día
+• DAYS(fecha_fin, fecha_inicio): Diferencia en días
+• EOMONTH(fecha, meses): Fin de mes
+• EDATE(fecha, meses): Agregar meses
+• WEEKDAY(fecha): Día de la semana
+• WORKDAY(fecha_inicio, días): Días laborables
+
+### Funciones Lógicas Comunes
+
+• IF(condición, si_verdadero, si_falso): Condicional
+• AND(condición1, condición2, ...): Y lógico
+• OR(condición1, condición2, ...): O lógico
+• NOT(condición): Negación
+• IFERROR(valor, valor_si_error): Manejar errores
+• IFS(condición1, valor1, condición2, valor2, ...): Múltiples condiciones
+
+### Notas sobre Funciones de Excel
+
+1. Los nombres de funciones son case-insensitive (SUM = sum = Sum)
+2. Los parámetros se separan por comas
+3. Los strings van entre comillas dobles: "texto"
+4. Las fechas pueden ser strings en formato ISO: "2025-01-01"
+5. Los números van sin comillas: 123.45
+6. Los booleanos son: TRUE o FALSE (sin comillas)
+7. Puedes anidar funciones: IF(SUM(1,2,3) > 5, "Mayor", "Menor")
+8. Algunas funciones aceptan rangos de valores
+9. Las funciones estadísticas ignoran valores de texto
+10. Las funciones de fecha retornan números seriales internamente
+
+### Diferencias con Excel Desktop
+
+Algunas limitaciones comparado con Excel de escritorio:
+• No se soportan referencias de celdas (A1, B2, etc.)
+• No se soportan rangos con dos puntos (A1:A10)
+• Algunas funciones avanzadas pueden no estar disponibles
+• Los arrays se pasan como valores separados por comas
+• No hay autocompletado de rangos
+
+### Recursos Adicionales
+
+Para más información sobre cada función específica, consulta la documentación de hot-formula-parser:
+https://github.com/handsontable/formula-parser
+
+Para equivalencias con Excel:
+https://support.microsoft.com/es-es/office/funciones-de-excel-por-categoría
+`;
+
 const SYSTEM_DATA_DOCS = `
 # Funciones del Sistema para KPIs
 
@@ -279,18 +437,19 @@ export function generateSystemDataDocsPDF() {
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(37, 99, 235); // blue-600
-  doc.text('Funciones del Sistema para KPIs', margin, yPos);
+  doc.text('Referencia Completa de Funciones', margin, yPos);
   yPos += 10;
 
   // Subtítulo
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(75, 85, 99); // gray-600
-  doc.text('Documentacion Completa', margin, yPos);
+  doc.text('Sistema (8 funciones) + Excel (382 funciones)', margin, yPos);
   yPos += 15;
 
-  // Procesar el contenido
-  const lines = SYSTEM_DATA_DOCS.trim().split('\n');
+  // Combinar ambas documentaciones
+  const fullDocs = SYSTEM_DATA_DOCS.trim() + '\n\n' + EXCEL_FUNCTIONS_DATA.trim();
+  const lines = fullDocs.split('\n');
 
   for (const line of lines) {
     // Verificar si necesitamos nueva página
@@ -377,5 +536,5 @@ export function generateSystemDataDocsPDF() {
   }
 
   // Guardar el PDF
-  doc.save('Funciones-Sistema-KPIs.pdf');
+  doc.save('Referencia-Funciones-KPIs.pdf');
 }
