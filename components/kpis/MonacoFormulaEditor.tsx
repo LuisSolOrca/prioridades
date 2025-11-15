@@ -887,7 +887,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const systemSuggestions = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 2) // LÍMITE: máximo 2 sugerencias de sistema
+            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
             .map(func => ({
               label: {
                 label: func.name,
@@ -907,7 +907,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const excelSuggestions = EXCEL_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 1) // LÍMITE: máximo 1 sugerencia de Excel
+            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
             .map(func => ({
               label: {
                 label: func.name,
@@ -937,7 +937,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const systemSuggestions = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 2) // LÍMITE: máximo 2 sugerencias de sistema
+            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
             .map(func => ({
               label: {
                 label: func.name,
@@ -957,7 +957,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const excelSuggestions = EXCEL_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 1) // LÍMITE: máximo 1 sugerencia de Excel
+            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
             .map(func => ({
               label: {
                 label: func.name,
@@ -1227,17 +1227,22 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           visibility: visible !important;
           opacity: 1 !important;
           display: flex !important;
+          max-width: 400px !important;
+          width: auto !important;
         }
         .monaco-editor .suggest-widget .monaco-list {
-          max-height: 250px !important;
-          min-height: 40px !important;
+          max-height: 100px !important;
+          height: 100px !important;
+          min-height: 100px !important;
           display: block !important;
           visibility: visible !important;
           opacity: 1 !important;
+          overflow-y: auto !important;
         }
         .monaco-editor .suggest-widget .monaco-list .monaco-list-row {
-          height: auto !important;
+          height: 24px !important;
           min-height: 24px !important;
+          max-height: 24px !important;
           display: flex !important;
           visibility: visible !important;
           opacity: 1 !important;
