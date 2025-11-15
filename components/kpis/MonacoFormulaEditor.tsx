@@ -870,7 +870,10 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           const wordText = word.word.toUpperCase();
 
           const systemSuggestions = SYSTEM_FUNCTIONS.map(func => ({
-            label: func.name,
+            label: {
+              label: func.name,
+              description: func.signature, // Mostrar signature al lado del nombre
+            },
             kind: monaco.languages.CompletionItemKind.Function,
             detail: func.detail,
             documentation: {
@@ -884,7 +887,10 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           }));
 
           const excelSuggestions = EXCEL_FUNCTIONS.map(func => ({
-            label: func.name,
+            label: {
+              label: func.name,
+              description: func.signature, // Mostrar signature al lado del nombre
+            },
             kind: monaco.languages.CompletionItemKind.Function,
             detail: func.detail,
             documentation: {
