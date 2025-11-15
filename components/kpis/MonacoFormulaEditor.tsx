@@ -609,12 +609,16 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
   const handleEditorDidMount: OnMount = (monacoEditor, monaco) => {
     editorRef.current = monacoEditor;
 
+    // CRÍTICO: Configurar el lenguaje para que reconozca palabras desde el primer carácter
+    monaco.languages.setLanguageConfiguration('plaintext', {
+      wordPattern: /[a-zA-Z_][a-zA-Z0-9_]*/,
+    });
+
     // Registrar proveedor de autocompletado
-    // IMPORTANTE: No incluir letras en triggerCharacters porque causa problemas de rendimiento
-    // y no funciona como esperamos. Monaco llama a este provider automáticamente cuando
-    // quickSuggestions está habilitado.
+    // SOLUCIÓN: Solo incluir caracteres especiales para contextos específicos
+    // NO incluir letras - quickSuggestions maneja las letras automáticamente
     monaco.languages.registerCompletionItemProvider('plaintext', {
-      triggerCharacters: ['(', '{', ',', ' ', '"', ':'],
+      triggerCharacters: ['(', ',', ' ', ':', '"', '{'], // Solo símbolos, NO letras
       provideCompletionItems: (model, position) => {
         const word = model.getWordUntilPosition(position);
         const range = {
@@ -967,32 +971,25 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
       },
     });
 
-    // CRÍTICO: Forzar trigger de sugerencias cuando se escribe una letra sola
-    // Monaco por defecto requiere 2+ caracteres para activar quickSuggestions
-    monacoEditor.onDidChangeModelContent((e) => {
-      const changes = e.changes;
-      if (changes.length > 0) {
-        const lastChange = changes[changes.length - 1];
-        // Si se agregó un solo carácter que es una letra
-        if (lastChange.text && lastChange.text.length === 1 && /[a-zA-Z]/.test(lastChange.text)) {
-          // Usar setTimeout para asegurar que el modelo se actualice primero
-          setTimeout(() => {
-            const model = monacoEditor.getModel();
-            if (model) {
-              const position = monacoEditor.getPosition();
-              if (position) {
-                const word = model.getWordUntilPosition(position);
-                console.log('[Autocomplete Debug] Letra escrita:', lastChange.text, 'Palabra actual:', word.word);
-                // Si la palabra actual es de 1 solo carácter, forzar trigger
-                if (word.word.length === 1) {
-                  console.log('[Autocomplete Debug] Triggering suggest for:', word.word);
-                  // Trigger sugerencias manualmente
-                  monacoEditor.trigger('keyboard', 'editor.action.triggerSuggest', {});
-                }
-              }
-            }
-          }, 0);
-        }
+    // SOLUCIÓN: Forzar que Monaco muestre sugerencias incluso con 1 carácter
+    // Sobrescribir el comportamiento por defecto
+    monacoEditor.onDidChangeModelContent(() => {
+      // Obtener la posición del cursor
+      const position = monacoEditor.getPosition();
+      if (!position) return;
+
+      const model = monacoEditor.getModel();
+      if (!model) return;
+
+      // Obtener la palabra actual
+      const word = model.getWordUntilPosition(position);
+
+      // Si hay una palabra (aunque sea de 1 letra) y no hay widget visible
+      if (word.word.length > 0 && word.word.length <= 2) {
+        // Forzar trigger de sugerencias
+        setTimeout(() => {
+          monacoEditor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+        }, 1);
       }
     });
   };
@@ -1178,7 +1175,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 showKeywords: false,
                 showSnippets: true,
                 insertMode: 'replace',
-                snippetsPreventQuickSuggestions: false,
+                snippetsPreventQuickSuggestions: false, // IMPORTANTE
                 filterGraceful: true,
                 showWords: false, // No mostrar palabras aleatorias del documento
                 localityBonus: false, // No dar prioridad a palabras cercanas
@@ -1188,11 +1185,11 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 showVariables: false, // IMPORTANTE: no mostrar variables
               },
               quickSuggestions: {
-                other: true,
+                other: true,  // DEBE estar en true
                 comments: false,
                 strings: true,
               },
-              quickSuggestionsDelay: 10, // Pequeño delay para mejor UX
+              quickSuggestionsDelay: 10, // Reducir delay para testing
               parameterHints: {
                 enabled: true,
               },
