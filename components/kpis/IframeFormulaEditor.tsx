@@ -21,21 +21,6 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
     setDetectedVariables(variables);
   }, [value]);
 
-  // Escuchar mensajes del iframe
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Verificar origen por seguridad
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === 'FORMULA_SAVE') {
-        onChange(event.data.value);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [onChange]);
-
   const downloadPDF = async () => {
     try {
       setIsDownloading(true);
@@ -49,9 +34,10 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
     }
   };
 
-  const validateFormula = useCallback(() => {
-    console.log('validateFormula called with value:', value);
-    if (!value.trim()) {
+  // Función auxiliar que valida una fórmula con un valor específico
+  const validateFormulaWithValue = useCallback((formulaValue: string) => {
+    console.log('validateFormulaWithValue called with:', formulaValue);
+    if (!formulaValue.trim()) {
       console.log('Empty value, returning null');
       return null;
     }
@@ -68,13 +54,17 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
       const parser = new Parser();
       console.log('Parser created successfully');
 
+      // Extraer variables de la fórmula actual
+      const variables = extractVariablesFromFormula(formulaValue);
+      console.log('Detected variables:', variables);
+
       // Asignar valores de prueba a las variables detectadas
-      detectedVariables.forEach((varName) => {
+      variables.forEach((varName) => {
         parser.setVariable(varName, 0.5);
       });
 
       // Reemplazar funciones del sistema con valores de prueba
-      let processedFormula = value;
+      let processedFormula = formulaValue;
 
       const findClosingParen = (str: string, startIndex: number): number => {
         let depth = 1;
@@ -174,19 +164,37 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
       console.error('Error validating formula:', error);
       return { valid: false, error: error.message || 'Error desconocido al validar la fórmula' };
     }
-  }, [value, detectedVariables]);
+  }, []);
 
-  // Actualizar validación cuando cambia el valor o las variables
-  useEffect(() => {
-    console.log('useEffect validation triggered', { showValidation, value });
-    if (showValidation) {
-      const result = validateFormula();
-      console.log('Validation result:', result);
-      setValidation(result);
-    } else {
-      setValidation(null);
+  // Función para solicitar validación al iframe
+  const requestValidation = useCallback(() => {
+    console.log('Requesting validation from iframe');
+    if (iframeRef.current?.contentWindow) {
+      // Solicitar el valor actual del iframe
+      iframeRef.current.contentWindow.postMessage({ type: 'GET_VALUE' }, '*');
     }
-  }, [value, detectedVariables, showValidation, validateFormula]);
+  }, []);
+
+  // Escuchar mensajes del iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Verificar origen por seguridad
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'FORMULA_SAVE') {
+        onChange(event.data.value);
+      } else if (event.data.type === 'FORMULA_VALUE') {
+        // Recibir el valor actual y validarlo
+        console.log('Received FORMULA_VALUE:', event.data.value);
+        const result = validateFormulaWithValue(event.data.value);
+        console.log('Validation result:', result);
+        setValidation(result);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onChange, validateFormulaWithValue]);
 
   return (
     <div className="space-y-4">
@@ -228,7 +236,17 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
           </div>
           <button
             type="button"
-            onClick={() => setShowValidation(!showValidation)}
+            onClick={() => {
+              if (showValidation) {
+                // Si ya está mostrando, solo ocultar
+                setShowValidation(false);
+                setValidation(null);
+              } else {
+                // Si no está mostrando, solicitar validación
+                setShowValidation(true);
+                requestValidation();
+              }
+            }}
             className="px-3 py-1.5 text-xs font-medium rounded-md bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 transition-colors whitespace-nowrap"
           >
             {showValidation ? '👁️ Ocultar validación' : '🔍 Validar fórmula'}
