@@ -647,7 +647,32 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         return { valid: false, error: result.error };
       }
 
-      return { valid: true, result: result.result };
+      // Formatear el resultado según su tipo
+      let formattedResult = result.result;
+
+      if (result.result instanceof Date) {
+        // Si es una fecha, formatearla legiblemente
+        formattedResult = result.result.toLocaleDateString('es-MX', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } else if (typeof result.result === 'number') {
+        // Si es un número, formatearlo con 2 decimales máximo
+        formattedResult = Number.isInteger(result.result)
+          ? result.result
+          : result.result.toFixed(2);
+      } else if (typeof result.result === 'boolean') {
+        formattedResult = result.result ? 'Verdadero' : 'Falso';
+      } else if (result.result === null || result.result === undefined) {
+        formattedResult = 'Sin valor';
+      } else if (typeof result.result === 'object') {
+        formattedResult = JSON.stringify(result.result);
+      }
+
+      return { valid: true, result: formattedResult, rawResult: result.result };
     } catch (error: any) {
       return { valid: false, error: error.message };
     }
@@ -749,8 +774,26 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
             {validation.valid ? (
               <div>
                 <strong>✓ Fórmula válida</strong>
-                <div className="mt-1 font-mono">
-                  Resultado de prueba: <span className="font-bold">{validation.result}</span>
+                <div className="mt-1">
+                  <span className="text-xs opacity-75">Resultado de prueba:</span>
+                  <div className="font-mono font-bold mt-1">
+                    {validation.result}
+                  </div>
+                  {(validation as any).rawResult && (
+                    <div className="text-xs mt-2 opacity-75">
+                      Tipo: {
+                        (validation as any).rawResult instanceof Date
+                          ? '📅 Fecha'
+                          : typeof (validation as any).rawResult === 'number'
+                          ? '🔢 Número'
+                          : typeof (validation as any).rawResult === 'boolean'
+                          ? '✅ Booleano'
+                          : typeof (validation as any).rawResult === 'string'
+                          ? '📝 Texto'
+                          : '📦 Objeto'
+                      }
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
