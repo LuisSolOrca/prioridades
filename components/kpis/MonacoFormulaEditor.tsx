@@ -887,7 +887,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const systemSuggestions = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 1) // LÍMITE: máximo 1 sugerencia de sistema
+            .slice(0, 2) // LÍMITE: máximo 2 sugerencias de sistema
             .map(func => ({
               label: {
                 label: func.name,
@@ -907,7 +907,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const excelSuggestions = EXCEL_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 0) // LÍMITE: 0 sugerencias de Excel (solo mostrar sistema)
+            .slice(0, 1) // LÍMITE: máximo 1 sugerencia de Excel
             .map(func => ({
               label: {
                 label: func.name,
@@ -937,7 +937,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const systemSuggestions = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 1) // LÍMITE: máximo 1 sugerencia de sistema
+            .slice(0, 2) // LÍMITE: máximo 2 sugerencias de sistema
             .map(func => ({
               label: {
                 label: func.name,
@@ -957,7 +957,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
           const excelSuggestions = EXCEL_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 0) // LÍMITE: 0 sugerencias de Excel (solo mostrar sistema)
+            .slice(0, 1) // LÍMITE: máximo 1 sugerencia de Excel
             .map(func => ({
               label: {
                 label: func.name,
