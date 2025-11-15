@@ -644,14 +644,34 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           return openParens > closeParens;
         });
 
+        // Detectar si estamos dentro de un objeto de parámetros {}
+        const insideObjectBraces = () => {
+          let braceCount = 0;
+          for (let i = textUntilPosition.length - 1; i >= 0; i--) {
+            if (textUntilPosition[i] === '}') braceCount++;
+            if (textUntilPosition[i] === '{') {
+              braceCount--;
+              if (braceCount < 0) return true; // Estamos dentro de {}
+            }
+          }
+          return false;
+        };
+
+        // Detectar si estamos dentro de comillas ""
+        const insideQuotes = () => {
+          const quotesBeforeCursor = (beforeCursor.match(/"/g) || []).length;
+          return quotesBeforeCursor % 2 === 1; // Número impar de comillas = estamos dentro
+        };
+
         if (inSystemFunction && autocompleteData) {
           // Estamos dentro de una función del sistema
 
-          // Detectar si estamos escribiendo un parámetro específico
-          const paramMatch = beforeCursor.match(/(\w+):\s*"?$/);
+          // Detectar si estamos escribiendo el valor de un parámetro (después de ":" y posiblemente dentro de "")
+          const paramValueMatch = beforeCursor.match(/(\w+):\s*"([^"]*)$/);
 
-          if (paramMatch) {
-            const paramName = paramMatch[1];
+          if (paramValueMatch) {
+            const paramName = paramValueMatch[1];
+            // Estamos escribiendo el valor dentro de comillas
 
             // Autocompletar valores según el parámetro
             if (paramName === 'status') {
@@ -738,6 +758,49 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 }
               ];
             }
+          } else if (insideObjectBraces() && !insideQuotes()) {
+            // Estamos dentro de {} pero NO dentro de comillas
+            // Esto significa que estamos escribiendo un nombre de parámetro
+
+            // Verificar si ya hay dos puntos después del cursor (entonces estamos escribiendo el nombre)
+            const afterCursor = lineText.substring(position.column - 1);
+            const hasColonAfter = afterCursor.match(/^\w*:/);
+
+            if (!hasColonAfter) {
+              // No hay ":" después, estamos escribiendo el nombre de un parámetro
+              const availableParams = inSystemFunction.params;
+
+              suggestions = availableParams.map(param => {
+                let detail = 'Parámetro';
+                let insertText = `${param}: `;
+
+                if (param.includes('Name')) {
+                  detail = 'Nombre (autocompletado disponible)';
+                  insertText = `${param}: ""`;
+                } else if (param === 'status') {
+                  detail = 'Estado (autocompletado disponible)';
+                  insertText = `${param}: ""`;
+                } else if (param.startsWith('is')) {
+                  detail = 'Booleano (true/false)';
+                  insertText = `${param}: true`;
+                } else if (param.includes('Date') || param.includes('week')) {
+                  detail = 'Fecha (formato: "YYYY-MM-DD")';
+                  insertText = `${param}: "2025-01-01"`;
+                } else if (param.includes('Min') || param.includes('Max')) {
+                  detail = 'Número (0-100)';
+                  insertText = `${param}: 0`;
+                }
+
+                return {
+                  label: param,
+                  kind: monaco.languages.CompletionItemKind.Property,
+                  detail: detail,
+                  insertText: insertText,
+                  range: range,
+                  sortText: '0' + param,
+                };
+              });
+            }
           } else if (beforeCursor.match(/{\s*$/)) {
             // Acabamos de abrir llaves, sugerir parámetros disponibles para esta función
             const availableParams = inSystemFunction.params;
@@ -799,8 +862,9 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
               };
             });
           }
-        } else {
-          // No estamos dentro de una función, sugerir funciones
+        } else if (!insideQuotes() && !insideObjectBraces()) {
+          // No estamos dentro de una función del sistema NI dentro de comillas NI dentro de {}
+          // Aquí sí podemos sugerir funciones
           const systemSuggestions = SYSTEM_FUNCTIONS.map(func => ({
             label: func.name,
             kind: monaco.languages.CompletionItemKind.Function,
