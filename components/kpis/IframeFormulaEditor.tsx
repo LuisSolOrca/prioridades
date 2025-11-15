@@ -36,27 +36,21 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
 
   // Función auxiliar que valida una fórmula con un valor específico
   const validateFormulaWithValue = useCallback((formulaValue: string) => {
-    console.log('validateFormulaWithValue called with:', formulaValue);
     if (!formulaValue.trim()) {
-      console.log('Empty value, returning null');
       return null;
     }
 
     try {
       // Importación dinámica para evitar errores en el servidor
       if (typeof window === 'undefined') {
-        console.log('Server side, returning null');
         return null;
       }
 
-      console.log('Importing Parser...');
       const { Parser } = require('hot-formula-parser');
       const parser = new Parser();
-      console.log('Parser created successfully');
 
       // Extraer variables de la fórmula actual
       const variables = extractVariablesFromFormula(formulaValue);
-      console.log('Detected variables:', variables);
 
       // Asignar valores de prueba a las variables detectadas
       variables.forEach((varName) => {
@@ -161,14 +155,12 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
 
       return { valid: true, result: formattedResult, rawResult: result.result };
     } catch (error: any) {
-      console.error('Error validating formula:', error);
       return { valid: false, error: error.message || 'Error desconocido al validar la fórmula' };
     }
   }, []);
 
   // Función para solicitar validación al iframe
   const requestValidation = useCallback(() => {
-    console.log('Requesting validation from iframe');
     if (iframeRef.current?.contentWindow) {
       // Solicitar el valor actual del iframe
       iframeRef.current.contentWindow.postMessage({ type: 'GET_VALUE' }, '*');
@@ -185,9 +177,7 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
         onChange(event.data.value);
       } else if (event.data.type === 'FORMULA_VALUE') {
         // Recibir el valor actual y validarlo
-        console.log('Received FORMULA_VALUE:', event.data.value);
         const result = validateFormulaWithValue(event.data.value);
-        console.log('Validation result:', result);
         setValidation(result);
       }
     };
@@ -251,12 +241,6 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
           >
             {showValidation ? '👁️ Ocultar validación' : '🔍 Validar fórmula'}
           </button>
-        </div>
-
-        {/* DEBUG INFO */}
-        <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/20 text-xs">
-          <div>showValidation: {showValidation ? 'true' : 'false'}</div>
-          <div>validation: {validation ? JSON.stringify(validation) : 'null'}</div>
         </div>
 
         {showValidation && validation && (
