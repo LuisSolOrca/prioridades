@@ -609,15 +609,11 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
     editorRef.current = monacoEditor;
 
     // Registrar proveedor de autocompletado
+    // IMPORTANTE: No incluir letras en triggerCharacters porque causa problemas de rendimiento
+    // y no funciona como esperamos. Monaco llama a este provider automáticamente cuando
+    // quickSuggestions está habilitado.
     monaco.languages.registerCompletionItemProvider('plaintext', {
-      triggerCharacters: [
-        '(', '{', ',', ' ', '"', ':',
-        // Agregar todas las letras mayúsculas y minúsculas como triggers
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-      ],
+      triggerCharacters: ['(', '{', ',', ' ', '"', ':'],
       provideCompletionItems: (model, position) => {
         const word = model.getWordUntilPosition(position);
         const range = {
@@ -913,6 +909,46 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           suggestions = [...systemSuggestions, ...excelSuggestions];
         }
 
+        // Si no hay sugerencias específicas de contexto, siempre mostrar las funciones
+        // Esto evita que Monaco muestre sugerencias de variables por defecto
+        if (suggestions.length === 0 && !insideQuotes() && !insideObjectBraces()) {
+          const systemSuggestions = SYSTEM_FUNCTIONS.map(func => ({
+            label: {
+              label: func.name,
+              description: func.signature,
+            },
+            kind: monaco.languages.CompletionItemKind.Function,
+            detail: func.detail,
+            documentation: {
+              value: `**${func.signature}**\n\n${func.description}\n\n${func.documentation}`,
+              isTrusted: true,
+            },
+            insertText: func.insertText,
+            range: range,
+            sortText: '0' + func.name,
+            filterText: func.name,
+          }));
+
+          const excelSuggestions = EXCEL_FUNCTIONS.map(func => ({
+            label: {
+              label: func.name,
+              description: func.signature,
+            },
+            kind: monaco.languages.CompletionItemKind.Function,
+            detail: func.detail,
+            documentation: {
+              value: `**${func.signature}**\n\n${func.description}`,
+              isTrusted: true,
+            },
+            insertText: func.insertText,
+            range: range,
+            sortText: '1' + func.name,
+            filterText: func.name,
+          }));
+
+          suggestions = [...systemSuggestions, ...excelSuggestions];
+        }
+
         return { suggestions };
       },
     });
@@ -1111,7 +1147,9 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
                 insertMode: 'replace',
                 snippetsPreventQuickSuggestions: false,
                 filterGraceful: true,
-                showWords: false,
+                showWords: false, // No mostrar palabras aleatorias del documento
+                localityBonus: false, // No dar prioridad a palabras cercanas
+                shareSuggestSelections: false,
               },
               quickSuggestions: {
                 other: true,
