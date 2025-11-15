@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import FormulaEditor from '@/components/kpis/FormulaEditor';
+import MonacoFormulaEditor from '@/components/kpis/MonacoFormulaEditor';
 
 interface Initiative {
   _id: string;
@@ -333,7 +333,7 @@ export default function NewKPIPage() {
           {/* Fórmula */}
           <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Fórmula de Cálculo</h2>
-            <FormulaEditor value={formula} onChange={setFormula} />
+            <MonacoFormulaEditor value={formula} onChange={setFormula} />
           </div>
 
           {/* Metas y Tolerancias */}

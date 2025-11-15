@@ -2,6 +2,7 @@
  * Sistema de funciones para acceder a datos del sistema - VERSIÓN SERVIDOR
  *
  * Esta versión accede directamente a la base de datos sin hacer fetch HTTP
+ * Ahora soporta búsqueda por NOMBRE además de por ID
  */
 
 import connectDB from '@/lib/mongodb';
@@ -14,13 +15,17 @@ export interface SystemDataFilter {
   // Filtros comunes
   status?: string;
   type?: string;
-  userId?: string;
+  userId?: string; // Mantener por compatibilidad
+  userName?: string; // NUEVO: Buscar por nombre de usuario
   isActive?: boolean;
 
   // Filtros específicos de prioridades
-  initiativeId?: string;
-  projectId?: string;
-  clientId?: string;
+  initiativeId?: string; // Mantener por compatibilidad
+  initiativeName?: string; // NUEVO: Buscar por nombre de iniciativa
+  projectId?: string; // Mantener por compatibilidad
+  projectName?: string; // NUEVO: Buscar por nombre de proyecto
+  clientId?: string; // Mantener por compatibilidad
+  clientName?: string; // NUEVO: Buscar por nombre de cliente
   isCarriedOver?: boolean;
   weekStart?: string;
   weekEnd?: string;
@@ -33,7 +38,8 @@ export interface SystemDataFilter {
   dueDateEnd?: string;
 
   // Filtros específicos de proyectos
-  projectManagerId?: string;
+  projectManagerId?: string; // Mantener por compatibilidad
+  projectManagerName?: string; // NUEVO: Buscar por nombre de gerente
 
   // Filtros específicos de usuarios
   role?: string;
@@ -42,27 +48,97 @@ export interface SystemDataFilter {
 }
 
 /**
- * COUNT_PRIORITIES - Versión servidor
+ * Helper: Resolver nombre de usuario a ID
+ */
+async function resolveUserIdByName(userName: string): Promise<string | null> {
+  const user: any = await User.findOne({ name: userName, isActive: true }).select('_id').lean();
+  return user ? user._id.toString() : null;
+}
+
+/**
+ * Helper: Resolver nombre de iniciativa a ID
+ */
+async function resolveInitiativeIdByName(initiativeName: string): Promise<string | null> {
+  const StrategicInitiative = require('@/models/StrategicInitiative').default;
+  const initiative: any = await StrategicInitiative.findOne({ name: initiativeName, isActive: true }).select('_id').lean();
+  return initiative ? initiative._id.toString() : null;
+}
+
+/**
+ * Helper: Resolver nombre de proyecto a ID
+ */
+async function resolveProjectIdByName(projectName: string): Promise<string | null> {
+  const project: any = await Project.findOne({ name: projectName, isActive: true }).select('_id').lean();
+  return project ? project._id.toString() : null;
+}
+
+/**
+ * Helper: Resolver nombre de cliente a ID
+ */
+async function resolveClientIdByName(clientName: string): Promise<string | null> {
+  try {
+    const Client = require('@/models/Client').default;
+    const client: any = await Client.findOne({ name: clientName, isActive: true }).select('_id').lean();
+    return client ? client._id.toString() : null;
+  } catch (error) {
+    console.log('Client model not found');
+    return null;
+  }
+}
+
+/**
+ * COUNT_PRIORITIES - Versión servidor con soporte de nombres
  */
 export async function COUNT_PRIORITIES(filters: SystemDataFilter = {}): Promise<number> {
   await connectDB();
 
   const query: any = {};
 
+  // Filtros básicos
   if (filters.status) query.status = filters.status;
   if (filters.type) query.type = filters.type;
-  if (filters.userId) query.userId = filters.userId;
-  if (filters.initiativeId) query.initiativeIds = filters.initiativeId;
-  if (filters.projectId) query.projectId = filters.projectId;
-  if (filters.clientId) query.clientId = filters.clientId;
   if (filters.isCarriedOver !== undefined) query.isCarriedOver = filters.isCarriedOver;
 
+  // Resolver userName a userId
+  if (filters.userName) {
+    const userId = await resolveUserIdByName(filters.userName);
+    if (userId) query.userId = userId;
+  } else if (filters.userId) {
+    query.userId = filters.userId;
+  }
+
+  // Resolver initiativeName a initiativeId
+  if (filters.initiativeName) {
+    const initiativeId = await resolveInitiativeIdByName(filters.initiativeName);
+    if (initiativeId) query.initiativeIds = initiativeId;
+  } else if (filters.initiativeId) {
+    query.initiativeIds = filters.initiativeId;
+  }
+
+  // Resolver projectName a projectId
+  if (filters.projectName) {
+    const projectId = await resolveProjectIdByName(filters.projectName);
+    if (projectId) query.projectId = projectId;
+  } else if (filters.projectId) {
+    query.projectId = filters.projectId;
+  }
+
+  // Resolver clientName a clientId
+  if (filters.clientName) {
+    const clientId = await resolveClientIdByName(filters.clientName);
+    if (clientId) query.clientId = clientId;
+  } else if (filters.clientId) {
+    query.clientId = filters.clientId;
+  }
+
+  // Filtros de fechas
   if (filters.weekStart || filters.weekEnd) {
     query.weekStart = {};
     if (filters.weekStart) query.weekStart.$gte = new Date(filters.weekStart);
     if (filters.weekEnd) query.weekEnd = { $lte: new Date(filters.weekEnd) };
   }
 
+  // Filtros de completitud
   if (filters.completionMin !== undefined || filters.completionMax !== undefined) {
     query.completionPercentage = {};
     if (filters.completionMin !== undefined) query.completionPercentage.$gte = filters.completionMin;
@@ -77,7 +153,7 @@ export async function COUNT_PRIORITIES(filters: SystemDataFilter = {}): Promise<
 }
 
 /**
- * SUM_PRIORITIES - Versión servidor
+ * SUM_PRIORITIES - Versión servidor con soporte de nombres
  */
 export async function SUM_PRIORITIES(field: string, filters: SystemDataFilter = {}): Promise<number> {
   await connectDB();
@@ -86,9 +162,30 @@ export async function SUM_PRIORITIES(field: string, filters: SystemDataFilter = 
 
   if (filters.status) query.status = filters.status;
   if (filters.type) query.type = filters.type;
-  if (filters.userId) query.userId = filters.userId;
-  if (filters.initiativeId) query.initiativeIds = filters.initiativeId;
-  if (filters.projectId) query.projectId = filters.projectId;
+
+  // Resolver userName a userId
+  if (filters.userName) {
+    const userId = await resolveUserIdByName(filters.userName);
+    if (userId) query.userId = userId;
+  } else if (filters.userId) {
+    query.userId = filters.userId;
+  }
+
+  // Resolver initiativeName a initiativeId
+  if (filters.initiativeName) {
+    const initiativeId = await resolveInitiativeIdByName(filters.initiativeName);
+    if (initiativeId) query.initiativeIds = initiativeId;
+  } else if (filters.initiativeId) {
+    query.initiativeIds = filters.initiativeId;
+  }
+
+  // Resolver projectName a projectId
+  if (filters.projectName) {
+    const projectId = await resolveProjectIdByName(filters.projectName);
+    if (projectId) query.projectId = projectId;
+  } else if (filters.projectId) {
+    query.projectId = filters.projectId;
+  }
 
   const results = await Priority.find(query).select(field).lean();
   const sum = results.reduce((acc, item) => acc + ((item as any)[field] || 0), 0);
@@ -97,7 +194,7 @@ export async function SUM_PRIORITIES(field: string, filters: SystemDataFilter = 
 }
 
 /**
- * AVG_PRIORITIES - Versión servidor
+ * AVG_PRIORITIES - Versión servidor con soporte de nombres
  */
 export async function AVG_PRIORITIES(field: string, filters: SystemDataFilter = {}): Promise<number> {
   await connectDB();
@@ -106,9 +203,30 @@ export async function AVG_PRIORITIES(field: string, filters: SystemDataFilter = 
 
   if (filters.status) query.status = filters.status;
   if (filters.type) query.type = filters.type;
-  if (filters.userId) query.userId = filters.userId;
-  if (filters.initiativeId) query.initiativeIds = filters.initiativeId;
-  if (filters.projectId) query.projectId = filters.projectId;
+
+  // Resolver userName a userId
+  if (filters.userName) {
+    const userId = await resolveUserIdByName(filters.userName);
+    if (userId) query.userId = userId;
+  } else if (filters.userId) {
+    query.userId = filters.userId;
+  }
+
+  // Resolver initiativeName a initiativeId
+  if (filters.initiativeName) {
+    const initiativeId = await resolveInitiativeIdByName(filters.initiativeName);
+    if (initiativeId) query.initiativeIds = initiativeId;
+  } else if (filters.initiativeId) {
+    query.initiativeIds = filters.initiativeId;
+  }
+
+  // Resolver projectName a projectId
+  if (filters.projectName) {
+    const projectId = await resolveProjectIdByName(filters.projectName);
+    if (projectId) query.projectId = projectId;
+  } else if (filters.projectId) {
+    query.projectId = filters.projectId;
+  }
 
   const results = await Priority.find(query).select(field).lean();
   if (results.length === 0) return 0;
@@ -118,15 +236,29 @@ export async function AVG_PRIORITIES(field: string, filters: SystemDataFilter = 
 }
 
 /**
- * COUNT_MILESTONES - Versión servidor
+ * COUNT_MILESTONES - Versión servidor con soporte de nombres
  */
 export async function COUNT_MILESTONES(filters: SystemDataFilter = {}): Promise<number> {
   await connectDB();
 
   const query: any = {};
 
-  if (filters.userId) query.userId = filters.userId;
-  if (filters.projectId) query.projectId = filters.projectId;
+  // Resolver userName a userId
+  if (filters.userName) {
+    const userId = await resolveUserIdByName(filters.userName);
+    if (userId) query.userId = userId;
+  } else if (filters.userId) {
+    query.userId = filters.userId;
+  }
+
+  // Resolver projectName a projectId
+  if (filters.projectName) {
+    const projectId = await resolveProjectIdByName(filters.projectName);
+    if (projectId) query.projectId = projectId;
+  } else if (filters.projectId) {
+    query.projectId = filters.projectId;
+  }
+
   if (filters.isCompleted !== undefined) query.isCompleted = filters.isCompleted;
 
   if (filters.dueDateStart || filters.dueDateEnd) {
@@ -139,7 +271,7 @@ export async function COUNT_MILESTONES(filters: SystemDataFilter = {}): Promise<
 }
 
 /**
- * COUNT_PROJECTS - Versión servidor
+ * COUNT_PROJECTS - Versión servidor con soporte de nombres
  */
 export async function COUNT_PROJECTS(filters: SystemDataFilter = {}): Promise<number> {
   await connectDB();
@@ -147,7 +279,14 @@ export async function COUNT_PROJECTS(filters: SystemDataFilter = {}): Promise<nu
   const query: any = {};
 
   if (filters.isActive !== undefined) query.isActive = filters.isActive;
-  if (filters.projectManagerId) query['projectManager.userId'] = filters.projectManagerId;
+
+  // Resolver projectManagerName a projectManagerId
+  if (filters.projectManagerName) {
+    const managerId = await resolveUserIdByName(filters.projectManagerName);
+    if (managerId) query['projectManager.userId'] = managerId;
+  } else if (filters.projectManagerId) {
+    query['projectManager.userId'] = filters.projectManagerId;
+  }
 
   return await Project.countDocuments(query);
 }
@@ -177,7 +316,7 @@ export function PERCENTAGE(part: number, total: number): number {
 }
 
 /**
- * COMPLETION_RATE - Versión servidor
+ * COMPLETION_RATE - Versión servidor con soporte de nombres
  */
 export async function COMPLETION_RATE(filters: SystemDataFilter = {}): Promise<number> {
   console.log('[COMPLETION_RATE Server] Filtros recibidos:', filters);

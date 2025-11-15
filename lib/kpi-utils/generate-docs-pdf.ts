@@ -14,108 +14,252 @@ Cuenta el número de prioridades que cumplen ciertos criterios.
 Sintaxis: COUNT_PRIORITIES() o COUNT_PRIORITIES(filtros)
 
 Filtros disponibles:
-• status: Estado de la prioridad
+• status: Estado de la prioridad (ej: "COMPLETADO", "EN_RIESGO", "BLOQUEADO", "EN_TIEMPO", "REPROGRAMADO")
 • type: Tipo de prioridad
-• userId: ID del usuario
-• initiativeId: ID de la iniciativa
-• projectId: ID del proyecto
+• userId: ID del usuario (ObjectId de MongoDB)
+• initiativeId: ID de la iniciativa estratégica (ObjectId de MongoDB)
+• projectId: ID del proyecto (ObjectId de MongoDB)
+• clientId: ID del cliente (ObjectId de MongoDB)
+• isCarriedOver: Prioridades arrastradas (true/false)
+• weekStart: Fecha de inicio de semana (formato: "YYYY-MM-DD")
+• weekEnd: Fecha de fin de semana (formato: "YYYY-MM-DD")
+• completionMin: Porcentaje mínimo de completitud (0-100)
+• completionMax: Porcentaje máximo de completitud (0-100)
 
 Ejemplos:
   COUNT_PRIORITIES()
   COUNT_PRIORITIES({status: "COMPLETADO"})
-  COUNT_PRIORITIES({userId: "123", status: "EN_RIESGO"})
+  COUNT_PRIORITIES({userId: "123abc", status: "EN_RIESGO"})
+  COUNT_PRIORITIES({completionMin: 50, completionMax: 100})
+  COUNT_PRIORITIES({weekStart: "2025-01-01", weekEnd: "2025-01-31"})
 
 ### 2. SUM_PRIORITIES
 Suma un campo numérico de las prioridades.
 
 Sintaxis: SUM_PRIORITIES(campo, filtros)
 
+Campos comunes: "completionPercentage"
+
+Filtros disponibles (mismos que COUNT_PRIORITIES):
+• status, type, userId, initiativeId, projectId
+
 Ejemplos:
   SUM_PRIORITIES("completionPercentage")
   SUM_PRIORITIES("completionPercentage", {status: "COMPLETADO"})
+  SUM_PRIORITIES("completionPercentage", {initiativeId: "abc123"})
 
 ### 3. AVG_PRIORITIES
 Calcula el promedio de un campo numérico.
 
 Sintaxis: AVG_PRIORITIES(campo, filtros)
 
+Campos comunes: "completionPercentage"
+
+Filtros disponibles (mismos que COUNT_PRIORITIES):
+• status, type, userId, initiativeId, projectId
+
 Ejemplos:
   AVG_PRIORITIES("completionPercentage")
   AVG_PRIORITIES("completionPercentage", {status: "COMPLETADO"})
+  AVG_PRIORITIES("completionPercentage", {projectId: "xyz789"})
 
 ### 4. COUNT_MILESTONES
 Cuenta hitos que cumplen ciertos criterios.
 
 Sintaxis: COUNT_MILESTONES() o COUNT_MILESTONES(filtros)
 
-Filtros: userId, projectId, isCompleted, dueDateStart, dueDateEnd
+Filtros disponibles:
+• userId: ID del usuario (ObjectId de MongoDB)
+• projectId: ID del proyecto (ObjectId de MongoDB)
+• isCompleted: Hitos completados (true) o pendientes (false)
+• dueDateStart: Fecha de vencimiento desde (formato: "YYYY-MM-DD")
+• dueDateEnd: Fecha de vencimiento hasta (formato: "YYYY-MM-DD")
 
 Ejemplos:
   COUNT_MILESTONES({isCompleted: true})
   COUNT_MILESTONES({projectId: "123"})
+  COUNT_MILESTONES({dueDateStart: "2025-01-01", dueDateEnd: "2025-12-31"})
+  COUNT_MILESTONES({userId: "abc123", isCompleted: false})
 
 ### 5. COUNT_PROJECTS
-Cuenta proyectos activos.
+Cuenta proyectos.
 
 Sintaxis: COUNT_PROJECTS() o COUNT_PROJECTS(filtros)
 
-Filtros: isActive, projectManagerId
+Filtros disponibles:
+• isActive: Proyectos activos (true) o inactivos (false)
+• projectManagerId: ID del gerente de proyecto (ObjectId de MongoDB)
 
 Ejemplos:
   COUNT_PROJECTS({isActive: true})
+  COUNT_PROJECTS({projectManagerId: "abc123"})
+  COUNT_PROJECTS()
 
 ### 6. COUNT_USERS
 Cuenta usuarios del sistema.
 
 Sintaxis: COUNT_USERS() o COUNT_USERS(filtros)
 
-Filtros: role, area, isActive, isAreaLeader
+Filtros disponibles:
+• role: Rol del usuario (ej: "ADMIN", "USER")
+• area: Área o departamento (ej: "Tecnología", "Ventas")
+• isActive: Usuarios activos (true) o inactivos (false)
+• isAreaLeader: Líderes de área (true/false)
 
 Ejemplos:
   COUNT_USERS({area: "Tecnologia"})
   COUNT_USERS({role: "ADMIN"})
+  COUNT_USERS({isAreaLeader: true})
+  COUNT_USERS({area: "Ventas", isActive: true})
 
 ### 7. COMPLETION_RATE
-Calcula la tasa de cumplimiento de prioridades.
+Calcula la tasa de cumplimiento de prioridades (porcentaje completadas).
 
 Sintaxis: COMPLETION_RATE() o COMPLETION_RATE(filtros)
 
+Filtros disponibles (mismos que COUNT_PRIORITIES):
+• userId, initiativeId, projectId, weekStart, weekEnd, etc.
+
+Nota: Esta función automáticamente calcula el porcentaje de prioridades
+con status "COMPLETADO" sobre el total de prioridades.
+
 Ejemplos:
   COMPLETION_RATE()
-  COMPLETION_RATE({userId: "123"})
+  COMPLETION_RATE({userId: "123abc"})
+  COMPLETION_RATE({initiativeId: "xyz789"})
+  COMPLETION_RATE({weekStart: "2025-01-01", weekEnd: "2025-01-31"})
 
 ### 8. PERCENTAGE
 Función auxiliar para calcular porcentajes.
 
 Sintaxis: PERCENTAGE(parte, total)
 
+Parámetros:
+• parte: Valor parcial (número)
+• total: Valor total (número)
+
+Retorna: (parte / total) * 100
+
 Ejemplo:
   PERCENTAGE(25, 100)  // = 25
+  PERCENTAGE(COUNT_PRIORITIES({status: "COMPLETADO"}), COUNT_PRIORITIES())
 
 ## Casos de Uso Reales
 
-1. Tasa de Cumplimiento por Area
+1. Tasa de Cumplimiento por Usuario
    COMPLETION_RATE({userId: "ID_USER"})
 
-2. Productividad por Proyecto
+2. Tasa de Cumplimiento por Iniciativa
+   COMPLETION_RATE({initiativeId: "ID_INITIATIVE"})
+
+3. Productividad por Proyecto
    AVG_PRIORITIES("completionPercentage", {projectId: "ID"})
 
-3. Indice de Riesgo
+4. Índice de Riesgo General
    PERCENTAGE(COUNT_PRIORITIES({status: "EN_RIESGO"}), COUNT_PRIORITIES())
 
-4. Eficiencia de Hitos
+5. Índice de Bloqueos por Área
+   PERCENTAGE(
+     COUNT_PRIORITIES({status: "BLOQUEADO", userId: "ID_USER"}),
+     COUNT_PRIORITIES({userId: "ID_USER"})
+   )
+
+6. Eficiencia de Hitos
    PERCENTAGE(COUNT_MILESTONES({isCompleted: true}), COUNT_MILESTONES())
 
-5. Velocidad de Equipo
+7. Velocidad de Equipo
    COUNT_PRIORITIES({status: "COMPLETADO"}) / COUNT_USERS({area: "Tech"})
+
+8. Prioridades Completadas en el Mes Actual
+   COUNT_PRIORITIES({
+     status: "COMPLETADO",
+     weekStart: "2025-01-01",
+     weekEnd: "2025-01-31"
+   })
+
+9. Promedio de Completitud de Prioridades Activas
+   AVG_PRIORITIES("completionPercentage", {
+     status: "EN_TIEMPO"
+   })
+
+10. Tasa de Prioridades Arrastradas
+    PERCENTAGE(
+      COUNT_PRIORITIES({isCarriedOver: true}),
+      COUNT_PRIORITIES()
+    )
+
+## Combinación de Filtros
+
+Puedes combinar múltiples filtros para consultas más específicas:
+
+Ejemplo 1: Prioridades completadas por usuario en una iniciativa
+  COUNT_PRIORITIES({
+    userId: "abc123",
+    initiativeId: "xyz789",
+    status: "COMPLETADO"
+  })
+
+Ejemplo 2: Tasa de cumplimiento en un rango de fechas
+  COMPLETION_RATE({
+    weekStart: "2025-01-01",
+    weekEnd: "2025-03-31"
+  })
+
+Ejemplo 3: Hitos completados en un proyecto este año
+  COUNT_MILESTONES({
+    projectId: "proj123",
+    isCompleted: true,
+    dueDateStart: "2025-01-01",
+    dueDateEnd: "2025-12-31"
+  })
+
+## Tipos de Datos
+
+### Strings
+Deben ir entre comillas dobles:
+  {status: "COMPLETADO"}
+  {area: "Tecnología"}
+
+### Booleanos
+Sin comillas, valores: true o false:
+  {isActive: true}
+  {isCompleted: false}
+
+### Números
+Sin comillas:
+  {completionMin: 50}
+  {completionMax: 100}
+
+### Fechas
+String en formato ISO 8601 (YYYY-MM-DD):
+  {weekStart: "2025-01-01"}
+  {dueDateEnd: "2025-12-31"}
 
 ## Notas Importantes
 
 1. Las funciones del sistema consultan la base de datos en tiempo real
 2. Las fechas deben estar en formato ISO 8601 (YYYY-MM-DD)
-3. Los IDs requieren el ObjectId completo de MongoDB
-4. Los nombres de funciones deben estar en MAYUSCULAS
-5. Los strings van entre comillas dobles en los filtros
+3. Los IDs (userId, projectId, etc.) requieren el ObjectId completo de MongoDB
+4. Los nombres de funciones deben estar en MAYÚSCULAS
+5. Los strings en filtros van entre comillas dobles
+6. Los booleanos (true/false) van sin comillas
+7. Puedes combinar múltiples filtros en una sola llamada
+8. Los filtros son opcionales - llamar sin filtros retorna todos los registros
+9. Las funciones son case-sensitive: usar MAYÚSCULAS
+10. Los valores numéricos (completionMin, completionMax) están en porcentaje (0-100)
+
+## Estados Disponibles para Prioridades
+
+• EN_TIEMPO: Prioridad en tiempo
+• EN_RIESGO: Prioridad en riesgo
+• BLOQUEADO: Prioridad bloqueada
+• COMPLETADO: Prioridad completada
+• REPROGRAMADO: Prioridad reprogramada
+
+## Roles de Usuario Disponibles
+
+• ADMIN: Administrador del sistema
+• USER: Usuario estándar
 `;
 
 export function generateSystemDataDocsPDF() {
