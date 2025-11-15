@@ -922,8 +922,11 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
       const Parser = require('hot-formula-parser').Parser;
       const parser = new Parser();
 
+      // Asignar valores de prueba a las variables detectadas
+      // Usar 0.5 en lugar de 100 para evitar errores en funciones trigonométricas
+      // (ASIN, ACOS requieren valores entre -1 y 1)
       detectedVariables.forEach((varName) => {
-        parser.setVariable(varName, 100);
+        parser.setVariable(varName, 0.5);
       });
 
       // Reemplazar funciones del sistema con valores de prueba
