@@ -610,7 +610,14 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
 
     // Registrar proveedor de autocompletado
     monaco.languages.registerCompletionItemProvider('plaintext', {
-      triggerCharacters: ['(', '{', ',', ' ', '"', ':'],
+      triggerCharacters: [
+        '(', '{', ',', ' ', '"', ':',
+        // Agregar todas las letras mayúsculas y minúsculas como triggers
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+      ],
       provideCompletionItems: (model, position) => {
         const word = model.getWordUntilPosition(position);
         const range = {
