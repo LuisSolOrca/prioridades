@@ -881,13 +881,24 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           // No estamos dentro de una función del sistema NI dentro de comillas NI dentro de {}
           // Aquí sí podemos sugerir funciones
 
-          // CRÍTICO: Pre-filtrar funciones basándose en la palabra actual
-          // Monaco NO filtra automáticamente, nosotros debemos hacerlo
+          // CRÍTICO: Monaco solo muestra widget con 1 sugerencia
+          // Solución: Priorizar la mejor coincidencia
           const wordUpper = word.word.toUpperCase();
 
-          const systemSuggestions = SYSTEM_FUNCTIONS
+          // Filtrar y ordenar por relevancia
+          const filteredSystem = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
+            .sort((a, b) => {
+              // Priorizar coincidencias exactas o más cortas
+              const aExact = a.name.toUpperCase() === wordUpper;
+              const bExact = b.name.toUpperCase() === wordUpper;
+              if (aExact && !bExact) return -1;
+              if (!aExact && bExact) return 1;
+              return a.name.length - b.name.length;
+            });
+
+          const systemSuggestions = filteredSystem
+            .slice(0, 1) // Solo 1 sugerencia para que Monaco muestre el widget
             .map(func => ({
               label: {
                 label: func.name,
@@ -905,25 +916,29 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
               filterText: func.name, // Asegurar que Monaco use el nombre completo para filtrar
             }));
 
-          const excelSuggestions = EXCEL_FUNCTIONS
-            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
-            .map(func => ({
-              label: {
-                label: func.name,
-                description: func.signature, // Mostrar signature al lado del nombre
-              },
-              kind: monaco.languages.CompletionItemKind.Function,
-              detail: func.detail,
-              documentation: {
-                value: `**${func.signature}**\n\n${func.description}`,
-                isTrusted: true,
-              },
-              insertText: func.insertText,
-              range: range,
-              sortText: '!!' + func.name, // !! para Excel (después de funciones del sistema)
-              filterText: func.name, // Asegurar que Monaco use el nombre completo para filtrar
-            }));
+          // Si no hay sugerencias del sistema, buscar en Excel (solo 1 para evitar colapso)
+          const excelSuggestions = systemSuggestions.length === 0
+            ? EXCEL_FUNCTIONS
+                .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+                .sort((a, b) => a.name.length - b.name.length)
+                .slice(0, 1)
+                .map(func => ({
+                  label: {
+                    label: func.name,
+                    description: func.signature,
+                  },
+                  kind: monaco.languages.CompletionItemKind.Function,
+                  detail: func.detail,
+                  documentation: {
+                    value: `**${func.signature}**\n\n${func.description}`,
+                    isTrusted: true,
+                  },
+                  insertText: func.insertText,
+                  range: range,
+                  sortText: '!!' + func.name,
+                  filterText: func.name,
+                }))
+            : [];
 
           suggestions = [...systemSuggestions, ...excelSuggestions];
         }
@@ -931,13 +946,15 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         // Si no hay sugerencias específicas de contexto, siempre mostrar las funciones
         // Esto evita que Monaco muestre sugerencias de variables por defecto
         if (suggestions.length === 0 && !insideQuotes() && !insideObjectBraces()) {
-          // CRÍTICO: Pre-filtrar las funciones basándose en la palabra actual
-          // Monaco espera que nosotros hagamos el filtrado, no lo hace automáticamente
+          // CRÍTICO: Solo 1 sugerencia para que Monaco muestre el widget
           const wordUpper = word.word.toUpperCase();
 
-          const systemSuggestions = SYSTEM_FUNCTIONS
+          const filteredSystem = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
+            .sort((a, b) => a.name.length - b.name.length);
+
+          const systemSuggestions = filteredSystem
+            .slice(0, 1)
             .map(func => ({
               label: {
                 label: func.name,
@@ -951,29 +968,32 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
               },
               insertText: func.insertText,
               range: range,
-              sortText: '!' + func.name, // ! da máxima prioridad
+              sortText: '!' + func.name,
               filterText: func.name,
             }));
 
-          const excelSuggestions = EXCEL_FUNCTIONS
-            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .slice(0, 5) // Mostrar hasta 5 sugerencias (widget con altura fija y scroll)
-            .map(func => ({
-              label: {
-                label: func.name,
-                description: func.signature,
-              },
-              kind: monaco.languages.CompletionItemKind.Function,
-              detail: func.detail,
-              documentation: {
-                value: `**${func.signature}**\n\n${func.description}`,
-                isTrusted: true,
-              },
-              insertText: func.insertText,
-              range: range,
-              sortText: '!!' + func.name, // !! para Excel
-              filterText: func.name,
-            }));
+          const excelSuggestions = systemSuggestions.length === 0
+            ? EXCEL_FUNCTIONS
+                .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+                .sort((a, b) => a.name.length - b.name.length)
+                .slice(0, 1)
+                .map(func => ({
+                  label: {
+                    label: func.name,
+                    description: func.signature,
+                  },
+                  kind: monaco.languages.CompletionItemKind.Function,
+                  detail: func.detail,
+                  documentation: {
+                    value: `**${func.signature}**\n\n${func.description}`,
+                    isTrusted: true,
+                  },
+                  insertText: func.insertText,
+                  range: range,
+                  sortText: '!!' + func.name,
+                  filterText: func.name,
+                }))
+            : [];
 
           suggestions = [...systemSuggestions, ...excelSuggestions];
         }
