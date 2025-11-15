@@ -579,6 +579,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
   const [isDownloading, setIsDownloading] = useState(false);
   const [autocompleteData, setAutocompleteData] = useState<AutocompleteData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
+  const [showValidation, setShowValidation] = useState(false); // Nuevo estado para validación manual
 
   // Cargar datos de autocompletado
   useEffect(() => {
@@ -974,18 +975,23 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         const lastChange = changes[changes.length - 1];
         // Si se agregó un solo carácter que es una letra
         if (lastChange.text && lastChange.text.length === 1 && /[a-zA-Z]/.test(lastChange.text)) {
-          const model = monacoEditor.getModel();
-          if (model) {
-            const position = monacoEditor.getPosition();
-            if (position) {
-              const word = model.getWordUntilPosition(position);
-              // Si la palabra actual es de 1 solo carácter, forzar trigger
-              if (word.word.length === 1) {
-                // Trigger sugerencias manualmente
-                monacoEditor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+          // Usar setTimeout para asegurar que el modelo se actualice primero
+          setTimeout(() => {
+            const model = monacoEditor.getModel();
+            if (model) {
+              const position = monacoEditor.getPosition();
+              if (position) {
+                const word = model.getWordUntilPosition(position);
+                console.log('[Autocomplete Debug] Letra escrita:', lastChange.text, 'Palabra actual:', word.word);
+                // Si la palabra actual es de 1 solo carácter, forzar trigger
+                if (word.word.length === 1) {
+                  console.log('[Autocomplete Debug] Triggering suggest for:', word.word);
+                  // Trigger sugerencias manualmente
+                  monacoEditor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+                }
               }
             }
-          }
+          }, 0);
         }
       }
     });
@@ -1208,9 +1214,16 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
               ✨ 382 funciones de Excel + funciones del sistema con datos reales (usuarios, proyectos, iniciativas)
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowValidation(!showValidation)}
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 transition-colors whitespace-nowrap"
+          >
+            {showValidation ? '👁️ Ocultar validación' : '🔍 Validar fórmula'}
+          </button>
         </div>
 
-        {validation && (
+        {showValidation && validation && (
           <div
             className={`mt-3 p-3 rounded-lg text-sm ${
               validation.valid
