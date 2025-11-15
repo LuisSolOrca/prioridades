@@ -609,15 +609,31 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
   const handleEditorDidMount: OnMount = (monacoEditor, monaco) => {
     editorRef.current = monacoEditor;
 
-    // CRÍTICO: Configurar el lenguaje para que reconozca palabras desde el primer carácter
-    monaco.languages.setLanguageConfiguration('plaintext', {
+    // SOLUCIÓN: Registrar lenguaje custom en lugar de usar plaintext
+    monaco.languages.register({ id: 'kpi-formula' });
+
+    // Configurar el lenguaje custom
+    monaco.languages.setLanguageConfiguration('kpi-formula', {
       wordPattern: /[a-zA-Z_][a-zA-Z0-9_]*/,
+      brackets: [
+        ['(', ')'],
+        ['{', '}'],
+      ],
+      autoClosingPairs: [
+        { open: '(', close: ')' },
+        { open: '{', close: '}' },
+        { open: '"', close: '"' },
+      ],
     });
 
-    // Registrar proveedor de autocompletado
-    // SOLUCIÓN: Solo incluir caracteres especiales para contextos específicos
-    // NO incluir letras - quickSuggestions maneja las letras automáticamente
-    monaco.languages.registerCompletionItemProvider('plaintext', {
+    // Cambiar el lenguaje del modelo
+    const model = monacoEditor.getModel();
+    if (model) {
+      monaco.editor.setModelLanguage(model, 'kpi-formula');
+    }
+
+    // Registrar proveedor de autocompletado para el lenguaje custom
+    monaco.languages.registerCompletionItemProvider('kpi-formula', {
       triggerCharacters: ['(', ',', ' ', ':', '"', '{'], // Solo símbolos, NO letras
       provideCompletionItems: (model, position) => {
         const word = model.getWordUntilPosition(position);
@@ -881,24 +897,12 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           // No estamos dentro de una función del sistema NI dentro de comillas NI dentro de {}
           // Aquí sí podemos sugerir funciones
 
-          // CRÍTICO: Monaco solo muestra widget con 1 sugerencia
-          // Solución: Priorizar la mejor coincidencia
+          // Pre-filtrar funciones basándose en la palabra actual
           const wordUpper = word.word.toUpperCase();
 
-          // Filtrar y ordenar por relevancia
-          const filteredSystem = SYSTEM_FUNCTIONS
+          const systemSuggestions = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .sort((a, b) => {
-              // Priorizar coincidencias exactas o más cortas
-              const aExact = a.name.toUpperCase() === wordUpper;
-              const bExact = b.name.toUpperCase() === wordUpper;
-              if (aExact && !bExact) return -1;
-              if (!aExact && bExact) return 1;
-              return a.name.length - b.name.length;
-            });
-
-          const systemSuggestions = filteredSystem
-            .slice(0, 1) // Solo 1 sugerencia para que Monaco muestre el widget
+            .slice(0, 5) // Mostrar hasta 5 sugerencias
             .map(func => ({
               label: {
                 label: func.name,
@@ -916,29 +920,25 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
               filterText: func.name, // Asegurar que Monaco use el nombre completo para filtrar
             }));
 
-          // Si no hay sugerencias del sistema, buscar en Excel (solo 1 para evitar colapso)
-          const excelSuggestions = systemSuggestions.length === 0
-            ? EXCEL_FUNCTIONS
-                .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-                .sort((a, b) => a.name.length - b.name.length)
-                .slice(0, 1)
-                .map(func => ({
-                  label: {
-                    label: func.name,
-                    description: func.signature,
-                  },
-                  kind: monaco.languages.CompletionItemKind.Function,
-                  detail: func.detail,
-                  documentation: {
-                    value: `**${func.signature}**\n\n${func.description}`,
-                    isTrusted: true,
-                  },
-                  insertText: func.insertText,
-                  range: range,
-                  sortText: '!!' + func.name,
-                  filterText: func.name,
-                }))
-            : [];
+          const excelSuggestions = EXCEL_FUNCTIONS
+            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+            .slice(0, 5) // Mostrar hasta 5 sugerencias
+            .map(func => ({
+              label: {
+                label: func.name,
+                description: func.signature,
+              },
+              kind: monaco.languages.CompletionItemKind.Function,
+              detail: func.detail,
+              documentation: {
+                value: `**${func.signature}**\n\n${func.description}`,
+                isTrusted: true,
+              },
+              insertText: func.insertText,
+              range: range,
+              sortText: '!!' + func.name,
+              filterText: func.name,
+            }));
 
           suggestions = [...systemSuggestions, ...excelSuggestions];
         }
@@ -946,15 +946,11 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         // Si no hay sugerencias específicas de contexto, siempre mostrar las funciones
         // Esto evita que Monaco muestre sugerencias de variables por defecto
         if (suggestions.length === 0 && !insideQuotes() && !insideObjectBraces()) {
-          // CRÍTICO: Solo 1 sugerencia para que Monaco muestre el widget
           const wordUpper = word.word.toUpperCase();
 
-          const filteredSystem = SYSTEM_FUNCTIONS
+          const systemSuggestions = SYSTEM_FUNCTIONS
             .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-            .sort((a, b) => a.name.length - b.name.length);
-
-          const systemSuggestions = filteredSystem
-            .slice(0, 1)
+            .slice(0, 5)
             .map(func => ({
               label: {
                 label: func.name,
@@ -972,28 +968,25 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
               filterText: func.name,
             }));
 
-          const excelSuggestions = systemSuggestions.length === 0
-            ? EXCEL_FUNCTIONS
-                .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
-                .sort((a, b) => a.name.length - b.name.length)
-                .slice(0, 1)
-                .map(func => ({
-                  label: {
-                    label: func.name,
-                    description: func.signature,
-                  },
-                  kind: monaco.languages.CompletionItemKind.Function,
-                  detail: func.detail,
-                  documentation: {
-                    value: `**${func.signature}**\n\n${func.description}`,
-                    isTrusted: true,
-                  },
-                  insertText: func.insertText,
-                  range: range,
-                  sortText: '!!' + func.name,
-                  filterText: func.name,
-                }))
-            : [];
+          const excelSuggestions = EXCEL_FUNCTIONS
+            .filter(func => wordUpper === '' || func.name.toUpperCase().startsWith(wordUpper))
+            .slice(0, 5)
+            .map(func => ({
+              label: {
+                label: func.name,
+                description: func.signature,
+              },
+              kind: monaco.languages.CompletionItemKind.Function,
+              detail: func.detail,
+              documentation: {
+                value: `**${func.signature}**\n\n${func.description}`,
+                isTrusted: true,
+              },
+              insertText: func.insertText,
+              range: range,
+              sortText: '!!' + func.name,
+              filterText: func.name,
+            }));
 
           suggestions = [...systemSuggestions, ...excelSuggestions];
         }
@@ -1298,7 +1291,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
         <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-gray-900">
           <Editor
             height="200px"
-            defaultLanguage="plaintext"
+            defaultLanguage="kpi-formula"
             value={value}
             onChange={(newValue) => onChange(newValue || '')}
             onMount={handleEditorDidMount}
