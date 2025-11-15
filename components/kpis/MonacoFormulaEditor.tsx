@@ -1215,12 +1215,31 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
   const validation = validateFormula();
 
   return (
-    <div className="space-y-4">
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Fórmula de cálculo {loadingData && <span className="text-xs text-gray-500">(cargando datos...)</span>}
-          </label>
+    <>
+      {/* CSS FIX: Asegurar que el widget de sugerencias de Monaco sea visible */}
+      <style jsx global>{`
+        .monaco-editor .suggest-widget {
+          z-index: 9999 !important;
+          position: fixed !important;
+        }
+        .monaco-editor .suggest-widget .monaco-list {
+          max-height: 250px !important;
+          min-height: 40px !important;
+        }
+        .monaco-editor .suggest-widget .monaco-list .monaco-list-row {
+          height: auto !important;
+          min-height: 24px !important;
+        }
+        .monaco-editor .suggest-widget .details {
+          display: block !important;
+        }
+      `}</style>
+      <div className="space-y-4">
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Fórmula de cálculo {loadingData && <span className="text-xs text-gray-500">(cargando datos...)</span>}
+            </label>
           <button
             type="button"
             onClick={downloadPDF}
@@ -1366,6 +1385,7 @@ export default function MonacoFormulaEditor({ value, onChange }: MonacoFormulaEd
           </p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
