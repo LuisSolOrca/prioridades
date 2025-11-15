@@ -50,14 +50,23 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
   };
 
   const validateFormula = useCallback(() => {
-    if (!value.trim()) return null;
+    console.log('validateFormula called with value:', value);
+    if (!value.trim()) {
+      console.log('Empty value, returning null');
+      return null;
+    }
 
     try {
       // Importación dinámica para evitar errores en el servidor
-      if (typeof window === 'undefined') return null;
+      if (typeof window === 'undefined') {
+        console.log('Server side, returning null');
+        return null;
+      }
 
+      console.log('Importing Parser...');
       const { Parser } = require('hot-formula-parser');
       const parser = new Parser();
+      console.log('Parser created successfully');
 
       // Asignar valores de prueba a las variables detectadas
       detectedVariables.forEach((varName) => {
@@ -169,9 +178,13 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
 
   // Actualizar validación cuando cambia el valor o las variables
   useEffect(() => {
+    console.log('useEffect validation triggered', { showValidation, value });
     if (showValidation) {
       const result = validateFormula();
+      console.log('Validation result:', result);
       setValidation(result);
+    } else {
+      setValidation(null);
     }
   }, [value, detectedVariables, showValidation, validateFormula]);
 
@@ -220,6 +233,12 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
           >
             {showValidation ? '👁️ Ocultar validación' : '🔍 Validar fórmula'}
           </button>
+        </div>
+
+        {/* DEBUG INFO */}
+        <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/20 text-xs">
+          <div>showValidation: {showValidation ? 'true' : 'false'}</div>
+          <div>validation: {validation ? JSON.stringify(validation) : 'null'}</div>
         </div>
 
         {showValidation && validation && (
