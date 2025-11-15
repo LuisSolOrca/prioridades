@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { extractVariablesFromFormula } from '@/lib/kpi-utils/formula-parser';
 
 interface IframeFormulaEditorProps {
@@ -13,6 +13,7 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
   const [detectedVariables, setDetectedVariables] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const [validation, setValidation] = useState<any>(null);
 
   // Extraer variables automáticamente
   useEffect(() => {
@@ -48,11 +49,14 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
     }
   };
 
-  const validateFormula = () => {
+  const validateFormula = useCallback(() => {
     if (!value.trim()) return null;
 
     try {
-      const Parser = require('hot-formula-parser').Parser;
+      // Importación dinámica para evitar errores en el servidor
+      if (typeof window === 'undefined') return null;
+
+      const { Parser } = require('hot-formula-parser');
       const parser = new Parser();
 
       // Asignar valores de prueba a las variables detectadas
@@ -158,11 +162,18 @@ export default function IframeFormulaEditor({ value, onChange }: IframeFormulaEd
 
       return { valid: true, result: formattedResult, rawResult: result.result };
     } catch (error: any) {
-      return { valid: false, error: error.message };
+      console.error('Error validating formula:', error);
+      return { valid: false, error: error.message || 'Error desconocido al validar la fórmula' };
     }
-  };
+  }, [value, detectedVariables]);
 
-  const validation = validateFormula();
+  // Actualizar validación cuando cambia el valor o las variables
+  useEffect(() => {
+    if (showValidation) {
+      const result = validateFormula();
+      setValidation(result);
+    }
+  }, [value, detectedVariables, showValidation, validateFormula]);
 
   return (
     <div className="space-y-4">
