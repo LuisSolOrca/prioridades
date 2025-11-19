@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('📦 Body recibido:', JSON.stringify(body, null, 2));
 
-    const { workItems, weekStart, weekEnd } = body;
+    const { workItems, weekStart, weekEnd, clientId } = body;
 
     if (!workItems || !Array.isArray(workItems) || workItems.length === 0) {
       console.log('❌ No hay work items en el request');
@@ -45,7 +45,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!clientId) {
+      console.log('❌ No se especificó clientId');
+      return NextResponse.json(
+        { error: 'Debes seleccionar un cliente para importar' },
+        { status: 400 }
+      );
+    }
+
     console.log(`📋 Work items a importar: ${workItems.length}`);
+    console.log(`🏢 Cliente seleccionado: ${clientId}`);
 
     // Validar que todos los work items tengan iniciativas
     const missingInitiatives = workItems.filter((wi: any) => !wi.initiativeIds || wi.initiativeIds.length === 0);
@@ -170,6 +179,7 @@ export async function POST(request: NextRequest) {
           type: 'ESTRATEGICA',
           userId: (session.user as any).id,
           initiativeIds: initiativeIds,
+          clientId: clientId,
           wasEdited: false,
           isCarriedOver: false,
           checklist: checklist,

@@ -38,6 +38,12 @@ interface Initiative {
   color: string;
 }
 
+interface Client {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
 export default function AzureDevOpsImportPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -53,6 +59,8 @@ export default function AzureDevOpsImportPage() {
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [selectedInitiatives, setSelectedInitiatives] = useState<Map<number, string[]>>(new Map());
   const [importResults, setImportResults] = useState<any>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
 
   // Estado para sincronización
   const [showSyncModal, setShowSyncModal] = useState(false);
@@ -93,9 +101,10 @@ export default function AzureDevOpsImportPage() {
       setLoading(true);
       setMessage(null);
 
-      const [workItemsRes, initiativesRes] = await Promise.all([
+      const [workItemsRes, initiativesRes, clientsRes] = await Promise.all([
         fetch('/api/azure-devops/work-items'),
-        fetch('/api/initiatives?activeOnly=true')
+        fetch('/api/initiatives?activeOnly=true'),
+        fetch('/api/clients?activeOnly=true')
       ]);
 
       if (!workItemsRes.ok) {
@@ -105,9 +114,11 @@ export default function AzureDevOpsImportPage() {
 
       const workItemsData = await workItemsRes.json();
       const initiativesData = await initiativesRes.json();
+      const clientsData = await clientsRes.json();
 
       setWorkItems(workItemsData.workItems || []);
       setInitiatives(initiativesData || []);
+      setClients(clientsData || []);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -176,6 +187,15 @@ export default function AzureDevOpsImportPage() {
   };
 
   const handleConfirmImport = async () => {
+    // Validar que se haya seleccionado un cliente
+    if (!selectedClientId) {
+      setMessage({
+        type: 'error',
+        text: 'Debes seleccionar un cliente antes de importar'
+      });
+      return;
+    }
+
     // Validar que todos los work items tengan al menos una iniciativa
     const missingInitiatives = previewItems.filter(item =>
       !item.error && (!selectedInitiatives.has(item.workItemId) || selectedInitiatives.get(item.workItemId)!.length === 0)
@@ -207,7 +227,8 @@ export default function AzureDevOpsImportPage() {
         body: JSON.stringify({
           workItems: workItemsWithInitiatives,
           weekStart: targetWeek.monday.toISOString(),
-          weekEnd: targetWeek.friday.toISOString()
+          weekEnd: targetWeek.friday.toISOString(),
+          clientId: selectedClientId
         })
       });
 
@@ -591,6 +612,34 @@ export default function AzureDevOpsImportPage() {
                   📅 Siguiente Semana ({getWeekLabel(nextWeek.monday)})
                 </button>
               </div>
+            </div>
+
+            {/* Selector de cliente */}
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg">
+              <label className="block text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                🏢 Cliente (Requerido)
+              </label>
+              <select
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                  !selectedClientId
+                    ? 'border-red-300 dark:border-red-700'
+                    : 'border-blue-300 dark:border-blue-700'
+                }`}
+              >
+                <option value="">Seleccionar cliente...</option>
+                {clients.map((client) => (
+                  <option key={client._id} value={client._id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+              {!selectedClientId && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-semibold">
+                  ⚠️ Debes seleccionar un cliente antes de importar work items
+                </p>
+              )}
             </div>
           </div>
 
