@@ -120,7 +120,7 @@ export async function sendPriorityNotificationToSlack(params: {
     const emoji = eventEmojis[params.eventType] || '📝';
 
     // Crear bloques de mensaje enriquecido
-    const blocks = [
+    const blocks: any[] = [
       {
         type: 'section',
         text: {
