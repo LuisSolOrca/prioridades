@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Slack, CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -14,7 +14,7 @@ interface SlackStatus {
   slackUserId?: string;
 }
 
-export default function IntegrationsPage() {
+function IntegrationsContent() {
   const searchParams = useSearchParams();
   const [slackStatus, setSlackStatus] = useState<SlackStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -205,5 +205,22 @@ export default function IntegrationsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="max-w-4xl mx-auto p-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="animate-spin" size={32} />
+          </div>
+        </div>
+      </div>
+    }>
+      <IntegrationsContent />
+    </Suspense>
   );
 }
