@@ -1,5 +1,5 @@
 import SlackIntegration from '@/models/SlackIntegration';
-import Project from '@/models/Project';
+import Project, { IProject } from '@/models/Project';
 import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
 
@@ -92,7 +92,7 @@ export async function sendPriorityNotificationToSlack(params: {
     await connectDB();
 
     // Obtener el proyecto para ver si tiene canal de Slack configurado
-    const project = await Project.findById(params.projectId).lean();
+    const project = await Project.findById(params.projectId).lean() as IProject | null;
     if (!project || !project.slackChannelId) {
       console.log('Proyecto no tiene canal de Slack configurado');
       return { success: false, error: 'No Slack channel configured' };

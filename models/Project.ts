@@ -1,5 +1,57 @@
 import mongoose from 'mongoose';
 
+export interface IProject {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  slackChannelId?: string;
+  slackChannelName?: string;
+  purpose?: string;
+  objectives?: Array<{
+    description: string;
+    specific: boolean;
+    measurable: boolean;
+    achievable: boolean;
+    relevant: boolean;
+    timeBound: boolean;
+  }>;
+  scope?: {
+    included?: string;
+    excluded?: string;
+  };
+  requirements?: string;
+  assumptions?: string;
+  constraints?: string;
+  stakeholders?: Array<{
+    name: string;
+    role: string;
+    interest: 'Alto' | 'Medio' | 'Bajo';
+    influence: 'Alto' | 'Medio' | 'Bajo';
+  }>;
+  risks?: Array<{
+    description: string;
+    probability: 'Alta' | 'Media' | 'Baja';
+    impact: 'Alto' | 'Medio' | 'Bajo';
+    mitigation: string;
+  }>;
+  budget?: {
+    estimated?: number;
+    currency?: string;
+    notes?: string;
+  };
+  successCriteria?: Array<{
+    description: string;
+  }>;
+  projectManager?: {
+    userId?: mongoose.Types.ObjectId;
+    name?: string;
+    authority?: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const ProjectSchema = new mongoose.Schema({
   name: {
     type: String,
