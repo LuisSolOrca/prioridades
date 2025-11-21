@@ -39,8 +39,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generar reportes para todos los usuarios
-    const reports = await generateAllUsersReports(reportType);
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    let reports;
+
+    // En modo de prueba, buscar el usuario por email y generar solo su reporte
+    if (testMode) {
+      const User = (await import('@/models/User')).default;
+      const user = await User.findOne({ email: testEmail, isActive: true }).lean();
+
+      if (!user) {
+        return NextResponse.json(
+          { error: `No se encontró usuario activo con el email ${testEmail}` },
+          { status: 404 }
+        );
+      }
+
+      // Generar reporte solo para este usuario
+      const { generateUserReport } = await import('@/lib/reportStats');
+      const report = await generateUserReport(
+        user._id,
+        user.email,
+        user.name,
+        reportType
+      );
+      reports = [report];
+    } else {
+      // Generar reportes para todos los usuarios
+      reports = await generateAllUsersReports(reportType);
+    }
 
     const results = {
       total: reports.length,
@@ -48,8 +74,6 @@ export async function POST(request: Request) {
       failed: 0,
       errors: [] as string[],
     };
-
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
     // Enviar correos
     for (const report of reports) {
@@ -72,10 +96,8 @@ export async function POST(request: Request) {
           dashboardUrl: `${baseUrl}/dashboard`,
         });
 
-        const recipientEmail = testMode ? testEmail! : report.userEmail;
-
         const result = await sendEmail({
-          to: recipientEmail,
+          to: report.userEmail,
           subject: emailData.subject,
           html: emailData.html,
         });
@@ -86,9 +108,6 @@ export async function POST(request: Request) {
           results.failed++;
           results.errors.push(`${report.userName} (${report.userEmail}): Error al enviar`);
         }
-
-        // En modo de prueba, solo enviar un reporte
-        if (testMode) break;
       } catch (error) {
         results.failed++;
         results.errors.push(
