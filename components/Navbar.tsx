@@ -30,7 +30,8 @@ import {
   Briefcase,
   ClipboardList,
   FolderKanban,
-  TrendingUp
+  TrendingUp,
+  Mail
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -458,6 +459,17 @@ export default function Navbar() {
                     >
                       <ClipboardList size={22} />
                     </button>
+                    <button
+                      onClick={() => handleNavigation('/admin/report-settings')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/admin/report-settings'
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Reportes Automáticos"
+                    >
+                      <Mail size={22} />
+                    </button>
                   </>
                 )}
               </>
@@ -633,6 +645,12 @@ export default function Navbar() {
                       label="Asignación Masiva"
                       active={pathname === '/admin/bulk-assignment'}
                       onClick={() => handleNavigation('/admin/bulk-assignment')}
+                    />
+                    <NavButton
+                      icon={<Mail size={20} />}
+                      label="Reportes Automáticos"
+                      active={pathname === '/admin/report-settings'}
+                      onClick={() => handleNavigation('/admin/report-settings')}
                     />
                   </>
                 )}

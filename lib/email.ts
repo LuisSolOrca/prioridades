@@ -388,4 +388,208 @@ export const emailTemplates = {
       `
     }),
   }),
+
+  performanceReport: (params: {
+    userName: string;
+    periodLabel: string;
+    reportType: 'SEMANAL' | 'MENSUAL';
+    currentStats: {
+      totalPriorities: number;
+      completedPriorities: number;
+      delayedPriorities: number;
+      totalTasks: number;
+      completedTasks: number;
+      totalHoursReported: number;
+      averageCompletionPercentage: number;
+    };
+    comparison: {
+      prioritiesChange: number;
+      completionRateChange: number;
+      tasksChange: number;
+      hoursChange: number;
+      delayedChange: number;
+    };
+    topPriorities: Array<{
+      title: string;
+      status: string;
+      completionPercentage: number;
+      tasksCompleted: number;
+      totalTasks: number;
+    }>;
+    dashboardUrl: string;
+  }) => {
+    const formatChange = (value: number): string => {
+      if (value > 0) return `<span style="color: #10b981;">▲ ${value.toFixed(1)}%</span>`;
+      if (value < 0) return `<span style="color: #ef4444;">▼ ${Math.abs(value).toFixed(1)}%</span>`;
+      return '<span style="color: #6b7280;">= 0%</span>';
+    };
+
+    const formatChangeInverse = (value: number): string => {
+      // Para métricas negativas (menos retrasadas es mejor)
+      if (value < 0) return `<span style="color: #10b981;">▼ ${Math.abs(value).toFixed(1)}%</span>`;
+      if (value > 0) return `<span style="color: #ef4444;">▲ ${value.toFixed(1)}%</span>`;
+      return '<span style="color: #6b7280;">= 0%</span>';
+    };
+
+    const formatPercentChange = (value: number): string => {
+      if (value > 0) return `<span style="color: #10b981;">▲ ${value.toFixed(1)} puntos</span>`;
+      if (value < 0) return `<span style="color: #ef4444;">▼ ${Math.abs(value).toFixed(1)} puntos</span>`;
+      return '<span style="color: #6b7280;">= Sin cambio</span>';
+    };
+
+    const completionRate = params.currentStats.totalPriorities > 0
+      ? (params.currentStats.completedPriorities / params.currentStats.totalPriorities * 100).toFixed(1)
+      : '0';
+
+    const taskCompletionRate = params.currentStats.totalTasks > 0
+      ? (params.currentStats.completedTasks / params.currentStats.totalTasks * 100).toFixed(1)
+      : '0';
+
+    const statusEmoji: Record<string, string> = {
+      'EN_TIEMPO': '🟢',
+      'EN_RIESGO': '🟡',
+      'BLOQUEADO': '🔴',
+      'COMPLETADO': '✅',
+      'REPROGRAMADO': '🔄',
+    };
+
+    const topPrioritiesHTML = params.topPriorities.length > 0
+      ? params.topPriorities.map(p => `
+          <div style="background: #f9fafb; padding: 12px; margin: 8px 0; border-radius: 6px; border-left: 3px solid #3b82f6;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                  ${statusEmoji[p.status] || '⚪'} ${p.title}
+                </div>
+                <div style="font-size: 12px; color: #6b7280;">
+                  ${p.tasksCompleted}/${p.totalTasks} tareas completadas
+                </div>
+              </div>
+              <div style="text-align: right; margin-left: 10px;">
+                <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">
+                  ${p.completionPercentage}%
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('')
+      : '<p style="color: #6b7280; text-align: center;">No hay prioridades en este período</p>';
+
+    return {
+      subject: `📊 Reporte de Rendimiento ${params.reportType === 'SEMANAL' ? 'Semanal' : 'Mensual'} - ${params.periodLabel}`,
+      html: generateEmailHTML({
+        headerGradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+        headerTitle: `📊 Reporte de Rendimiento ${params.reportType === 'SEMANAL' ? 'Semanal' : 'Mensual'}`,
+        content: `
+          <p style="font-size: 16px; color: #1f2937;">Hola <strong>${params.userName}</strong>,</p>
+          <p style="color: #6b7280;">Aquí está tu reporte de rendimiento para: <strong>${params.periodLabel}</strong></p>
+
+          <!-- Resumen General -->
+          <div class="info-box" style="border-color: #6366f1; margin-top: 25px;">
+            <h3 style="color: #6366f1; margin-top: 0; margin-bottom: 15px;">📈 Resumen General</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span style="color: #6b7280;">Prioridades Atendidas</span>
+                </td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
+                  <strong style="color: #1f2937; font-size: 18px;">${params.currentStats.totalPriorities}</strong>
+                  <div style="font-size: 12px; margin-top: 2px;">${formatChange(params.comparison.prioritiesChange)}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span style="color: #6b7280;">Tasa de Completitud</span>
+                </td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
+                  <strong style="color: #1f2937; font-size: 18px;">${completionRate}%</strong>
+                  <div style="font-size: 12px; margin-top: 2px;">${formatPercentChange(params.comparison.completionRateChange)}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span style="color: #6b7280;">Prioridades Retrasadas</span>
+                </td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
+                  <strong style="color: #1f2937; font-size: 18px;">${params.currentStats.delayedPriorities}</strong>
+                  <div style="font-size: 12px; margin-top: 2px;">${formatChangeInverse(params.comparison.delayedChange)}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span style="color: #6b7280;">Tareas Ejecutadas</span>
+                </td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
+                  <strong style="color: #1f2937; font-size: 18px;">${params.currentStats.completedTasks} / ${params.currentStats.totalTasks}</strong>
+                  <div style="font-size: 12px; margin-top: 2px;">${formatChange(params.comparison.tasksChange)}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0;">
+                  <span style="color: #6b7280;">Horas Reportadas</span>
+                </td>
+                <td style="padding: 10px 0; text-align: right;">
+                  <strong style="color: #1f2937; font-size: 18px;">${params.currentStats.totalHoursReported.toFixed(1)}h</strong>
+                  <div style="font-size: 12px; margin-top: 2px;">${formatChange(params.comparison.hoursChange)}</div>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Indicadores Clave -->
+          <div style="margin: 25px 0;">
+            <h3 style="color: #1f2937; margin-bottom: 15px;">🎯 Indicadores Clave</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 15px; border-radius: 8px; color: white;">
+                <div style="font-size: 12px; opacity: 0.9;">Completadas</div>
+                <div style="font-size: 28px; font-weight: 700; margin: 5px 0;">${params.currentStats.completedPriorities}</div>
+              </div>
+              <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 15px; border-radius: 8px; color: white;">
+                <div style="font-size: 12px; opacity: 0.9;">Retrasadas</div>
+                <div style="font-size: 28px; font-weight: 700; margin: 5px 0;">${params.currentStats.delayedPriorities}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Prioridades -->
+          <div style="margin: 25px 0;">
+            <h3 style="color: #1f2937; margin-bottom: 15px;">⭐ Top Prioridades del Período</h3>
+            ${topPrioritiesHTML}
+          </div>
+
+          <!-- Insight de Rendimiento -->
+          ${params.comparison.completionRateChange > 0 ? `
+            <div class="info-box" style="border-color: #10b981; background: #f0fdf4; margin: 25px 0;">
+              <p style="color: #047857; font-weight: 600; margin: 0;">🎉 ¡Excelente trabajo!</p>
+              <p style="color: #065f46; margin: 10px 0 0 0; font-size: 14px;">
+                Tu tasa de completitud aumentó ${params.comparison.completionRateChange.toFixed(1)} puntos en comparación con el período anterior. ¡Sigue así!
+              </p>
+            </div>
+          ` : params.comparison.completionRateChange < -5 ? `
+            <div class="info-box" style="border-color: #f59e0b; background: #fffbeb; margin: 25px 0;">
+              <p style="color: #d97706; font-weight: 600; margin: 0;">💪 Oportunidad de Mejora</p>
+              <p style="color: #92400e; margin: 10px 0 0 0; font-size: 14px;">
+                Tu tasa de completitud disminuyó ${Math.abs(params.comparison.completionRateChange).toFixed(1)} puntos. Considera revisar tus prioridades y eliminar bloqueos.
+              </p>
+            </div>
+          ` : `
+            <div class="info-box" style="border-color: #3b82f6; background: #eff6ff; margin: 25px 0;">
+              <p style="color: #2563eb; font-weight: 600; margin: 0;">📊 Rendimiento Estable</p>
+              <p style="color: #1e40af; margin: 10px 0 0 0; font-size: 14px;">
+                Tu rendimiento se mantiene consistente. Continúa con tu ritmo de trabajo.
+              </p>
+            </div>
+          `}
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${params.dashboardUrl}" class="button" style="background: #6366f1;">Ver Dashboard Completo</a>
+          </div>
+
+          <p style="color: #9ca3af; font-size: 13px; margin-top: 30px; text-align: center;">
+            Este reporte compara tu rendimiento con el período anterior para ayudarte a identificar tendencias y áreas de mejora.
+          </p>
+        `
+      }),
+    };
+  },
 };

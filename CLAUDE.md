@@ -229,6 +229,43 @@ The application includes a comprehensive KPI (Key Performance Indicators) manage
 
 See `docs/KPI_MANAGEMENT.md` for detailed documentation.
 
+## Performance Reports System
+
+The application includes an automatic performance reporting system that sends statistical analysis to users via email:
+
+### Key Features
+
+- **Automated Reports**: Weekly and/or monthly reports sent automatically to all active users
+- **Performance Metrics**: Priorities attended, completion rate, delayed priorities, tasks executed, hours reported
+- **Comparative Analysis**: Each metric compares current period vs previous period with percentage changes
+- **Top Priorities**: List of top 5 priorities from the period
+- **Personalized Insights**: Automatic messages based on performance trends (improvement, opportunity, stable)
+
+### Admin Configuration
+
+- **Admin Panel**: Access `/admin/report-settings` to configure report frequency and schedule
+- **Frequency Options**: NINGUNO (disabled), SEMANAL (weekly), MENSUAL (monthly), AMBOS (both)
+- **Weekly Reports**: Configure day of week (0-6) and hour (0-23) for sending
+- **Monthly Reports**: Configure day of month (1-28) and hour (0-23) for sending
+- **Test Mode**: Send test reports to specific email before enabling for all users
+
+### API Routes
+
+- `/api/admin/report-settings` - GET/PUT for admin-only configuration
+- `/api/reports/send` - POST to manually send reports (admin only)
+- `/api/cron/send-reports` - GET endpoint for external cron automation
+
+### Automation Setup
+
+Use a free service like cron-job.org to call `/api/cron/send-reports` every hour. The system automatically checks configuration and sends reports only when scheduled.
+
+### Testing
+
+- **UI Test**: Use test mode in `/admin/report-settings` to send sample reports
+- **Script Test**: Run `npx tsx scripts/test-reports.ts` to generate reports without sending emails
+
+See `docs/REPORTS.md` for detailed documentation.
+
 ## Important Notes
 
 - **Password security**: All passwords are hashed with bcrypt (salt rounds: 10)
