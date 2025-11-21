@@ -277,26 +277,26 @@ export async function generateUserReport(
   let currentStart: Date, currentEnd: Date, previousStart: Date, previousEnd: Date, label: string;
 
   if (reportType === 'SEMANAL') {
-    // Semana anterior (lunes a viernes)
-    currentEnd = new Date();
-    currentStart = startOfWeek(subWeeks(currentEnd, 1), { weekStartsOn: 1 }); // Lunes
-    currentEnd = endOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 }); // Domingo
+    // Semana ACTUAL (lunes a domingo)
+    const now = new Date();
+    currentStart = startOfWeek(now, { weekStartsOn: 1 }); // Lunes de esta semana
+    currentEnd = endOfWeek(now, { weekStartsOn: 1 }); // Domingo de esta semana
 
-    // Semana previa para comparación
-    previousStart = startOfWeek(subWeeks(currentStart, 1), { weekStartsOn: 1 });
-    previousEnd = endOfWeek(subWeeks(currentStart, 1), { weekStartsOn: 1 });
+    // Semana anterior para comparación
+    previousStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+    previousEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
 
     label = `Semana del ${format(currentStart, 'd MMM', { locale: es })} al ${format(currentEnd, 'd MMM yyyy', { locale: es })}`;
   } else {
-    // Mes anterior
-    const lastMonth = subMonths(new Date(), 1);
-    currentStart = startOfMonth(lastMonth);
-    currentEnd = endOfMonth(lastMonth);
+    // Mes ACTUAL
+    const now = new Date();
+    currentStart = startOfMonth(now);
+    currentEnd = endOfMonth(now);
 
-    // Mes previo para comparación
-    const twoMonthsAgo = subMonths(new Date(), 2);
-    previousStart = startOfMonth(twoMonthsAgo);
-    previousEnd = endOfMonth(twoMonthsAgo);
+    // Mes anterior para comparación
+    const lastMonth = subMonths(now, 1);
+    previousStart = startOfMonth(lastMonth);
+    previousEnd = endOfMonth(lastMonth);
 
     label = format(currentStart, 'MMMM yyyy', { locale: es });
   }
