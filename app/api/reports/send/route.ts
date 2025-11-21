@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import { generateAllUsersReports } from '@/lib/reportStats';
 import { sendEmail, emailTemplates } from '@/lib/email';
@@ -12,7 +13,7 @@ import SystemSettings from '@/models/SystemSettings';
  */
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     // Solo admins pueden enviar reportes manualmente
     if (!session || session.user.role !== 'ADMIN') {
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
  */
 export async function GET() {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
