@@ -21,6 +21,16 @@ export async function GET() {
       return NextResponse.json({
         message: 'Reportes desactivados o no configurados',
         sent: false,
+        debug: {
+          settingsExists: !!settings,
+          isActive: settings?.isActive || false,
+          reportFrequency: settings?.reportFrequency || 'N/A',
+          hint: !settings
+            ? 'No existe configuración en la base de datos. Configúrala en /admin/report-settings'
+            : !settings.isActive
+            ? 'El sistema está desactivado. Actívalo en /admin/report-settings'
+            : 'La frecuencia está en NINGUNO. Cámbiala en /admin/report-settings'
+        }
       });
     }
 
