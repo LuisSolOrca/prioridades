@@ -457,21 +457,23 @@ export const emailTemplates = {
     const topPrioritiesHTML = params.topPriorities.length > 0
       ? params.topPriorities.map(p => `
           <div style="background: #f9fafb; padding: 12px; margin: 8px 0; border-radius: 6px; border-left: 3px solid #3b82f6;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="flex: 1;">
-                <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
-                  ${statusEmoji[p.status] || '⚪'} ${p.title}
-                </div>
-                <div style="font-size: 12px; color: #6b7280;">
-                  ${p.tasksCompleted}/${p.totalTasks} tareas completadas
-                </div>
-              </div>
-              <div style="text-align: right; margin-left: 10px;">
-                <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">
-                  ${p.completionPercentage}%
-                </div>
-              </div>
-            </div>
+            <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+              <tr>
+                <td style="vertical-align: middle; width: 80%;">
+                  <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                    ${statusEmoji[p.status] || '⚪'} ${p.title}
+                  </div>
+                  <div style="font-size: 12px; color: #6b7280;">
+                    ${p.tasksCompleted}/${p.totalTasks} tareas completadas
+                  </div>
+                </td>
+                <td style="vertical-align: middle; text-align: right; width: 20%;">
+                  <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">
+                    ${p.completionPercentage}%
+                  </div>
+                </td>
+              </tr>
+            </table>
           </div>
         `).join('')
       : '<p style="color: #6b7280; text-align: center;">No hay prioridades en este período</p>';
@@ -540,16 +542,30 @@ export const emailTemplates = {
           <!-- Indicadores Clave -->
           <div style="margin: 25px 0;">
             <h3 style="color: #1f2937; margin-bottom: 15px;">🎯 Indicadores Clave</h3>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 15px; border-radius: 8px; color: white;">
-                <div style="font-size: 12px; opacity: 0.9;">Completadas</div>
-                <div style="font-size: 28px; font-weight: 700; margin: 5px 0;">${params.currentStats.completedPriorities}</div>
-              </div>
-              <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 15px; border-radius: 8px; color: white;">
-                <div style="font-size: 12px; opacity: 0.9;">Retrasadas</div>
-                <div style="font-size: 28px; font-weight: 700; margin: 5px 0;">${params.currentStats.delayedPriorities}</div>
-              </div>
-            </div>
+            <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+              <tr>
+                <td style="width: 48%; padding-right: 2%;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; background-color: #10b981; border-radius: 8px;">
+                    <tr>
+                      <td style="padding: 20px; text-align: center;">
+                        <div style="font-size: 14px; color: #ffffff; margin-bottom: 8px;">Completadas</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #ffffff;">${params.currentStats.completedPriorities}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td style="width: 48%; padding-left: 2%;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; background-color: #ef4444; border-radius: 8px;">
+                    <tr>
+                      <td style="padding: 20px; text-align: center;">
+                        <div style="font-size: 14px; color: #ffffff; margin-bottom: 8px;">Retrasadas</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #ffffff;">${params.currentStats.delayedPriorities}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </div>
 
           <!-- Top Prioridades -->
@@ -560,16 +576,26 @@ export const emailTemplates = {
 
           <!-- Análisis Profesional con IA -->
           ${params.aiAnalysis ? `
-            <div class="info-box" style="border-color: #8b5cf6; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); margin: 25px 0; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.1);">
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <div style="background: #8b5cf6; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                  🤖
-                </div>
-                <h3 style="color: #6d28d9; margin: 0; font-size: 16px;">Análisis Profesional con IA</h3>
-              </div>
-              <p style="color: #5b21b6; margin: 0; font-size: 14px; line-height: 1.6;">
-                ${params.aiAnalysis}
-              </p>
+            <div class="info-box" style="background: #f5f3ff; border-left: 4px solid #8b5cf6; border-radius: 5px; padding: 20px; margin: 25px 0;">
+              <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                <tr>
+                  <td style="width: 50px; vertical-align: top; padding-right: 15px;">
+                    <table cellpadding="0" cellspacing="0" border="0" style="width: 40px; height: 40px; background-color: #8b5cf6; border-radius: 20px;">
+                      <tr>
+                        <td style="text-align: center; vertical-align: middle; font-size: 20px;">
+                          🤖
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td style="vertical-align: top;">
+                    <h3 style="color: #6d28d9; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">Análisis Profesional con IA</h3>
+                    <p style="color: #5b21b6; margin: 0; font-size: 14px; line-height: 1.6;">
+                      ${params.aiAnalysis}
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </div>
           ` : ''}
 
