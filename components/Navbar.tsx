@@ -153,6 +153,16 @@ export default function Navbar() {
                     <User size={16} />
                     <span>Mi Perfil</span>
                   </button>
+                  <button
+                    onClick={() => {
+                      handleNavigation('/settings/integrations');
+                      setProfileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                  >
+                    <Link size={16} />
+                    <span>Integraciones</span>
+                  </button>
                   <div className="px-4 py-2">
                     <SessionRefreshButton />
                   </div>

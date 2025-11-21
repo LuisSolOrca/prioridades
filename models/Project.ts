@@ -16,6 +16,17 @@ const ProjectSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Slack Integration
+  slackChannelId: {
+    type: String,
+    trim: true,
+    maxlength: 50
+  },
+  slackChannelName: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
   // PM BOOK Fields
   purpose: {
     type: String,
