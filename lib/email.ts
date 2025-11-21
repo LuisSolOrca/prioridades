@@ -397,6 +397,7 @@ export const emailTemplates = {
       totalPriorities: number;
       completedPriorities: number;
       delayedPriorities: number;
+      pendingPriorities: number;
       totalTasks: number;
       completedTasks: number;
       totalHoursReported: number;
@@ -544,7 +545,7 @@ export const emailTemplates = {
             <h3 style="color: #1f2937; margin-bottom: 15px;">🎯 Indicadores Clave</h3>
             <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
               <tr>
-                <td style="width: 48%; padding-right: 2%;">
+                <td style="width: 32%; padding-right: 2%;">
                   <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; background-color: #10b981; border-radius: 8px;">
                     <tr>
                       <td style="padding: 20px; text-align: center;">
@@ -554,7 +555,17 @@ export const emailTemplates = {
                     </tr>
                   </table>
                 </td>
-                <td style="width: 48%; padding-left: 2%;">
+                <td style="width: 32%; padding: 0 1%;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; background-color: #f59e0b; border-radius: 8px;">
+                    <tr>
+                      <td style="padding: 20px; text-align: center;">
+                        <div style="font-size: 14px; color: #ffffff; margin-bottom: 8px;">Pendientes</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #ffffff;">${params.currentStats.pendingPriorities}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td style="width: 32%; padding-left: 2%;">
                   <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; background-color: #ef4444; border-radius: 8px;">
                     <tr>
                       <td style="padding: 20px; text-align: center;">

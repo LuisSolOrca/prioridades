@@ -86,6 +86,7 @@ export async function POST(request: Request) {
             totalPriorities: report.currentStats.totalPriorities,
             completedPriorities: report.currentStats.completedPriorities,
             delayedPriorities: report.currentStats.delayedPriorities,
+            pendingPriorities: report.currentStats.pendingPriorities,
             totalTasks: report.currentStats.totalTasks,
             completedTasks: report.currentStats.completedTasks,
             totalHoursReported: report.currentStats.totalHoursReported,

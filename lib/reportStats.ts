@@ -104,6 +104,7 @@ export interface PriorityStats {
   totalPriorities: number;
   completedPriorities: number;
   delayedPriorities: number; // EN_RIESGO, BLOQUEADO, o REPROGRAMADO
+  pendingPriorities: number; // EN_TIEMPO (no completadas pero sin problemas)
   inTimePriorities: number; // EN_TIEMPO o COMPLETADO
   totalTasks: number;
   completedTasks: number;
@@ -169,6 +170,7 @@ async function calculateStats(
     totalPriorities: priorities.length,
     completedPriorities: 0,
     delayedPriorities: 0,
+    pendingPriorities: 0,
     inTimePriorities: 0,
     totalTasks: 0,
     completedTasks: 0,
@@ -202,6 +204,7 @@ async function calculateStats(
     // En tiempo (EN_TIEMPO o COMPLETADO)
     if (priority.status === 'EN_TIEMPO') {
       stats.inTimePriorities++;
+      stats.pendingPriorities++; // Pendientes son las EN_TIEMPO no completadas
     }
 
     // Retrasadas (EN_RIESGO, BLOQUEADO, REPROGRAMADO)
