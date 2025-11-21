@@ -48,6 +48,8 @@ export async function PUT(
         name: body.name,
         description: body.description,
         isActive: body.isActive,
+        slackChannelId: body.slackChannelId,
+        slackChannelName: body.slackChannelName,
         purpose: body.purpose,
         objectives: body.objectives,
         scope: body.scope,

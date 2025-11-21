@@ -9,6 +9,7 @@ import { AzureDevOpsClient, mapAppStateToAzureDevOpsState } from '@/lib/azureDev
 import { notifyStatusChange, notifyPriorityUnblocked, notifyCompletionMilestone, notifyWeekCompleted } from '@/lib/notifications';
 import { awardBadge } from '@/lib/gamification';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
+import { sendPriorityNotificationToSlack } from '@/lib/slack';
 
 export async function GET(
   request: NextRequest,
@@ -219,6 +220,19 @@ export async function PUT(
             body.status,
             id
           );
+
+          // Notificar a Slack si el proyecto tiene canal configurado
+          if (priority.projectId) {
+            const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+            await sendPriorityNotificationToSlack({
+              projectId: priority.projectId,
+              userId: priority.userId,
+              eventType: 'status_change',
+              priorityTitle: priority.title,
+              message: `Prioridad desbloqueada. Nuevo estado: ${body.status}`,
+              priorityUrl: `${baseUrl}/dashboard?priority=${id}`,
+            });
+          }
         }
         // Notificar cambios a EN_RIESGO o BLOQUEADO
         else {
@@ -229,6 +243,26 @@ export async function PUT(
             body.status,
             id
           );
+
+          // Notificar a Slack si el proyecto tiene canal configurado
+          if (priority.projectId) {
+            const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+            const statusLabels: Record<string, string> = {
+              'EN_TIEMPO': 'En tiempo',
+              'EN_RIESGO': 'En riesgo',
+              'BLOQUEADO': 'Bloqueado',
+              'COMPLETADO': 'Completado',
+              'REPROGRAMADO': 'Reprogramado',
+            };
+            await sendPriorityNotificationToSlack({
+              projectId: priority.projectId,
+              userId: priority.userId,
+              eventType: 'status_change',
+              priorityTitle: priority.title,
+              message: `Estado cambió de ${statusLabels[oldStatus] || oldStatus} → ${statusLabels[body.status] || body.status}`,
+              priorityUrl: `${baseUrl}/dashboard?priority=${id}`,
+            });
+          }
         }
       }
 
@@ -252,6 +286,19 @@ export async function PUT(
             highestMilestoneReached,
             id
           );
+
+          // Notificar a Slack si se completó la prioridad (100%)
+          if (highestMilestoneReached === 100 && priority.projectId) {
+            const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+            await sendPriorityNotificationToSlack({
+              projectId: priority.projectId,
+              userId: priority.userId,
+              eventType: 'completion',
+              priorityTitle: priority.title,
+              message: `¡Prioridad completada al 100%! 🎉`,
+              priorityUrl: `${baseUrl}/dashboard?priority=${id}`,
+            });
+          }
         }
 
         // 3. Verificar si completó todas las prioridades de la semana

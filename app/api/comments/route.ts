@@ -7,6 +7,7 @@ import Priority from '@/models/Priority';
 import User from '@/models/User';
 import { notifyComment, notifyMention } from '@/lib/notifications';
 import { trackCommentBadges } from '@/lib/gamification';
+import { sendPriorityNotificationToSlack } from '@/lib/slack';
 
 export async function GET(request: NextRequest) {
   try {
@@ -127,6 +128,19 @@ export async function POST(request: NextRequest) {
             priorityId,
             comment._id.toString()
           ).catch(err => console.error('[NOTIFICATION] Error creating comment notification:', err));
+
+          // Notificar a Slack si el proyecto tiene canal configurado
+          if (priority.projectId) {
+            const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+            await sendPriorityNotificationToSlack({
+              projectId: priority.projectId,
+              userId: priority.userId,
+              eventType: 'comment',
+              priorityTitle: priority.title,
+              message: `${commentAuthor.name} comentó: "${text.trim().substring(0, 100)}${text.trim().length > 100 ? '...' : ''}"`,
+              priorityUrl: `${baseUrl}/dashboard?priority=${priorityId}`,
+            }).catch(err => console.error('[SLACK] Error sending comment notification to Slack:', err));
+          }
         }
 
         // Detectar menciones (@username o @NombreCompleto) y crear notificaciones
@@ -172,6 +186,19 @@ export async function POST(request: NextRequest) {
                   priorityId,
                   comment._id.toString()
                 ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
+
+                // Notificar a Slack si el proyecto tiene canal configurado
+                if (priority.projectId) {
+                  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+                  await sendPriorityNotificationToSlack({
+                    projectId: priority.projectId,
+                    userId: priority.userId,
+                    eventType: 'mention',
+                    priorityTitle: priority.title,
+                    message: `${commentAuthor.name} mencionó a ${mentionedUser.name}: "${text.trim().substring(0, 100)}${text.trim().length > 100 ? '...' : ''}"`,
+                    priorityUrl: `${baseUrl}/dashboard?priority=${priorityId}`,
+                  }).catch(err => console.error('[SLACK] Error sending mention notification to Slack:', err));
+                }
 
                 mentionedSomeone = true;
               } else if (!mentionedUser) {

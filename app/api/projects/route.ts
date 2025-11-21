@@ -50,6 +50,8 @@ export async function POST(req: Request) {
       name: name.trim(),
       description: description?.trim() || '',
       isActive: body.isActive !== undefined ? body.isActive : true,
+      slackChannelId: body.slackChannelId,
+      slackChannelName: body.slackChannelName,
       purpose: body.purpose,
       objectives: body.objectives,
       scope: body.scope,

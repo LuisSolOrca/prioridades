@@ -50,6 +50,8 @@ export interface ProjectFormData {
   name: string;
   description?: string;
   isActive: boolean;
+  slackChannelId?: string;
+  slackChannelName?: string;
   purpose?: string;
   objectives?: Objective[];
   scope?: {
@@ -112,6 +114,41 @@ export default function ProjectFormModal({
   const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'planning' | 'management'>('basic');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
+  const [slackChannels, setSlackChannels] = useState<Array<{ id: string; name: string }>>([]);
+  const [slackConnected, setSlackConnected] = useState(false);
+  const [loadingSlackChannels, setLoadingSlackChannels] = useState(false);
+
+  // Cargar canales de Slack cuando se abre el modal
+  useEffect(() => {
+    if (isOpen) {
+      loadSlackChannels();
+    }
+  }, [isOpen]);
+
+  const loadSlackChannels = async () => {
+    setLoadingSlackChannels(true);
+    try {
+      // Primero verificar si el usuario tiene Slack conectado
+      const statusRes = await fetch('/api/slack/status');
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        setSlackConnected(statusData.connected);
+
+        if (statusData.connected) {
+          // Cargar canales disponibles
+          const channelsRes = await fetch('/api/slack/channels');
+          if (channelsRes.ok) {
+            const channelsData = await channelsRes.json();
+            setSlackChannels(channelsData.channels || []);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading Slack channels:', error);
+    } finally {
+      setLoadingSlackChannels(false);
+    }
+  };
 
   // Cargar hitos cuando se abre el modal con un proyecto existente
   useEffect(() => {
@@ -370,6 +407,66 @@ export default function ProjectFormModal({
                 <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Proyecto Activo
                 </label>
+              </div>
+
+              {/* Slack Integration */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+                  </svg>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Notificaciones de Slack
+                  </label>
+                </div>
+
+                {!slackConnected ? (
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <p className="text-sm text-purple-800 dark:text-purple-300 mb-2">
+                      📢 Conecta Slack para recibir notificaciones de este proyecto en un canal específico
+                    </p>
+                    <a
+                      href="/settings/integrations"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium"
+                    >
+                      Ir a Integraciones →
+                    </a>
+                  </div>
+                ) : loadingSlackChannels ? (
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Cargando canales...</p>
+                  </div>
+                ) : (
+                  <div>
+                    <select
+                      value={formData.slackChannelId || ''}
+                      onChange={(e) => {
+                        const selectedChannel = slackChannels.find(ch => ch.id === e.target.value);
+                        setFormData({
+                          ...formData,
+                          slackChannelId: e.target.value || undefined,
+                          slackChannelName: selectedChannel?.name || undefined,
+                        });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                      disabled={readOnly}
+                    >
+                      <option value="">Sin notificaciones de Slack</option>
+                      {slackChannels.map(channel => (
+                        <option key={channel.id} value={channel.id}>
+                          #{channel.name}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.slackChannelId && (
+                      <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                        ✅ Las notificaciones de prioridades se enviarán a #{formData.slackChannelName}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
