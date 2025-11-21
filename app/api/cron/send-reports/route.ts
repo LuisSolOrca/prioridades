@@ -108,6 +108,7 @@ export async function GET() {
             comparison: report.comparison,
             topPriorities: report.topPriorities,
             dashboardUrl: `${baseUrl}/dashboard`,
+            aiAnalysis: report.aiAnalysis,
           });
 
           const result = await sendEmail({
@@ -159,6 +160,7 @@ export async function GET() {
             comparison: report.comparison,
             topPriorities: report.topPriorities,
             dashboardUrl: `${baseUrl}/dashboard`,
+            aiAnalysis: report.aiAnalysis,
           });
 
           const result = await sendEmail({

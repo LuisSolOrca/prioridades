@@ -417,6 +417,7 @@ export const emailTemplates = {
       totalTasks: number;
     }>;
     dashboardUrl: string;
+    aiAnalysis?: string;
   }) => {
     const formatChange = (value: number): string => {
       if (value > 0) return `<span style="color: #10b981;">▲ ${value.toFixed(1)}%</span>`;
@@ -557,8 +558,23 @@ export const emailTemplates = {
             ${topPrioritiesHTML}
           </div>
 
-          <!-- Insight de Rendimiento -->
-          ${params.comparison.completionRateChange > 0 ? `
+          <!-- Análisis Profesional con IA -->
+          ${params.aiAnalysis ? `
+            <div class="info-box" style="border-color: #8b5cf6; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); margin: 25px 0; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.1);">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <div style="background: #8b5cf6; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                  🤖
+                </div>
+                <h3 style="color: #6d28d9; margin: 0; font-size: 16px;">Análisis Profesional con IA</h3>
+              </div>
+              <p style="color: #5b21b6; margin: 0; font-size: 14px; line-height: 1.6;">
+                ${params.aiAnalysis}
+              </p>
+            </div>
+          ` : ''}
+
+          <!-- Insight de Rendimiento (Fallback si no hay IA) -->
+          ${!params.aiAnalysis ? (params.comparison.completionRateChange > 0 ? `
             <div class="info-box" style="border-color: #10b981; background: #f0fdf4; margin: 25px 0;">
               <p style="color: #047857; font-weight: 600; margin: 0;">🎉 ¡Excelente trabajo!</p>
               <p style="color: #065f46; margin: 10px 0 0 0; font-size: 14px;">
@@ -579,7 +595,7 @@ export const emailTemplates = {
                 Tu rendimiento se mantiene consistente. Continúa con tu ritmo de trabajo.
               </p>
             </div>
-          `}
+          `) : ''}
 
           <div style="text-align: center; margin-top: 30px;">
             <a href="${params.dashboardUrl}" class="button" style="background: #6366f1;">Ver Dashboard Completo</a>

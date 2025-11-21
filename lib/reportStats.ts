@@ -4,6 +4,102 @@ import mongoose from 'mongoose';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+/**
+ * Genera un análisis profesional con IA basado en las estadísticas del usuario
+ */
+async function generateAIAnalysis(
+  userName: string,
+  periodType: 'SEMANAL' | 'MENSUAL',
+  currentStats: PriorityStats,
+  previousStats: PriorityStats,
+  comparison: ComparisonMetrics
+): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+    console.warn('GROQ_API_KEY no configurada, análisis IA no disponible');
+    return '';
+  }
+
+  try {
+    const periodLabel = periodType === 'SEMANAL' ? 'esta semana' : 'este mes';
+    const previousPeriodLabel = periodType === 'SEMANAL' ? 'la semana anterior' : 'el mes anterior';
+
+    const completionRate = currentStats.totalPriorities > 0
+      ? (currentStats.completedPriorities / currentStats.totalPriorities * 100).toFixed(1)
+      : '0';
+
+    const previousCompletionRate = previousStats.totalPriorities > 0
+      ? (previousStats.completedPriorities / previousStats.totalPriorities * 100).toFixed(1)
+      : '0';
+
+    const systemPrompt = `Eres un coach ejecutivo y experto en productividad empresarial. Tu tarea es analizar las métricas de rendimiento de un profesional y proporcionar un análisis breve, directo y accionable.
+
+Características de tu análisis:
+- Profesional y motivador, pero directo
+- Máximo 3-4 oraciones
+- Identifica 1-2 puntos clave (fortalezas o áreas de oportunidad)
+- Proporciona 1 consejo específico y accionable
+- Usa un tono constructivo y orientado a resultados
+- En español
+
+NO uses:
+- Listas con bullets o números
+- Saltos de línea múltiples
+- Felicitaciones genéricas sin sustento
+- Consejos vagos o generales`;
+
+    const userPrompt = `Analiza el rendimiento de ${userName} en ${periodLabel}:
+
+MÉTRICAS ACTUALES (${periodLabel}):
+- Prioridades atendidas: ${currentStats.totalPriorities}
+- Prioridades completadas: ${currentStats.completedPriorities}
+- Tasa de completitud: ${completionRate}%
+- Prioridades retrasadas: ${currentStats.delayedPriorities}
+- Tareas ejecutadas: ${currentStats.completedTasks} de ${currentStats.totalTasks}
+- Horas reportadas: ${currentStats.totalHoursReported.toFixed(1)}h
+
+COMPARACIÓN CON ${previousPeriodLabel.toUpperCase()}:
+- Cambio en prioridades: ${comparison.prioritiesChange > 0 ? '+' : ''}${comparison.prioritiesChange.toFixed(1)}%
+- Cambio en tasa de completitud: ${comparison.completionRateChange > 0 ? '+' : ''}${comparison.completionRateChange.toFixed(1)} puntos
+- Cambio en tareas: ${comparison.tasksChange > 0 ? '+' : ''}${comparison.tasksChange.toFixed(1)}%
+- Cambio en horas: ${comparison.hoursChange > 0 ? '+' : ''}${comparison.hoursChange.toFixed(1)}%
+- Cambio en retrasadas: ${comparison.delayedChange > 0 ? '+' : ''}${comparison.delayedChange.toFixed(1)}%
+
+Proporciona un análisis profesional breve (3-4 oraciones) con un consejo específico para mejorar su productividad.`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Error en API de Groq:', await response.text());
+      return '';
+    }
+
+    const data = await response.json();
+    const analysis = data.choices[0]?.message?.content?.trim() || '';
+
+    return analysis;
+  } catch (error) {
+    console.error('Error generando análisis con IA:', error);
+    return '';
+  }
+}
+
 export interface PriorityStats {
   totalPriorities: number;
   completedPriorities: number;
@@ -50,6 +146,7 @@ export interface ReportData {
     tasksCompleted: number;
     totalTasks: number;
   }>;
+  aiAnalysis?: string;
 }
 
 /**
@@ -224,6 +321,15 @@ export async function generateUserReport(
     totalTasks: p.checklist?.length || 0,
   }));
 
+  // Generar análisis con IA
+  const aiAnalysis = await generateAIAnalysis(
+    userName,
+    reportType,
+    currentStats,
+    previousStats,
+    comparison
+  );
+
   return {
     userId,
     userName,
@@ -238,6 +344,7 @@ export async function generateUserReport(
     previousStats,
     comparison,
     topPriorities,
+    aiAnalysis,
   };
 }
 

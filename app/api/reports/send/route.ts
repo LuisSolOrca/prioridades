@@ -94,6 +94,7 @@ export async function POST(request: Request) {
           comparison: report.comparison,
           topPriorities: report.topPriorities,
           dashboardUrl: `${baseUrl}/dashboard`,
+          aiAnalysis: report.aiAnalysis,
         });
 
         const result = await sendEmail({
