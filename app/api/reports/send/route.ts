@@ -105,9 +105,12 @@ export async function POST(request: Request) {
 
         if (result.success) {
           results.sent++;
+          console.log(`✅ Reporte enviado exitosamente a ${report.userEmail}`);
         } else {
           results.failed++;
-          results.errors.push(`${report.userName} (${report.userEmail}): Error al enviar`);
+          const errorMsg = `${report.userName} (${report.userEmail}): ${result.error ? JSON.stringify(result.error) : 'Error desconocido'}`;
+          results.errors.push(errorMsg);
+          console.error(`❌ Error enviando reporte a ${report.userEmail}:`, result.error);
         }
       } catch (error) {
         results.failed++;
