@@ -155,23 +155,27 @@ export default function LeaderboardPage() {
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-2 border-purple-200 dark:border-purple-700 rounded-lg p-6">
             <h2 className="text-xl font-bold text-purple-900 dark:text-purple-200 mb-3 flex items-center">
               <span className="mr-2">🎁</span>
-              Reconocimiento para el Ganador
+              Reconocimiento para los Top 3
             </h2>
             <p className="text-purple-800 dark:text-purple-200 mb-3">
-              Al finalizar el mes, el colaborador con más puntos recibe:
+              Al finalizar el mes, los <strong>3 colaboradores con más puntos</strong> reciben:
             </p>
             <ul className="space-y-2 text-purple-700 dark:text-purple-300">
               <li className="flex items-center">
-                <span className="mr-2">📧</span>
-                Correo de felicitación personalizado
+                <span className="mr-2">🥇🥈🥉</span>
+                Correos de felicitación personalizados por puesto (oro, plata, bronce)
               </li>
               <li className="flex items-center">
                 <span className="mr-2">👥</span>
-                Reconocimiento con copia a todos los administradores
+                Notificación a todos los usuarios mostrando el pódium completo
               </li>
               <li className="flex items-center">
                 <span className="mr-2">⭐</span>
-                Tu nombre destacado como el mejor del mes
+                Tu nombre destacado en el pódium del mes con tu medalla
+              </li>
+              <li className="flex items-center">
+                <span className="mr-2">📊</span>
+                Estadísticas detalladas de tu desempeño mensual
               </li>
             </ul>
           </div>

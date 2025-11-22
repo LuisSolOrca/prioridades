@@ -295,25 +295,39 @@ export async function checkAndUpdateStreak(userId: string, weekEnd: Date) {
 }
 
 /**
- * Resetea los puntos mensuales y envía email al ganador
+ * Resetea los puntos mensuales y envía emails a los top 3 ganadores con copia a todos
  */
 export async function resetMonthlyPointsAndNotifyWinner() {
   try {
-    // Obtener el ganador del mes
-    const users = await User.find({ isActive: true }).sort({ 'gamification.currentMonthPoints': -1 }).limit(3);
+    // Obtener top 3 del mes
+    const topUsers = await User.find({ isActive: true }).sort({ 'gamification.currentMonthPoints': -1 }).limit(3);
 
-    if (users.length === 0) return;
+    if (topUsers.length === 0) return { resetCompleted: false };
 
-    const winner = users[0];
-    const admins = await User.find({ role: 'ADMIN', isActive: true });
+    // Obtener TODOS los usuarios activos para enviarles copia
+    const allActiveUsers = await User.find({ isActive: true });
 
-    // Enviar email al ganador con copia a admins
-    if (winner.gamification && winner.gamification.currentMonthPoints > 0) {
-      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-      const adminEmails = admins.map(admin => admin.email);
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
+    // Emojis y colores por posición
+    const rankInfo = [
+      { emoji: '🥇', medal: 'Oro', color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
+      { emoji: '🥈', medal: 'Plata', color: '#9ca3af', gradient: 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)' },
+      { emoji: '🥉', medal: 'Bronce', color: '#ea580c', gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' }
+    ];
+
+    const results = { winners: [], emailsSent: 0 };
+
+    // Enviar emails personalizados a cada ganador del top 3
+    for (let i = 0; i < topUsers.length && i < 3; i++) {
+      const user = topUsers[i];
+      if (!user.gamification || user.gamification.currentMonthPoints <= 0) continue;
+
+      const rank = i + 1;
+      const info = rankInfo[i];
 
       const emailContent = {
-        subject: `🏆 ¡Felicitaciones! Ganaste el Leaderboard del mes`,
+        subject: `${info.emoji} ¡Felicitaciones! Obtuviste el puesto #${rank} del mes`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -321,26 +335,44 @@ export async function resetMonthlyPointsAndNotifyWinner() {
               <meta charset="utf-8">
             </head>
             <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
-                <h1 style="margin: 0; font-size: 32px;">🏆 ¡Felicitaciones ${winner.name}!</h1>
+              <div style="background: ${info.gradient}; color: white; padding: 30px; border-radius: 10px; text-align: center;">
+                <h1 style="margin: 0; font-size: 32px;">${info.emoji} ¡Felicitaciones ${user.name}!</h1>
+                <p style="font-size: 18px; margin-top: 10px;">Medalla de ${info.medal} - Puesto #${rank}</p>
               </div>
               <div style="padding: 30px; background: #f9fafb;">
-                <h2 style="color: #1f2937;">Ganaste el Leaderboard del mes</h2>
+                <h2 style="color: #1f2937;">Obtuviste el puesto #${rank} del Leaderboard del mes</h2>
                 <p style="font-size: 18px; color: #4b5563;">
-                  ¡Increíble logro! Has sido el colaborador con más puntos este mes.
+                  ${rank === 1 ? '¡Increíble logro! Has sido el colaborador con más puntos este mes.' :
+                    rank === 2 ? '¡Excelente desempeño! Quedaste en segundo lugar.' :
+                    '¡Gran trabajo! Quedaste en tercer lugar.'}
                 </p>
-                <div style="background: white; padding: 20px; border-left: 4px solid #f59e0b; border-radius: 5px; margin: 20px 0;">
-                  <p style="font-size: 24px; font-weight: bold; color: #f59e0b; margin: 0;">
-                    ${winner.gamification.currentMonthPoints} puntos
-                  </p>
-                  <p style="color: #6b7280; margin: 10px 0 0 0;">Puntuación total del mes</p>
+
+                <!-- Top 3 del mes -->
+                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                  <h3 style="color: #1f2937; margin-top: 0;">🏆 Top 3 del mes</h3>
+                  ${topUsers.map((u, idx) => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin: 8px 0; background: ${idx === i ? '#fef3c7' : '#f9fafb'}; border-radius: 8px; border-left: 4px solid ${rankInfo[idx].color};">
+                      <div style="display: flex; align-items: center;">
+                        <span style="font-size: 24px; margin-right: 12px;">${rankInfo[idx].emoji}</span>
+                        <div>
+                          <div style="font-weight: bold; color: #1f2937;">${u.name}</div>
+                          <div style="font-size: 12px; color: #6b7280;">Puesto #${idx + 1}</div>
+                        </div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="font-size: 20px; font-weight: bold; color: ${rankInfo[idx].color};">${u.gamification?.currentMonthPoints || 0}</div>
+                        <div style="font-size: 12px; color: #6b7280;">puntos</div>
+                      </div>
+                    </div>
+                  `).join('')}
                 </div>
+
                 <p style="color: #4b5563;">
                   Tu dedicación y compromiso con tus prioridades es un ejemplo para todo el equipo.
                   ¡Sigue así!
                 </p>
-                <a href="${baseUrl}/analytics" style="display: inline-block; background: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: 600;">
-                  Ver Estadísticas
+                <a href="${baseUrl}/leaderboard" style="display: inline-block; background: ${info.color}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: 600;">
+                  Ver Leaderboard Completo
                 </a>
               </div>
               <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
@@ -354,19 +386,81 @@ export async function resetMonthlyPointsAndNotifyWinner() {
 
       // Enviar al ganador
       await sendEmail({
-        to: winner.email,
+        to: user.email,
         subject: emailContent.subject,
         html: emailContent.html
       });
 
-      // Enviar copia a admins
-      if (adminEmails.length > 0) {
-        await sendEmail({
-          to: adminEmails,
-          subject: `🏆 ${winner.name} ganó el Leaderboard del mes`,
-          html: emailContent.html
-        });
-      }
+      results.winners.push({ name: user.name, rank, points: user.gamification.currentMonthPoints });
+      results.emailsSent++;
+    }
+
+    // Enviar copia a TODOS los usuarios activos (que no sean ganadores)
+    const nonWinnerEmails = allActiveUsers
+      .filter(u => !topUsers.slice(0, 3).some(top => top._id.equals(u._id)))
+      .map(u => u.email);
+
+    if (nonWinnerEmails.length > 0 && topUsers.length > 0) {
+      const notificationEmail = {
+        subject: `🏆 Ganadores del Leaderboard del mes`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+            </head>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px;">🏆 Ganadores del Leaderboard</h1>
+                <p style="margin-top: 10px; opacity: 0.9;">Conoce a los mejores colaboradores del mes</p>
+              </div>
+              <div style="padding: 30px; background: #f9fafb;">
+                <p style="font-size: 16px; color: #4b5563;">
+                  Estos son los colaboradores que más destacaron este mes:
+                </p>
+
+                <!-- Top 3 del mes -->
+                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                  ${topUsers.map((u, idx) => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin: 8px 0; background: #f9fafb; border-radius: 8px; border-left: 4px solid ${rankInfo[idx].color};">
+                      <div style="display: flex; align-items: center;">
+                        <span style="font-size: 24px; margin-right: 12px;">${rankInfo[idx].emoji}</span>
+                        <div>
+                          <div style="font-weight: bold; color: #1f2937;">${u.name}</div>
+                          <div style="font-size: 12px; color: #6b7280;">Medalla de ${rankInfo[idx].medal}</div>
+                        </div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="font-size: 20px; font-weight: bold; color: ${rankInfo[idx].color};">${u.gamification?.currentMonthPoints || 0}</div>
+                        <div style="font-size: 12px; color: #6b7280;">puntos</div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <p style="color: #4b5563;">
+                  ¡Felicitaciones a los ganadores! Recuerda que completar tus prioridades, mantenerlas al día y evitar bloqueos te ayuda a ganar puntos.
+                </p>
+                <a href="${baseUrl}/leaderboard" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: 600;">
+                  Ver Leaderboard Completo
+                </a>
+              </div>
+              <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
+                <p><strong>Sistema de Prioridades</strong> - Orca GRC</p>
+                <p>Este es un correo automático.</p>
+              </div>
+            </body>
+          </html>
+        `
+      };
+
+      await sendEmail({
+        to: nonWinnerEmails,
+        subject: notificationEmail.subject,
+        html: notificationEmail.html
+      });
+
+      results.emailsSent++;
     }
 
     // Resetear puntos mensuales de todos los usuarios
@@ -375,11 +469,29 @@ export async function resetMonthlyPointsAndNotifyWinner() {
       { $set: { 'gamification.currentMonthPoints': 0 } }
     );
 
-    return winner;
+    results.resetCompleted = true;
+    return results;
   } catch (error) {
     console.error('Error resetting monthly points:', error);
-    return null;
+    return { resetCompleted: false, error: error.message };
   }
+}
+
+/**
+ * Calcula la próxima fecha de reseteo del leaderboard (primer lunes del próximo mes)
+ */
+export function getNextResetDate(): Date {
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  // Encontrar el primer lunes del próximo mes
+  const dayOfWeek = nextMonth.getDay();
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : dayOfWeek === 1 ? 0 : 8 - dayOfWeek;
+
+  nextMonth.setDate(nextMonth.getDate() + daysUntilMonday);
+  nextMonth.setHours(9, 0, 0, 0); // 9 AM hora del servidor
+
+  return nextMonth;
 }
 
 /**

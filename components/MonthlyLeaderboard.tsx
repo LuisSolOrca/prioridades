@@ -12,14 +12,22 @@ interface LeaderboardEntry {
   currentStreak: number;
 }
 
+interface NextResetInfo {
+  nextResetDate: string;
+  formattedDate: string;
+  formattedTime: string;
+}
+
 export default function MonthlyLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showRestExpanded, setShowRestExpanded] = useState(false);
+  const [nextReset, setNextReset] = useState<NextResetInfo | null>(null);
 
   useEffect(() => {
     loadLeaderboard();
+    loadNextResetDate();
   }, []);
 
   const loadLeaderboard = async () => {
@@ -41,6 +49,22 @@ export default function MonthlyLeaderboard() {
       setError(err.message || 'Error al cargar el leaderboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadNextResetDate = async () => {
+    try {
+      const response = await fetch('/api/leaderboard/next-reset');
+
+      if (!response.ok) {
+        throw new Error('Error al cargar fecha de reset');
+      }
+
+      const data = await response.json();
+      setNextReset(data);
+    } catch (err: any) {
+      console.error('Error loading next reset date:', err);
+      // No mostrar error, solo no mostrar la fecha
     }
   };
 
@@ -156,6 +180,33 @@ export default function MonthlyLeaderboard() {
           🔄
         </button>
       </h2>
+
+      {/* Next Reset Date Banner */}
+      {nextReset && (
+        <div className="mb-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-2 border-purple-200 dark:border-purple-700 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center mb-1">
+                <span className="text-2xl mr-2">⏰</span>
+                <h3 className="font-bold text-purple-900 dark:text-purple-200">
+                  Próximo Reseteo del Leaderboard
+                </h3>
+              </div>
+              <p className="text-sm text-purple-800 dark:text-purple-300 ml-9">
+                El <strong>{nextReset.formattedDate}</strong> a las <strong>{nextReset.formattedTime}</strong>
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl">🏆</div>
+            </div>
+          </div>
+          <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-700">
+            <p className="text-xs text-purple-700 dark:text-purple-300 ml-9">
+              Los <strong>top 3</strong> recibirán un correo de felicitación personalizado y todos los usuarios serán notificados de los ganadores
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Top 3 - Pódium con premios */}
       <div className="space-y-3 mb-4">
@@ -297,7 +348,7 @@ export default function MonthlyLeaderboard() {
           💡 Completa prioridades para ganar puntos (+4 por prioridad completada)
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          El ganador del mes recibe un correo de felicitación
+          Los <strong>top 3</strong> del mes reciben correos de felicitación personalizados 🥇🥈🥉
         </p>
       </div>
     </div>
