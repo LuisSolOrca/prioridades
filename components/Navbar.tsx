@@ -482,6 +482,17 @@ export default function Navbar() {
                     >
                       <Slack size={22} />
                     </button>
+                    <button
+                      onClick={() => handleNavigation('/admin/leaderboard-settings')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/admin/leaderboard-settings'
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Leaderboard"
+                    >
+                      <Trophy size={22} />
+                    </button>
                   </>
                 )}
               </>
@@ -669,6 +680,12 @@ export default function Navbar() {
                       label="Integraciones"
                       active={pathname === '/admin/integrations'}
                       onClick={() => handleNavigation('/admin/integrations')}
+                    />
+                    <NavButton
+                      icon={<Trophy size={20} />}
+                      label="Leaderboard"
+                      active={pathname === '/admin/leaderboard-settings'}
+                      onClick={() => handleNavigation('/admin/leaderboard-settings')}
                     />
                   </>
                 )}
