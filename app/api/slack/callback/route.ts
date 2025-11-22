@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Error en OAuth de Slack:', error);
       return NextResponse.redirect(
-        new URL('/settings/integrations?slack_error=' + error, process.env.NEXTAUTH_URL || 'http://localhost:3000')
+        new URL('/admin/integrations?slack_error=' + error, process.env.NEXTAUTH_URL || 'http://localhost:3000')
       );
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        new URL('/settings/integrations?slack_error=missing_params', process.env.NEXTAUTH_URL || 'http://localhost:3000')
+        new URL('/admin/integrations?slack_error=missing_params', process.env.NEXTAUTH_URL || 'http://localhost:3000')
       );
     }
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     if (!clientId || !clientSecret) {
       return NextResponse.redirect(
-        new URL('/settings/integrations?slack_error=config_missing', process.env.NEXTAUTH_URL || 'http://localhost:3000')
+        new URL('/admin/integrations?slack_error=config_missing', process.env.NEXTAUTH_URL || 'http://localhost:3000')
       );
     }
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     if (!tokenData.ok) {
       console.error('Error obteniendo token de Slack:', tokenData.error);
       return NextResponse.redirect(
-        new URL('/settings/integrations?slack_error=' + tokenData.error, process.env.NEXTAUTH_URL || 'http://localhost:3000')
+        new URL('/admin/integrations?slack_error=' + tokenData.error, process.env.NEXTAUTH_URL || 'http://localhost:3000')
       );
     }
 
@@ -85,12 +85,12 @@ export async function GET(request: NextRequest) {
 
     // Redirigir a la página de configuración con éxito
     return NextResponse.redirect(
-      new URL('/settings/integrations?slack_success=true', process.env.NEXTAUTH_URL || 'http://localhost:3000')
+      new URL('/admin/integrations?slack_success=true', process.env.NEXTAUTH_URL || 'http://localhost:3000')
     );
   } catch (error) {
     console.error('Error en /api/slack/callback:', error);
     return NextResponse.redirect(
-      new URL('/settings/integrations?slack_error=server_error', process.env.NEXTAUTH_URL || 'http://localhost:3000')
+      new URL('/admin/integrations?slack_error=server_error', process.env.NEXTAUTH_URL || 'http://localhost:3000')
     );
   }
 }

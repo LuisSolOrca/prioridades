@@ -66,7 +66,7 @@ Si quieres probar inmediatamente:
 
 ### Conectar Slack (Solo Administradores)
 
-1. Ir a **Configuración** → **Integraciones** (`/settings/integrations`)
+1. Ir a **Admin** → **Integraciones** (`/admin/integrations`)
 2. Click en **"Conectar con Slack"** (solo visible para administradores)
 3. Autorizar la app en Slack
 4. Serás redirigido de vuelta a la aplicación
@@ -83,7 +83,7 @@ Si quieres probar inmediatamente:
 
 ### Desconectar Slack (Solo Administradores)
 
-1. Ir a **Configuración** → **Integraciones**
+1. Ir a **Admin** → **Integraciones**
 2. Click en **"Desconectar"** (solo visible para administradores)
 3. Confirmar la desconexión
 
@@ -121,7 +121,7 @@ Cada notificación incluye:
 - Asegúrate de que la URL de callback coincida exactamente
 
 ### Error: "No se encontró integración de Slack"
-- Un administrador debe configurar primero la integración organizacional en `/settings/integrations`
+- Un administrador debe configurar primero la integración organizacional en `/admin/integrations`
 
 ### Los mensajes no llegan a Slack
 - Verifica que un admin haya configurado la integración organizacional
@@ -149,7 +149,7 @@ Cada notificación incluye:
 Si modificas los scopes:
 
 1. Actualiza los scopes en la configuración de la app
-2. Un administrador debe desconectar y volver a conectar la integración en `/settings/integrations`
+2. Un administrador debe desconectar y volver a conectar la integración en `/admin/integrations`
 
 ## 🔀 Migración de Integraciones por Usuario
 

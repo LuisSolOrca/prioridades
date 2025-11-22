@@ -423,15 +423,15 @@ export default function ProjectFormModal({
                 {!slackConnected ? (
                   <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
                     <p className="text-sm text-purple-800 dark:text-purple-300 mb-2">
-                      📢 Conecta Slack para recibir notificaciones de este proyecto en un canal específico
+                      📢 Un administrador debe conectar Slack primero para recibir notificaciones en canales específicos
                     </p>
                     <a
-                      href="/settings/integrations"
+                      href="/admin/integrations"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium"
                     >
-                      Ir a Integraciones →
+                      Ir a Integraciones (Admin) →
                     </a>
                   </div>
                 ) : loadingSlackChannels ? (

@@ -37,13 +37,13 @@ function IntegrationsContent() {
     if (slackSuccess) {
       setMessage({ type: 'success', text: '¡Slack conectado exitosamente!' });
       // Limpiar URL
-      window.history.replaceState({}, '', '/settings/integrations');
+      window.history.replaceState({}, '', '/admin/integrations');
     } else if (slackError) {
       setMessage({
         type: 'error',
         text: `Error conectando Slack: ${slackError}`,
       });
-      window.history.replaceState({}, '', '/settings/integrations');
+      window.history.replaceState({}, '', '/admin/integrations');
     }
   }, [searchParams]);
 

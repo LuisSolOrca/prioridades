@@ -31,7 +31,8 @@ import {
   ClipboardList,
   FolderKanban,
   TrendingUp,
-  Mail
+  Mail,
+  Slack
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -152,16 +153,6 @@ export default function Navbar() {
                   >
                     <User size={16} />
                     <span>Mi Perfil</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleNavigation('/settings/integrations');
-                      setProfileMenuOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    <Link size={16} />
-                    <span>Integraciones</span>
                   </button>
                   <div className="px-4 py-2">
                     <SessionRefreshButton />
@@ -480,6 +471,17 @@ export default function Navbar() {
                     >
                       <Mail size={22} />
                     </button>
+                    <button
+                      onClick={() => handleNavigation('/admin/integrations')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/admin/integrations'
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Integraciones"
+                    >
+                      <Slack size={22} />
+                    </button>
                   </>
                 )}
               </>
@@ -661,6 +663,12 @@ export default function Navbar() {
                       label="Reportes Automáticos"
                       active={pathname === '/admin/report-settings'}
                       onClick={() => handleNavigation('/admin/report-settings')}
+                    />
+                    <NavButton
+                      icon={<Slack size={20} />}
+                      label="Integraciones"
+                      active={pathname === '/admin/integrations'}
+                      onClick={() => handleNavigation('/admin/integrations')}
                     />
                   </>
                 )}
