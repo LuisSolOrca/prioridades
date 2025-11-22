@@ -28,6 +28,7 @@ export async function GET() {
     if (!slackIntegration) {
       return NextResponse.json({
         connected: false,
+        isAdmin: session.user.role === 'ADMIN',
       });
     }
 
