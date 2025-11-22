@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import PermissionGuard from '@/components/PermissionGuard';
 
 interface NextResetInfo {
   nextResetDate: string;
@@ -105,10 +104,9 @@ export default function LeaderboardSettingsPage() {
   }
 
   return (
-    <PermissionGuard permission="manageUsers">
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Navbar />
-        <div className="pt-16 main-content container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <div className="pt-16 main-content container mx-auto px-4 py-8 max-w-4xl">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
               🏆 Configuración del Leaderboard
@@ -250,6 +248,6 @@ export default function LeaderboardSettingsPage() {
           </div>
         </div>
       </div>
-    </PermissionGuard>
+    </div>
   );
 }
