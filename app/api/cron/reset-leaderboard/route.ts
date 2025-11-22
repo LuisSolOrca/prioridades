@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { resetMonthlyPointsAndNotifyWinner } from '@/lib/gamification';
+import { resetMonthlyPointsAndNotifyWinner, type LeaderboardResetResult } from '@/lib/gamification';
 
 /**
  * GET /api/cron/reset-leaderboard

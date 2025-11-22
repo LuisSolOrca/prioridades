@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
-import { resetMonthlyPointsAndNotifyWinner } from '@/lib/gamification';
+import { resetMonthlyPointsAndNotifyWinner, type LeaderboardResetResult } from '@/lib/gamification';
 
 /**
  * POST /api/admin/reset-leaderboard

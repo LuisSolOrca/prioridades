@@ -295,9 +295,20 @@ export async function checkAndUpdateStreak(userId: string, weekEnd: Date) {
 }
 
 /**
+ * Resultado del reseteo del leaderboard
+ */
+export interface LeaderboardResetResult {
+  resetCompleted: boolean;
+  winners: Array<{ name: string; rank: number; points: number }>;
+  emailsSent: number;
+  totalUsersNotified: number;
+  error?: string;
+}
+
+/**
  * Resetea los puntos mensuales y envía emails a los top 3 ganadores con copia a todos
  */
-export async function resetMonthlyPointsAndNotifyWinner() {
+export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardResetResult> {
   try {
     // Obtener top 3 del mes
     const topUsers = await User.find({ isActive: true }).sort({ 'gamification.currentMonthPoints': -1 }).limit(3);
@@ -323,7 +334,9 @@ export async function resetMonthlyPointsAndNotifyWinner() {
       { emoji: '🥉', medal: 'Bronce', color: '#ea580c', gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' }
     ];
 
-    const results = { winners: [] as any[], emailsSent: 0, totalUsersNotified: 0 };
+    const winners: Array<{ name: string; rank: number; points: number }> = [];
+    let emailsSent = 0;
+    let totalUsersNotified = 0;
 
     // Enviar emails personalizados a cada ganador del top 3
     for (let i = 0; i < topUsers.length && i < 3; i++) {
@@ -398,8 +411,8 @@ export async function resetMonthlyPointsAndNotifyWinner() {
         html: emailContent.html
       });
 
-      results.winners.push({ name: user.name, rank, points: user.gamification.currentMonthPoints });
-      results.emailsSent++;
+      winners.push({ name: user.name, rank, points: user.gamification.currentMonthPoints });
+      emailsSent++;
     }
 
     // Enviar copia a TODOS los usuarios activos (que no sean ganadores)
@@ -466,8 +479,8 @@ export async function resetMonthlyPointsAndNotifyWinner() {
         html: notificationEmail.html
       });
 
-      results.emailsSent++;
-      results.totalUsersNotified = nonWinners.length;
+      emailsSent++;
+      totalUsersNotified = nonWinners.length;
     }
 
     // Resetear puntos mensuales de todos los usuarios
@@ -478,9 +491,9 @@ export async function resetMonthlyPointsAndNotifyWinner() {
 
     return {
       resetCompleted: true,
-      winners: results.winners,
-      emailsSent: results.emailsSent,
-      totalUsersNotified: results.totalUsersNotified
+      winners,
+      emailsSent,
+      totalUsersNotified
     };
   } catch (error: any) {
     console.error('Error resetting monthly points:', error);
