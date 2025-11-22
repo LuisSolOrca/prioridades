@@ -33,6 +33,16 @@ export async function POST() {
     // Ejecutar el reseteo y envío de notificaciones
     const result = await resetMonthlyPointsAndNotifyWinner();
 
+    if (!result.resetCompleted) {
+      return NextResponse.json(
+        {
+          error: 'No se pudo completar el reseteo del leaderboard',
+          details: result.error || 'No hay usuarios activos',
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       message: 'Leaderboard reseteado exitosamente',
       timestamp: new Date().toISOString(),

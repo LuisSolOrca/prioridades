@@ -74,7 +74,7 @@ export default function LeaderboardSettingsPage() {
 
       setMessage({
         type: 'success',
-        text: `Leaderboard reseteado exitosamente. Correos enviados: ${data.result.emailsSent}. Usuarios notificados: ${data.result.totalUsersNotificados}`
+        text: `Leaderboard reseteado exitosamente. Correos enviados: ${data.result.emailsSent}. Usuarios notificados: ${data.result.totalUsersNotified}`
       });
 
       setTimeout(() => {

@@ -302,7 +302,14 @@ export async function resetMonthlyPointsAndNotifyWinner() {
     // Obtener top 3 del mes
     const topUsers = await User.find({ isActive: true }).sort({ 'gamification.currentMonthPoints': -1 }).limit(3);
 
-    if (topUsers.length === 0) return { resetCompleted: false };
+    if (topUsers.length === 0) {
+      return {
+        resetCompleted: false,
+        winners: [],
+        emailsSent: 0,
+        totalUsersNotified: 0
+      };
+    }
 
     // Obtener TODOS los usuarios activos para enviarles copia
     const allActiveUsers = await User.find({ isActive: true });
@@ -316,7 +323,7 @@ export async function resetMonthlyPointsAndNotifyWinner() {
       { emoji: '🥉', medal: 'Bronce', color: '#ea580c', gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' }
     ];
 
-    const results = { winners: [], emailsSent: 0 };
+    const results = { winners: [] as any[], emailsSent: 0, totalUsersNotified: 0 };
 
     // Enviar emails personalizados a cada ganador del top 3
     for (let i = 0; i < topUsers.length && i < 3; i++) {
@@ -396,9 +403,8 @@ export async function resetMonthlyPointsAndNotifyWinner() {
     }
 
     // Enviar copia a TODOS los usuarios activos (que no sean ganadores)
-    const nonWinnerEmails = allActiveUsers
-      .filter(u => !topUsers.slice(0, 3).some(top => top._id.equals(u._id)))
-      .map(u => u.email);
+    const nonWinners = allActiveUsers.filter(u => !topUsers.slice(0, 3).some(top => top._id.equals(u._id)));
+    const nonWinnerEmails = nonWinners.map(u => u.email);
 
     if (nonWinnerEmails.length > 0 && topUsers.length > 0) {
       const notificationEmail = {
@@ -461,6 +467,7 @@ export async function resetMonthlyPointsAndNotifyWinner() {
       });
 
       results.emailsSent++;
+      results.totalUsersNotified = nonWinners.length;
     }
 
     // Resetear puntos mensuales de todos los usuarios
@@ -469,11 +476,21 @@ export async function resetMonthlyPointsAndNotifyWinner() {
       { $set: { 'gamification.currentMonthPoints': 0 } }
     );
 
-    results.resetCompleted = true;
-    return results;
-  } catch (error) {
+    return {
+      resetCompleted: true,
+      winners: results.winners,
+      emailsSent: results.emailsSent,
+      totalUsersNotified: results.totalUsersNotified
+    };
+  } catch (error: any) {
     console.error('Error resetting monthly points:', error);
-    return { resetCompleted: false, error: error.message };
+    return {
+      resetCompleted: false,
+      winners: [],
+      emailsSent: 0,
+      totalUsersNotified: 0,
+      error: error.message
+    };
   }
 }
 
