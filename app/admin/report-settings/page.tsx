@@ -262,8 +262,11 @@ export default function ReportSettingsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Hora de envío
+                    Hora de envío (UTC) ⏰
                   </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    ⚠️ El servidor usa horario UTC. Si estás en GMT-6, resta 6 horas. Ej: 18:00 UTC = 12:00 PM tu hora local
+                  </p>
                   <select
                     value={settings.weeklyReportHour}
                     onChange={(e) =>
@@ -321,8 +324,11 @@ export default function ReportSettingsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Hora de envío
+                    Hora de envío (UTC) ⏰
                   </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    ⚠️ El servidor usa horario UTC. Si estás en GMT-6, resta 6 horas. Ej: 18:00 UTC = 12:00 PM tu hora local
+                  </p>
                   <select
                     value={settings.monthlyReportHour}
                     onChange={(e) =>

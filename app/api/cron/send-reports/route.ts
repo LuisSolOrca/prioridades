@@ -37,7 +37,7 @@ export async function GET() {
     const now = new Date();
     const currentDay = now.getDay(); // 0-6 (0 = Domingo)
     const currentDate = now.getDate(); // 1-31
-    const currentHour = now.getHours(); // 0-23
+    const currentHour = now.getUTCHours(); // 0-23 (UTC)
 
     let shouldSendWeekly = false;
     let shouldSendMonthly = false;
@@ -48,7 +48,18 @@ export async function GET() {
       currentDay === settings.weeklyReportDay &&
       currentHour === settings.weeklyReportHour
     ) {
-      shouldSendWeekly = true;
+      // Protección contra duplicados: no enviar si ya se envió en las últimas 23 horas
+      if (settings.lastWeeklyReportSent) {
+        const hoursSinceLastSent = (now.getTime() - settings.lastWeeklyReportSent.getTime()) / (1000 * 60 * 60);
+        if (hoursSinceLastSent < 23) {
+          console.log(`Reporte semanal ya enviado hace ${hoursSinceLastSent.toFixed(1)} horas`);
+          shouldSendWeekly = false;
+        } else {
+          shouldSendWeekly = true;
+        }
+      } else {
+        shouldSendWeekly = true;
+      }
     }
 
     // Verificar si debe enviar reporte mensual
@@ -57,7 +68,18 @@ export async function GET() {
       currentDate === settings.monthlyReportDay &&
       currentHour === settings.monthlyReportHour
     ) {
-      shouldSendMonthly = true;
+      // Protección contra duplicados: no enviar si ya se envió en los últimos 27 días
+      if (settings.lastMonthlyReportSent) {
+        const daysSinceLastSent = (now.getTime() - settings.lastMonthlyReportSent.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceLastSent < 27) {
+          console.log(`Reporte mensual ya enviado hace ${daysSinceLastSent.toFixed(1)} días`);
+          shouldSendMonthly = false;
+        } else {
+          shouldSendMonthly = true;
+        }
+      } else {
+        shouldSendMonthly = true;
+      }
     }
 
     if (!shouldSendWeekly && !shouldSendMonthly) {
@@ -66,14 +88,18 @@ export async function GET() {
         currentDay,
         currentDate,
         currentHour,
+        currentTime: now.toISOString(),
         settings: {
           weeklyReportDay: settings.weeklyReportDay,
           weeklyReportHour: settings.weeklyReportHour,
           monthlyReportDay: settings.monthlyReportDay,
           monthlyReportHour: settings.monthlyReportHour,
           reportFrequency: settings.reportFrequency,
+          lastWeeklyReportSent: settings.lastWeeklyReportSent?.toISOString(),
+          lastMonthlyReportSent: settings.lastMonthlyReportSent?.toISOString(),
         },
         sent: false,
+        note: 'Las horas están configuradas en UTC. El servidor usa getUTCHours() para validar.'
       });
     }
 
