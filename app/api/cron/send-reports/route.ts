@@ -10,6 +10,11 @@ import SystemSettings from '@/models/SystemSettings';
  * Determina automáticamente si debe enviar reportes semanales o mensuales
  * basándose en la fecha actual y la configuración
  */
+
+// Configurar para no cachear
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     await connectDB();
@@ -30,6 +35,12 @@ export async function GET() {
             : !settings.isActive
             ? 'El sistema está desactivado. Actívalo en /admin/report-settings'
             : 'La frecuencia está en NINGUNO. Cámbiala en /admin/report-settings'
+        }
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         }
       });
     }
@@ -100,6 +111,12 @@ export async function GET() {
         },
         sent: false,
         note: 'Las horas están configuradas en UTC. El servidor usa getUTCHours() para validar.'
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
       });
     }
 
@@ -220,6 +237,12 @@ export async function GET() {
       message: 'Reportes enviados exitosamente',
       timestamp: now.toISOString(),
       results,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
     });
   } catch (error) {
     console.error('Error en cron de envío de reportes:', error);
@@ -228,7 +251,14 @@ export async function GET() {
         error: 'Error en cron de envío de reportes',
         details: error instanceof Error ? error.message : 'Error desconocido',
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        }
+      }
     );
   }
 }
