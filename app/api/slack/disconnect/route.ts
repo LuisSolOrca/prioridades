@@ -6,7 +6,7 @@ import SlackIntegration from '@/models/SlackIntegration';
 
 /**
  * POST /api/slack/disconnect
- * Desconecta la integración de Slack del usuario
+ * Desconecta la integración organizacional de Slack (solo admins)
  */
 export async function POST() {
   try {
@@ -16,23 +16,29 @@ export async function POST() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // Solo admins pueden desconectar la integración organizacional
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Solo administradores pueden desconectar Slack' },
+        { status: 403 }
+      );
+    }
+
     await connectDB();
 
-    // Desactivar integración
-    const result = await SlackIntegration.findOneAndUpdate(
-      { userId: session.user.id },
-      { isActive: false },
-      { new: true }
-    );
+    // Eliminar la integración organizacional (solo debe existir una)
+    const result = await SlackIntegration.findOneAndDelete({
+      isActive: true,
+    });
 
     if (!result) {
       return NextResponse.json(
-        { error: 'No se encontró integración de Slack' },
+        { error: 'No se encontró integración de Slack activa' },
         { status: 404 }
       );
     }
 
-    console.log(`✅ Slack desconectado para usuario ${session.user.id}`);
+    console.log(`✅ Slack desconectado de la organización por admin ${session.user.id}`);
 
     return NextResponse.json({
       message: 'Integración de Slack desconectada exitosamente',

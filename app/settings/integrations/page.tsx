@@ -11,7 +11,12 @@ interface SlackStatus {
     id: string;
     name: string;
   };
-  slackUserId?: string;
+  configuredBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  isAdmin: boolean;
 }
 
 function IntegrationsContent() {
@@ -65,9 +70,10 @@ function IntegrationsContent() {
         // Redirigir a Slack OAuth
         window.location.href = data.authUrl;
       } else {
+        const errorData = await response.json();
         setMessage({
           type: 'error',
-          text: 'Error iniciando conexión con Slack',
+          text: errorData.error || 'Error iniciando conexión con Slack',
         });
       }
     } catch (error) {
@@ -82,7 +88,7 @@ function IntegrationsContent() {
   };
 
   const handleDisconnectSlack = async () => {
-    if (!confirm('¿Estás seguro de desconectar Slack?')) return;
+    if (!confirm('¿Estás seguro de desconectar la integración de Slack para toda la organización?')) return;
 
     try {
       setDisconnecting(true);
@@ -97,9 +103,10 @@ function IntegrationsContent() {
         });
         await loadSlackStatus();
       } else {
+        const errorData = await response.json();
         setMessage({
           type: 'error',
-          text: 'Error desconectando Slack',
+          text: errorData.error || 'Error desconectando Slack',
         });
       }
     } catch (error) {
@@ -154,7 +161,7 @@ function IntegrationsContent() {
                 Slack
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Recibe notificaciones de prioridades directamente en tus canales de Slack
+                Integración organizacional de Slack para enviar notificaciones de todos los usuarios a canales específicos por proyecto
               </p>
 
               {loading ? (
@@ -164,30 +171,49 @@ function IntegrationsContent() {
                 </div>
               ) : slackStatus?.connected ? (
                 <div>
-                  <div className="flex items-center gap-2 mb-4 text-green-600 dark:text-green-400">
-                    <CheckCircle size={18} />
-                    <span className="font-medium">
-                      Conectado a {slackStatus.workspace?.name}
-                    </span>
+                  <div className="mb-4 space-y-2">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                      <CheckCircle size={18} />
+                      <span className="font-medium">
+                        Conectado a {slackStatus.workspace?.name}
+                      </span>
+                    </div>
+                    {slackStatus.configuredBy && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Configurado por: {slackStatus.configuredBy.name} ({slackStatus.configuredBy.email})
+                      </p>
+                    )}
                   </div>
-                  <button
-                    onClick={handleDisconnectSlack}
-                    disabled={disconnecting}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-                  >
-                    {disconnecting && <Loader2 size={16} className="animate-spin" />}
-                    Desconectar
-                  </button>
+                  {slackStatus.isAdmin ? (
+                    <button
+                      onClick={handleDisconnectSlack}
+                      disabled={disconnecting}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                    >
+                      {disconnecting && <Loader2 size={16} className="animate-spin" />}
+                      Desconectar
+                    </button>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                      Solo administradores pueden desconectar la integración
+                    </p>
+                  )}
                 </div>
               ) : (
-                <button
-                  onClick={handleConnectSlack}
-                  disabled={connecting}
-                  className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-                >
-                  {connecting && <Loader2 size={16} className="animate-spin" />}
-                  Conectar con Slack
-                </button>
+                slackStatus?.isAdmin ? (
+                  <button
+                    onClick={handleConnectSlack}
+                    disabled={connecting}
+                    className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                  >
+                    {connecting && <Loader2 size={16} className="animate-spin" />}
+                    Conectar con Slack
+                  </button>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                    Solo administradores pueden configurar la integración de Slack
+                  </p>
+                )
               )}
             </div>
           </div>

@@ -98,15 +98,14 @@ export async function sendPriorityNotificationToSlack(params: {
       return { success: false, error: 'No Slack channel configured' };
     }
 
-    // Obtener la integración de Slack del usuario
+    // Obtener la integración organizacional de Slack (única para toda la organización)
     const slackIntegration = await SlackIntegration.findOne({
-      userId: params.userId,
       isActive: true,
     }).lean();
 
     if (!slackIntegration) {
-      console.log('Usuario no tiene integración de Slack activa');
-      return { success: false, error: 'User has no active Slack integration' };
+      console.log('No hay integración de Slack configurada para la organización');
+      return { success: false, error: 'No organizational Slack integration configured' };
     }
 
     // Emojis por tipo de evento

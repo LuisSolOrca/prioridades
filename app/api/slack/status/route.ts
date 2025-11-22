@@ -6,7 +6,7 @@ import SlackIntegration from '@/models/SlackIntegration';
 
 /**
  * GET /api/slack/status
- * Obtiene el estado de la integración de Slack del usuario
+ * Obtiene el estado de la integración organizacional de Slack
  */
 export async function GET() {
   try {
@@ -18,9 +18,12 @@ export async function GET() {
 
     await connectDB();
 
+    // Buscar la integración organizacional (única)
     const slackIntegration = await SlackIntegration.findOne({
-      userId: session.user.id,
-    }).lean();
+      isActive: true,
+    })
+    .populate('configuredBy', 'name email')
+    .lean();
 
     if (!slackIntegration) {
       return NextResponse.json({
@@ -29,12 +32,13 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      connected: slackIntegration.isActive,
+      connected: true,
       workspace: {
         id: slackIntegration.slackTeamId,
         name: slackIntegration.slackTeamName,
       },
-      slackUserId: slackIntegration.slackUserId,
+      configuredBy: slackIntegration.configuredBy,
+      isAdmin: session.user.role === 'ADMIN',
     });
   } catch (error) {
     console.error('Error en /api/slack/status:', error);

@@ -1,6 +1,6 @@
 # Integración con Slack
 
-Esta guía explica cómo configurar la integración con Slack para recibir notificaciones de prioridades en canales específicos por proyecto.
+Esta guía explica cómo configurar la integración organizacional con Slack para recibir notificaciones de prioridades de **todos los usuarios** en canales específicos por proyecto.
 
 ## 📋 Requisitos Previos
 
@@ -62,46 +62,57 @@ Si quieres probar inmediatamente:
 2. Click en **"Install to Workspace"**
 3. Autoriza la app
 
-## 👤 Uso por Usuarios
+## 👤 Uso
 
-### Conectar Slack
+### Conectar Slack (Solo Administradores)
 
 1. Ir a **Configuración** → **Integraciones** (`/settings/integrations`)
-2. Click en **"Conectar con Slack"**
+2. Click en **"Conectar con Slack"** (solo visible para administradores)
 3. Autorizar la app en Slack
 4. Serás redirigido de vuelta a la aplicación
 
-### Configurar Canales por Proyecto
+**Nota**: La integración es **organizacional**, por lo que solo necesita ser configurada una vez por un administrador.
+
+### Configurar Canales por Proyecto (Todos los usuarios)
 
 1. Ir a la configuración del proyecto
 2. En la sección **"Slack"**, seleccionar el canal deseado
 3. Guardar cambios
 
-### Desconectar Slack
+**Nota**: Todos los usuarios autenticados pueden seleccionar canales de Slack para sus proyectos, pero la integración debe estar configurada primero por un admin.
+
+### Desconectar Slack (Solo Administradores)
 
 1. Ir a **Configuración** → **Integraciones**
-2. Click en **"Desconectar"**
+2. Click en **"Desconectar"** (solo visible para administradores)
+3. Confirmar la desconexión
+
+**⚠️ Advertencia**: Desconectar Slack deshabilitará las notificaciones para **toda la organización**.
 
 ## 📬 Notificaciones que se Envían
 
-La integración envía notificaciones a Slack cuando:
+La integración envía notificaciones a Slack cuando **cualquier usuario** de la organización:
 
-- ✅ Se completa una prioridad
-- 💬 Se agrega un comentario
+- ✅ Completa una prioridad
+- 💬 Agrega un comentario
 - 🔄 Cambia el estado de una prioridad
-- 📢 Se menciona a alguien en un comentario
+- 📢 Menciona a alguien en un comentario
 
 Cada notificación incluye:
 - Título de la prioridad
 - Mensaje descriptivo
 - Botón para ver la prioridad en la app
 
+**✨ Beneficio**: Con la integración organizacional, el equipo completo puede ver **toda la actividad** del proyecto en Slack, sin importar qué usuario realice la acción.
+
 ## 🔐 Seguridad
 
-- Los tokens de acceso se almacenan encriptados en la base de datos
-- Solo usuarios autenticados pueden conectar Slack
+- Los tokens de acceso se almacenan encriptados en la base de datos (TODO: implementar encriptación en producción)
+- Solo administradores pueden conectar/desconectar la integración organizacional
+- Todos los usuarios autenticados pueden configurar canales para sus proyectos
 - Cada proyecto requiere que el canal sea configurado explícitamente
 - Los mensajes solo se envían a canales autorizados
+- Existe una única integración organizacional (no por usuario)
 
 ## 🚨 Troubleshooting
 
@@ -110,12 +121,16 @@ Cada notificación incluye:
 - Asegúrate de que la URL de callback coincida exactamente
 
 ### Error: "No se encontró integración de Slack"
-- El usuario debe conectar primero su cuenta de Slack en `/settings/integrations`
+- Un administrador debe configurar primero la integración organizacional en `/settings/integrations`
 
 ### Los mensajes no llegan a Slack
+- Verifica que un admin haya configurado la integración organizacional
 - Verifica que el proyecto tenga un canal de Slack configurado
-- Verifica que el usuario tenga su integración de Slack activa
-- Revisa los logs de Vercel para ver errores específicos
+- Revisa los logs de Vercel/consola para ver errores específicos
+
+### Error: "Solo administradores pueden configurar Slack"
+- Solo usuarios con rol ADMIN pueden conectar/desconectar la integración
+- Contacta a un administrador para configurar Slack
 
 ### Error: "missing_scope"
 - Revisa que la app de Slack tenga todos los scopes necesarios
@@ -134,5 +149,26 @@ Cada notificación incluye:
 Si modificas los scopes:
 
 1. Actualiza los scopes en la configuración de la app
-2. Los usuarios deben reconectar su integración para obtener los nuevos permisos
-3. Pide a los usuarios que desconecten y vuelvan a conectar en `/settings/integrations`
+2. Un administrador debe desconectar y volver a conectar la integración en `/settings/integrations`
+
+## 🔀 Migración de Integraciones por Usuario
+
+Si vienes de una versión anterior donde cada usuario conectaba su propio Slack:
+
+1. Ejecuta el script de migración:
+   ```bash
+   npx tsx scripts/migrate-slack-to-organizational.ts
+   ```
+
+2. El script automáticamente:
+   - Selecciona la integración más reciente/activa como base
+   - Elimina todas las integraciones antiguas
+   - Crea una nueva integración organizacional
+   - Preserva el token de acceso y configuración del workspace
+
+3. Después de la migración:
+   - Solo administradores verán el botón "Conectar/Desconectar"
+   - Todos los usuarios seguirán pudiendo configurar canales en sus proyectos
+   - Las notificaciones se enviarán para **todas las acciones**, sin importar el usuario
+
+**Nota**: Es seguro ejecutar el script múltiples veces si es necesario.

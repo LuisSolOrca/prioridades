@@ -61,26 +61,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Guardar integración en la base de datos
+    // Guardar integración organizacional en la base de datos
     await connectDB();
 
-    const userId = new mongoose.Types.ObjectId(state);
+    const configuredBy = new mongoose.Types.ObjectId(state);
 
-    await SlackIntegration.findOneAndUpdate(
-      { userId },
-      {
-        userId,
-        slackUserId: tokenData.authed_user.id,
-        slackTeamId: tokenData.team.id,
-        slackTeamName: tokenData.team.name,
-        accessToken: tokenData.access_token,
-        scope: tokenData.scope,
-        isActive: true,
-      },
-      { upsert: true, new: true }
-    );
+    // Eliminar cualquier integración anterior (solo puede existir una organizacional)
+    await SlackIntegration.deleteMany({});
 
-    console.log(`✅ Slack integrado exitosamente para usuario ${state}`);
+    // Crear nueva integración organizacional
+    await SlackIntegration.create({
+      configuredBy,
+      slackUserId: tokenData.authed_user.id,
+      slackTeamId: tokenData.team.id,
+      slackTeamName: tokenData.team.name,
+      accessToken: tokenData.access_token,
+      botAccessToken: tokenData.bot_user_id ? tokenData.access_token : undefined,
+      scope: tokenData.scope,
+      isActive: true,
+    });
+
+    console.log(`✅ Slack integrado exitosamente para la organización por admin ${state}`);
 
     // Redirigir a la página de configuración con éxito
     return NextResponse.redirect(

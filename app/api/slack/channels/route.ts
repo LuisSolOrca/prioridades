@@ -7,7 +7,7 @@ import { getSlackChannels } from '@/lib/slack';
 
 /**
  * GET /api/slack/channels
- * Obtiene la lista de canales de Slack disponibles para el usuario
+ * Obtiene la lista de canales de Slack disponibles (usa integración organizacional)
  */
 export async function GET() {
   try {
@@ -19,15 +19,14 @@ export async function GET() {
 
     await connectDB();
 
-    // Buscar integración de Slack del usuario
+    // Buscar integración organizacional de Slack (única)
     const slackIntegration = await SlackIntegration.findOne({
-      userId: session.user.id,
       isActive: true,
     }).lean();
 
     if (!slackIntegration) {
       return NextResponse.json(
-        { error: 'No tienes una integración de Slack activa' },
+        { error: 'No hay una integración de Slack configurada para la organización' },
         { status: 404 }
       );
     }

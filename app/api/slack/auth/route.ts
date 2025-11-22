@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 
 /**
  * GET /api/slack/auth
- * Inicia el flujo OAuth de Slack
+ * Inicia el flujo OAuth de Slack (solo admins)
  */
 export async function GET() {
   try {
@@ -12,6 +12,14 @@ export async function GET() {
 
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Solo admins pueden configurar la integración organizacional
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Solo administradores pueden configurar Slack' },
+        { status: 403 }
+      );
     }
 
     const clientId = process.env.SLACK_CLIENT_ID;
