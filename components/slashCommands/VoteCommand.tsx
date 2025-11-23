@@ -92,7 +92,7 @@ export default function VoteCommand({
   const maxPoints = Math.max(...options.map(o => o.points), 1);
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-blue-300 dark:border-blue-700 p-6 my-2">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-blue-300 dark:border-blue-700 p-6 my-2 max-w-3xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -128,9 +128,9 @@ export default function VoteCommand({
                   className="absolute inset-0 bg-gradient-to-r from-blue-200 to-indigo-200 dark:from-blue-900/50 dark:to-indigo-900/50 transition-all duration-300"
                   style={{ width: `${percentage}%` }}
                 />
-                <div className="relative flex items-center justify-between">
-                  <span className="font-medium text-gray-800 dark:text-gray-100">{option.text}</span>
-                  <div className="flex items-center gap-2">
+                <div className="relative flex items-center justify-between gap-3">
+                  <span className="flex-1 min-w-0 font-medium text-gray-800 dark:text-gray-100 break-words">{option.text}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="font-bold text-blue-600 dark:text-blue-400">{option.points} pts</span>
                     {!userVote && !closed && (
                       <div className="flex gap-1">

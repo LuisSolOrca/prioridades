@@ -119,7 +119,7 @@ export default function MoodCommand({
   const totalResponses = moods.length;
 
   return (
-    <div className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-pink-300 dark:border-pink-700 p-6 my-2">
+    <div className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-pink-300 dark:border-pink-700 p-6 my-2 max-w-3xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center">

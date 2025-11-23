@@ -40,7 +40,7 @@ export default function TimerCommand({
   const percentage = ((duration - remaining) / duration) * 100;
 
   return (
-    <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-orange-300 dark:border-orange-700 p-6 my-2">
+    <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-orange-300 dark:border-orange-700 p-6 my-2 max-w-2xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
