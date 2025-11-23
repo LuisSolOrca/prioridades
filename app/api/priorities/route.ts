@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
     }
 
     const priorities = await Priority.find(query)
+      .populate('userId', 'name email')
       .sort({ weekStart: -1, createdAt: -1 })
       .lean();
 
