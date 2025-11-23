@@ -115,6 +115,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   } | null>(null);
   const [showCommandSuggestions, setShowCommandSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Pusher states
   const [pusherChannel, setPusherChannel] = useState<PresenceChannel | null>(null);
@@ -122,14 +123,38 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; info: { name: string; email: string } }>>([]);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Infinite scroll states
+  const [hasMore, setHasMore] = useState(true);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+
   useEffect(() => {
     loadUsers();
     // No cargar mensajes aquí, esperar a que se seleccione un canal
   }, [projectId]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (initialLoad) {
+      scrollToBottom();
+    }
+  }, [messages, initialLoad]);
+
+  // Listener de scroll para infinite scroll
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Si el usuario hace scroll hasta arriba (con un threshold de 100px)
+      if (container.scrollTop < 100 && hasMore && !loadingMore) {
+        loadMoreMessages();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [hasMore, loadingMore, nextCursor]);
 
   useEffect(() => {
     // Detectar comandos slash
@@ -173,6 +198,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   // Cuando cambia la búsqueda debounced o el canal seleccionado, recargar mensajes
   useEffect(() => {
     if (selectedChannelId) {
+      // Resetear estados de paginación
+      setHasMore(true);
+      setNextCursor(null);
+      setInitialLoad(true);
+
       loadMessages();
       loadPinnedMessages();
     }
@@ -298,10 +328,73 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       });
 
       setMessages(Array.from(messageMap.values()));
+      setHasMore(data.pagination?.hasMore || false);
+      setNextCursor(data.pagination?.nextCursor || null);
+      setInitialLoad(false);
     } catch (err) {
       console.error('Error loading messages:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMoreMessages = async () => {
+    if (!selectedChannelId || loadingMore || !hasMore || !nextCursor) {
+      return;
+    }
+
+    try {
+      setLoadingMore(true);
+
+      // Guardar altura del scroll antes de cargar
+      const container = messagesContainerRef.current;
+      const previousScrollHeight = container?.scrollHeight || 0;
+
+      const searchParam = debouncedSearchQuery.trim() ? `&search=${encodeURIComponent(debouncedSearchQuery.trim())}` : '';
+      const response = await fetch(`/api/projects/${projectId}/messages?limit=50&cursor=${nextCursor}&channelId=${selectedChannelId}${searchParam}`);
+
+      if (!response.ok) {
+        throw new Error('Error al cargar más mensajes');
+      }
+
+      const data = await response.json();
+      const olderMessages = (data.messages || []).reverse(); // Invertir para mostrar más recientes abajo
+
+      if (olderMessages.length > 0) {
+        setMessages((prev) => {
+          // Agregar mensajes antiguos al inicio
+          const messageMap = new Map();
+
+          // Primero agregar los nuevos mensajes antiguos
+          olderMessages.forEach((msg: Message) => {
+            messageMap.set(msg._id, msg);
+          });
+
+          // Luego agregar los existentes (esto evita duplicados)
+          prev.forEach((msg: Message) => {
+            messageMap.set(msg._id, msg);
+          });
+
+          return Array.from(messageMap.values());
+        });
+
+        setNextCursor(data.pagination?.nextCursor || null);
+        setHasMore(data.pagination?.hasMore || false);
+
+        // Restaurar posición del scroll
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - previousScrollHeight;
+          }
+        }, 0);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error('Error loading more messages:', err);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -1029,7 +1122,17 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Loading More Indicator */}
+        {loadingMore && (
+          <div className="flex justify-center py-3">
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span>Cargando mensajes antiguos...</span>
+            </div>
+          </div>
+        )}
+
         {debouncedSearchQuery && messages.length === 0 ? (
           <div className="text-center py-12">
             <Search className="mx-auto mb-3 text-gray-400" size={48} />

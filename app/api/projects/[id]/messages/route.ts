@@ -28,7 +28,7 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const cursor = searchParams.get('cursor'); // Cursor-based pagination
     const parentMessageId = searchParams.get('parentMessageId');
     const channelId = searchParams.get('channelId');
     const search = searchParams.get('search') || '';
@@ -52,6 +52,11 @@ export async function GET(
       query.parentMessageId = null;
     }
 
+    // Cursor-based pagination: obtener mensajes más antiguos que el cursor
+    if (cursor) {
+      query._id = { $lt: cursor };
+    }
+
     // Si hay búsqueda, agregar condiciones
     if (search.trim()) {
       const searchRegex = new RegExp(search.trim(), 'i');
@@ -71,11 +76,10 @@ export async function GET(
       ];
     }
 
-    // Obtener mensajes
+    // Obtener mensajes (ordenar por _id descendente que es equivalente a createdAt)
     const messages = await ChannelMessage.find(query)
-      .sort({ createdAt: -1 })
-      .skip(offset)
-      .limit(limit)
+      .sort({ _id: -1 })
+      .limit(limit + 1) // Obtener uno más para saber si hay más páginas
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
       .populate('priorityMentions', 'title status completionPercentage userId')
@@ -83,8 +87,13 @@ export async function GET(
       .populate('pinnedBy', 'name')
       .lean();
 
+    // Determinar si hay más mensajes
+    const hasMore = messages.length > limit;
+    const messagesToReturn = hasMore ? messages.slice(0, limit) : messages;
+    const nextCursor = hasMore ? messagesToReturn[messagesToReturn.length - 1]._id : null;
+
     // Manejar usuarios eliminados - reemplazar con objeto de usuario eliminado
-    const messagesWithDeletedUsers = messages.map((msg: any) => {
+    const messagesWithDeletedUsers = messagesToReturn.map((msg: any) => {
       if (!msg.userId) {
         msg.userId = {
           _id: 'deleted',
@@ -117,16 +126,12 @@ export async function GET(
       return msg;
     });
 
-    // Contar total
-    const total = await ChannelMessage.countDocuments(query);
-
     return NextResponse.json({
       messages: messagesWithDeletedUsers,
       pagination: {
-        total,
-        offset,
-        limit,
-        hasMore: offset + limit < total
+        hasMore,
+        nextCursor,
+        limit
       }
     });
   } catch (error) {
