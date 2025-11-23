@@ -18,11 +18,15 @@ export interface INotification extends Document {
     | 'WEEK_COMPLETED'
     | 'WEEK_START_REMINDER'
     | 'COMMENT_REPLY'
-    | 'WORKFLOW_NOTIFICATION';
+    | 'WORKFLOW_NOTIFICATION'
+    | 'CHANNEL_MENTION'
+    | 'CHANNEL_REPLY';
   title: string;
   message: string;
   priorityId?: mongoose.Types.ObjectId;
   commentId?: mongoose.Types.ObjectId;
+  projectId?: mongoose.Types.ObjectId;
+  messageId?: mongoose.Types.ObjectId;
   actionUrl?: string;
   isRead: boolean;
   createdAt: Date;
@@ -53,7 +57,9 @@ const NotificationSchema = new Schema<INotification>({
       'WEEK_COMPLETED',
       'WEEK_START_REMINDER',
       'COMMENT_REPLY',
-      'WORKFLOW_NOTIFICATION'
+      'WORKFLOW_NOTIFICATION',
+      'CHANNEL_MENTION',
+      'CHANNEL_REPLY'
     ],
     required: true
   },
@@ -74,6 +80,14 @@ const NotificationSchema = new Schema<INotification>({
   commentId: {
     type: Schema.Types.ObjectId,
     ref: 'Comment'
+  },
+  projectId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Project'
+  },
+  messageId: {
+    type: Schema.Types.ObjectId,
+    ref: 'ChannelMessage'
   },
   actionUrl: {
     type: String,

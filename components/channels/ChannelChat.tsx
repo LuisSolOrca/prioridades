@@ -10,8 +10,10 @@ import {
   Trash2,
   MessageSquare,
   Check,
-  X
+  X,
+  CornerDownRight
 } from 'lucide-react';
+import ThreadView from './ThreadView';
 
 interface Message {
   _id: string;
@@ -46,18 +48,54 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [sending, setSending] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [openThread, setOpenThread] = useState<Message | null>(null);
+  const [users, setUsers] = useState<Array<{ _id: string; name: string; email: string }>>([]);
+  const [showUserSuggestions, setShowUserSuggestions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadMessages();
+    loadUsers();
   }, [projectId]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Detectar @ para autocompletado
+    const lastAtIndex = newMessage.lastIndexOf('@');
+    if (lastAtIndex !== -1 && lastAtIndex === newMessage.length - 1) {
+      setShowUserSuggestions(true);
+      setMentionSearch('');
+    } else if (lastAtIndex !== -1) {
+      const searchText = newMessage.substring(lastAtIndex + 1);
+      if (searchText.includes(' ')) {
+        setShowUserSuggestions(false);
+      } else {
+        setMentionSearch(searchText);
+        setShowUserSuggestions(true);
+      }
+    } else {
+      setShowUserSuggestions(false);
+    }
+  }, [newMessage]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || data || []);
+      }
+    } catch (err) {
+      console.error('Error loading users:', err);
+    }
   };
 
   const loadMessages = async () => {
@@ -213,6 +251,17 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
     return summary;
   };
+
+  const handleMentionSelect = (user: { name: string }) => {
+    const lastAtIndex = newMessage.lastIndexOf('@');
+    const beforeAt = newMessage.substring(0, lastAtIndex);
+    setNewMessage(`${beforeAt}@${user.name} `);
+    setShowUserSuggestions(false);
+  };
+
+  const filteredUsers = users.filter((u) =>
+    u.name.toLowerCase().includes(mentionSearch.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -379,6 +428,17 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       </button>
                     ))}
                   </div>
+
+                  {/* Reply Button */}
+                  {message.replyCount > 0 && (
+                    <button
+                      onClick={() => setOpenThread(message)}
+                      className="flex items-center gap-1 mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      <CornerDownRight size={14} />
+                      {message.replyCount} {message.replyCount === 1 ? 'respuesta' : 'respuestas'}
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -389,6 +449,31 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        {/* User Suggestions */}
+        {showUserSuggestions && filteredUsers.length > 0 && (
+          <div className="mb-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {filteredUsers.slice(0, 5).map((user) => (
+              <button
+                key={user._id}
+                onClick={() => handleMentionSelect(user)}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2 transition"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                    {user.name}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {user.email}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-2">
           <input
             type="text"
@@ -417,6 +502,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           Presiona Enter para enviar, Shift+Enter para nueva línea
         </p>
       </div>
+
+      {/* Thread View Modal */}
+      {openThread && (
+        <ThreadView
+          projectId={projectId}
+          parentMessage={openThread}
+          onClose={() => setOpenThread(null)}
+        />
+      )}
     </div>
   );
 }

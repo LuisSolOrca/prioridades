@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
+import User from '@/models/User';
+import Project from '@/models/Project';
+import Notification from '@/models/Notification';
 
 /**
  * GET /api/projects/[id]/messages
@@ -123,6 +126,76 @@ export async function POST(
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
       .lean();
+
+    // Detectar menciones y crear notificaciones
+    try {
+      const mentionRegex = /@([\w\s]+?)(?=\s|$|[^\w\s])/g;
+      const mentionsFound = content.match(mentionRegex);
+      const project = await Project.findById(params.id).lean();
+      const author = await User.findById(session.user.id).lean();
+
+      if (mentionsFound && author && project) {
+        const usernames = [...new Set(mentionsFound.map((m: string) => m.substring(1).trim()))];
+
+        for (const username of usernames) {
+          try {
+            const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // Buscar usuario mencionado
+            let mentionedUser = await User.findOne({
+              name: { $regex: new RegExp(`^${escapedUsername}$`, 'i') },
+              isActive: true
+            }).lean();
+
+            if (!mentionedUser) {
+              mentionedUser = await User.findOne({
+                name: { $regex: new RegExp(escapedUsername, 'i') },
+                isActive: true
+              }).lean();
+            }
+
+            // Crear notificación si no es el mismo autor
+            if (mentionedUser && mentionedUser._id.toString() !== author._id.toString()) {
+              await Notification.create({
+                userId: mentionedUser._id,
+                type: 'CHANNEL_MENTION',
+                title: `Te mencionaron en #${project.name}`,
+                message: `${author.name} te mencionó: "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`,
+                projectId: params.id,
+                messageId: message._id,
+                actionUrl: `/channels/${params.id}?message=${message._id}`,
+                isRead: false
+              });
+            }
+          } catch (err) {
+            console.error(`Error creating notification for mention @${username}:`, err);
+          }
+        }
+      }
+
+      // Si es un reply, notificar al autor del mensaje original
+      if (parentMessageId && author && project) {
+        const parentMessage = await ChannelMessage.findById(parentMessageId)
+          .populate('userId', 'name email')
+          .lean();
+
+        if (parentMessage && parentMessage.userId._id.toString() !== author._id.toString()) {
+          await Notification.create({
+            userId: parentMessage.userId._id,
+            type: 'CHANNEL_REPLY',
+            title: `Nueva respuesta en #${project.name}`,
+            message: `${author.name} respondió a tu mensaje: "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`,
+            projectId: params.id,
+            messageId: message._id,
+            actionUrl: `/channels/${params.id}?message=${message._id}`,
+            isRead: false
+          });
+        }
+      }
+    } catch (notifError) {
+      console.error('Error creating notifications:', notifError);
+      // No fallar la creación del mensaje si las notificaciones fallan
+    }
 
     return NextResponse.json(populatedMessage, { status: 201 });
   } catch (error) {
