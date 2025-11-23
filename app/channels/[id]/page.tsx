@@ -8,8 +8,9 @@ import ActivityFeed from '@/components/channels/ActivityFeed';
 import ChannelChat from '@/components/channels/ChannelChat';
 import ChannelLinks from '@/components/channels/ChannelLinks';
 import ChannelMetrics from '@/components/channels/ChannelMetrics';
+import ChannelManagement from '@/components/ChannelManagement';
 import ProjectFormModal, { ProjectFormData } from '@/components/ProjectFormModal';
-import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft, BarChart3, FileText } from 'lucide-react';
+import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft, BarChart3, FileText, Folder } from 'lucide-react';
 
 interface User {
   _id: string;
@@ -20,7 +21,7 @@ interface User {
 export default function ChannelPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics'>('metrics');
+  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics' | 'canales'>('metrics');
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -182,6 +183,17 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
                 <BarChart3 size={18} className="mr-2" />
                 Métricas
               </button>
+              <button
+                onClick={() => setActiveTab('canales')}
+                className={`flex items-center px-4 py-2 rounded-t-lg transition ${
+                  activeTab === 'canales'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Folder size={18} className="mr-2" />
+                Canales
+              </button>
             </div>
           </div>
         </div>
@@ -193,6 +205,7 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
             {activeTab === 'chat' && <ChannelChat projectId={params.id} />}
             {activeTab === 'links' && <ChannelLinks projectId={params.id} />}
             {activeTab === 'metrics' && <ChannelMetrics projectId={params.id} />}
+            {activeTab === 'canales' && <ChannelManagement projectId={params.id} />}
           </div>
         </div>
       </div>
