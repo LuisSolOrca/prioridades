@@ -131,8 +131,8 @@ export async function POST(
     try {
       const mentionRegex = /@([\w\s]+?)(?=\s|$|[^\w\s])/g;
       const mentionsFound = content.match(mentionRegex);
-      const project = await Project.findById(params.id).lean();
-      const author = await User.findById(session.user.id).lean();
+      const project = await Project.findById(params.id).lean() as any;
+      const author = await User.findById(session.user.id).lean() as any;
 
       if (mentionsFound && author && project) {
         const usernames = [...new Set<string>(mentionsFound.map((m: string) => m.substring(1).trim()))];
@@ -145,13 +145,13 @@ export async function POST(
             let mentionedUser = await User.findOne({
               name: { $regex: new RegExp(`^${escapedUsername}$`, 'i') },
               isActive: true
-            }).lean();
+            }).lean() as any;
 
             if (!mentionedUser) {
               mentionedUser = await User.findOne({
                 name: { $regex: new RegExp(escapedUsername, 'i') },
                 isActive: true
-              }).lean();
+              }).lean() as any;
             }
 
             // Crear notificación si no es el mismo autor
@@ -177,7 +177,7 @@ export async function POST(
       if (parentMessageId && author && project) {
         const parentMessage = await ChannelMessage.findById(parentMessageId)
           .populate('userId', 'name email')
-          .lean();
+          .lean() as any;
 
         if (parentMessage && parentMessage.userId._id.toString() !== author._id.toString()) {
           await Notification.create({
