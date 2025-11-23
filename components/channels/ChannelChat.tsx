@@ -815,10 +815,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex items-center gap-2 flex-1">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 ${
+                        message.userId._id === 'deleted'
+                          ? 'bg-gradient-to-br from-gray-400 to-gray-500'
+                          : 'bg-gradient-to-br from-blue-400 to-purple-500'
+                      }`}>
                         {message.userId.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-100">
+                      <span className={`text-xs font-semibold ${
+                        message.userId._id === 'deleted'
+                          ? 'text-gray-500 dark:text-gray-400 italic'
+                          : 'text-gray-800 dark:text-gray-100'
+                      }`}>
                         {message.userId.name}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -880,7 +888,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           </div>
         ) : (
           messages.map((message) => {
-            const isOwn = message.userId._id === session?.user.id;
+            const isOwn = message.userId._id === session?.user.id && message.userId._id !== 'deleted';
             const reactionSummary = getReactionSummary(message.reactions);
 
             return (
@@ -890,7 +898,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               >
                 {/* Avatar */}
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
+                    message.userId._id === 'deleted'
+                      ? 'bg-gradient-to-br from-gray-400 to-gray-500'
+                      : 'bg-gradient-to-br from-blue-400 to-purple-500'
+                  }`}>
                     {message.userId.name.charAt(0).toUpperCase()}
                   </div>
                 </div>
@@ -898,7 +910,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                 {/* Message Content */}
                 <div className={`flex-1 max-w-xl ${isOwn ? 'items-end' : ''}`}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    <span className={`text-sm font-semibold ${
+                      message.userId._id === 'deleted'
+                        ? 'text-gray-500 dark:text-gray-400 italic'
+                        : 'text-gray-800 dark:text-gray-100'
+                    }`}>
                       {message.userId.name}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">

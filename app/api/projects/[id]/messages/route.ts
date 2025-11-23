@@ -76,11 +76,45 @@ export async function GET(
       .populate('pinnedBy', 'name')
       .lean();
 
+    // Manejar usuarios eliminados - reemplazar con objeto de usuario eliminado
+    const messagesWithDeletedUsers = messages.map((msg: any) => {
+      if (!msg.userId) {
+        msg.userId = {
+          _id: 'deleted',
+          name: 'Usuario Eliminado',
+          email: 'deleted@system.local'
+        };
+      }
+
+      // Manejar reacciones con usuarios eliminados
+      if (msg.reactions && msg.reactions.length > 0) {
+        msg.reactions = msg.reactions.map((reaction: any) => {
+          if (!reaction.userId) {
+            reaction.userId = {
+              _id: 'deleted',
+              name: 'Usuario Eliminado'
+            };
+          }
+          return reaction;
+        });
+      }
+
+      // Manejar pinnedBy si el usuario fue eliminado
+      if (msg.isPinned && !msg.pinnedBy) {
+        msg.pinnedBy = {
+          _id: 'deleted',
+          name: 'Usuario Eliminado'
+        };
+      }
+
+      return msg;
+    });
+
     // Contar total
     const total = await ChannelMessage.countDocuments(query);
 
     return NextResponse.json({
-      messages,
+      messages: messagesWithDeletedUsers,
       pagination: {
         total,
         offset,
@@ -190,11 +224,20 @@ export async function POST(
     }
 
     // Poblar el mensaje creado
-    const populatedMessage = await ChannelMessage.findById(message._id)
+    let populatedMessage: any = await ChannelMessage.findById(message._id)
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
       .populate('priorityMentions', 'title status completionPercentage userId')
       .lean();
+
+    // Manejar usuarios eliminados (aunque poco probable en mensaje recién creado)
+    if (!populatedMessage.userId) {
+      populatedMessage.userId = {
+        _id: 'deleted',
+        name: 'Usuario Eliminado',
+        email: 'deleted@system.local'
+      };
+    }
 
     // Detectar menciones y crear notificaciones
     try {

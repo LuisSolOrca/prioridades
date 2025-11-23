@@ -38,7 +38,41 @@ export async function GET(
       .populate('pinnedBy', 'name')
       .lean();
 
-    return NextResponse.json({ messages });
+    // Manejar usuarios eliminados
+    const messagesWithDeletedUsers = messages.map((msg: any) => {
+      if (!msg.userId) {
+        msg.userId = {
+          _id: 'deleted',
+          name: 'Usuario Eliminado',
+          email: 'deleted@system.local'
+        };
+      }
+
+      // Manejar reacciones con usuarios eliminados
+      if (msg.reactions && msg.reactions.length > 0) {
+        msg.reactions = msg.reactions.map((reaction: any) => {
+          if (!reaction.userId) {
+            reaction.userId = {
+              _id: 'deleted',
+              name: 'Usuario Eliminado'
+            };
+          }
+          return reaction;
+        });
+      }
+
+      // Manejar pinnedBy si el usuario fue eliminado
+      if (!msg.pinnedBy) {
+        msg.pinnedBy = {
+          _id: 'deleted',
+          name: 'Usuario Eliminado'
+        };
+      }
+
+      return msg;
+    });
+
+    return NextResponse.json({ messages: messagesWithDeletedUsers });
   } catch (error) {
     console.error('Error getting pinned messages:', error);
     return NextResponse.json(

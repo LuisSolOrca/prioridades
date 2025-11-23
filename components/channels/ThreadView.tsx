@@ -258,13 +258,21 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
+                parentMessage.userId._id === 'deleted'
+                  ? 'bg-gradient-to-br from-gray-400 to-gray-500'
+                  : 'bg-gradient-to-br from-blue-400 to-purple-500'
+              }`}>
                 {parentMessage.userId.name.charAt(0).toUpperCase()}
               </div>
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                <span className={`text-sm font-semibold ${
+                  parentMessage.userId._id === 'deleted'
+                    ? 'text-gray-500 dark:text-gray-400 italic'
+                    : 'text-gray-800 dark:text-gray-100'
+                }`}>
                   {parentMessage.userId.name}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -308,7 +316,11 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
                 <div key={reply._id} className="flex gap-3">
                   {/* Avatar */}
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs ${
+                      reply.userId._id === 'deleted'
+                        ? 'bg-gradient-to-br from-gray-400 to-gray-500'
+                        : 'bg-gradient-to-br from-green-400 to-blue-500'
+                    }`}>
                       {reply.userId.name.charAt(0).toUpperCase()}
                     </div>
                   </div>
@@ -316,7 +328,11 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
                   {/* Reply Content */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                      <span className={`text-sm font-semibold ${
+                        reply.userId._id === 'deleted'
+                          ? 'text-gray-500 dark:text-gray-400 italic'
+                          : 'text-gray-800 dark:text-gray-100'
+                      }`}>
                         {reply.userId.name}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
