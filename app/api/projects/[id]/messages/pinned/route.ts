@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
+import Priority from '@/models/Priority';
+import User from '@/models/User';
 
 /**
  * GET /api/projects/[id]/messages/pinned
