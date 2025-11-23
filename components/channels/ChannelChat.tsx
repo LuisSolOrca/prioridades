@@ -730,6 +730,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     /* Render Celebrate Command */
                     <CelebrateCommand
                       projectId={projectId}
+                      messageId={message._id}
                       userName={message.commandData.userName}
                       achievement={message.commandData.achievement}
                       createdBy={message.commandData.createdBy}

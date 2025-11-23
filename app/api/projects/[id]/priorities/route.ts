@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Priority from '@/models/Priority';
+import User from '@/models/User';
 
 /**
  * GET /api/projects/[id]/priorities
@@ -25,7 +26,8 @@ export async function GET(
     const priorities = await Priority.find({
       projectId: params.id
     })
-      .select('title status completionPercentage weekStart weekEnd userId initiativeIds')
+      .select('title status completionPercentage weekStart weekEnd userId initiativeIds updatedAt')
+      .populate('userId', 'name email')
       .lean();
 
     return NextResponse.json({ priorities });

@@ -9,6 +9,7 @@ interface CelebrateCommandProps {
   achievement: string;
   createdBy?: string;
   createdAt?: string;
+  messageId?: string; // Si existe, es una celebración persistente
   onClose: () => void;
 }
 
@@ -26,6 +27,7 @@ export default function CelebrateCommand({
   achievement,
   createdBy,
   createdAt,
+  messageId,
   onClose
 }: CelebrateCommandProps) {
   const [isAnimating, setIsAnimating] = useState(true);
@@ -78,12 +80,14 @@ export default function CelebrateCommand({
               <p className="text-xs text-gray-600 dark:text-gray-400">Reconocimiento del equipo</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          >
-            ✕
-          </button>
+          {!messageId && (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Main Celebration Card */}
