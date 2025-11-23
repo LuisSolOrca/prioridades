@@ -135,6 +135,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Hacer pregunta importante a un stakeholder o miembro del equipo',
     usage: '/question @usuario "¿Tu pregunta aquí?"',
     category: 'collaboration'
+  },
+  {
+    name: 'export',
+    description: 'Exportar datos del proyecto en diferentes formatos',
+    usage: '/export [excel|pdf|csv] [filtros]',
+    category: 'analysis'
   }
 ];
 

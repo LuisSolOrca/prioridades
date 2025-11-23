@@ -40,6 +40,7 @@ import DecisionCommand from '../slashCommands/DecisionCommand';
 import ScheduleCommand from '../slashCommands/ScheduleCommand';
 import MentionStatsCommand from '../slashCommands/MentionStatsCommand';
 import QuestionCommand from '../slashCommands/QuestionCommand';
+import ExportCommand from '../slashCommands/ExportCommand';
 
 interface Priority {
   _id: string;
@@ -562,6 +563,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } finally {
           setSending(false);
         }
+        setNewMessage('');
+        break;
+
+      case 'export':
+        const exportFormat = parsed.args[0] as 'excel' | 'pdf' | 'csv' | undefined;
+        setActiveCommand({
+          type: 'export',
+          data: { format: exportFormat || 'excel' }
+        });
         setNewMessage('');
         break;
 
@@ -1319,6 +1329,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           {activeCommand.type === 'mention-stats' && (
             <MentionStatsCommand
               projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'export' && (
+            <ExportCommand
+              projectId={projectId}
+              initialFormat={activeCommand.data?.format}
               onClose={() => setActiveCommand(null)}
             />
           )}
