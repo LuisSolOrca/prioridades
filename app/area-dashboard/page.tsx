@@ -429,7 +429,7 @@ export default function AreaDashboardPage() {
       }
 
       // Agregar las prioridades filtradas del usuario
-      const userPriorities = filteredPriorities.filter(p => p.userId === user._id);
+      const userPriorities = filteredPriorities.filter(p => p.userId._id === user._id);
       areaData.priorities.push(...userPriorities);
     });
 

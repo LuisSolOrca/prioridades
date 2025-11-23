@@ -147,7 +147,7 @@ export default function ReportsPage() {
     let filtered = priorities;
 
     if (selectedUser !== 'all') {
-      filtered = filtered.filter(p => p.userId === selectedUser);
+      filtered = filtered.filter(p => p.userId._id === selectedUser);
     }
 
     if (!includeAdmins) {

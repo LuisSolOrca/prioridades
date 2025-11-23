@@ -699,7 +699,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredUsers.map(user => {
-              const userPriorities = filteredPriorities.filter(p => p.userId === user._id);
+              const userPriorities = filteredPriorities.filter(p => p.userId._id === user._id);
 
               return (
                 <UserPriorityCard

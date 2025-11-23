@@ -148,7 +148,7 @@ export default function HistoryPage() {
 
     // Filtro por usuario
     if (selectedUser !== 'all') {
-      filtered = filtered.filter(p => p.userId === selectedUser);
+      filtered = filtered.filter(p => p.userId._id === selectedUser);
     }
 
     // Filtro por rol de usuario (incluir/excluir admins)

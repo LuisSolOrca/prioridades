@@ -630,7 +630,7 @@ export const generateUserPerformanceReport = async (
   filters?: string
 ) => {
   const userStats = users.map(user => {
-    const userPriorities = priorities.filter(p => p.userId === user._id);
+    const userPriorities = priorities.filter(p => p.userId._id === user._id);
     const completed = userPriorities.filter(p => p.status === 'COMPLETADO').length;
     const avgCompletion = userPriorities.length > 0
       ? userPriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userPriorities.length

@@ -330,7 +330,7 @@ export default function AreaLeaderPage() {
   const userColumns = useMemo(() => {
     return users.map((user) => ({
       user,
-      priorities: priorities.filter((p) => p.userId === user._id),
+      priorities: priorities.filter((p) => p.userId._id === user._id),
     }));
   }, [users, priorities]);
 
@@ -358,7 +358,7 @@ export default function AreaLeaderPage() {
     if (!newUserId) return;
 
     const priority = priorities.find((p) => p._id === priorityId);
-    if (!priority || priority.userId === newUserId) return;
+    if (!priority || priority.userId._id === newUserId) return;
 
     try {
       const res = await fetch(`/api/priorities/${priorityId}/reassign`, {
