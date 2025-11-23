@@ -60,6 +60,8 @@ interface Message {
     _id: string;
     name: string;
   };
+  commandType?: string;
+  commandData?: any;
   isEdited: boolean;
   isDeleted: boolean;
   createdAt: string;
@@ -230,21 +232,24 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   };
 
-  const handleSlashCommand = (commandText: string) => {
+  const handleSlashCommand = async (commandText: string) => {
     const parsed = parseSlashCommand(commandText);
     if (!parsed) return;
 
     switch (parsed.command) {
       case 'status':
         setActiveCommand({ type: 'status' });
+        setNewMessage('');
         break;
 
       case 'blockers':
         setActiveCommand({ type: 'blockers' });
+        setNewMessage('');
         break;
 
       case 'risks':
         setActiveCommand({ type: 'risks' });
+        setNewMessage('');
         break;
 
       case 'poll':
@@ -254,7 +259,32 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         }
         const question = parsed.args[0];
         const options = parsed.args.slice(1);
-        setActiveCommand({ type: 'poll', data: { question, options } });
+
+        // Crear poll persistente en la base de datos
+        try {
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/poll ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'poll',
+              commandData: {
+                question,
+                options: options.map((opt: string) => ({ text: opt, votes: [] })),
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            loadMessages(); // Recargar mensajes para mostrar el poll
+          }
+        } catch (error) {
+          console.error('Error creating poll:', error);
+          alert('Error al crear la encuesta');
+        }
+        setNewMessage('');
         break;
 
       case 'quick-priority':
@@ -264,18 +294,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         }
         const title = parsed.args[0];
         setActiveCommand({ type: 'quick-priority', data: { title } });
+        setNewMessage('');
         break;
 
       case 'help':
         setActiveCommand({ type: 'help' });
+        setNewMessage('');
         break;
 
       default:
         alert(`Comando desconocido: ${parsed.command}\nEscribe /help para ver comandos disponibles`);
         return;
     }
-
-    setNewMessage('');
   };
 
   const handleEditMessage = async (messageId: string) => {
@@ -629,6 +659,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         <X size={18} />
                       </button>
                     </div>
+                  ) : message.commandType === 'poll' && message.commandData ? (
+                    /* Render Poll Command */
+                    <PollCommand
+                      projectId={projectId}
+                      messageId={message._id}
+                      question={message.commandData.question}
+                      options={message.commandData.options || []}
+                      createdBy={message.commandData.createdBy}
+                      closed={message.commandData.closed || false}
+                      onClose={() => {}}
+                      onUpdate={loadMessages}
+                    />
                   ) : (
                     <div
                       className={`relative group rounded-lg px-4 py-2 ${

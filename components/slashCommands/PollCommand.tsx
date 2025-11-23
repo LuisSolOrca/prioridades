@@ -19,21 +19,35 @@ interface Poll {
 
 interface PollCommandProps {
   projectId: string;
+  messageId?: string; // ID del mensaje que contiene el poll (si es persistente)
   question: string;
-  options: string[];
+  options: PollOption[];
+  createdBy: string;
+  closed: boolean;
   onClose: () => void;
+  onUpdate?: () => void; // Callback para recargar mensajes después de votar
 }
 
-export default function PollCommand({ projectId, question, options, onClose }: PollCommandProps) {
+export default function PollCommand({
+  projectId,
+  messageId,
+  question,
+  options: initialOptions,
+  createdBy,
+  closed: initialClosed,
+  onClose,
+  onUpdate
+}: PollCommandProps) {
   const { data: session } = useSession();
   const [poll, setPoll] = useState<Poll>({
     question,
-    options: options.map(opt => ({ text: opt, votes: [] })),
-    createdBy: session?.user?.id || '',
+    options: initialOptions,
+    createdBy,
     createdAt: new Date(),
-    closed: false
+    closed: initialClosed
   });
   const [hasVoted, setHasVoted] = useState(false);
+  const [voting, setVoting] = useState(false);
 
   useEffect(() => {
     // Verificar si el usuario ya votó
@@ -43,27 +57,87 @@ export default function PollCommand({ projectId, question, options, onClose }: P
     setHasVoted(userVoted);
   }, [poll, session]);
 
-  const handleVote = (optionIndex: number) => {
-    if (!session?.user?.id || poll.closed || hasVoted) return;
+  const handleVote = async (optionIndex: number) => {
+    if (!session?.user?.id || poll.closed || hasVoted || voting) return;
 
-    setPoll(prev => ({
-      ...prev,
-      options: prev.options.map((opt, idx) => {
-        if (idx === optionIndex) {
-          return {
-            ...opt,
-            votes: [...opt.votes, session.user.id]
-          };
-        }
-        return opt;
-      })
-    }));
+    // Si no hay messageId, es un poll temporal (sin persistencia)
+    if (!messageId) {
+      setPoll(prev => ({
+        ...prev,
+        options: prev.options.map((opt, idx) => {
+          if (idx === optionIndex) {
+            return {
+              ...opt,
+              votes: [...opt.votes, session.user.id]
+            };
+          }
+          return opt;
+        })
+      }));
+      setHasVoted(true);
+      return;
+    }
 
-    setHasVoted(true);
+    // Poll persistente: usar API
+    try {
+      setVoting(true);
+      const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ optionIndex })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Error al votar');
+        return;
+      }
+
+      const data = await response.json();
+      setPoll(prev => ({
+        ...prev,
+        options: data.commandData.options,
+        closed: data.commandData.closed
+      }));
+      setHasVoted(true);
+      onUpdate?.(); // Recargar mensajes
+    } catch (error) {
+      console.error('Error voting:', error);
+      alert('Error al votar en la encuesta');
+    } finally {
+      setVoting(false);
+    }
   };
 
-  const handleClosePoll = () => {
-    setPoll(prev => ({ ...prev, closed: true }));
+  const handleClosePoll = async () => {
+    // Si no hay messageId, es un poll temporal
+    if (!messageId) {
+      setPoll(prev => ({ ...prev, closed: true }));
+      return;
+    }
+
+    // Poll persistente: usar API
+    try {
+      const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/vote`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Error al cerrar encuesta');
+        return;
+      }
+
+      const data = await response.json();
+      setPoll(prev => ({
+        ...prev,
+        closed: data.commandData.closed
+      }));
+      onUpdate?.(); // Recargar mensajes
+    } catch (error) {
+      console.error('Error closing poll:', error);
+      alert('Error al cerrar la encuesta');
+    }
   };
 
   const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes.length, 0);

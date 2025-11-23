@@ -19,6 +19,8 @@ export interface IChannelMessage {
   isPinned: boolean; // Si el mensaje está anclado
   pinnedAt?: Date; // Cuándo fue anclado
   pinnedBy?: mongoose.Types.ObjectId; // Quién lo ancló
+  commandType?: string; // Tipo de comando slash (poll, status, etc.)
+  commandData?: any; // Datos del comando (flexible para diferentes tipos)
   isEdited: boolean;
   isDeleted: boolean;
   createdAt: Date;
@@ -88,6 +90,14 @@ const ChannelMessageSchema = new mongoose.Schema({
   pinnedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    default: null
+  },
+  commandType: {
+    type: String,
+    default: null
+  },
+  commandData: {
+    type: mongoose.Schema.Types.Mixed,
     default: null
   },
   isEdited: {

@@ -115,7 +115,7 @@ export async function POST(
     await connectDB();
 
     const body = await request.json();
-    const { content, mentions = [], parentMessageId } = body;
+    const { content, mentions = [], parentMessageId, commandType, commandData } = body;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -173,6 +173,8 @@ export async function POST(
       mentions,
       priorityMentions: priorityMentionsIds,
       parentMessageId: parentMessageId || null,
+      commandType: commandType || null,
+      commandData: commandData || null,
       reactions: [],
       replyCount: 0,
       isPinned: false,
