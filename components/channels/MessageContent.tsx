@@ -145,11 +145,20 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
           rehypePlugins={[rehypeHighlight]}
           components={{
             // Personalizar componentes para mantener estilos consistentes
-            p: ({ children }) => (
-              <p className="mb-2 last:mb-0 whitespace-pre-wrap break-words">
-                {processPriorityMentions(String(children))}
-              </p>
-            ),
+            p: ({ children }) => {
+              // Convertir children a string solo si es texto plano
+              const textContent = typeof children === 'string'
+                ? children
+                : Array.isArray(children)
+                ? children.map(child => typeof child === 'string' ? child : '').join('')
+                : '';
+
+              return (
+                <p className="mb-2 last:mb-0 whitespace-pre-wrap break-words">
+                  {textContent ? processPriorityMentions(textContent) : children}
+                </p>
+              );
+            },
             strong: ({ children }) => (
               <strong className="font-bold text-gray-900 dark:text-gray-100">
                 {children}
