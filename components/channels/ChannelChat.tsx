@@ -11,7 +11,8 @@ import {
   MessageSquare,
   Check,
   X,
-  CornerDownRight
+  CornerDownRight,
+  Search
 } from 'lucide-react';
 import ThreadView from './ThreadView';
 
@@ -52,6 +53,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [users, setUsers] = useState<Array<{ _id: string; name: string; email: string }>>([]);
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,6 +84,27 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       setShowUserSuggestions(false);
     }
   }, [newMessage]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredMessages(messages);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = messages.filter((message) => {
+      // Buscar en contenido del mensaje
+      if (message.content.toLowerCase().includes(query)) return true;
+
+      // Buscar en nombre de usuario
+      const userName = message.userId?.name?.toLowerCase() || '';
+      if (userName.includes(query)) return true;
+
+      return false;
+    });
+
+    setFilteredMessages(filtered);
+  }, [searchQuery, messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -276,9 +300,46 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   return (
     <div className="flex flex-col h-[600px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      {/* Search Bar */}
+      <div className="border-b border-gray-200 dark:border-gray-700 p-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar mensajes... (contenido, usuario)"
+            className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+            {filteredMessages.length} {filteredMessages.length === 1 ? 'mensaje' : 'mensajes'} encontrados
+          </div>
+        )}
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
+        {searchQuery && filteredMessages.length === 0 ? (
+          <div className="text-center py-12">
+            <Search className="mx-auto mb-3 text-gray-400" size={48} />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+              No se encontraron mensajes
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Intenta con otro término de búsqueda
+            </p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="text-center py-12">
             <MessageSquare className="mx-auto mb-3 text-gray-400" size={48} />
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
@@ -289,7 +350,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             </p>
           </div>
         ) : (
-          messages.map((message) => {
+          filteredMessages.map((message) => {
             const isOwn = message.userId._id === session?.user.id;
             const reactionSummary = getReactionSummary(message.reactions);
 

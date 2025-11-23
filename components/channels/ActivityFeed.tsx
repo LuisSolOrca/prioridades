@@ -10,7 +10,9 @@ import {
   UserPlus,
   UserMinus,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Search,
+  X
 } from 'lucide-react';
 
 interface Activity {
@@ -43,10 +45,43 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
     loadActivities();
   }, [projectId]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredActivities(activities);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = activities.filter((activity) => {
+      // Buscar en nombre de usuario
+      const userName = activity.userId?.name?.toLowerCase() || '';
+      if (userName.includes(query)) return true;
+
+      // Buscar en tipo de actividad
+      const activityType = activity.activityType.toLowerCase();
+      if (activityType.includes(query)) return true;
+
+      // Buscar en metadata
+      const metadata = activity.metadata;
+      if (metadata.priorityTitle && metadata.priorityTitle.toLowerCase().includes(query)) return true;
+      if (metadata.taskTitle && metadata.taskTitle.toLowerCase().includes(query)) return true;
+      if (metadata.commentText && metadata.commentText.toLowerCase().includes(query)) return true;
+      if (metadata.milestoneTitle && metadata.milestoneTitle.toLowerCase().includes(query)) return true;
+      if (metadata.oldStatus && metadata.oldStatus.toLowerCase().includes(query)) return true;
+      if (metadata.newStatus && metadata.newStatus.toLowerCase().includes(query)) return true;
+
+      return false;
+    });
+
+    setFilteredActivities(filtered);
+  }, [searchQuery, activities]);
 
   const loadActivities = async (loadMore = false) => {
     try {
@@ -251,12 +286,53 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
 
   return (
     <div className="space-y-4">
-      {/* Timeline */}
+      {/* Search Bar */}
       <div className="relative">
-        {activities.map((activity, index) => (
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar en actividades... (usuario, prioridad, tarea, comentario)"
+          className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
+
+      {/* Results Count */}
+      {searchQuery && (
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {filteredActivities.length} {filteredActivities.length === 1 ? 'resultado' : 'resultados'} encontrados
+        </div>
+      )}
+
+      {/* Empty State for Search */}
+      {searchQuery && filteredActivities.length === 0 && (
+        <div className="text-center py-12">
+          <Search className="mx-auto mb-3 text-gray-400" size={48} />
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+            No se encontraron resultados
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Intenta con otro término de búsqueda
+          </p>
+        </div>
+      )}
+
+      {/* Timeline */}
+      {filteredActivities.length > 0 && (
+        <div className="relative">
+          {filteredActivities.map((activity, index) => (
           <div key={activity._id} className="relative flex gap-4 pb-6">
             {/* Timeline line */}
-            {index < activities.length - 1 && (
+            {index < filteredActivities.length - 1 && (
               <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
             )}
 
@@ -283,18 +359,19 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
             </div>
           </div>
         ))}
-      </div>
 
-      {/* Load More */}
-      {hasMore && (
-        <div className="text-center pt-4">
-          <button
-            onClick={() => loadActivities(true)}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Cargar más actividades
-          </button>
-        </div>
+        {/* Load More */}
+        {!searchQuery && hasMore && (
+          <div className="text-center pt-4">
+            <button
+              onClick={() => loadActivities(true)}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Cargar más actividades
+            </button>
+          </div>
+        )}
+      </div>
       )}
     </div>
   );

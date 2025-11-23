@@ -14,7 +14,8 @@ import {
   Video,
   Folder,
   X,
-  Check
+  Check,
+  Search
 } from 'lucide-react';
 
 interface Link {
@@ -42,6 +43,8 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredLinks, setFilteredLinks] = useState<Link[]>([]);
   const [formData, setFormData] = useState({
     url: '',
     title: '',
@@ -61,6 +64,33 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
   useEffect(() => {
     loadLinks();
   }, [projectId, selectedCategory]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredLinks(links);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = links.filter((link) => {
+      // Buscar en título
+      if (link.title.toLowerCase().includes(query)) return true;
+
+      // Buscar en descripción
+      if (link.description && link.description.toLowerCase().includes(query)) return true;
+
+      // Buscar en URL
+      if (link.url.toLowerCase().includes(query)) return true;
+
+      // Buscar en categoría
+      const categoryInfo = getCategoryInfo(link.category);
+      if (categoryInfo.label.toLowerCase().includes(query)) return true;
+
+      return false;
+    });
+
+    setFilteredLinks(filtered);
+  }, [searchQuery, links]);
 
   const loadLinks = async () => {
     try {
@@ -198,6 +228,33 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar enlaces... (título, descripción, URL, categoría)"
+          className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
+
+      {/* Results Count */}
+      {searchQuery && (
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {filteredLinks.length} {filteredLinks.length === 1 ? 'enlace' : 'enlaces'} encontrados
+        </div>
+      )}
+
       {/* Add/Edit Form */}
       {showForm && (
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-700 p-6">
@@ -326,7 +383,17 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
       </div>
 
       {/* Links List */}
-      {links.length === 0 ? (
+      {searchQuery && filteredLinks.length === 0 ? (
+        <div className="text-center py-12">
+          <Search className="mx-auto mb-3 text-gray-400" size={48} />
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+            No se encontraron enlaces
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Intenta con otro término de búsqueda
+          </p>
+        </div>
+      ) : filteredLinks.length === 0 ? (
         <div className="text-center py-12">
           <LinkIcon className="mx-auto mb-3 text-gray-400" size={48} />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
@@ -338,7 +405,7 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {links.map((link) => {
+          {filteredLinks.map((link) => {
             const categoryInfo = getCategoryInfo(link.category);
             const Icon = categoryInfo.icon;
             const isOwn = link.addedBy._id === session?.user.id;
