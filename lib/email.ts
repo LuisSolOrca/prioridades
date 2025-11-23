@@ -389,6 +389,52 @@ export const emailTemplates = {
     }),
   }),
 
+  channelMention: (params: {
+    mentionerName: string;
+    projectName: string;
+    messageText: string;
+    channelUrl: string;
+  }) => ({
+    subject: `@️ ${params.mentionerName} te mencionó en #${params.projectName}`,
+    html: generateEmailHTML({
+      headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+      headerTitle: '@️ Te mencionaron en el canal',
+      content: `
+        <p><strong>${params.mentionerName}</strong> te mencionó en el canal:</p>
+        <h3 style="color: #1f2937; margin: 15px 0;">#${params.projectName}</h3>
+        <div class="info-box" style="border-color: #8b5cf6;">
+          <div style="background: #f3f4f6; padding: 12px; border-radius: 6px; margin-top: 10px;">
+            <div style="color: #4b5563; font-style: italic;">"${params.messageText}"</div>
+          </div>
+        </div>
+        <a href="${params.channelUrl}" class="button" style="background: #8b5cf6;">Ver Mensaje en el Canal</a>
+      `
+    }),
+  }),
+
+  channelReply: (params: {
+    replierName: string;
+    projectName: string;
+    replyText: string;
+    channelUrl: string;
+  }) => ({
+    subject: `💬 ${params.replierName} respondió a tu mensaje en #${params.projectName}`,
+    html: generateEmailHTML({
+      headerGradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+      headerTitle: '💬 Nueva Respuesta en el Canal',
+      content: `
+        <p><strong>${params.replierName}</strong> respondió a tu mensaje en:</p>
+        <h3 style="color: #1f2937; margin: 15px 0;">#${params.projectName}</h3>
+        <div class="info-box" style="border-color: #06b6d4;">
+          <div style="background: #f3f4f6; padding: 12px; border-radius: 6px; margin-top: 10px;">
+            <div style="color: #4b5563; font-style: italic;">"${params.replyText}"</div>
+          </div>
+        </div>
+        <a href="${params.channelUrl}" class="button" style="background: #06b6d4;">Ver Respuesta en el Canal</a>
+      `
+    }),
+  }),
+
   performanceReport: (params: {
     userName: string;
     periodLabel: string;

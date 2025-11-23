@@ -19,12 +19,17 @@ interface CreateNotificationParams {
     | 'INITIATIVE_AT_RISK'
     | 'WEEK_COMPLETED'
     | 'WEEK_START_REMINDER'
-    | 'COMMENT_REPLY';
+    | 'COMMENT_REPLY'
+    | 'CHANNEL_MENTION'
+    | 'CHANNEL_REPLY';
   title: string;
   message: string;
   priorityId?: string;
   priorityTitle?: string; // Título de la prioridad para usar en emails
   commentId?: string;
+  projectId?: string; // ID del proyecto para menciones en canales
+  projectName?: string; // Nombre del proyecto para emails
+  messageId?: string; // ID del mensaje de canal
   actionUrl?: string;
   sendEmail?: boolean;
 }
@@ -47,6 +52,8 @@ export async function createNotification(params: CreateNotificationParams) {
       message: params.message,
       priorityId: params.priorityId,
       commentId: params.commentId,
+      projectId: params.projectId,
+      messageId: params.messageId,
       actionUrl: params.actionUrl
     });
 
@@ -163,6 +170,30 @@ export async function createNotification(params: CreateNotificationParams) {
             emailContent = emailTemplates.weekendReminder({
               priorityUrl
             });
+            break;
+
+          case 'CHANNEL_MENTION':
+            if (user.emailNotifications?.newComments) {
+              const mentionerName = params.title.split(' te mencionó en ')[0];
+              emailContent = emailTemplates.channelMention({
+                mentionerName,
+                projectName: params.projectName || 'Proyecto',
+                messageText: params.message,
+                channelUrl: `${baseUrl}${params.actionUrl || '/channels'}`
+              });
+            }
+            break;
+
+          case 'CHANNEL_REPLY':
+            if (user.emailNotifications?.newComments) {
+              const replierName = params.title.split(' respondió a tu mensaje en ')[0];
+              emailContent = emailTemplates.channelReply({
+                replierName,
+                projectName: params.projectName || 'Proyecto',
+                replyText: params.message,
+                channelUrl: `${baseUrl}${params.actionUrl || '/channels'}`
+              });
+            }
             break;
         }
 
@@ -383,6 +414,50 @@ export async function notifyCommentReply(
     priorityId,
     commentId,
     actionUrl: `/priorities`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Mención en canal de proyecto
+export async function notifyChannelMention(
+  userId: string,
+  mentionerName: string,
+  projectId: string,
+  projectName: string,
+  messageText: string,
+  messageId: string
+) {
+  await createNotification({
+    userId,
+    type: 'CHANNEL_MENTION',
+    title: `${mentionerName} te mencionó en #${projectName}`,
+    message: messageText.substring(0, 100) + (messageText.length > 100 ? '...' : ''),
+    projectId,
+    projectName,
+    messageId,
+    actionUrl: `/channels/${projectId}?message=${messageId}`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Respuesta en hilo de canal
+export async function notifyChannelReply(
+  userId: string,
+  replierName: string,
+  projectId: string,
+  projectName: string,
+  replyText: string,
+  messageId: string
+) {
+  await createNotification({
+    userId,
+    type: 'CHANNEL_REPLY',
+    title: `${replierName} respondió a tu mensaje en #${projectName}`,
+    message: replyText.substring(0, 100) + (replyText.length > 100 ? '...' : ''),
+    projectId,
+    projectName,
+    messageId,
+    actionUrl: `/channels/${projectId}?message=${messageId}`,
     sendEmail: true
   });
 }

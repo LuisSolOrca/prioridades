@@ -5,7 +5,7 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import User from '@/models/User';
 import Project from '@/models/Project';
-import Notification from '@/models/Notification';
+import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
 
 /**
  * GET /api/projects/[id]/messages
@@ -154,18 +154,16 @@ export async function POST(
               }).lean() as any;
             }
 
-            // Crear notificación si no es el mismo autor
+            // Crear notificación y enviar correo si no es el mismo autor
             if (mentionedUser && mentionedUser._id.toString() !== author._id.toString()) {
-              await Notification.create({
-                userId: mentionedUser._id,
-                type: 'CHANNEL_MENTION',
-                title: `Te mencionaron en #${project.name}`,
-                message: `${author.name} te mencionó: "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`,
-                projectId: params.id,
-                messageId: message._id,
-                actionUrl: `/channels/${params.id}?message=${message._id}`,
-                isRead: false
-              });
+              await notifyChannelMention(
+                mentionedUser._id.toString(),
+                author.name,
+                params.id,
+                project.name,
+                content,
+                message._id.toString()
+              );
             }
           } catch (err) {
             console.error(`Error creating notification for mention @${username}:`, err);
@@ -173,23 +171,21 @@ export async function POST(
         }
       }
 
-      // Si es un reply, notificar al autor del mensaje original
+      // Si es un reply, notificar y enviar correo al autor del mensaje original
       if (parentMessageId && author && project) {
         const parentMessage = await ChannelMessage.findById(parentMessageId)
           .populate('userId', 'name email')
           .lean() as any;
 
         if (parentMessage && parentMessage.userId._id.toString() !== author._id.toString()) {
-          await Notification.create({
-            userId: parentMessage.userId._id,
-            type: 'CHANNEL_REPLY',
-            title: `Nueva respuesta en #${project.name}`,
-            message: `${author.name} respondió a tu mensaje: "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`,
-            projectId: params.id,
-            messageId: message._id,
-            actionUrl: `/channels/${params.id}?message=${message._id}`,
-            isRead: false
-          });
+          await notifyChannelReply(
+            parentMessage.userId._id.toString(),
+            author.name,
+            params.id,
+            project.name,
+            content,
+            message._id.toString()
+          );
         }
       }
     } catch (notifError) {
