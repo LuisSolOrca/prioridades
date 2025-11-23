@@ -10,6 +10,7 @@ import UserGroup from '@/models/UserGroup';
 import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 import { trackChannelUsage } from '@/lib/gamification';
+import { triggerOutgoingWebhooks } from '@/lib/webhooks';
 
 /**
  * GET /api/projects/[id]/messages
@@ -380,6 +381,24 @@ export async function POST(
     } catch (pusherError) {
       console.error('Error triggering Pusher event:', pusherError);
       // No fallar la creación del mensaje si Pusher falla
+    }
+
+    // Triggerar webhooks salientes
+    try {
+      await triggerOutgoingWebhooks(
+        params.id,
+        channelId,
+        'message.created',
+        {
+          message: populatedMessage,
+          project: { id: params.id },
+          channel: { id: channelId },
+          timestamp: new Date().toISOString(),
+        }
+      );
+    } catch (webhookError) {
+      console.error('Error triggering outgoing webhooks:', webhookError);
+      // No fallar la creación del mensaje si los webhooks fallan
     }
 
     return NextResponse.json(populatedMessage, { status: 201 });
