@@ -28,6 +28,7 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
     const parentMessageId = searchParams.get('parentMessageId');
+    const search = searchParams.get('search') || '';
 
     // Construir query
     const query: any = {
@@ -41,6 +42,25 @@ export async function GET(
     } else {
       // Solo mensajes principales (no respuestas)
       query.parentMessageId = null;
+    }
+
+    // Si hay búsqueda, agregar condiciones
+    if (search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+
+      // Buscar usuarios que coincidan
+      const matchingUsers = await User.find({
+        name: searchRegex,
+        isActive: true
+      }).select('_id').lean();
+
+      const userIds = matchingUsers.map(u => u._id);
+
+      // Buscar en contenido o por usuario
+      query.$or = [
+        { content: searchRegex },
+        ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : [])
+      ];
     }
 
     // Obtener mensajes

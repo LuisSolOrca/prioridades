@@ -25,9 +25,41 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
+    const search = searchParams.get('search') || '';
+
+    // Construir query base
+    const query: any = { projectId: params.id };
+
+    // Si hay búsqueda, agregar condiciones
+    if (search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+
+      // Primero, buscar usuarios que coincidan con el término de búsqueda
+      const matchingUsers = await User.find({
+        name: searchRegex,
+        isActive: true
+      }).select('_id').lean();
+
+      const userIds = matchingUsers.map(u => u._id);
+
+      // Construir query con búsqueda en múltiples campos
+      query.$or = [
+        // Buscar por tipo de actividad
+        { activityType: searchRegex },
+        // Buscar por userId
+        ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : []),
+        // Buscar en metadata
+        { 'metadata.priorityTitle': searchRegex },
+        { 'metadata.taskTitle': searchRegex },
+        { 'metadata.commentText': searchRegex },
+        { 'metadata.milestoneTitle': searchRegex },
+        { 'metadata.oldStatus': searchRegex },
+        { 'metadata.newStatus': searchRegex }
+      ];
+    }
 
     // Obtener actividades del proyecto
-    const activities = await ProjectActivity.find({ projectId: params.id })
+    const activities = await ProjectActivity.find(query)
       .sort({ createdAt: -1 })
       .skip(offset)
       .limit(limit)
@@ -35,7 +67,7 @@ export async function GET(
       .lean();
 
     // Contar total de actividades
-    const total = await ProjectActivity.countDocuments({ projectId: params.id });
+    const total = await ProjectActivity.countDocuments(query);
 
     return NextResponse.json({
       activities,

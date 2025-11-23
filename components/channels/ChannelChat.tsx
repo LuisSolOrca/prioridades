@@ -54,7 +54,6 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,26 +84,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   }, [newMessage]);
 
+  // Cuando cambia la búsqueda, recargar mensajes
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredMessages(messages);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = messages.filter((message) => {
-      // Buscar en contenido del mensaje
-      if (message.content.toLowerCase().includes(query)) return true;
-
-      // Buscar en nombre de usuario
-      const userName = message.userId?.name?.toLowerCase() || '';
-      if (userName.includes(query)) return true;
-
-      return false;
-    });
-
-    setFilteredMessages(filtered);
-  }, [searchQuery, messages]);
+    loadMessages();
+  }, [searchQuery]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -125,7 +108,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const loadMessages = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/messages?limit=50`);
+      const searchParam = searchQuery.trim() ? `&search=${encodeURIComponent(searchQuery.trim())}` : '';
+      const response = await fetch(`/api/projects/${projectId}/messages?limit=50${searchParam}`);
 
       if (!response.ok) {
         throw new Error('Error al cargar mensajes');
@@ -322,14 +306,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         </div>
         {searchQuery && (
           <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-            {filteredMessages.length} {filteredMessages.length === 1 ? 'mensaje' : 'mensajes'} encontrados
+            {messages.length} {messages.length === 1 ? 'mensaje' : 'mensajes'} encontrados
           </div>
         )}
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {searchQuery && filteredMessages.length === 0 ? (
+        {searchQuery && messages.length === 0 ? (
           <div className="text-center py-12">
             <Search className="mx-auto mb-3 text-gray-400" size={48} />
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
@@ -350,7 +334,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             </p>
           </div>
         ) : (
-          filteredMessages.map((message) => {
+          messages.map((message) => {
             const isOwn = message.userId._id === session?.user.id;
             const reactionSummary = getReactionSummary(message.reactions);
 

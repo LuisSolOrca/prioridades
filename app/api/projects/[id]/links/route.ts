@@ -23,6 +23,7 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
+    const search = searchParams.get('search') || '';
 
     // Construir query
     const query: any = {
@@ -32,6 +33,17 @@ export async function GET(
 
     if (category) {
       query.category = category;
+    }
+
+    // Si hay búsqueda, agregar condiciones
+    if (search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { url: searchRegex },
+        { category: searchRegex }
+      ];
     }
 
     // Obtener enlaces

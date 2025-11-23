@@ -46,44 +46,18 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
     loadActivities();
   }, [projectId]);
 
+  // Cuando cambia la búsqueda, recargar actividades
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredActivities(activities);
-      return;
-    }
+    setOffset(0);
+    loadActivities(false, searchQuery);
+  }, [searchQuery]);
 
-    const query = searchQuery.toLowerCase();
-    const filtered = activities.filter((activity) => {
-      // Buscar en nombre de usuario
-      const userName = activity.userId?.name?.toLowerCase() || '';
-      if (userName.includes(query)) return true;
-
-      // Buscar en tipo de actividad
-      const activityType = activity.activityType.toLowerCase();
-      if (activityType.includes(query)) return true;
-
-      // Buscar en metadata
-      const metadata = activity.metadata;
-      if (metadata.priorityTitle && metadata.priorityTitle.toLowerCase().includes(query)) return true;
-      if (metadata.taskTitle && metadata.taskTitle.toLowerCase().includes(query)) return true;
-      if (metadata.commentText && metadata.commentText.toLowerCase().includes(query)) return true;
-      if (metadata.milestoneTitle && metadata.milestoneTitle.toLowerCase().includes(query)) return true;
-      if (metadata.oldStatus && metadata.oldStatus.toLowerCase().includes(query)) return true;
-      if (metadata.newStatus && metadata.newStatus.toLowerCase().includes(query)) return true;
-
-      return false;
-    });
-
-    setFilteredActivities(filtered);
-  }, [searchQuery, activities]);
-
-  const loadActivities = async (loadMore = false) => {
+  const loadActivities = async (loadMore = false, search = searchQuery) => {
     try {
       if (!loadMore) {
         setLoading(true);
@@ -91,8 +65,9 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
       }
 
       const currentOffset = loadMore ? offset : 0;
+      const searchParam = search.trim() ? `&search=${encodeURIComponent(search.trim())}` : '';
       const response = await fetch(
-        `/api/projects/${projectId}/activities?limit=20&offset=${currentOffset}`
+        `/api/projects/${projectId}/activities?limit=20&offset=${currentOffset}${searchParam}`
       );
 
       if (!response.ok) {
@@ -309,12 +284,12 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
       {/* Results Count */}
       {searchQuery && (
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          {filteredActivities.length} {filteredActivities.length === 1 ? 'resultado' : 'resultados'} encontrados
+          {activities.length} {activities.length === 1 ? 'resultado' : 'resultados'} encontrados
         </div>
       )}
 
       {/* Empty State for Search */}
-      {searchQuery && filteredActivities.length === 0 && (
+      {searchQuery && activities.length === 0 && (
         <div className="text-center py-12">
           <Search className="mx-auto mb-3 text-gray-400" size={48} />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
@@ -327,12 +302,12 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
       )}
 
       {/* Timeline */}
-      {filteredActivities.length > 0 && (
+      {activities.length > 0 && (
         <div className="relative">
-          {filteredActivities.map((activity, index) => (
+          {activities.map((activity, index) => (
           <div key={activity._id} className="relative flex gap-4 pb-6">
             {/* Timeline line */}
-            {index < filteredActivities.length - 1 && (
+            {index < activities.length - 1 && (
               <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
             )}
 
