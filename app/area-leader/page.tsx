@@ -316,7 +316,7 @@ export default function AreaLeaderPage() {
 
       // Filtrar prioridades del área
       const areaPriorities = allPriorities.filter((p: Priority) =>
-        areaUsers.some((u: User) => u._id === p.userId)
+        areaUsers.some((u: User) => u._id === (typeof p.userId === 'object' ? p.userId._id : p.userId))
       );
       setPriorities(areaPriorities);
     } catch (error) {
