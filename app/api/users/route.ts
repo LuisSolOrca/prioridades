@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('activeOnly') === 'true';
+    const forChannels = searchParams.get('forChannels') === 'true'; // Para canales: incluir todos los usuarios
     const currentUserId = (session.user as any).id;
 
     let query: any = {};
@@ -29,6 +30,11 @@ export async function GET(request: NextRequest) {
       .select('-password')
       .sort({ name: 1 })
       .lean();
+
+    // Si es para canales, no filtrar a Francisco Puente (permitir menciones/preguntas)
+    if (forChannels) {
+      return NextResponse.json(users);
+    }
 
     // Filtrar Francisco Puente de la lista para todos excepto él mismo
     const filteredUsers = users.filter(u => {

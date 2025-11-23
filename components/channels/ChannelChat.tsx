@@ -169,7 +169,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      // forChannels=true permite incluir a todos los usuarios (incluyendo Francisco Puente) para menciones y preguntas
+      const response = await fetch('/api/users?forChannels=true');
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || data || []);
