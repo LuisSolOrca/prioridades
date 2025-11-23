@@ -99,6 +99,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [activeCommand, setActiveCommand] = useState<{
     type: string;
     data?: any;
+    args?: string[];
   } | null>(null);
   const [showCommandSuggestions, setShowCommandSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
