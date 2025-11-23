@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import MessageContent from './MessageContent';
 import EmojiPicker from './EmojiPicker';
+import MarkdownHelp from './MarkdownHelp';
 
 interface Priority {
   _id: string;
@@ -473,10 +474,11 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
                   handleSendReply();
                 }
               }}
-              placeholder="Escribe una respuesta... (usa @ para mencionar)"
+              placeholder="Escribe una respuesta... (@ para mencionar, Markdown soportado)"
               className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={sending}
             />
+            <MarkdownHelp />
             <button
               onClick={handleSendReply}
               disabled={!newReply.trim() || sending}
@@ -487,7 +489,7 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
             </button>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            Presiona Enter para enviar
+            <span className="font-medium">Enter</span> para enviar • Soporta <span className="font-medium">Markdown</span>
           </p>
         </div>
       </div>
