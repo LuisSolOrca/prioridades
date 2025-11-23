@@ -54,6 +54,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,10 +85,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   }, [newMessage]);
 
-  // Cuando cambia la búsqueda, recargar mensajes
+  // Debouncing: esperar 500ms después de que el usuario deje de escribir
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Cuando cambia la búsqueda debounced, recargar mensajes
   useEffect(() => {
     loadMessages();
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,7 +118,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const loadMessages = async () => {
     try {
       setLoading(true);
-      const searchParam = searchQuery.trim() ? `&search=${encodeURIComponent(searchQuery.trim())}` : '';
+      const searchParam = debouncedSearchQuery.trim() ? `&search=${encodeURIComponent(debouncedSearchQuery.trim())}` : '';
       const response = await fetch(`/api/projects/${projectId}/messages?limit=50${searchParam}`);
 
       if (!response.ok) {
@@ -304,7 +314,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             </button>
           )}
         </div>
-        {searchQuery && (
+        {debouncedSearchQuery && (
           <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             {messages.length} {messages.length === 1 ? 'mensaje' : 'mensajes'} encontrados
           </div>
@@ -313,7 +323,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {searchQuery && messages.length === 0 ? (
+        {debouncedSearchQuery && messages.length === 0 ? (
           <div className="text-center py-12">
             <Search className="mx-auto mb-3 text-gray-400" size={48} />
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">

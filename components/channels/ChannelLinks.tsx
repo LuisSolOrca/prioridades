@@ -44,6 +44,7 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     url: '',
     title: '',
@@ -64,16 +65,25 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
     loadLinks();
   }, [projectId, selectedCategory]);
 
-  // Cuando cambia la búsqueda, recargar enlaces
+  // Debouncing: esperar 500ms después de que el usuario deje de escribir
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Cuando cambia la búsqueda debounced, recargar enlaces
   useEffect(() => {
     loadLinks();
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   const loadLinks = async () => {
     try {
       setLoading(true);
       const categoryParam = selectedCategory ? `category=${selectedCategory}` : '';
-      const searchParam = searchQuery.trim() ? `search=${encodeURIComponent(searchQuery.trim())}` : '';
+      const searchParam = debouncedSearchQuery.trim() ? `search=${encodeURIComponent(debouncedSearchQuery.trim())}` : '';
       const params = [categoryParam, searchParam].filter(Boolean).join('&');
       const url = `/api/projects/${projectId}/links${params ? `?${params}` : ''}`;
 
@@ -227,7 +237,7 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
       </div>
 
       {/* Results Count */}
-      {searchQuery && (
+      {debouncedSearchQuery && (
         <div className="text-sm text-gray-600 dark:text-gray-400">
           {links.length} {links.length === 1 ? 'enlace' : 'enlaces'} encontrados
         </div>
@@ -361,7 +371,7 @@ export default function ChannelLinks({ projectId }: ChannelLinksProps) {
       </div>
 
       {/* Links List */}
-      {searchQuery && links.length === 0 ? (
+      {debouncedSearchQuery && links.length === 0 ? (
         <div className="text-center py-12">
           <Search className="mx-auto mb-3 text-gray-400" size={48} />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">

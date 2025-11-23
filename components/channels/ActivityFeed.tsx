@@ -46,18 +46,28 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   useEffect(() => {
     loadActivities();
   }, [projectId]);
 
-  // Cuando cambia la búsqueda, recargar actividades
+  // Debouncing: esperar 500ms después de que el usuario deje de escribir
   useEffect(() => {
-    setOffset(0);
-    loadActivities(false, searchQuery);
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const loadActivities = async (loadMore = false, search = searchQuery) => {
+  // Cuando cambia la búsqueda debounced, recargar actividades
+  useEffect(() => {
+    setOffset(0);
+    loadActivities(false, debouncedSearchQuery);
+  }, [debouncedSearchQuery]);
+
+  const loadActivities = async (loadMore = false, search = debouncedSearchQuery) => {
     try {
       if (!loadMore) {
         setLoading(true);
@@ -282,14 +292,14 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
       </div>
 
       {/* Results Count */}
-      {searchQuery && (
+      {debouncedSearchQuery && (
         <div className="text-sm text-gray-600 dark:text-gray-400">
           {activities.length} {activities.length === 1 ? 'resultado' : 'resultados'} encontrados
         </div>
       )}
 
       {/* Empty State for Search */}
-      {searchQuery && activities.length === 0 && (
+      {debouncedSearchQuery && activities.length === 0 && (
         <div className="text-center py-12">
           <Search className="mx-auto mb-3 text-gray-400" size={48} />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
@@ -336,7 +346,7 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
         ))}
 
         {/* Load More */}
-        {!searchQuery && hasMore && (
+        {!debouncedSearchQuery && hasMore && (
           <div className="text-center pt-4">
             <button
               onClick={() => loadActivities(true)}
