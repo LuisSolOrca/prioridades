@@ -20,6 +20,7 @@ import {
 import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
 import ChannelSelector from '../ChannelSelector';
+import EmojiPicker from './EmojiPicker';
 import { isSlashCommand, parseSlashCommand, SLASH_COMMANDS } from '@/lib/slashCommands';
 import { getPusherClient } from '@/lib/pusher-client';
 import type Pusher from 'pusher-js';
@@ -1466,7 +1467,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                   )}
 
                   {/* Quick Reactions */}
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex gap-1 mt-1 items-center">
                     {['👍', '❤️', '😄', '🎉'].map((emoji) => (
                       <button
                         key={emoji}
@@ -1477,6 +1478,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         {emoji}
                       </button>
                     ))}
+                    {/* Emoji Picker para más opciones */}
+                    <EmojiPicker onEmojiSelect={(emoji) => handleReaction(message._id, emoji)} />
                   </div>
 
                   {/* Reply Button/Counter */}

@@ -11,6 +11,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import MessageContent from './MessageContent';
+import EmojiPicker from './EmojiPicker';
 
 interface Priority {
   _id: string;
@@ -435,7 +436,7 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
                         )}
 
                         {/* Quick Reactions */}
-                        <div className="flex gap-1 mt-1">
+                        <div className="flex gap-1 mt-1 items-center">
                           {['👍', '❤️', '😄', '🎉'].map((emoji) => (
                             <button
                               key={emoji}
@@ -446,6 +447,8 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
                               {emoji}
                             </button>
                           ))}
+                          {/* Emoji Picker para más opciones */}
+                          <EmojiPicker onEmojiSelect={(emoji) => handleReaction(reply._id, emoji)} />
                         </div>
                       </div>
                     )}
