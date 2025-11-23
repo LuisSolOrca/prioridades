@@ -405,6 +405,17 @@ export default function Navbar() {
                       <Users size={22} />
                     </button>
                     <button
+                      onClick={() => handleNavigation('/admin/user-groups')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/admin/user-groups'
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Grupos"
+                    >
+                      <span className="text-xl">👥</span>
+                    </button>
+                    <button
                       onClick={() => handleNavigation('/admin/permissions')}
                       className={`w-full flex justify-center p-3 rounded-lg transition ${
                         pathname === '/admin/permissions'
@@ -648,6 +659,12 @@ export default function Navbar() {
                       label="Usuarios"
                       active={pathname === '/admin/users'}
                       onClick={() => handleNavigation('/admin/users')}
+                    />
+                    <NavButton
+                      icon="👥"
+                      label="Grupos"
+                      active={pathname === '/admin/user-groups'}
+                      onClick={() => handleNavigation('/admin/user-groups')}
                     />
                     <NavButton
                       icon="🔐"
