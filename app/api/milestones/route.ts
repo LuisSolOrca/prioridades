@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || (session.user as any).id;
+    const projectId = searchParams.get('projectId');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const forReports = searchParams.get('forReports') === 'true';
@@ -77,6 +78,11 @@ export async function GET(request: NextRequest) {
       if (endDate) {
         query.dueDate.$lte = new Date(endDate);
       }
+    }
+
+    // Filtrar por projectId si se proporciona
+    if (projectId) {
+      query.projectId = projectId;
     }
 
     const milestones = await Milestone.find(query).sort({ dueDate: 1 });

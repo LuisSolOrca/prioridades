@@ -5,10 +5,10 @@ import { Target, CheckCircle, Clock, TrendingUp, Calendar } from 'lucide-react';
 
 interface Milestone {
   _id: string;
-  name: string;
-  description: string;
+  title: string;
+  description?: string;
   dueDate: string;
-  completed: boolean;
+  isCompleted: boolean;
   completedAt?: string;
 }
 
@@ -43,7 +43,8 @@ export default function ProgressCommand({ projectId, onClose }: ProgressCommandP
       const milestonesRes = await fetch(`/api/milestones?projectId=${projectId}`);
       if (milestonesRes.ok) {
         const data = await milestonesRes.json();
-        setMilestones(data.milestones || []);
+        // El endpoint retorna un array directamente, no un objeto con milestones
+        setMilestones(Array.isArray(data) ? data : []);
       }
 
       // Cargar prioridades
@@ -60,13 +61,13 @@ export default function ProgressCommand({ projectId, onClose }: ProgressCommandP
   };
 
   const getCompletedMilestones = () => {
-    return milestones.filter(m => m.completed).sort((a, b) =>
+    return milestones.filter(m => m.isCompleted).sort((a, b) =>
       new Date(b.completedAt || b.dueDate).getTime() - new Date(a.completedAt || a.dueDate).getTime()
     );
   };
 
   const getUpcomingMilestones = () => {
-    return milestones.filter(m => !m.completed).sort((a, b) =>
+    return milestones.filter(m => !m.isCompleted).sort((a, b) =>
       new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
     );
   };
@@ -201,7 +202,7 @@ export default function ProgressCommand({ projectId, onClose }: ProgressCommandP
             {completedMilestones.slice(0, 3).map((milestone) => (
               <div key={milestone._id} className="flex items-start gap-3 border-l-2 border-green-500 pl-3">
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900 dark:text-gray-100">{milestone.name}</div>
+                  <div className="font-medium text-gray-900 dark:text-gray-100">{milestone.title}</div>
                   {milestone.description && (
                     <div className="text-sm text-gray-600 dark:text-gray-400">{milestone.description}</div>
                   )}
@@ -246,7 +247,7 @@ export default function ProgressCommand({ projectId, onClose }: ProgressCommandP
                   }`}
                 >
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{milestone.name}</div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{milestone.title}</div>
                     {milestone.description && (
                       <div className="text-sm text-gray-600 dark:text-gray-400">{milestone.description}</div>
                     )}
