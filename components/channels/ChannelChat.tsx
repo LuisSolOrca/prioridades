@@ -29,6 +29,9 @@ import SummaryCommand from '../slashCommands/SummaryCommand';
 import ProgressCommand from '../slashCommands/ProgressCommand';
 import TeamLoadCommand from '../slashCommands/TeamLoadCommand';
 import BurndownCommand from '../slashCommands/BurndownCommand';
+import SearchCommand from '../slashCommands/SearchCommand';
+import PrioritiesCommand from '../slashCommands/PrioritiesCommand';
+import RecentCommand from '../slashCommands/RecentCommand';
 import CelebrateCommand from '../slashCommands/CelebrateCommand';
 
 interface Priority {
@@ -375,6 +378,37 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         }
         const title = parsed.args[0];
         setActiveCommand({ type: 'quick-priority', data: { title } });
+        setNewMessage('');
+        break;
+
+      case 'search':
+        const searchType = parsed.args[0] || 'all';
+        const searchTerm = parsed.args[1] || '';
+        setActiveCommand({ type: 'search', data: { type: searchType, term: searchTerm } });
+        setNewMessage('');
+        break;
+
+      case 'priorities':
+        // Parse filters from args if provided
+        const filters: any = {};
+        parsed.args.forEach((arg) => {
+          const [key, value] = arg.split(':');
+          if (key && value) {
+            filters[key] = value;
+          }
+        });
+        setActiveCommand({ type: 'priorities', data: { filters } });
+        setNewMessage('');
+        break;
+
+      case 'recent':
+        const targetUser = parsed.args[0]?.replace('@', '') || '';
+        const daysStr = parsed.args[1] || '7';
+        const daysNum = parseInt(daysStr, 10);
+        setActiveCommand({
+          type: 'recent',
+          data: { userName: targetUser, days: isNaN(daysNum) ? 7 : daysNum }
+        });
         setNewMessage('');
         break;
 
@@ -977,6 +1011,29 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                 loadMessages();
                 setActiveCommand(null);
               }}
+            />
+          )}
+          {activeCommand.type === 'search' && (
+            <SearchCommand
+              projectId={projectId}
+              initialType={activeCommand.data?.type}
+              initialTerm={activeCommand.data?.term}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'priorities' && (
+            <PrioritiesCommand
+              projectId={projectId}
+              initialFilters={activeCommand.data?.filters}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'recent' && (
+            <RecentCommand
+              projectId={projectId}
+              userName={activeCommand.data?.userName}
+              days={activeCommand.data?.days}
+              onClose={() => setActiveCommand(null)}
             />
           )}
           {activeCommand.type === 'help' && (

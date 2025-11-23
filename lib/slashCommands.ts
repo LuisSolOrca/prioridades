@@ -71,6 +71,24 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'management'
   },
   {
+    name: 'search',
+    description: 'Búsqueda avanzada de prioridades, mensajes y links',
+    usage: '/search [tipo] [término]',
+    category: 'analysis'
+  },
+  {
+    name: 'priorities',
+    description: 'Lista prioridades con filtros avanzados',
+    usage: '/priorities [filtros]',
+    category: 'management'
+  },
+  {
+    name: 'recent',
+    description: 'Actividad reciente de un usuario',
+    usage: '/recent @usuario [días]',
+    category: 'analysis'
+  },
+  {
     name: 'help',
     description: 'Muestra la lista de comandos disponibles',
     usage: '/help [comando]',
