@@ -38,6 +38,7 @@ import AiSummaryCommand from '../slashCommands/AiSummaryCommand';
 import MyStatsCommand from '../slashCommands/MyStatsCommand';
 import DecisionCommand from '../slashCommands/DecisionCommand';
 import ScheduleCommand from '../slashCommands/ScheduleCommand';
+import MentionStatsCommand from '../slashCommands/MentionStatsCommand';
 
 interface Priority {
   _id: string;
@@ -435,6 +436,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       case 'schedule':
         const scheduleView = parsed.args[0] as 'week' | 'month' | undefined;
         setActiveCommand({ type: 'schedule', data: { view: scheduleView || 'month' } });
+        setNewMessage('');
+        break;
+
+      case 'mention-stats':
+        setActiveCommand({ type: 'mention-stats' });
         setNewMessage('');
         break;
 
@@ -1183,6 +1189,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             <ScheduleCommand
               projectId={projectId}
               view={activeCommand.data?.view}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'mention-stats' && (
+            <MentionStatsCommand
+              projectId={projectId}
               onClose={() => setActiveCommand(null)}
             />
           )}

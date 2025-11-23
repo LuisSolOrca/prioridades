@@ -123,6 +123,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Calendario de hitos y próximos deadlines del proyecto',
     usage: '/schedule [week|month]',
     category: 'status'
+  },
+  {
+    name: 'mention-stats',
+    description: 'Análisis de menciones y patrones de colaboración',
+    usage: '/mention-stats',
+    category: 'analysis'
   }
 ];
 
