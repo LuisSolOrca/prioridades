@@ -10,6 +10,10 @@ import path from 'path';
 
 // Cargar variables de entorno
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+// Fallback a .env si .env.local no existe
+if (!process.env.MONGODB_URI) {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 // Importar modelos
 import Channel from '../models/Channel';

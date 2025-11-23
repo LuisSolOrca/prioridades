@@ -92,7 +92,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [pinnedMessages, setPinnedMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -114,9 +114,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadMessages();
-    loadPinnedMessages();
     loadUsers();
+    // No cargar mensajes aquí, esperar a que se seleccione un canal
   }, [projectId]);
 
   useEffect(() => {
@@ -188,7 +187,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   };
 
   const loadMessages = async () => {
-    if (!selectedChannelId) return;
+    if (!selectedChannelId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -217,7 +219,9 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   };
 
   const loadPinnedMessages = async () => {
-    if (!selectedChannelId) return;
+    if (!selectedChannelId) {
+      return;
+    }
 
     try {
       // Fetch pinned messages separately

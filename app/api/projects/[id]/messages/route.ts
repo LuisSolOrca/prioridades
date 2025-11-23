@@ -7,6 +7,7 @@ import User from '@/models/User';
 import Project from '@/models/Project';
 import Priority from '@/models/Priority';
 import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
+import { triggerPusherEvent } from '@/lib/pusher-server';
 
 /**
  * GET /api/projects/[id]/messages
