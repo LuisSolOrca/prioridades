@@ -148,7 +148,7 @@ export default function RetrospectiveCommand({
   ];
 
   return (
-    <div className="bg-gradient-to-br from-green-50 via-yellow-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-green-300 dark:border-green-700 p-6 my-2">
+    <div className="bg-gradient-to-br from-green-50 via-yellow-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-green-300 dark:border-green-700 p-6 my-2 max-w-6xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
@@ -162,7 +162,7 @@ export default function RetrospectiveCommand({
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         {columns.map(col => (
           <div key={col.key} className={`${col.bg} rounded-lg p-4`}>
             <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">{col.title}</h4>
@@ -173,7 +173,7 @@ export default function RetrospectiveCommand({
                   <button
                     onClick={() => handleVote(item.id)}
                     disabled={closed}
-                    className={`flex flex-col items-center p-1 rounded ${
+                    className={`flex-shrink-0 flex flex-col items-center p-1 rounded ${
                       item.votes.includes(session?.user?.id || '')
                         ? `bg-${col.color}-100 dark:bg-${col.color}-900/30`
                         : 'hover:bg-gray-100 dark:hover:bg-gray-600'
@@ -182,8 +182,8 @@ export default function RetrospectiveCommand({
                     <ThumbsUp size={12} className={item.votes.includes(session?.user?.id || '') ? `text-${col.color}-600` : 'text-gray-400'} />
                     <span className="text-xs font-bold">{item.votes.length}</span>
                   </button>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-800 dark:text-gray-100">{item.text}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-800 dark:text-gray-100 break-words">{item.text}</p>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{item.author.name}</span>
                   </div>
                 </div>
@@ -198,12 +198,12 @@ export default function RetrospectiveCommand({
                   onChange={e => setNewItem(prev => ({ ...prev, [col.key]: e.target.value }))}
                   onKeyPress={e => e.key === 'Enter' && handleAddItem(col.key)}
                   placeholder="Agregar..."
-                  className="flex-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1"
+                  className="flex-1 min-w-0 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <button
                   onClick={() => handleAddItem(col.key)}
                   disabled={submitting}
-                  className={`bg-${col.color}-600 hover:bg-${col.color}-700 text-white p-1 rounded`}
+                  className={`flex-shrink-0 bg-${col.color}-600 hover:bg-${col.color}-700 text-white p-1 rounded`}
                 >
                   <Plus size={16} />
                 </button>
