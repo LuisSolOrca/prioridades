@@ -4,22 +4,32 @@
 1. [Introducción](#introducción)
 2. [Características Principales](#características-principales)
 3. [Mensajería](#mensajería)
-4. [Menciones](#menciones)
-5. [Reacciones](#reacciones)
-6. [Threads (Hilos)](#threads-hilos)
-7. [Mensajes Anclados](#mensajes-anclados)
-8. [Búsqueda](#búsqueda)
-9. [Slash Commands](#slash-commands)
-10. [Notificaciones](#notificaciones)
-11. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+4. [Tiempo Real y Presencia](#tiempo-real-y-presencia)
+5. [Canales y Subcanales](#canales-y-subcanales)
+6. [Menciones](#menciones)
+7. [Reacciones](#reacciones)
+8. [Threads (Hilos)](#threads-hilos)
+9. [Mensajes Anclados](#mensajes-anclados)
+10. [Búsqueda](#búsqueda)
+11. [Slash Commands](#slash-commands)
+12. [Notificaciones](#notificaciones)
+13. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+14. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+15. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
 ## Introducción
 
-El sistema de **Canales** es una plataforma de comunicación en tiempo real integrada en cada proyecto, diseñada para facilitar la colaboración del equipo mediante chat, comandos especializados y funcionalidades avanzadas de gestión de conversaciones.
+El sistema de **Canales** es una plataforma de comunicación **en tiempo real con WebSockets** integrada en cada proyecto, diseñada para facilitar la colaboración del equipo mediante chat instantáneo, canales organizados jerárquicamente, comandos especializados y funcionalidades avanzadas de gestión de conversaciones.
 
 **Ubicación:** `/projects/[id]/canales`
+
+**Tecnología:**
+- **WebSockets con Pusher** para mensajes instantáneos
+- **Cursor-based pagination** para scroll infinito eficiente
+- **Presence channels** para tracking de usuarios en línea
+- **Client events** para typing indicators en tiempo real
 
 ---
 
@@ -27,7 +37,11 @@ El sistema de **Canales** es una plataforma de comunicación en tiempo real inte
 
 ### ✅ Funcionalidades Disponibles
 
-- ✉️ **Chat en tiempo real** con mensajes persistentes
+- ✉️ **Chat en tiempo real** con WebSockets (Pusher)
+- 🚀 **Mensajes instantáneos** sin recargar la página
+- ⌨️ **Typing indicators** - ve quién está escribiendo
+- 🟢 **Presencia de usuarios** - ve quién está en línea
+- 📜 **Scroll infinito** con lazy loading de mensajes antiguos
 - 👥 **Menciones de usuarios** con notificaciones
 - 📌 **Menciones de prioridades** con previsualizaciones
 - 😄 **Reacciones con emojis** (👍 ❤️ 😄 🎉)
@@ -38,6 +52,7 @@ El sistema de **Canales** es una plataforma de comunicación en tiempo real inte
 - ✏️ **Edición y eliminación** de mensajes propios
 - 🔔 **Notificaciones** por email y en aplicación
 - 👻 **Soporte para usuarios eliminados**
+- 🗂️ **Sistema de canales y subcanales** jerárquico (máx 2 niveles)
 
 ---
 
@@ -48,7 +63,31 @@ El sistema de **Canales** es una plataforma de comunicación en tiempo real inte
 - Escribe en el campo de texto y presiona **Enter** para enviar
 - **Shift + Enter** para agregar una nueva línea sin enviar
 - Los mensajes se muestran en orden cronológico (más recientes abajo)
+- **Tiempo real**: Los mensajes aparecen instantáneamente para todos los usuarios
+- **Typing indicator**: Otros usuarios ven cuando estás escribiendo
 - Auto-scroll al recibir nuevos mensajes
+
+### Scroll Infinito y Lazy Loading
+
+El chat implementa **scroll infinito con cursor-based pagination** para carga eficiente de mensajes antiguos:
+
+**Cómo funciona:**
+- **Carga inicial**: Se cargan los 50 mensajes más recientes
+- **Scroll hacia arriba**: Al acercarte al inicio, automáticamente carga los siguientes 50 mensajes más antiguos
+- **Indicador visual**: Spinner animado que muestra "Cargando mensajes antiguos..."
+- **Preservación de posición**: El scroll se mantiene en el mismo lugar después de cargar
+
+**Ventajas técnicas:**
+- ✅ **Cursor-based pagination**: Usa el `_id` del mensaje como cursor
+- ✅ **Sin duplicados**: Compatible con mensajes en tiempo real
+- ✅ **Performance óptima**: Usa índices de MongoDB eficientemente
+- ✅ **Consistencia garantizada**: No se saltan ni duplican mensajes
+
+**Experiencia del usuario:**
+- Carga instantánea del chat
+- No hay paginación manual (botones "cargar más")
+- Scrollea naturalmente hacia arriba para ver historial
+- Funciona perfectamente con búsqueda y filtros
 
 ### Editar Mensajes
 
@@ -68,6 +107,141 @@ El sistema de **Canales** es una plataforma de comunicación en tiempo real inte
 **Permisos:**
 - Usuarios pueden eliminar sus propios mensajes
 - Administradores pueden eliminar cualquier mensaje
+
+---
+
+## Tiempo Real y Presencia
+
+### WebSockets con Pusher
+
+El sistema utiliza **Pusher** para comunicación en tiempo real mediante WebSockets:
+
+**Tecnología:**
+- **Pusher Channels**: Servicio de WebSocket gestionado
+- **Presence Channels**: Canales especiales para tracking de usuarios en línea
+- **Client Events**: Eventos directos entre usuarios para typing indicators
+
+**Configuración:**
+- **Free tier**: 100 conexiones concurrentes, 200K mensajes/día
+- **Cluster**: us2 (configurable)
+- **Auth endpoint**: `/api/pusher/auth` para autenticación segura
+
+### Mensajes Instantáneos
+
+**Funcionamiento:**
+1. Usuario escribe y envía mensaje
+2. Mensaje se guarda en MongoDB
+3. Servidor dispara evento Pusher a `presence-channel-{channelId}`
+4. Todos los usuarios conectados reciben el mensaje instantáneamente
+5. UI se actualiza sin recargar la página
+
+**Características:**
+- ✅ Latencia < 100ms en la mayoría de casos
+- ✅ Prevención automática de duplicados
+- ✅ Compatible con scroll infinito
+- ✅ Funciona con threads y reacciones
+
+### Typing Indicators (Indicador de Escritura)
+
+Ve en tiempo real cuando otros usuarios están escribiendo:
+
+**Comportamiento:**
+- Aparece al empezar a escribir: `Juan está escribiendo...`
+- Se actualiza con múltiples usuarios: `Juan y María están escribiendo...`
+- Desaparece automáticamente después de 3 segundos sin escribir
+- Se limpia al enviar el mensaje
+
+**Implementación:**
+- Eventos `client-typing` y `client-stop-typing`
+- Animación de puntos rebotando
+- Muestra hasta 3 nombres, luego "y X más"
+
+**Ejemplo visual:**
+```
+🔵🔵🔵 Juan Pérez está escribiendo...
+```
+
+### Presencia de Usuarios (Quién Está En Línea)
+
+El sistema muestra quiénes están conectados al canal en tiempo real:
+
+**Indicador visual:**
+- 🟢 Punto verde pulsante
+- Contador: "3 en línea"
+- Tooltip al pasar mouse: Lista de nombres
+
+**Eventos de presencia:**
+- `pusher:subscription_succeeded`: Obtiene lista inicial
+- `pusher:member_added`: Usuario se conecta
+- `pusher:member_removed`: Usuario se desconecta
+
+**Información incluida:**
+```javascript
+{
+  user_id: "507f1f77bcf86cd799439011",
+  user_info: {
+    name: "Juan Pérez",
+    email: "juan@empresa.com"
+  }
+}
+```
+
+**Casos de uso:**
+- Saber si un compañero está disponible antes de mencionar
+- Coordinar respuestas en tiempo real
+- Ver actividad del canal
+
+### Reconexión Automática
+
+Pusher maneja automáticamente:
+- ✅ Reconexión al perder internet
+- ✅ Reautenticación después de reconectar
+- ✅ Resincronización de estado de presencia
+- ✅ Logs en desarrollo para debugging
+
+---
+
+## Canales y Subcanales
+
+### Estructura Jerárquica
+
+El sistema soporta **canales organizados en jerarquía** similar a Discord:
+
+**Niveles:**
+- **Nivel 1**: Canales principales (ej: "General", "Backend", "Frontend")
+- **Nivel 2**: Subcanales (ej: "Backend → API", "Backend → Database")
+- **Máximo**: 2 niveles de profundidad
+
+### Gestión de Canales
+
+**Crear canal principal:**
+1. Ve a la pestaña "Canales" en el proyecto
+2. Haz clic en "➕ Nuevo Canal"
+3. Ingresa nombre, descripción y selecciona ícono
+4. Guarda
+
+**Crear subcanal:**
+1. En un canal existente, haz clic en "➕ Agregar Subcanal"
+2. Completa la información
+3. Se crea automáticamente bajo el canal padre
+
+**Características:**
+- 🔒 **Canal General**: Se crea automáticamente, no se puede eliminar
+- 🎨 **Íconos personalizados**: Usa cualquier ícono de Lucide React
+- 📊 **Ordenamiento**: Arrastra y suelta para reordenar
+- 🗑️ **Eliminación segura**: Los mensajes se mueven a "General"
+
+### Selector de Canales
+
+El selector en el header del chat permite:
+- Ver jerarquía completa de canales
+- Cambiar entre canales con un clic
+- Breadcrumbs para subcanales: `Backend → API`
+- Auto-selección del canal "General" al cargar
+
+**Migración automática:**
+- Los mensajes existentes se asignan a "General"
+- Script de migración: `scripts/migrate-channels.ts`
 
 ---
 
@@ -544,16 +718,20 @@ El sistema maneja elegantemente los usuarios eliminados:
 ### Límites Técnicos
 
 - **Mensajes anclados:** Máximo 5 por canal
-- **Búsqueda:** Últimos 50 mensajes por defecto (configurable)
+- **Canales jerárquicos:** Máximo 2 niveles de profundidad
 - **Reacciones:** Sin límite, pero solo 4 emojis de acceso rápido
 - **Exportación:** Limitada por memoria del servidor (miles de registros OK)
+- **Pusher free tier:** 100 conexiones concurrentes, 200K mensajes/día
 
 ### Rendimiento
 
-- **Carga inicial:** Últimos 50 mensajes
-- **Scroll infinito:** No implementado (puede agregarse)
-- **Tiempo real:** No hay WebSockets, requiere recargar manualmente
-- **Cache:** No hay cache del lado del cliente
+- **Carga inicial:** 50 mensajes más recientes
+- **Scroll infinito:** ✅ Implementado con cursor-based pagination
+- **Lazy loading:** Carga automática de mensajes antiguos al scrollear
+- **Tiempo real:** ✅ WebSockets con Pusher (latencia < 100ms)
+- **Typing indicators:** ✅ Actualización en tiempo real
+- **Presencia:** ✅ Tracking de usuarios en línea
+- **Cache:** Caché de conexión Pusher en cliente
 
 ### Seguridad
 
@@ -568,7 +746,8 @@ El sistema maneja elegantemente los usuarios eliminados:
 
 ### Features Planeadas
 
-- [ ] WebSockets para mensajes en tiempo real
+- [x] ✅ WebSockets para mensajes en tiempo real
+- [x] ✅ Canales y subcanales jerárquicos
 - [ ] Adjuntar archivos a mensajes
 - [ ] Markdown y formato de texto enriquecido
 - [ ] Grabaciones de voz
@@ -581,13 +760,14 @@ El sistema maneja elegantemente los usuarios eliminados:
 
 ### Mejoras Planeadas
 
-- [ ] Scroll infinito para mensajes antiguos
-- [ ] Indicadores de "escribiendo..."
-- [ ] Estado en línea/fuera de línea
+- [x] ✅ Scroll infinito para mensajes antiguos
+- [x] ✅ Indicadores de "escribiendo..."
+- [x] ✅ Estado en línea/fuera de línea
 - [ ] Mención de equipos/grupos
 - [ ] Hilos anidados (threads de threads)
 - [ ] Reacciones personalizadas
 - [ ] Temas y personalización
+- [ ] Notificaciones push en navegador
 
 ---
 
@@ -611,13 +791,25 @@ Para problemas o sugerencias:
 ## Créditos
 
 **Desarrollado por:** Tu Empresa
-**Versión:** 1.0
+**Versión:** 1.1
 **Última actualización:** Noviembre 2025
 **Licencia:** Propietaria
 
 ---
 
 ## Changelog
+
+### v1.1 (Noviembre 2025)
+- ✅ **WebSockets con Pusher** para comunicación en tiempo real
+- ✅ **Mensajes instantáneos** sin recargar la página
+- ✅ **Typing indicators** - indicador de quién está escribiendo
+- ✅ **Presencia de usuarios** - tracking de usuarios en línea
+- ✅ **Scroll infinito** con lazy loading automático
+- ✅ **Cursor-based pagination** para performance óptima
+- ✅ **Sistema de canales y subcanales** jerárquico (máx 2 niveles)
+- ✅ **Selector de canales** con breadcrumbs
+- ✅ **Migración automática** de mensajes existentes a canal General
+- ✅ **Íconos personalizados** para canales (Lucide React)
 
 ### v1.0 (Noviembre 2025)
 - ✅ Sistema de mensajería básico
