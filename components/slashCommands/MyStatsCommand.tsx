@@ -66,7 +66,8 @@ export default function MyStatsCommand({ projectId, onClose }: MyStatsCommandPro
       const data = await response.json();
       console.log('[MyStats] Response data:', data);
 
-      const myPriorities = data.priorities || [];
+      // API returns array directly, not wrapped in object
+      const myPriorities = Array.isArray(data) ? data : [];
       console.log('[MyStats] My priorities count:', myPriorities.length);
 
       setPriorities(myPriorities);
