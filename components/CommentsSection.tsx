@@ -26,6 +26,17 @@ interface User {
   email: string;
 }
 
+interface UserGroup {
+  _id: string;
+  name: string;
+  tag: string;
+  color?: string;
+  members?: any[];
+  isGroup: true;
+}
+
+type MentionItem = (User & { isGroup?: false }) | UserGroup;
+
 export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -38,7 +49,7 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   // Mention autocomplete states
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
-  const [mentionUsers, setMentionUsers] = useState<User[]>([]);
+  const [mentionItems, setMentionItems] = useState<MentionItem[]>([]);
   const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -112,21 +123,34 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
     }
   };
 
-  // Search users for mention autocomplete
+  // Search users and groups for mention autocomplete
   const searchUsers = async (query: string) => {
     if (query.length < 1) {
-      setMentionUsers([]);
+      setMentionItems([]);
       return;
     }
 
     try {
-      const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
-      if (res.ok) {
-        const users = await res.json();
-        setMentionUsers(users);
-      }
+      // Buscar usuarios y grupos en paralelo
+      const [usersRes, groupsRes] = await Promise.all([
+        fetch(`/api/users/search?q=${encodeURIComponent(query)}`),
+        fetch('/api/user-groups')
+      ]);
+
+      const users: User[] = usersRes.ok ? await usersRes.json() : [];
+      const allGroups: UserGroup[] = groupsRes.ok ? await groupsRes.json() : [];
+
+      // Filtrar grupos que coincidan con la búsqueda
+      const filteredGroups = allGroups.filter((g: any) =>
+        g.name.toLowerCase().includes(query.toLowerCase()) ||
+        g.tag.toLowerCase().includes(query.toLowerCase())
+      ).map((g: any) => ({ ...g, isGroup: true as const }));
+
+      // Combinar y ordenar: grupos primero, luego usuarios
+      const combined: MentionItem[] = [...filteredGroups, ...users.map(u => ({ ...u, isGroup: false as const }))];
+      setMentionItems(combined);
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error('Error searching users/groups:', error);
     }
   };
 
@@ -159,40 +183,42 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   };
 
   // Handle mention selection
-  const selectMention = (user: User) => {
+  const selectMention = (item: MentionItem) => {
     const beforeMention = newComment.slice(0, mentionCursorPosition);
     const afterMention = newComment.slice(mentionCursorPosition + mentionSearch.length + 1);
-    const newText = `${beforeMention}@${user.name} ${afterMention}`;
+    const mentionText = item.isGroup ? (item as UserGroup).tag : (item as User).name;
+    const newText = `${beforeMention}@${mentionText} ${afterMention}`;
 
     setNewComment(newText);
     setShowMentionDropdown(false);
-    setMentionUsers([]);
+    setMentionItems([]);
 
     // Focus back on textarea
     setTimeout(() => {
       textareaRef.current?.focus();
-      const newCursorPos = beforeMention.length + user.name.length + 2;
+      const newCursorPos = beforeMention.length + mentionText.length + 2;
       textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
     }, 0);
   };
 
   // Handle keyboard navigation in mention dropdown
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!showMentionDropdown || mentionUsers.length === 0) return;
+    if (!showMentionDropdown || mentionItems.length === 0) return;
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedMentionIndex((prev) =>
-        prev < mentionUsers.length - 1 ? prev + 1 : prev
+        prev < mentionItems.length - 1 ? prev + 1 : prev
       );
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedMentionIndex((prev) => (prev > 0 ? prev - 1 : prev));
     } else if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
-      selectMention(mentionUsers[selectedMentionIndex]);
+      selectMention(mentionItems[selectedMentionIndex]);
     } else if (e.key === 'Escape') {
       setShowMentionDropdown(false);
+      setMentionItems([]);
     }
   };
 
@@ -342,30 +368,60 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
           />
 
           {/* Mention Autocomplete Dropdown */}
-          {showMentionDropdown && mentionUsers.length > 0 && (
-            <div className="absolute z-10 w-64 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
-              {mentionUsers.map((user, index) => (
+          {showMentionDropdown && mentionItems.length > 0 && (
+            <div className="absolute z-10 w-80 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 max-h-64 overflow-y-auto">
+              {mentionItems.map((item, index) => (
                 <button
-                  key={user._id}
+                  key={item._id}
                   type="button"
-                  onClick={() => selectMention(user)}
+                  onClick={() => selectMention(item)}
                   className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 transition ${
                     index === selectedMentionIndex ? 'bg-blue-100 dark:bg-gray-700' : ''
                   }`}
                 >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                      {user.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">
-                        {user.name}
+                  {item.isGroup ? (
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                        style={{ backgroundColor: (item as UserGroup).color || '#3b82f6' }}
+                      >
+                        👥
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {user.email}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">
+                            {item.name}
+                          </span>
+                          <span
+                            className="text-xs px-2 py-0.5 rounded font-mono"
+                            style={{
+                              backgroundColor: `${(item as UserGroup).color}20`,
+                              color: (item as UserGroup).color || '#3b82f6'
+                            }}
+                          >
+                            @{(item as UserGroup).tag}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {(item as UserGroup).members?.length || 0} {((item as UserGroup).members?.length || 0) === 1 ? 'miembro' : 'miembros'}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        {(item as User).name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 truncate">
+                          {(item as User).name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {(item as User).email}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
