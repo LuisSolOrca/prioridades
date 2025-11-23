@@ -32,7 +32,8 @@ import {
   FolderKanban,
   TrendingUp,
   Mail,
-  Slack
+  Slack,
+  Hash
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -280,6 +281,17 @@ export default function Navbar() {
                   <Trophy size={22} />
                 </button>
                 )}
+                <button
+                  onClick={() => handleNavigation('/channels')}
+                  className={`w-full flex justify-center p-3 rounded-lg transition ${
+                    pathname?.startsWith('/channels')
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  title="Canales"
+                >
+                  <Hash size={22} />
+                </button>
                 {hasPermission('viewAutomations') && (
                   <button
                     onClick={() => handleNavigation('/workflows')}
@@ -547,6 +559,12 @@ export default function Navbar() {
                     onClick={() => handleNavigation('/leaderboard')}
                   />
                 )}
+                <NavButton
+                  icon={<Hash size={20} />}
+                  label="Canales"
+                  active={pathname?.startsWith('/channels') || false}
+                  onClick={() => handleNavigation('/channels')}
+                />
                 {hasPermission('viewAutomations') && (
                   <NavButton
                     icon={<Zap size={20} />}
