@@ -50,7 +50,8 @@ export default function PermissionsManagementPage() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/users');
+      // includeAll=true para mostrar todos los usuarios incluyendo Francisco Puente en admin
+      const response = await fetch('/api/users?includeAll=true');
       const data = await response.json();
 
       // Asegurar que todos los usuarios tengan permisos definidos con valores por defecto

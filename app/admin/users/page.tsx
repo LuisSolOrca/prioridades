@@ -54,7 +54,8 @@ export default function AdminUsersPage() {
 
   const loadUsers = async () => {
     try {
-      const res = await fetch('/api/users');
+      // includeAll=true para mostrar todos los usuarios incluyendo Francisco Puente en admin
+      const res = await fetch('/api/users?includeAll=true');
       const data = await res.json();
       setUsers(data);
     } catch (error) {
