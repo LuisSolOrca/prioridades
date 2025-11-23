@@ -35,6 +35,8 @@ import RecentCommand from '../slashCommands/RecentCommand';
 import StandupCommand from '../slashCommands/StandupCommand';
 import CelebrateCommand from '../slashCommands/CelebrateCommand';
 import AiSummaryCommand from '../slashCommands/AiSummaryCommand';
+import MyStatsCommand from '../slashCommands/MyStatsCommand';
+import DecisionCommand from '../slashCommands/DecisionCommand';
 
 interface Priority {
   _id: string;
@@ -421,6 +423,51 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       case 'ai-summary':
         setActiveCommand({ type: 'ai-summary', args: parsed.args });
+        setNewMessage('');
+        break;
+
+      case 'my-stats':
+        setActiveCommand({ type: 'my-stats' });
+        setNewMessage('');
+        break;
+
+      case 'decision':
+        if (parsed.args.length < 1) {
+          alert('Uso: /decision "descripción de la decisión"');
+          return;
+        }
+        if (sending) return; // Evitar duplicados
+
+        const decisionText = parsed.args[0];
+
+        // Crear decisión persistente en la base de datos
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/decision "${decisionText}"`,
+              commandType: 'decision',
+              commandData: {
+                decision: decisionText,
+                createdBy: session?.user?.name,
+                createdAt: new Date().toISOString()
+              }
+            })
+          });
+
+          if (response.ok) {
+            const message = await response.json();
+            // Agregar mensaje directamente en lugar de recargar todos
+            setMessages((prev) => [...prev, message]);
+          }
+        } catch (error) {
+          console.error('Error creating decision:', error);
+          alert('Error al registrar la decisión');
+        } finally {
+          setSending(false);
+        }
         setNewMessage('');
         break;
 
@@ -868,6 +915,32 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         </div>
                       )}
                     </div>
+                  ) : message.commandType === 'decision' && message.commandData ? (
+                    /* Render Decision Command */
+                    <div className="relative group">
+                      <DecisionCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        decision={message.commandData.decision}
+                        createdBy={message.commandData.createdBy}
+                        createdAt={message.commandData.createdAt}
+                        onClose={() => {}}
+                      />
+                      {/* Actions Menu for Decision */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar decisión"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div
                       className={`relative group rounded-lg px-4 py-2 ${
@@ -1091,6 +1164,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                 loadMessages();
                 setActiveCommand(null);
               }}
+            />
+          )}
+          {activeCommand.type === 'my-stats' && (
+            <MyStatsCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
             />
           )}
           {activeCommand.type === 'help' && (

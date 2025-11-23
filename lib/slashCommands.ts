@@ -105,6 +105,18 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Genera un resumen inteligente del chat usando IA',
     usage: '/ai-summary [últimos N mensajes]',
     category: 'analysis'
+  },
+  {
+    name: 'my-stats',
+    description: 'Muestra tus estadísticas personales y progreso',
+    usage: '/my-stats',
+    category: 'analysis'
+  },
+  {
+    name: 'decision',
+    description: 'Registra una decisión importante del proyecto',
+    usage: '/decision "descripción de la decisión"',
+    category: 'management'
   }
 ];
 
