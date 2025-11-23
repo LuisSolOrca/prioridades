@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
+import LinkPreview from './LinkPreview';
 
 interface Priority {
   _id: string;
@@ -125,6 +126,16 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
         return status;
     }
   };
+
+  // Detectar URLs en el contenido para mostrar previews
+  const detectedUrls = useMemo(() => {
+    const urlRegex = /(https?:\/\/[^\s<]+)/g;
+    const matches = content.match(urlRegex);
+    if (!matches) return [];
+
+    // Deduplicar URLs
+    return [...new Set(matches)];
+  }, [content]);
 
   return (
     <>
@@ -252,6 +263,15 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
           {content}
         </ReactMarkdown>
       </div>
+
+      {/* Link Previews */}
+      {detectedUrls.length > 0 && (
+        <div className="mt-2">
+          {detectedUrls.map((url, index) => (
+            <LinkPreview key={`${url}-${index}`} url={url} />
+          ))}
+        </div>
+      )}
 
       {/* Preview Tooltip */}
       {hoveredPriority && (
