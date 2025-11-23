@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
     }
 
-    let data: any[] = [];
+    let data: any[] | { priorities: any[], messages: any[] } = [];
     let headers: string[] = [];
 
     // Construir query para filtros
