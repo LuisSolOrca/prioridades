@@ -17,6 +17,18 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'status'
   },
   {
+    name: 'blockers',
+    description: 'Muestra todas las prioridades bloqueadas del proyecto',
+    usage: '/blockers',
+    category: 'analysis'
+  },
+  {
+    name: 'risks',
+    description: 'Analiza y muestra las prioridades en riesgo',
+    usage: '/risks',
+    category: 'analysis'
+  },
+  {
     name: 'poll',
     description: 'Crea una encuesta para el equipo',
     usage: '/poll "¿Pregunta?" "Opción 1" "Opción 2" "Opción 3"',

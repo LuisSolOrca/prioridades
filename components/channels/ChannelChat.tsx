@@ -23,6 +23,8 @@ import { isSlashCommand, parseSlashCommand, SLASH_COMMANDS } from '@/lib/slashCo
 import StatusCommand from '../slashCommands/StatusCommand';
 import PollCommand from '../slashCommands/PollCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
+import BlockersCommand from '../slashCommands/BlockersCommand';
+import RisksCommand from '../slashCommands/RisksCommand';
 
 interface Priority {
   _id: string;
@@ -235,6 +237,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     switch (parsed.command) {
       case 'status':
         setActiveCommand({ type: 'status' });
+        break;
+
+      case 'blockers':
+        setActiveCommand({ type: 'blockers' });
+        break;
+
+      case 'risks':
+        setActiveCommand({ type: 'risks' });
         break;
 
       case 'poll':
@@ -748,6 +758,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         <div className="border-t border-gray-200 dark:border-gray-700 p-4">
           {activeCommand.type === 'status' && (
             <StatusCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'blockers' && (
+            <BlockersCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'risks' && (
+            <RisksCommand
               projectId={projectId}
               onClose={() => setActiveCommand(null)}
             />
