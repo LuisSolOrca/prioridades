@@ -799,6 +799,15 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/celebrate` | Celebra logros del equipo | `/celebrate @usuario "logro"` |
 | `/poll` | Crea una encuesta | `/poll "¿Pregunta?" "Op1" "Op2"` |
 | `/brainstorm` | Sesión de brainstorming colaborativa | `/brainstorm "¿Tema o pregunta?"` |
+| `/estimation-poker` | Planning Poker para estimación de tareas | `/estimation-poker "¿Tarea?"` |
+| `/retrospective` | Retrospectiva ágil con 3 columnas | `/retrospective "Sprint N"` |
+| `/vote-points` | Votación por distribución de puntos | `/vote "¿Pregunta?" 10 "Op1" "Op2"` |
+| `/checklist` | Lista de tareas colaborativa | `/checklist "Título" "Item1" "Item2"` |
+| `/timer` | Temporizador compartido | `/timer "Título" 25` |
+| `/wheel` | Ruleta de decisión aleatoria | `/wheel "Título" "Op1" "Op2" "Op3"` |
+| `/mood` | Check-in de estado del equipo | `/mood "¿Cómo están?"` |
+| `/pros-cons` | Tabla de pros y contras | `/pros-cons "Título"` |
+| `/ranking` | Ranking colaborativo drag & drop | `/ranking "¿Pregunta?" "Op1" "Op2"` |
 | `/standup` | Daily standup virtual | `/standup` |
 | `/question` | Pregunta a un stakeholder | `/question @usuario "¿pregunta?"` |
 
@@ -809,6 +818,7 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/quick-priority` | Crea prioridad rápida | `/quick-priority "Título"` |
 | `/priorities` | Lista prioridades filtradas | `/priorities [filtros]` |
 | `/decision` | Registra decisión importante | `/decision "descripción"` |
+| `/incident` | Gestión de incidentes con timeline | `/incident "Título" P0\|P1\|P2\|P3\|P4` |
 
 #### ℹ️ Ayuda (Help)
 
