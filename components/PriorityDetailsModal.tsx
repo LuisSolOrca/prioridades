@@ -104,7 +104,7 @@ export default function PriorityDetailsModal({
 
   const loadInitiatives = async () => {
     try {
-      const response = await fetch('/api/strategic-initiatives');
+      const response = await fetch('/api/initiatives?activeOnly=true');
       if (response.ok) {
         const data = await response.json();
         setInitiatives(data);
