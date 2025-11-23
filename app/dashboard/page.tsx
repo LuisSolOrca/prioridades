@@ -69,7 +69,7 @@ interface Priority {
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   type?: 'ESTRATEGICA' | 'OPERATIVA';
-  userId: string;
+  userId: string | { _id: string; name: string; email: string };
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   clientId?: string;
@@ -430,7 +430,7 @@ export default function DashboardPage() {
     // Filtrar por área (solo usuarios del área filtrada)
     if (filterByMyArea && currentUser?.area) {
       const areaUserIds = filteredUsers.map(u => u._id);
-      filtered = filtered.filter(p => areaUserIds.includes(p.userId));
+      filtered = filtered.filter(p => areaUserIds.includes(typeof p.userId === 'object' ? p.userId._id : p.userId));
     }
 
     return filtered;
@@ -699,7 +699,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredUsers.map(user => {
-              const userPriorities = filteredPriorities.filter(p => p.userId._id === user._id);
+              const userPriorities = filteredPriorities.filter(p => (typeof p.userId === 'object' ? p.userId._id : p.userId) === user._id);
 
               return (
                 <UserPriorityCard

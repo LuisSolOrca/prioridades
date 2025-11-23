@@ -52,7 +52,7 @@ interface Priority {
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   type?: 'ESTRATEGICA' | 'OPERATIVA';
-  userId: string;
+  userId: string | { _id: string; name: string; email: string };
   initiativeId?: string;
   initiativeIds?: string[];
   clientId?: string;
@@ -146,21 +146,26 @@ export default function BulkAssignmentPage() {
   const filteredPriorities = useMemo(() => {
     let filtered = priorities;
 
+    // Helper para extraer userId sea string u objeto
+    const getUserId = (userId: string | { _id: string; name: string; email: string }) => {
+      return typeof userId === 'string' ? userId : userId._id;
+    };
+
     // Filtro por usuario
     if (selectedUser !== 'all') {
-      filtered = filtered.filter(p => p.userId._id === selectedUser);
+      filtered = filtered.filter(p => getUserId(p.userId) === selectedUser);
     }
 
     // Filtro por rol de usuario (incluir/excluir admins)
     if (!includeAdmins) {
       const userIds = users.filter(u => u.role === 'USER').map(u => u._id);
-      filtered = filtered.filter(p => userIds.includes(p.userId));
+      filtered = filtered.filter(p => userIds.includes(getUserId(p.userId)));
     }
 
     // Filtro por área
     if (selectedArea !== 'all') {
       const areaUserIds = users.filter(u => u.area === selectedArea).map(u => u._id);
-      filtered = filtered.filter(p => areaUserIds.includes(p.userId));
+      filtered = filtered.filter(p => areaUserIds.includes(getUserId(p.userId)));
     }
 
     // Filtro por iniciativa (puede ser array o string único)

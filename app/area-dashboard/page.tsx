@@ -69,7 +69,7 @@ interface Priority {
   completionPercentage: number;
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   type?: 'ESTRATEGICA' | 'OPERATIVA';
-  userId: string;
+  userId: string | { _id: string; name: string; email: string };
   initiativeId?: string;
   initiativeIds?: string[];
   clientId?: string;
@@ -429,7 +429,7 @@ export default function AreaDashboardPage() {
       }
 
       // Agregar las prioridades filtradas del usuario
-      const userPriorities = filteredPriorities.filter(p => p.userId._id === user._id);
+      const userPriorities = filteredPriorities.filter(p => (typeof p.userId === 'object' ? p.userId._id : p.userId) === user._id);
       areaData.priorities.push(...userPriorities);
     });
 

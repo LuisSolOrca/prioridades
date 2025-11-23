@@ -58,7 +58,7 @@ interface Priority {
   completionPercentage: number;
   status: string;
   type?: 'ESTRATEGICA' | 'OPERATIVA';
-  userId: string;
+  userId: string | { _id: string; name: string; email: string };
   initiativeId: string;
   initiativeIds?: string[]; // Array de iniciativas (nuevo formato)
   clientId?: string;
@@ -147,18 +147,18 @@ export default function ReportsPage() {
     let filtered = priorities;
 
     if (selectedUser !== 'all') {
-      filtered = filtered.filter(p => p.userId._id === selectedUser);
+      filtered = filtered.filter(p => (typeof p.userId === 'object' ? p.userId._id : p.userId) === selectedUser);
     }
 
     if (!includeAdmins) {
       const userIds = users.filter(u => u.role === 'USER').map(u => u._id);
-      filtered = filtered.filter(p => userIds.includes(p.userId));
+      filtered = filtered.filter(p => userIds.includes(typeof p.userId === 'object' ? p.userId._id : p.userId));
     }
 
     // Filtro por área
     if (selectedArea !== 'all') {
       const areaUserIds = users.filter(u => u.area === selectedArea).map(u => u._id);
-      filtered = filtered.filter(p => areaUserIds.includes(p.userId));
+      filtered = filtered.filter(p => areaUserIds.includes(typeof p.userId === 'object' ? p.userId._id : p.userId));
     }
 
     // Filtro por iniciativa (puede ser array o string único)

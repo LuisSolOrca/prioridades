@@ -31,7 +31,7 @@ interface Priority {
   _id: string;
   title: string;
   description?: string;
-  userId: string;
+  userId: string | { _id: string; name: string; email: string };
   status: string;
   completionPercentage: number;
   weekStart: string;
@@ -330,7 +330,7 @@ export default function AreaLeaderPage() {
   const userColumns = useMemo(() => {
     return users.map((user) => ({
       user,
-      priorities: priorities.filter((p) => p.userId._id === user._id),
+      priorities: priorities.filter((p) => (typeof p.userId === 'object' ? p.userId._id : p.userId) === user._id),
     }));
   }, [users, priorities]);
 
@@ -358,7 +358,7 @@ export default function AreaLeaderPage() {
     if (!newUserId) return;
 
     const priority = priorities.find((p) => p._id === priorityId);
-    if (!priority || priority.userId._id === newUserId) return;
+    if (!priority || (typeof priority.userId === 'object' ? priority.userId._id : priority.userId) === newUserId) return;
 
     try {
       const res = await fetch(`/api/priorities/${priorityId}/reassign`, {

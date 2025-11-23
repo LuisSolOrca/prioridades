@@ -44,7 +44,7 @@ interface Priority {
   status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
   type?: 'ESTRATEGICA' | 'OPERATIVA';
   completionPercentage: number;
-  userId: string;
+  userId: string | { _id: string; name: string; email: string };
   initiativeId?: string; // Mantener para compatibilidad
   initiativeIds?: string[]; // Nuevo campo para múltiples iniciativas
   clientId?: string;
@@ -254,7 +254,7 @@ export default function AnalyticsPage() {
   if (!session) return null;
 
   const userStats = users.map(user => {
-    const userPriorities = priorities.filter(p => p.userId._id === user._id);
+    const userPriorities = priorities.filter(p => (typeof p.userId === 'object' ? p.userId._id : p.userId) === user._id);
     const completed = userPriorities.filter(p => p.status === 'COMPLETADO' || p.status === 'REPROGRAMADO').length;
     const avgCompletion = userPriorities.length > 0
       ? userPriorities.reduce((sum, p) => sum + p.completionPercentage, 0) / userPriorities.length
@@ -275,7 +275,7 @@ export default function AnalyticsPage() {
 
     users.forEach(user => {
       const area = user.area || 'Sin Área Asignada';
-      const userPriorities = priorities.filter(p => p.userId._id === user._id);
+      const userPriorities = priorities.filter(p => (typeof p.userId === 'object' ? p.userId._id : p.userId) === user._id);
       const completed = userPriorities.filter(p => p.status === 'COMPLETADO' || p.status === 'REPROGRAMADO').length;
       const totalCompletion = userPriorities.reduce((sum, p) => sum + p.completionPercentage, 0);
 
