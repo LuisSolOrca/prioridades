@@ -816,14 +816,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               onClose={() => setActiveCommand(null)}
             />
           )}
-          {activeCommand.type === 'poll' && activeCommand.data && (
-            <PollCommand
-              projectId={projectId}
-              question={activeCommand.data.question}
-              options={activeCommand.data.options}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
+          {/* Poll se renderiza directamente en la lista de mensajes ya que se persiste */}
           {activeCommand.type === 'quick-priority' && activeCommand.data && (
             <QuickPriorityCommand
               projectId={projectId}
