@@ -28,6 +28,7 @@ import type Pusher from 'pusher-js';
 import type { PresenceChannel } from 'pusher-js';
 import StatusCommand from '../slashCommands/StatusCommand';
 import PollCommand from '../slashCommands/PollCommand';
+import BrainstormCommand from '../slashCommands/BrainstormCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 import BlockersCommand from '../slashCommands/BlockersCommand';
 import RisksCommand from '../slashCommands/RisksCommand';
@@ -48,6 +49,16 @@ import ScheduleCommand from '../slashCommands/ScheduleCommand';
 import MentionStatsCommand from '../slashCommands/MentionStatsCommand';
 import QuestionCommand from '../slashCommands/QuestionCommand';
 import ExportCommand from '../slashCommands/ExportCommand';
+import EstimationPokerCommand from '../slashCommands/EstimationPokerCommand';
+import RetrospectiveCommand from '../slashCommands/RetrospectiveCommand';
+import IncidentCommand from '../slashCommands/IncidentCommand';
+import VoteCommand from '../slashCommands/VoteCommand';
+import ChecklistCommand from '../slashCommands/ChecklistCommand';
+import TimerCommand from '../slashCommands/TimerCommand';
+import WheelCommand from '../slashCommands/WheelCommand';
+import MoodCommand from '../slashCommands/MoodCommand';
+import ProsConsCommand from '../slashCommands/ProsConsCommand';
+import RankingCommand from '../slashCommands/RankingCommand';
 
 interface Priority {
   _id: string;
@@ -611,6 +622,464 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating poll:', error);
           alert('Error al crear la encuesta');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'brainstorm':
+        if (parsed.args.length < 1) {
+          alert('Uso: /brainstorm "¿Tema o pregunta?"');
+          return;
+        }
+        if (sending) return; // Evitar duplicados
+        const brainstormTopic = parsed.args[0];
+
+        // Crear brainstorm persistente en la base de datos
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/brainstorm ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'brainstorm',
+              commandData: {
+                topic: brainstormTopic,
+                ideas: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const brainstormMessage = await response.json();
+            // Agregar mensaje directamente en lugar de recargar todos
+            setMessages((prev) => [...prev, brainstormMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating brainstorm:', error);
+          alert('Error al crear la sesión de brainstorming');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'estimation-poker':
+        if (parsed.args.length < 1) {
+          alert('Uso: /estimation-poker "¿Tarea o historia?"');
+          return;
+        }
+        if (sending) return;
+        const estimationStory = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/estimation-poker ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'estimation-poker',
+              commandData: {
+                topic: estimationStory,
+                estimates: [],
+                revealed: false,
+                finalEstimate: null,
+                closed: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const estimationMessage = await response.json();
+            setMessages((prev) => [...prev, estimationMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating estimation poker:', error);
+          alert('Error al crear la sesión de estimación');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'retrospective':
+        if (parsed.args.length < 1) {
+          alert('Uso: /retrospective "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        const retroTopic = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/retrospective ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'retrospective',
+              commandData: {
+                title: retroTopic,
+                items: [],
+                closed: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const retroMessage = await response.json();
+            setMessages((prev) => [...prev, retroMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating retrospective:', error);
+          alert('Error al crear la retrospectiva');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'incident':
+        if (parsed.args.length < 2) {
+          alert('Uso: /incident "Título" P0|P1|P2|P3|P4');
+          return;
+        }
+        if (sending) return;
+        const incidentTitle = parsed.args[0];
+        const severity = (parsed.args[1] || 'P2').toUpperCase();
+
+        if (!['P0', 'P1', 'P2', 'P3', 'P4'].includes(severity)) {
+          alert('Severidad debe ser P0, P1, P2, P3 o P4');
+          return;
+        }
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/incident ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'incident',
+              commandData: {
+                title: incidentTitle,
+                severity,
+                commander: null,
+                timeline: [],
+                resolved: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const incidentMessage = await response.json();
+            setMessages((prev) => [...prev, incidentMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating incident:', error);
+          alert('Error al crear el incidente');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'vote-points':
+        if (parsed.args.length < 2) {
+          alert('Uso: /vote "Pregunta" 10 "Opción 1" "Opción 2" ...');
+          return;
+        }
+        if (sending) return;
+        const voteQuestion = parsed.args[0];
+        const totalPoints = parseInt(parsed.args[1], 10);
+        const voteOptions = parsed.args.slice(2);
+
+        if (isNaN(totalPoints) || totalPoints <= 0) {
+          alert('El segundo argumento debe ser un número de puntos válido');
+          return;
+        }
+
+        if (voteOptions.length < 2) {
+          alert('Debe haber al menos 2 opciones');
+          return;
+        }
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/vote ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'vote-points',
+              commandData: {
+                question: voteQuestion,
+                options: voteOptions.map((opt: string) => ({ text: opt, points: 0 })),
+                totalPoints,
+                userVotes: [],
+                closed: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const voteMessage = await response.json();
+            setMessages((prev) => [...prev, voteMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating vote:', error);
+          alert('Error al crear la votación');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'checklist':
+        if (parsed.args.length < 1) {
+          alert('Uso: /checklist "Título" ["Item 1" "Item 2" ...]');
+          return;
+        }
+        if (sending) return;
+        const checklistTitle = parsed.args[0];
+        const checklistItems = parsed.args.slice(1).map((text: string, idx: number) => ({
+          id: `${Date.now()}-${idx}`,
+          text,
+          checked: false
+        }));
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/checklist ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'checklist',
+              commandData: {
+                title: checklistTitle,
+                items: checklistItems,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const checklistMessage = await response.json();
+            setMessages((prev) => [...prev, checklistMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating checklist:', error);
+          alert('Error al crear el checklist');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'timer':
+        if (parsed.args.length < 1) {
+          alert('Uso: /timer "Título" 25 (minutos)');
+          return;
+        }
+        if (sending) return;
+        const timerTitle = parsed.args[0];
+        const minutes = parseInt(parsed.args[1] || '25', 10);
+
+        if (isNaN(minutes) || minutes <= 0) {
+          alert('Minutos deben ser un número positivo');
+          return;
+        }
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/timer ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'timer',
+              commandData: {
+                title: timerTitle,
+                duration: minutes * 60,
+                startTime: Date.now(),
+                paused: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const timerMessage = await response.json();
+            setMessages((prev) => [...prev, timerMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating timer:', error);
+          alert('Error al crear el temporizador');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'wheel':
+        if (parsed.args.length < 3) {
+          alert('Uso: /wheel "Título" "Opción 1" "Opción 2" "Opción 3" ...');
+          return;
+        }
+        if (sending) return;
+        const wheelTitle = parsed.args[0];
+        const wheelOptions = parsed.args.slice(1);
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/wheel ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'wheel',
+              commandData: {
+                title: wheelTitle,
+                options: wheelOptions,
+                winner: null,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const wheelMessage = await response.json();
+            setMessages((prev) => [...prev, wheelMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating wheel:', error);
+          alert('Error al crear la ruleta');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'mood':
+        if (parsed.args.length < 1) {
+          alert('Uso: /mood "Pregunta"');
+          return;
+        }
+        if (sending) return;
+        const moodQuestion = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/mood ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'mood',
+              commandData: {
+                question: moodQuestion,
+                moods: [],
+                closed: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const moodMessage = await response.json();
+            setMessages((prev) => [...prev, moodMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating mood check-in:', error);
+          alert('Error al crear el check-in');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'pros-cons':
+        if (parsed.args.length < 1) {
+          alert('Uso: /pros-cons "Título"');
+          return;
+        }
+        if (sending) return;
+        const prosConsTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/pros-cons ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'pros-cons',
+              commandData: {
+                title: prosConsTitle,
+                pros: [],
+                cons: [],
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const prosConsMessage = await response.json();
+            setMessages((prev) => [...prev, prosConsMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating pros-cons:', error);
+          alert('Error al crear la tabla de pros y contras');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'ranking':
+        if (parsed.args.length < 3) {
+          alert('Uso: /ranking "Pregunta" "Opción 1" "Opción 2" ...');
+          return;
+        }
+        if (sending) return;
+        const rankingQuestion = parsed.args[0];
+        const rankingOptions = parsed.args.slice(1);
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/ranking ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              commandType: 'ranking',
+              commandData: {
+                question: rankingQuestion,
+                options: rankingOptions,
+                rankings: [],
+                closed: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const rankingMessage = await response.json();
+            setMessages((prev) => [...prev, rankingMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating ranking:', error);
+          alert('Error al crear el ranking');
         } finally {
           setSending(false);
         }
@@ -1249,6 +1718,307 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar encuesta"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'brainstorm' && message.commandData ? (
+                    /* Render Brainstorm Command */
+                    <div className="relative group">
+                      <BrainstormCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        topic={message.commandData.topic}
+                        ideas={message.commandData.ideas || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Brainstorm */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar brainstorming"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'estimation-poker' && message.commandData ? (
+                    /* Render Estimation Poker Command */
+                    <div className="relative group">
+                      <EstimationPokerCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        topic={message.commandData.topic}
+                        estimates={message.commandData.estimates || []}
+                        revealed={message.commandData.revealed || false}
+                        finalEstimate={message.commandData.finalEstimate}
+                        closed={message.commandData.closed || false}
+                        createdBy={message.commandData.createdBy}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar estimation poker"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'retrospective' && message.commandData ? (
+                    /* Render Retrospective Command */
+                    <div className="relative group">
+                      <RetrospectiveCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        closed={message.commandData.closed || false}
+                        createdBy={message.commandData.createdBy}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar retrospectiva"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'incident' && message.commandData ? (
+                    /* Render Incident Command */
+                    <div className="relative group">
+                      <IncidentCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        severity={message.commandData.severity}
+                        commander={message.commandData.commander}
+                        timeline={message.commandData.timeline || []}
+                        resolved={message.commandData.resolved || false}
+                        createdBy={message.commandData.createdBy}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar incidente"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'vote-points' && message.commandData ? (
+                    /* Render Vote Points Command */
+                    <div className="relative group">
+                      <VoteCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        options={message.commandData.options || []}
+                        totalPoints={message.commandData.totalPoints}
+                        userVotes={message.commandData.userVotes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar votación"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'checklist' && message.commandData ? (
+                    /* Render Checklist Command */
+                    <div className="relative group">
+                      <ChecklistCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar checklist"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'timer' && message.commandData ? (
+                    /* Render Timer Command */
+                    <div className="relative group">
+                      <TimerCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        duration={message.commandData.duration}
+                        startTime={message.commandData.startTime}
+                        paused={message.commandData.paused || false}
+                        onClose={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar timer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'wheel' && message.commandData ? (
+                    /* Render Wheel Command */
+                    <div className="relative group">
+                      <WheelCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        options={message.commandData.options || []}
+                        winner={message.commandData.winner}
+                        onClose={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar ruleta"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'mood' && message.commandData ? (
+                    /* Render Mood Command */
+                    <div className="relative group">
+                      <MoodCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        moods={message.commandData.moods || []}
+                        closed={message.commandData.closed || false}
+                        createdBy={message.commandData.createdBy}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar mood check-in"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'pros-cons' && message.commandData ? (
+                    /* Render Pros-Cons Command */
+                    <div className="relative group">
+                      <ProsConsCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        pros={message.commandData.pros || []}
+                        cons={message.commandData.cons || []}
+                        createdBy={message.commandData.createdBy}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar pros-cons"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'ranking' && message.commandData ? (
+                    /* Render Ranking Command */
+                    <div className="relative group">
+                      <RankingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        options={message.commandData.options || []}
+                        rankings={message.commandData.rankings || []}
+                        closed={message.commandData.closed || false}
+                        createdBy={message.commandData.createdBy}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar ranking"
                             >
                               <Trash2 size={14} />
                             </button>

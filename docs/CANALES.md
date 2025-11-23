@@ -798,6 +798,7 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 |---------|-------------|-----|
 | `/celebrate` | Celebra logros del equipo | `/celebrate @usuario "logro"` |
 | `/poll` | Crea una encuesta | `/poll "¿Pregunta?" "Op1" "Op2"` |
+| `/brainstorm` | Sesión de brainstorming colaborativa | `/brainstorm "¿Tema o pregunta?"` |
 | `/standup` | Daily standup virtual | `/standup` |
 | `/question` | Pregunta a un stakeholder | `/question @usuario "¿pregunta?"` |
 
@@ -830,6 +831,11 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 **Crear una encuesta:**
 ```
 /poll "¿Qué día para la retrospectiva?" "Lunes" "Martes" "Miércoles"
+```
+
+**Iniciar brainstorming:**
+```
+/brainstorm "¿Cómo podemos mejorar la velocidad del equipo?"
 ```
 
 **Celebrar un logro:**
@@ -964,6 +970,166 @@ Donde:
 - La predicción asume que las condiciones actuales se mantendrán
 - No considera factores externos (vacaciones, cambios de equipo, etc.)
 - Solo cuenta prioridades marcadas como `COMPLETADO`
+
+---
+
+## Comando /brainstorm - Sesión de Brainstorming Colaborativa
+
+### Descripción
+
+El comando `/brainstorm` crea una sesión interactiva de brainstorming donde todos los miembros del equipo pueden contribuir con ideas y votar por las mejores propuestas en tiempo real.
+
+### Uso Básico
+
+```
+/brainstorm "¿Tema o pregunta para el brainstorming?"
+```
+
+### Características
+
+#### 1. **Contribución Abierta**
+
+Cualquier miembro del equipo puede:
+- Agregar nuevas ideas a la sesión
+- Ver todas las ideas en tiempo real
+- Votar por las ideas que más le gusten (👍)
+- Retirar su voto en cualquier momento
+
+#### 2. **Sistema de Votación**
+
+- **Votos ilimitados**: Puedes votar por todas las ideas que quieras
+- **Visual feedback**: Ideas votadas se resaltan con color amarillo
+- **Contador de votos**: Cada idea muestra cuántos votos tiene
+- **Toggle vote**: Clic nuevamente para quitar tu voto
+
+#### 3. **Ordenamiento Inteligente**
+
+Dos modos de visualización:
+- **🔥 Más votadas**: Ordena por número de votos (default)
+- **⏰ Más recientes**: Ordena por fecha de creación
+
+#### 4. **Métricas en Tiempo Real**
+
+Muestra estadísticas de la sesión:
+- 💡 **Total de ideas**: Número total de ideas contribuidas
+- 👍 **Total de votos**: Suma de todos los votos
+- 👥 **Participantes**: Número de usuarios que han contribuido
+
+#### 5. **Identificación de Ideas Top**
+
+- La idea con más votos recibe insignia **🏆 Top Idea**
+- Resaltado visual con borde amarillo
+- Útil para identificar rápidamente el consenso
+
+#### 6. **Autoría Visible**
+
+Cada idea muestra:
+- 👤 Nombre del autor
+- ⏰ Hora de creación
+- Fomenta la responsabilidad y reconocimiento
+
+#### 7. **Sesión Cerrable**
+
+El creador de la sesión puede:
+- Cerrar la sesión cuando termine el brainstorming
+- Al cerrar se muestra la idea ganadora
+- Ideas y votos quedan guardados para referencia
+
+### Casos de Uso
+
+#### Innovación y Mejora Continua
+
+```
+/brainstorm "¿Qué features podemos agregar al producto?"
+```
+
+Ideal para:
+- Roadmap de producto
+- Mejoras de procesos
+- Nuevas iniciativas
+
+#### Resolución de Problemas
+
+```
+/brainstorm "¿Cómo resolvemos el cuello de botella en deployment?"
+```
+
+Usa cuando:
+- Hay un problema que requiere creatividad
+- Necesitas perspectivas diversas
+- Quieres explorar múltiples soluciones
+
+#### Retrospectivas
+
+```
+/brainstorm "¿Qué podemos mejorar en el próximo sprint?"
+```
+
+Perfecto para:
+- Identificar áreas de mejora
+- Generar action items
+- Priorizar cambios por votación
+
+#### Planificación
+
+```
+/brainstorm "Ideas para el nombre del nuevo proyecto"
+```
+
+Útil cuando:
+- Necesitas tomar una decisión en grupo
+- Quieres opciones creativas
+- El equipo debe tener voz
+
+### Flujo de Trabajo Típico
+
+1. **Crear sesión**: Líder ejecuta `/brainstorm "pregunta"`
+2. **Fase de ideación** (5-10 min): Todos agregan ideas sin juzgar
+3. **Fase de votación** (3-5 min): Equipo vota las mejores ideas
+4. **Ordenar por votos**: Cambiar a vista "Más votadas"
+5. **Discusión**: Hablar sobre las top 3 ideas
+6. **Cerrar sesión**: Creador cierra y captura idea ganadora
+
+### Consejos de Uso
+
+#### Para Facilitadores
+
+- 🎯 **Pregunta clara**: Formula preguntas específicas y accionables
+- ⏱️ **Tiempo límite**: Establece un tiempo para cada fase
+- 🤐 **Sin juicios**: En fase de ideación, acepta todas las ideas
+- 🗣️ **Síguele**: Después del brainstorm, crea tareas con `/quick-priority`
+
+#### Para Participantes
+
+- 💭 **Cantidad sobre calidad**: Al inicio, genera muchas ideas
+- 🔄 **Builds on ideas**: Lee ideas de otros y construye sobre ellas
+- 👍 **Vota honestamente**: Vota por ideas que realmente apoyarías
+- 📝 **Se específico**: Ideas claras y concisas son más fáciles de evaluar
+
+### Ventajas sobre Brainstorming Tradicional
+
+| Brainstorming Tradicional | /brainstorm en Canales |
+|---------------------------|------------------------|
+| Voces dominantes | Todos participan por igual |
+| Ideas se pierden | Todo queda registrado |
+| Difícil priorizar | Votación inmediata |
+| Requiere reunión | Asíncrono y flexible |
+| Sesgos de grupo | Ideas anónimas en tiempo de creación |
+
+### Límites y Consideraciones
+
+- **No hay límite** de ideas por sesión
+- **Sin edición**: Las ideas no se pueden editar una vez publicadas
+- **Votación persistente**: Los votos se guardan permanentemente
+- **Cierre irreversible**: Una vez cerrada, la sesión no se puede reabrir
+- **Requiere participación**: Funciona mejor con 3+ personas activas
+
+### Integración con Otros Comandos
+
+Después del brainstorming, usa:
+- `/quick-priority "Top Idea"` - Convertir idea en tarea
+- `/decision "Vamos con Idea X"` - Documentar la decisión
+- `/poll "¿Implementamos A o B?"` - Refinar con encuesta
 
 ---
 

@@ -65,6 +65,72 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'collaboration'
   },
   {
+    name: 'brainstorm',
+    description: 'Inicia una sesión de brainstorming colaborativa',
+    usage: '/brainstorm "¿Tema o pregunta?"',
+    category: 'collaboration'
+  },
+  {
+    name: 'estimation-poker',
+    description: 'Planning Poker para estimación colaborativa de tareas',
+    usage: '/estimation-poker "¿Tarea o historia?"',
+    category: 'collaboration'
+  },
+  {
+    name: 'retrospective',
+    description: 'Retrospectiva ágil con 3 columnas (Bien, Mejorar, Acciones)',
+    usage: '/retrospective "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'incident',
+    description: 'Gestión de incidentes con timeline y niveles de severidad',
+    usage: '/incident "Título" P0|P1|P2|P3|P4',
+    category: 'management'
+  },
+  {
+    name: 'vote-points',
+    description: 'Votación por puntos para priorizar opciones',
+    usage: '/vote "Pregunta" 10 "Opción 1" "Opción 2" ...',
+    category: 'collaboration'
+  },
+  {
+    name: 'checklist',
+    description: 'Lista de tareas colaborativa con progreso visual',
+    usage: '/checklist "Título" ["Item 1" "Item 2" ...]',
+    category: 'collaboration'
+  },
+  {
+    name: 'timer',
+    description: 'Temporizador compartido para timeboxing',
+    usage: '/timer "Título" 25',
+    category: 'collaboration'
+  },
+  {
+    name: 'wheel',
+    description: 'Ruleta de decisión aleatoria animada',
+    usage: '/wheel "Título" "Opción 1" "Opción 2" ...',
+    category: 'collaboration'
+  },
+  {
+    name: 'mood',
+    description: 'Check-in de estado de ánimo del equipo',
+    usage: '/mood "¿Cómo están hoy?"',
+    category: 'collaboration'
+  },
+  {
+    name: 'pros-cons',
+    description: 'Tabla de pros y contras colaborativa',
+    usage: '/pros-cons "Título"',
+    category: 'analysis'
+  },
+  {
+    name: 'ranking',
+    description: 'Ranking colaborativo con drag & drop',
+    usage: '/ranking "Pregunta" "Opción 1" "Opción 2" ...',
+    category: 'collaboration'
+  },
+  {
     name: 'quick-priority',
     description: 'Crea una prioridad rápidamente sin salir del chat',
     usage: '/quick-priority "Título de la prioridad"',
