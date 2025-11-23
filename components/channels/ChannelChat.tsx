@@ -604,6 +604,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/poll ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'poll',
               commandData: {
                 question,
@@ -644,6 +645,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/brainstorm ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'brainstorm',
               commandData: {
                 topic: brainstormTopic,
@@ -683,6 +685,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/estimation-poker ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'estimation-poker',
               commandData: {
                 topic: estimationStory,
@@ -723,6 +726,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/retrospective ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'retrospective',
               commandData: {
                 title: retroTopic,
@@ -767,6 +771,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/incident ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'incident',
               commandData: {
                 title: incidentTitle,
@@ -819,6 +824,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/vote ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'vote-points',
               commandData: {
                 question: voteQuestion,
@@ -864,6 +870,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/checklist ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'checklist',
               commandData: {
                 title: checklistTitle,
@@ -907,6 +914,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/timer ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'timer',
               commandData: {
                 title: timerTitle,
@@ -947,6 +955,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/wheel ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'wheel',
               commandData: {
                 title: wheelTitle,
@@ -985,6 +994,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/mood ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'mood',
               commandData: {
                 question: moodQuestion,
@@ -1023,6 +1033,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/pros-cons ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'pros-cons',
               commandData: {
                 title: prosConsTitle,
@@ -1062,6 +1073,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/ranking ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
               commandType: 'ranking',
               commandData: {
                 question: rankingQuestion,
