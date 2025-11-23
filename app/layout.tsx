@@ -10,6 +10,11 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Sistema de Prioridades Semanales',
   description: 'Gestión semanal de prioridades y objetivos estratégicos',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({

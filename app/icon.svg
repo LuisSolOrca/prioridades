@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/>
+
+  <!-- Priority list icon -->
+  <!-- Line 1 - Completed -->
+  <circle cx="25" cy="30" r="4" fill="#ffffff"/>
+  <path d="M 23 30 L 25 32 L 28 28" stroke="#3b82f6" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="33" y="28" width="42" height="4" rx="2" fill="#ffffff"/>
+
+  <!-- Line 2 - In progress -->
+  <circle cx="25" cy="50" r="4" fill="#ffffff"/>
+  <rect x="33" y="48" width="42" height="4" rx="2" fill="#ffffff"/>
+
+  <!-- Line 3 - Pending -->
+  <circle cx="25" cy="70" r="4" fill="#ffffff" fill-opacity="0.6"/>
+  <rect x="33" y="68" width="30" height="4" rx="2" fill="#ffffff" fill-opacity="0.6"/>
+
+  <!-- Priority star accent -->
+  <path d="M 78 22 L 80 18 L 82 22 L 86 23 L 82 26 L 83 30 L 80 27 L 77 30 L 78 26 L 74 23 Z" fill="#fbbf24"/>
+</svg>
