@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
-    const projectId = searchParams.get('projectId');
     const weekStart = searchParams.get('weekStart');
     const weekEnd = searchParams.get('weekEnd');
     const forDashboard = searchParams.get('forDashboard'); // Nuevo parámetro para indicar que es para el dashboard
@@ -29,11 +28,6 @@ export async function GET(request: NextRequest) {
     const currentUserId = (session.user as any).id;
 
     let query: any = {};
-
-    // Filtrar por proyecto si se especifica
-    if (projectId) {
-      query.projectId = projectId;
-    }
 
     // Si es para el dashboard, mostrar todas las prioridades (ambos roles pueden ver el dashboard completo)
     // Si no es para el dashboard, aplicar filtros según el rol
@@ -79,17 +73,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Debug logging
-    console.log('[GET /api/priorities] Query:', JSON.stringify(query));
-    console.log('[GET /api/priorities] ProjectId requested:', projectId);
-    console.log('[GET /api/priorities] UserId requested:', userId);
-
     const priorities = await Priority.find(query)
       .populate('userId', 'name email')
       .sort({ weekStart: -1, createdAt: -1 })
       .lean();
-
-    console.log('[GET /api/priorities] Found priorities:', priorities.length);
 
     // Obtener información de Azure DevOps para las prioridades
     const priorityIds = priorities.map(p => p._id);

@@ -49,14 +49,8 @@ export default function MyStatsCommand({ projectId, onClose }: MyStatsCommandPro
     try {
       setLoading(true);
 
-      // Debug logging
-      console.log('[MyStats] projectId:', projectId);
-      console.log('[MyStats] userId:', session?.user.id);
-
-      // Obtener todas las prioridades del usuario en este proyecto
-      const url = `/api/priorities?projectId=${projectId}&userId=${session?.user.id}`;
-      console.log('[MyStats] Fetching:', url);
-
+      // Obtener todas las prioridades del usuario
+      const url = `/api/priorities?userId=${session?.user.id}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -64,11 +58,12 @@ export default function MyStatsCommand({ projectId, onClose }: MyStatsCommandPro
       }
 
       const data = await response.json();
-      console.log('[MyStats] Response data:', data);
 
       // API returns array directly, not wrapped in object
-      const myPriorities = Array.isArray(data) ? data : [];
-      console.log('[MyStats] My priorities count:', myPriorities.length);
+      const allPriorities = Array.isArray(data) ? data : [];
+
+      // Filtrar por proyecto en el cliente
+      const myPriorities = allPriorities.filter((p: any) => p.projectId === projectId);
 
       setPriorities(myPriorities);
 
