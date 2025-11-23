@@ -97,7 +97,7 @@ export default function ChecklistCommand({
   const percentage = items.length > 0 ? Math.round((completed / items.length) * 100) : 0;
 
   return (
-    <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-teal-300 dark:border-teal-700 p-6 my-2">
+    <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-teal-300 dark:border-teal-700 p-6 my-2 max-w-3xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
@@ -134,7 +134,7 @@ export default function ChecklistCommand({
             ) : (
               <Square className="text-gray-400 flex-shrink-0" size={20} />
             )}
-            <span className={`flex-1 ${item.checked ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}>
+            <span className={`flex-1 min-w-0 break-words ${item.checked ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}>
               {item.text}
             </span>
             {item.checkedBy && (
@@ -154,11 +154,11 @@ export default function ChecklistCommand({
           onChange={e => setNewItem(e.target.value)}
           onKeyPress={e => e.key === 'Enter' && handleAdd()}
           placeholder="Agregar item..."
-          className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm"
+          className="flex-1 min-w-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
         <button
           onClick={handleAdd}
-          className="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded"
+          className="flex-shrink-0 bg-teal-600 hover:bg-teal-700 text-white p-2 rounded"
         >
           <Plus size={18} />
         </button>

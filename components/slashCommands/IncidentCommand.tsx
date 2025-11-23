@@ -110,7 +110,7 @@ export default function IncidentCommand({
   const config = severityConfig[initialSeverity];
 
   return (
-    <div className={`${config.bg} rounded-lg border-2 border-${config.color}-300 dark:border-${config.color}-700 p-6 my-2`}>
+    <div className={`${config.bg} rounded-lg border-2 border-${config.color}-300 dark:border-${config.color}-700 p-6 my-2 max-w-4xl w-full`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className={`w-10 h-10 bg-${config.color}-600 rounded-full flex items-center justify-center`}>
@@ -154,7 +154,7 @@ export default function IncidentCommand({
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   {new Date(event.timestamp).toLocaleTimeString()} - {event.author.name}
                 </div>
-                <div className="text-sm text-gray-800 dark:text-gray-100">{event.text}</div>
+                <div className="text-sm text-gray-800 dark:text-gray-100 break-words">{event.text}</div>
               </div>
             ))}
           </div>
@@ -170,12 +170,12 @@ export default function IncidentCommand({
               onChange={e => setNewEvent(e.target.value)}
               onKeyPress={e => e.key === 'Enter' && handleAddEvent()}
               placeholder="Add event to timeline..."
-              className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm"
+              className="flex-1 min-w-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
             <button
               onClick={handleAddEvent}
               disabled={submitting}
-              className={`bg-${config.color}-600 hover:bg-${config.color}-700 text-white px-4 py-2 rounded font-medium`}
+              className={`flex-shrink-0 bg-${config.color}-600 hover:bg-${config.color}-700 text-white px-4 py-2 rounded font-medium`}
             >
               Add
             </button>

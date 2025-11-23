@@ -185,7 +185,7 @@ export default function BrainstormCommand({
   const topIdea = sortedIdeas[0];
 
   return (
-    <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-yellow-300 dark:border-yellow-700 p-6 my-2">
+    <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-yellow-300 dark:border-yellow-700 p-6 my-2 max-w-4xl w-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
@@ -307,7 +307,7 @@ export default function BrainstormCommand({
                         🏆 Top Idea
                       </div>
                     )}
-                    <p className="text-gray-800 dark:text-gray-100 text-sm mb-1">{idea.text}</p>
+                    <p className="text-gray-800 dark:text-gray-100 text-sm mb-1 break-words">{idea.text}</p>
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <User size={12} />
                       <span>{idea.author.name}</span>
@@ -338,12 +338,12 @@ export default function BrainstormCommand({
               }}
               placeholder="Escribe tu idea..."
               disabled={submitting}
-              className="flex-1 bg-gray-50 dark:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 placeholder-gray-500 dark:placeholder-gray-400"
             />
             <button
               onClick={handleAddIdea}
               disabled={!newIdea.trim() || submitting}
-              className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white p-2 rounded-lg transition"
+              className="flex-shrink-0 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white p-2 rounded-lg transition"
             >
               <Send size={18} />
             </button>

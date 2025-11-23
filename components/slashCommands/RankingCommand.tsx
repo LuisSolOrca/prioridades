@@ -155,7 +155,7 @@ export default function RankingCommand({
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-300 dark:border-indigo-700 p-6 my-2">
+    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-300 dark:border-indigo-700 p-6 my-2 max-w-4xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
@@ -193,7 +193,7 @@ export default function RankingCommand({
                 <span className="font-bold text-indigo-600 dark:text-indigo-400 w-8">
                   #{index + 1}
                 </span>
-                <span className="flex-1 text-gray-800 dark:text-gray-100">{option}</span>
+                <span className="flex-1 min-w-0 text-gray-800 dark:text-gray-100 break-words">{option}</span>
               </div>
             ))}
           </div>
@@ -232,7 +232,7 @@ export default function RankingCommand({
                 <span className={`text-2xl ${getMedalColor(index)}`}>
                   {getMedal(index)}
                 </span>
-                <span className="flex-1 font-medium text-gray-800 dark:text-gray-100">
+                <span className="flex-1 min-w-0 font-medium text-gray-800 dark:text-gray-100 break-words">
                   {item.option}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
