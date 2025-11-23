@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const projectId = searchParams.get('projectId');
     const weekStart = searchParams.get('weekStart');
     const weekEnd = searchParams.get('weekEnd');
     const forDashboard = searchParams.get('forDashboard'); // Nuevo parámetro para indicar que es para el dashboard
@@ -28,6 +29,11 @@ export async function GET(request: NextRequest) {
     const currentUserId = (session.user as any).id;
 
     let query: any = {};
+
+    // Filtrar por proyecto si se especifica
+    if (projectId) {
+      query.projectId = projectId;
+    }
 
     // Si es para el dashboard, mostrar todas las prioridades (ambos roles pueden ver el dashboard completo)
     // Si no es para el dashboard, aplicar filtros según el rol
