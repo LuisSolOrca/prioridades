@@ -6,6 +6,7 @@ import ChannelMessage from '@/models/ChannelMessage';
 import User from '@/models/User';
 import Project from '@/models/Project';
 import Priority from '@/models/Priority';
+import UserGroup from '@/models/UserGroup';
 import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 import { trackChannelUsage } from '@/lib/gamification';
@@ -295,29 +296,51 @@ export async function POST(
           try {
             const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-            // Buscar usuario mencionado
-            let mentionedUser = await User.findOne({
-              name: { $regex: new RegExp(`^${escapedUsername}$`, 'i') },
+            // Primero buscar si es un grupo
+            const group = await UserGroup.findOne({
+              tag: username.toLowerCase(),
               isActive: true
-            }).lean() as any;
+            }).populate('members', '_id name email isActive').lean() as any;
 
-            if (!mentionedUser) {
-              mentionedUser = await User.findOne({
-                name: { $regex: new RegExp(escapedUsername, 'i') },
+            if (group && group.members && group.members.length > 0) {
+              // Es un grupo, notificar a todos los miembros
+              for (const member of group.members) {
+                if (member.isActive && member._id.toString() !== author._id.toString()) {
+                  await notifyChannelMention(
+                    member._id.toString(),
+                    author.name,
+                    params.id,
+                    project.name,
+                    content,
+                    message._id.toString()
+                  );
+                }
+              }
+            } else {
+              // No es un grupo, buscar usuario
+              let mentionedUser = await User.findOne({
+                name: { $regex: new RegExp(`^${escapedUsername}$`, 'i') },
                 isActive: true
               }).lean() as any;
-            }
 
-            // Crear notificación y enviar correo si no es el mismo autor
-            if (mentionedUser && mentionedUser._id.toString() !== author._id.toString()) {
-              await notifyChannelMention(
-                mentionedUser._id.toString(),
-                author.name,
-                params.id,
-                project.name,
-                content,
-                message._id.toString()
-              );
+              if (!mentionedUser) {
+                mentionedUser = await User.findOne({
+                  name: { $regex: new RegExp(escapedUsername, 'i') },
+                  isActive: true
+                }).lean() as any;
+              }
+
+              // Crear notificación y enviar correo si no es el mismo autor
+              if (mentionedUser && mentionedUser._id.toString() !== author._id.toString()) {
+                await notifyChannelMention(
+                  mentionedUser._id.toString(),
+                  author.name,
+                  params.id,
+                  project.name,
+                  content,
+                  message._id.toString()
+                );
+              }
             }
           } catch (err) {
             console.error(`Error creating notification for mention @${username}:`, err);
