@@ -55,6 +55,11 @@ export default function QuickPriorityCommand({
       return;
     }
 
+    if (initiativeIds.length === 0) {
+      setError('Debes seleccionar al menos una iniciativa estratégica');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -175,7 +180,7 @@ export default function QuickPriorityCommand({
         {initiatives.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Iniciativa(s) Estratégica(s)
+              Iniciativa(s) Estratégica(s) *
             </label>
             <div className="flex flex-wrap gap-2">
               {initiatives.map(initiative => (
@@ -263,7 +268,7 @@ export default function QuickPriorityCommand({
         <div className="flex gap-2 pt-2">
           <button
             onClick={handleSubmit}
-            disabled={loading || !title.trim()}
+            disabled={loading || !title.trim() || initiativeIds.length === 0}
             className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-2 rounded-lg font-medium transition flex items-center justify-center gap-2"
           >
             {loading ? (
