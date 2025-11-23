@@ -30,12 +30,20 @@ interface Priority {
   createdAt: string;
 }
 
+interface Deliverable {
+  title: string;
+  description?: string;
+  successCriteria?: string;
+  isCompleted: boolean;
+}
+
 interface Milestone {
   _id: string;
   title: string;
+  description?: string;
   isCompleted: boolean;
   dueDate: string;
-  deliverables: Array<{ isCompleted: boolean }>;
+  deliverables: Deliverable[];
 }
 
 interface ChannelMetricsProps {
