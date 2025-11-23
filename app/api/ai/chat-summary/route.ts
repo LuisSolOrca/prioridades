@@ -39,6 +39,36 @@ export async function POST(request: NextRequest) {
         hour: '2-digit',
         minute: '2-digit'
       });
+
+      // Formatear comandos especiales con su información completa
+      if (msg.commandType === 'question' && msg.commandData) {
+        const questionData = msg.commandData;
+        let formatted = `[${timestamp}] ${userName} preguntó a ${questionData.askedTo}: "${questionData.question}"`;
+
+        if (questionData.answered && questionData.answer) {
+          const answerTime = questionData.answeredAt ?
+            new Date(questionData.answeredAt).toLocaleString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : timestamp;
+          formatted += `\n[${answerTime}] ${questionData.askedTo} respondió: "${questionData.answer}"`;
+        } else {
+          formatted += ` (Sin responder aún)`;
+        }
+        return formatted;
+      }
+
+      if (msg.commandType === 'decision' && msg.commandData) {
+        return `[${timestamp}] ${userName} registró decisión: "${msg.commandData.decision}"`;
+      }
+
+      if (msg.commandType === 'celebrate' && msg.commandData) {
+        return `[${timestamp}] ${userName} celebró a ${msg.commandData.userName}: "${msg.commandData.achievement}"`;
+      }
+
+      // Para mensajes normales, usar el contenido
       return `[${timestamp}] ${userName}: ${msg.content}`;
     }).join('\n');
 
@@ -46,10 +76,16 @@ export async function POST(request: NextRequest) {
 
 El resumen debe incluir:
 1. **Temas Principales**: Los 3-5 temas más discutidos o importantes
-2. **Decisiones Clave**: Cualquier decisión tomada o acordada
-3. **Acciones Pendientes**: Tareas mencionadas o compromisos adquiridos
-4. **Participantes Activos**: Quiénes han sido los más participativos
-5. **Puntos de Atención**: Problemas, blockers o riesgos mencionados
+2. **Decisiones Clave**: Cualquier decisión tomada o acordada (busca frases como "registró decisión")
+3. **Preguntas y Respuestas**: Preguntas importantes que se hicieron y si fueron respondidas o están pendientes
+4. **Acciones Pendientes**: Tareas mencionadas o compromisos adquiridos
+5. **Participantes Activos**: Quiénes han sido los más participativos
+6. **Puntos de Atención**: Problemas, blockers o riesgos mencionados
+
+IMPORTANTE:
+- Si ves que alguien "preguntó a" alguien y luego ves que esa persona "respondió", marca esa pregunta como RESPONDIDA
+- Si ves "Sin responder aún", marca esa pregunta como PENDIENTE
+- Las celebraciones ("celebró a") deben incluirse en logros del equipo
 
 Formatea el resumen de manera clara usando markdown con encabezados, listas y negritas cuando sea apropiado.
 Sé conciso pero completo. Usa español.`;
