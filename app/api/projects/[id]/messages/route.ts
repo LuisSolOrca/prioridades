@@ -320,6 +320,18 @@ export async function POST(
       // No fallar la creación del mensaje si las notificaciones fallan
     }
 
+    // Triggerar evento de Pusher para tiempo real
+    try {
+      await triggerPusherEvent(
+        `presence-channel-${channelId}`,
+        'new-message',
+        populatedMessage
+      );
+    } catch (pusherError) {
+      console.error('Error triggering Pusher event:', pusherError);
+      // No fallar la creación del mensaje si Pusher falla
+    }
+
     return NextResponse.json(populatedMessage, { status: 201 });
   } catch (error) {
     console.error('Error creating project message:', error);

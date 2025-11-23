@@ -21,6 +21,9 @@ import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
 import ChannelSelector from '../ChannelSelector';
 import { isSlashCommand, parseSlashCommand, SLASH_COMMANDS } from '@/lib/slashCommands';
+import { getPusherClient } from '@/lib/pusher-client';
+import type Pusher from 'pusher-js';
+import type { PresenceChannel } from 'pusher-js';
 import StatusCommand from '../slashCommands/StatusCommand';
 import PollCommand from '../slashCommands/PollCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
@@ -113,6 +116,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [showCommandSuggestions, setShowCommandSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Pusher states
+  const [pusherChannel, setPusherChannel] = useState<PresenceChannel | null>(null);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; info: { name: string; email: string } }>>([]);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     loadUsers();
     // No cargar mensajes aquí, esperar a que se seleccione un canal
@@ -168,6 +177,84 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       loadPinnedMessages();
     }
   }, [debouncedSearchQuery, selectedChannelId]);
+
+  // Pusher: suscribirse al canal cuando se selecciona un channelId
+  useEffect(() => {
+    if (!selectedChannelId) return;
+
+    const pusher = getPusherClient();
+    const channelName = `presence-channel-${selectedChannelId}`;
+    const channel = pusher.subscribe(channelName) as PresenceChannel;
+
+    // Evento: nuevo mensaje
+    channel.bind('new-message', (newMsg: Message) => {
+      // Solo agregar si no es del usuario actual (para evitar duplicados)
+      if (newMsg.userId._id !== session?.user.id) {
+        setMessages((prev) => {
+          // Evitar duplicados
+          if (prev.some((m) => m._id === newMsg._id)) return prev;
+          return [...prev, newMsg];
+        });
+        scrollToBottom();
+      }
+    });
+
+    // Evento: usuario escribiendo
+    channel.bind('client-typing', (data: { userId: string; userName: string }) => {
+      if (data.userId !== session?.user.id) {
+        setTypingUsers((prev) => {
+          if (prev.includes(data.userName)) return prev;
+          return [...prev, data.userName];
+        });
+
+        // Auto-remover después de 3 segundos
+        setTimeout(() => {
+          setTypingUsers((prev) => prev.filter((name) => name !== data.userName));
+        }, 3000);
+      }
+    });
+
+    // Evento: usuario dejó de escribir
+    channel.bind('client-stop-typing', (data: { userId: string; userName: string }) => {
+      setTypingUsers((prev) => prev.filter((name) => name !== data.userName));
+    });
+
+    // Presencia: suscripción exitosa
+    channel.bind('pusher:subscription_succeeded', (members: any) => {
+      const membersList: Array<{ id: string; info: { name: string; email: string } }> = [];
+      members.each((member: any) => {
+        membersList.push({
+          id: member.id,
+          info: member.info
+        });
+      });
+      setOnlineUsers(membersList);
+    });
+
+    // Presencia: miembro agregado
+    channel.bind('pusher:member_added', (member: any) => {
+      setOnlineUsers((prev) => {
+        if (prev.some((m) => m.id === member.id)) return prev;
+        return [...prev, { id: member.id, info: member.info }];
+      });
+    });
+
+    // Presencia: miembro removido
+    channel.bind('pusher:member_removed', (member: any) => {
+      setOnlineUsers((prev) => prev.filter((m) => m.id !== member.id));
+    });
+
+    setPusherChannel(channel);
+
+    // Cleanup
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(channelName);
+      setPusherChannel(null);
+      setTypingUsers([]);
+      setOnlineUsers([]);
+    };
+  }, [selectedChannelId, session?.user.id, session?.user.name]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -235,8 +322,42 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   };
 
+  // Emitir evento de typing
+  const handleTyping = () => {
+    if (!pusherChannel || !session?.user) return;
+
+    // Emitir evento client-typing
+    pusherChannel.trigger('client-typing', {
+      userId: session.user.id,
+      userName: session.user.name
+    });
+
+    // Cancelar timeout anterior si existe
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Emitir stop-typing después de 1 segundo sin escribir
+    typingTimeoutRef.current = setTimeout(() => {
+      if (pusherChannel) {
+        pusherChannel.trigger('client-stop-typing', {
+          userId: session.user.id,
+          userName: session.user.name
+        });
+      }
+    }, 1000);
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || sending) return;
+
+    // Emitir stop-typing al enviar mensaje
+    if (pusherChannel && session?.user) {
+      pusherChannel.trigger('client-stop-typing', {
+        userId: session.user.id,
+        userName: session.user.name
+      });
+    }
 
     // Detectar si es un comando slash
     if (isSlashCommand(newMessage)) {
@@ -797,8 +918,20 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               setSelectedChannelName(channelName);
             }}
           />
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {selectedChannelName && `# ${selectedChannelName}`}
+          <div className="flex items-center gap-3">
+            {/* Online Users Indicator */}
+            {onlineUsers.length > 0 && (
+              <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400" title={onlineUsers.map(u => u.info.name).join(', ')}>
+                <div className="relative">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
+                </div>
+                <span className="font-medium">{onlineUsers.length} en línea</span>
+              </div>
+            )}
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {selectedChannelName && `# ${selectedChannelName}`}
+            </div>
           </div>
         </div>
 
@@ -1428,6 +1561,24 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        {/* Typing Indicator */}
+        {typingUsers.length > 0 && (
+          <div className="mb-2 text-xs text-gray-500 dark:text-gray-400 italic flex items-center gap-1">
+            <span className="inline-flex gap-0.5">
+              <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+              <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+              <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            </span>
+            <span>
+              {typingUsers.length === 1
+                ? `${typingUsers[0]} está escribiendo...`
+                : typingUsers.length === 2
+                ? `${typingUsers[0]} y ${typingUsers[1]} están escribiendo...`
+                : `${typingUsers[0]}, ${typingUsers[1]} y ${typingUsers.length - 2} más están escribiendo...`}
+            </span>
+          </div>
+        )}
+
         {/* Command Suggestions */}
         {showCommandSuggestions && (
           <div className="mb-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
@@ -1490,7 +1641,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           <input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              handleTyping();
+            }}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
