@@ -117,6 +117,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Registra una decisión importante del proyecto',
     usage: '/decision "descripción de la decisión"',
     category: 'management'
+  },
+  {
+    name: 'schedule',
+    description: 'Calendario de hitos y próximos deadlines del proyecto',
+    usage: '/schedule [week|month]',
+    category: 'status'
   }
 ];
 
