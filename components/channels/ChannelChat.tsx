@@ -179,7 +179,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       }
 
       const data = await response.json();
-      setMessages((data.messages || []).reverse()); // Invertir para mostrar más recientes abajo
+      const newMessages = (data.messages || []).reverse(); // Invertir para mostrar más recientes abajo
+
+      // Deduplicar mensajes por _id
+      const messageMap = new Map();
+      newMessages.forEach((msg: Message) => {
+        messageMap.set(msg._id, msg);
+      });
+
+      setMessages(Array.from(messageMap.values()));
     } catch (err) {
       console.error('Error loading messages:', err);
     } finally {
@@ -277,11 +285,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           alert('Uso: /celebrate @usuario "descripción del logro"');
           return;
         }
+        if (sending) return; // Evitar duplicados
         const userName = parsed.args[0].replace('@', '');
         const achievement = parsed.args[1];
 
         // Crear celebración persistente en la base de datos
         try {
+          setSending(true);
           const response = await fetch(`/api/projects/${projectId}/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -298,11 +308,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           });
 
           if (response.ok) {
-            loadMessages();
+            const message = await response.json();
+            // Agregar mensaje directamente en lugar de recargar todos
+            setMessages((prev) => [...prev, message]);
           }
         } catch (error) {
           console.error('Error creating celebration:', error);
           alert('Error al crear la celebración');
+        } finally {
+          setSending(false);
         }
         setNewMessage('');
         break;
@@ -312,11 +326,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           alert('Uso: /poll "¿Pregunta?" "Opción 1" "Opción 2" ...');
           return;
         }
+        if (sending) return; // Evitar duplicados
         const question = parsed.args[0];
         const options = parsed.args.slice(1);
 
         // Crear poll persistente en la base de datos
         try {
+          setSending(true);
           const response = await fetch(`/api/projects/${projectId}/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -333,11 +349,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           });
 
           if (response.ok) {
-            loadMessages(); // Recargar mensajes para mostrar el poll
+            const pollMessage = await response.json();
+            // Agregar mensaje directamente en lugar de recargar todos
+            setMessages((prev) => [...prev, pollMessage]);
           }
         } catch (error) {
           console.error('Error creating poll:', error);
           alert('Error al crear la encuesta');
+        } finally {
+          setSending(false);
         }
         setNewMessage('');
         break;
