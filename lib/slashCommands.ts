@@ -17,6 +17,24 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'status'
   },
   {
+    name: 'summary',
+    description: 'Resumen de actividad del proyecto (24h, semana, mes)',
+    usage: '/summary [24h|week|month]',
+    category: 'analysis'
+  },
+  {
+    name: 'progress',
+    description: 'Progreso detallado con timeline de hitos y roadmap',
+    usage: '/progress',
+    category: 'status'
+  },
+  {
+    name: 'team-load',
+    description: 'Distribución de carga de trabajo por usuario',
+    usage: '/team-load',
+    category: 'analysis'
+  },
+  {
     name: 'blockers',
     description: 'Muestra todas las prioridades bloqueadas del proyecto',
     usage: '/blockers',
@@ -27,6 +45,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Analiza y muestra las prioridades en riesgo',
     usage: '/risks',
     category: 'analysis'
+  },
+  {
+    name: 'celebrate',
+    description: 'Celebra logros del equipo',
+    usage: '/celebrate @usuario "descripción del logro"',
+    category: 'collaboration'
   },
   {
     name: 'poll',

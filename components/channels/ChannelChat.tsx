@@ -25,6 +25,10 @@ import PollCommand from '../slashCommands/PollCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 import BlockersCommand from '../slashCommands/BlockersCommand';
 import RisksCommand from '../slashCommands/RisksCommand';
+import SummaryCommand from '../slashCommands/SummaryCommand';
+import ProgressCommand from '../slashCommands/ProgressCommand';
+import TeamLoadCommand from '../slashCommands/TeamLoadCommand';
+import CelebrateCommand from '../slashCommands/CelebrateCommand';
 
 interface Priority {
   _id: string;
@@ -242,6 +246,22 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         setNewMessage('');
         break;
 
+      case 'summary':
+        const period = parsed.args[0] as '24h' | 'week' | 'month' | undefined;
+        setActiveCommand({ type: 'summary', data: { period: period || 'week' } });
+        setNewMessage('');
+        break;
+
+      case 'progress':
+        setActiveCommand({ type: 'progress' });
+        setNewMessage('');
+        break;
+
+      case 'team-load':
+        setActiveCommand({ type: 'team-load' });
+        setNewMessage('');
+        break;
+
       case 'blockers':
         setActiveCommand({ type: 'blockers' });
         setNewMessage('');
@@ -249,6 +269,41 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       case 'risks':
         setActiveCommand({ type: 'risks' });
+        setNewMessage('');
+        break;
+
+      case 'celebrate':
+        if (parsed.args.length < 2) {
+          alert('Uso: /celebrate @usuario "descripción del logro"');
+          return;
+        }
+        const userName = parsed.args[0].replace('@', '');
+        const achievement = parsed.args[1];
+
+        // Crear celebración persistente en la base de datos
+        try {
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/celebrate @${userName} "${achievement}"`,
+              commandType: 'celebrate',
+              commandData: {
+                userName,
+                achievement,
+                createdBy: session?.user?.name,
+                createdAt: new Date().toISOString()
+              }
+            })
+          });
+
+          if (response.ok) {
+            loadMessages();
+          }
+        } catch (error) {
+          console.error('Error creating celebration:', error);
+          alert('Error al crear la celebración');
+        }
         setNewMessage('');
         break;
 
@@ -671,6 +726,16 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       onClose={() => {}}
                       onUpdate={loadMessages}
                     />
+                  ) : message.commandType === 'celebrate' && message.commandData ? (
+                    /* Render Celebrate Command */
+                    <CelebrateCommand
+                      projectId={projectId}
+                      userName={message.commandData.userName}
+                      achievement={message.commandData.achievement}
+                      createdBy={message.commandData.createdBy}
+                      createdAt={message.commandData.createdAt}
+                      onClose={() => {}}
+                    />
                   ) : (
                     <div
                       className={`relative group rounded-lg px-4 py-2 ${
@@ -816,7 +881,26 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               onClose={() => setActiveCommand(null)}
             />
           )}
-          {/* Poll se renderiza directamente en la lista de mensajes ya que se persiste */}
+          {activeCommand.type === 'summary' && (
+            <SummaryCommand
+              projectId={projectId}
+              period={activeCommand.data?.period}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'progress' && (
+            <ProgressCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'team-load' && (
+            <TeamLoadCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {/* Poll y Celebrate se renderizan directamente en la lista de mensajes ya que se persisten */}
           {activeCommand.type === 'quick-priority' && activeCommand.data && (
             <QuickPriorityCommand
               projectId={projectId}
