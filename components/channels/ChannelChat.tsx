@@ -14,10 +14,15 @@ import {
   CornerDownRight,
   Search,
   Pin,
-  PinOff
+  PinOff,
+  Zap
 } from 'lucide-react';
 import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
+import { isSlashCommand, parseSlashCommand, SLASH_COMMANDS } from '@/lib/slashCommands';
+import StatusCommand from '../slashCommands/StatusCommand';
+import PollCommand from '../slashCommands/PollCommand';
+import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 
 interface Priority {
   _id: string;
@@ -77,6 +82,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [mentionSearch, setMentionSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [activeCommand, setActiveCommand] = useState<{
+    type: string;
+    data?: any;
+  } | null>(null);
+  const [showCommandSuggestions, setShowCommandSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,21 +100,33 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   }, [messages]);
 
   useEffect(() => {
-    // Detectar @ para autocompletado
-    const lastAtIndex = newMessage.lastIndexOf('@');
-    if (lastAtIndex !== -1 && lastAtIndex === newMessage.length - 1) {
-      setShowUserSuggestions(true);
-      setMentionSearch('');
-    } else if (lastAtIndex !== -1) {
-      const searchText = newMessage.substring(lastAtIndex + 1);
-      if (searchText.includes(' ')) {
-        setShowUserSuggestions(false);
-      } else {
-        setMentionSearch(searchText);
-        setShowUserSuggestions(true);
-      }
-    } else {
+    // Detectar comandos slash
+    if (newMessage.startsWith('/') && !newMessage.includes(' ')) {
+      setShowCommandSuggestions(true);
       setShowUserSuggestions(false);
+    } else if (newMessage.startsWith('/')) {
+      setShowCommandSuggestions(false);
+    } else {
+      setShowCommandSuggestions(false);
+    }
+
+    // Detectar @ para autocompletado
+    if (!newMessage.startsWith('/')) {
+      const lastAtIndex = newMessage.lastIndexOf('@');
+      if (lastAtIndex !== -1 && lastAtIndex === newMessage.length - 1) {
+        setShowUserSuggestions(true);
+        setMentionSearch('');
+      } else if (lastAtIndex !== -1) {
+        const searchText = newMessage.substring(lastAtIndex + 1);
+        if (searchText.includes(' ')) {
+          setShowUserSuggestions(false);
+        } else {
+          setMentionSearch(searchText);
+          setShowUserSuggestions(true);
+        }
+      } else {
+        setShowUserSuggestions(false);
+      }
     }
   }, [newMessage]);
 
@@ -173,6 +195,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || sending) return;
 
+    // Detectar si es un comando slash
+    if (isSlashCommand(newMessage)) {
+      handleSlashCommand(newMessage);
+      return;
+    }
+
     try {
       setSending(true);
 
@@ -198,6 +226,46 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSlashCommand = (commandText: string) => {
+    const parsed = parseSlashCommand(commandText);
+    if (!parsed) return;
+
+    switch (parsed.command) {
+      case 'status':
+        setActiveCommand({ type: 'status' });
+        break;
+
+      case 'poll':
+        if (parsed.args.length < 3) {
+          alert('Uso: /poll "¿Pregunta?" "Opción 1" "Opción 2" ...');
+          return;
+        }
+        const question = parsed.args[0];
+        const options = parsed.args.slice(1);
+        setActiveCommand({ type: 'poll', data: { question, options } });
+        break;
+
+      case 'quick-priority':
+        if (parsed.args.length < 1) {
+          alert('Uso: /quick-priority "Título de la prioridad"');
+          return;
+        }
+        const title = parsed.args[0];
+        setActiveCommand({ type: 'quick-priority', data: { title } });
+        break;
+
+      case 'help':
+        setActiveCommand({ type: 'help' });
+        break;
+
+      default:
+        alert(`Comando desconocido: ${parsed.command}\nEscribe /help para ver comandos disponibles`);
+        return;
+    }
+
+    setNewMessage('');
   };
 
   const handleEditMessage = async (messageId: string) => {
@@ -675,8 +743,109 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Active Command Display */}
+      {activeCommand && (
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+          {activeCommand.type === 'status' && (
+            <StatusCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'poll' && activeCommand.data && (
+            <PollCommand
+              projectId={projectId}
+              question={activeCommand.data.question}
+              options={activeCommand.data.options}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'quick-priority' && activeCommand.data && (
+            <QuickPriorityCommand
+              projectId={projectId}
+              initialTitle={activeCommand.data.title}
+              onClose={() => setActiveCommand(null)}
+              onSuccess={() => {
+                loadMessages();
+                setActiveCommand(null);
+              }}
+            />
+          )}
+          {activeCommand.type === 'help' && (
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-gray-300 dark:border-gray-700 p-6 my-2">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                    <Zap className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">Comandos Disponibles</h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Escribe / para ver comandos</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveCommand(null)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-3">
+                {SLASH_COMMANDS.map(cmd => (
+                  <div key={cmd.name} className="bg-white dark:bg-gray-700 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <code className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm font-mono">
+                        /{cmd.name}
+                      </code>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
+                        {cmd.category}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{cmd.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{cmd.usage}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        {/* Command Suggestions */}
+        {showCommandSuggestions && (
+          <div className="mb-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+            <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 border-b border-blue-200 dark:border-blue-700">
+              <div className="flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-300">
+                <Zap size={14} />
+                Comandos Disponibles
+              </div>
+            </div>
+            {SLASH_COMMANDS
+              .filter(cmd => cmd.name.startsWith(newMessage.substring(1).toLowerCase()))
+              .map((cmd) => (
+                <button
+                  key={cmd.name}
+                  onClick={() => {
+                    setNewMessage(`/${cmd.name} `);
+                    setShowCommandSuggestions(false);
+                  }}
+                  className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-gray-100 dark:border-gray-600 last:border-b-0 transition"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <code className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded text-sm font-mono font-bold">
+                      /{cmd.name}
+                    </code>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{cmd.category}</span>
+                  </div>
+                  <div className="text-sm text-gray-700 dark:text-gray-300">{cmd.description}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">{cmd.usage}</div>
+                </button>
+              ))}
+          </div>
+        )}
+
         {/* User Suggestions */}
         {showUserSuggestions && filteredUsers.length > 0 && (
           <div className="mb-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -713,7 +882,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                 handleSendMessage();
               }
             }}
-            placeholder="Escribe un mensaje... (usa @ para mencionar)"
+            placeholder="Escribe un mensaje... (@ para mencionar, / para comandos)"
             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={sending}
           />
