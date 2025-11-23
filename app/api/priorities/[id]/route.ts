@@ -10,6 +10,12 @@ import { notifyStatusChange, notifyPriorityUnblocked, notifyCompletionMilestone,
 import { awardBadge } from '@/lib/gamification';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
 import { sendPriorityNotificationToSlack } from '@/lib/slack';
+import {
+  logPriorityStatusChanged,
+  logPriorityCompleted,
+  logTaskCreated,
+  logTaskCompleted
+} from '@/lib/projectActivity';
 
 export async function GET(
   request: NextRequest,
@@ -326,6 +332,66 @@ export async function PUT(
       }
     } catch (notifyError) {
       console.error('Error sending notifications:', notifyError);
+    }
+
+    // Log activities to project channels (solo si tiene projectId)
+    if (updatedPriority.projectId) {
+      try {
+        // Log status change
+        if (body.status && body.status !== oldStatus) {
+          await logPriorityStatusChanged(
+            updatedPriority.projectId,
+            updatedPriority.userId,
+            updatedPriority._id,
+            updatedPriority.title,
+            oldStatus,
+            body.status
+          );
+
+          // Log completion
+          if (body.status === 'COMPLETADO') {
+            await logPriorityCompleted(
+              updatedPriority.projectId,
+              updatedPriority.userId,
+              updatedPriority._id,
+              updatedPriority.title
+            );
+          }
+        }
+
+        // Log task changes (new tasks, completed tasks)
+        if (body.checklist && Array.isArray(body.checklist)) {
+          const oldChecklistObj = JSON.parse(oldChecklist);
+
+          for (const task of body.checklist) {
+            // Find if task existed before
+            const oldTask = oldChecklistObj.find((t: any) => t._id?.toString() === task._id?.toString());
+
+            // New task
+            if (!oldTask) {
+              await logTaskCreated(
+                updatedPriority.projectId,
+                updatedPriority.userId,
+                task._id,
+                task.text,
+                updatedPriority._id,
+                updatedPriority.title
+              );
+            }
+            // Task was completed
+            else if (!oldTask.completed && task.completed) {
+              await logTaskCompleted(
+                updatedPriority.projectId,
+                updatedPriority.userId,
+                task._id,
+                task.text
+              );
+            }
+          }
+        }
+      } catch (activityError) {
+        console.error('Error logging activities:', activityError);
+      }
     }
 
     // Sincronización automática con Azure DevOps

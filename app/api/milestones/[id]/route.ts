@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Milestone from '@/models/Milestone';
+import { logMilestoneCompleted } from '@/lib/projectActivity';
 
 /**
  * GET - Obtiene un hito específico
@@ -72,6 +73,9 @@ export async function PUT(
     const body = await request.json();
     const { title, description, dueDate, deliverables, isCompleted, projectId } = body;
 
+    // Track if milestone was completed
+    const wasCompleted = milestone.isCompleted;
+
     // Actualizar campos
     if (title !== undefined) milestone.title = title;
     if (description !== undefined) milestone.description = description;
@@ -86,6 +90,20 @@ export async function PUT(
     }
 
     await milestone.save();
+
+    // Log activity to project channel (solo si tiene projectId y se completó)
+    if (milestone.projectId && !wasCompleted && milestone.isCompleted) {
+      try {
+        await logMilestoneCompleted(
+          milestone.projectId,
+          milestone.userId,
+          milestone._id,
+          milestone.title
+        );
+      } catch (activityError) {
+        console.error('Error logging milestone completion activity:', activityError);
+      }
+    }
 
     return NextResponse.json(milestone);
   } catch (error) {

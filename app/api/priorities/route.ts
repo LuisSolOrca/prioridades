@@ -7,6 +7,7 @@ import AzureDevOpsWorkItem from '@/models/AzureDevOpsWorkItem';
 import { awardBadge } from '@/lib/gamification';
 import { executeWorkflowsForPriority } from '@/lib/workflows';
 import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
+import { logPriorityCreated, logTaskCreated } from '@/lib/projectActivity';
 
 export async function GET(request: NextRequest) {
   try {
@@ -157,6 +158,38 @@ export async function POST(request: NextRequest) {
         // El badge PRIMERA_VICTORIA se otorga automáticamente cuando se completa la primera prioridad
       } catch (badgeError) {
         console.error('[BADGE] Error checking for badges:', badgeError);
+      }
+    }
+
+    // Log activity: priority created (solo si tiene projectId)
+    if (priority.projectId) {
+      try {
+        await logPriorityCreated(
+          priority.projectId,
+          priority.userId,
+          priority._id,
+          priority.title
+        );
+      } catch (activityError) {
+        console.error('Error logging priority creation activity:', activityError);
+      }
+
+      // Log activities for initial tasks in checklist
+      if (body.checklist && Array.isArray(body.checklist) && body.checklist.length > 0) {
+        try {
+          for (const task of body.checklist) {
+            await logTaskCreated(
+              priority.projectId,
+              priority.userId,
+              task._id,
+              task.text,
+              priority._id,
+              priority.title
+            );
+          }
+        } catch (activityError) {
+          console.error('Error logging task creation activities:', activityError);
+        }
       }
     }
 

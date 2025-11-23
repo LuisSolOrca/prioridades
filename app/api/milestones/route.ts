@@ -6,6 +6,7 @@ import Milestone from '@/models/Milestone';
 import User from '@/models/User';
 import { DIRECCION_GENERAL_USER_ID } from '@/lib/direccionGeneralFilter';
 import { hasPermission } from '@/lib/permissions';
+import { logMilestoneCreated } from '@/lib/projectActivity';
 
 /**
  * GET - Obtiene los hitos del usuario más los de su líder de área
@@ -126,6 +127,21 @@ export async function POST(request: NextRequest) {
       dueDate: new Date(dueDate),
       deliverables: deliverables || []
     });
+
+    // Log activity to project channel (solo si tiene projectId)
+    if (milestone.projectId) {
+      try {
+        await logMilestoneCreated(
+          milestone.projectId,
+          milestone.userId,
+          milestone._id,
+          milestone.title,
+          milestone.dueDate
+        );
+      } catch (activityError) {
+        console.error('Error logging milestone creation activity:', activityError);
+      }
+    }
 
     return NextResponse.json(milestone, { status: 201 });
   } catch (error) {

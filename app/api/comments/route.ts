@@ -8,6 +8,7 @@ import User from '@/models/User';
 import { notifyComment, notifyMention } from '@/lib/notifications';
 import { trackCommentBadges } from '@/lib/gamification';
 import { sendPriorityNotificationToSlack } from '@/lib/slack';
+import { logCommentAdded } from '@/lib/projectActivity';
 
 export async function GET(request: NextRequest) {
   try {
@@ -102,6 +103,24 @@ export async function POST(request: NextRequest) {
 
     // Variable para trackear si hubo mención
     let hasMention = false;
+
+    // Log activity to project channel (solo para comentarios normales y si la prioridad tiene proyecto)
+    if (!isSystemComment) {
+      try {
+        const priority = await Priority.findById(priorityId).lean();
+        if (priority && priority.projectId) {
+          await logCommentAdded(
+            priority.projectId,
+            (session.user as any).id,
+            priority._id,
+            priority.title,
+            text.trim().substring(0, 100) // Limitar a 100 caracteres
+          );
+        }
+      } catch (activityError) {
+        console.error('Error logging comment activity:', activityError);
+      }
+    }
 
     // Crear notificaciones (solo para comentarios normales, no del sistema)
     if (!isSystemComment) {
