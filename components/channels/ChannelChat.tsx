@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
+import ChannelSelector from '../ChannelSelector';
 import { isSlashCommand, parseSlashCommand, SLASH_COMMANDS } from '@/lib/slashCommands';
 import StatusCommand from '../slashCommands/StatusCommand';
 import PollCommand from '../slashCommands/PollCommand';
@@ -98,6 +99,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [editContent, setEditContent] = useState('');
   const [openThread, setOpenThread] = useState<Message | null>(null);
   const [users, setUsers] = useState<Array<{ _id: string; name: string; email: string }>>([]);
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+  const [selectedChannelName, setSelectedChannelName] = useState<string>('');
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,10 +162,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Cuando cambia la búsqueda debounced, recargar mensajes
+  // Cuando cambia la búsqueda debounced o el canal seleccionado, recargar mensajes
   useEffect(() => {
-    loadMessages();
-  }, [debouncedSearchQuery]);
+    if (selectedChannelId) {
+      loadMessages();
+      loadPinnedMessages();
+    }
+  }, [debouncedSearchQuery, selectedChannelId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -182,10 +188,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   };
 
   const loadMessages = async () => {
+    if (!selectedChannelId) return;
+
     try {
       setLoading(true);
       const searchParam = debouncedSearchQuery.trim() ? `&search=${encodeURIComponent(debouncedSearchQuery.trim())}` : '';
-      const response = await fetch(`/api/projects/${projectId}/messages?limit=50${searchParam}`);
+      const response = await fetch(`/api/projects/${projectId}/messages?limit=50&channelId=${selectedChannelId}${searchParam}`);
 
       if (!response.ok) {
         throw new Error('Error al cargar mensajes');
@@ -209,9 +217,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   };
 
   const loadPinnedMessages = async () => {
+    if (!selectedChannelId) return;
+
     try {
       // Fetch pinned messages separately
-      const response = await fetch(`/api/projects/${projectId}/messages/pinned`);
+      const response = await fetch(`/api/projects/${projectId}/messages/pinned?channelId=${selectedChannelId}`);
       if (response.ok) {
         const data = await response.json();
         setPinnedMessages(data.messages || []);
@@ -238,6 +248,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newMessage.trim(),
+          channelId: selectedChannelId,
           mentions: [] // TODO: detectar menciones @usuario
         })
       });
@@ -770,8 +781,24 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   return (
     <div className="flex flex-col h-[600px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      {/* Search Bar */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-3">
+      {/* Channel Selector & Search Bar */}
+      <div className="border-b border-gray-200 dark:border-gray-700 p-3 space-y-3">
+        {/* Channel Selector */}
+        <div className="flex items-center justify-between">
+          <ChannelSelector
+            projectId={projectId}
+            selectedChannelId={selectedChannelId}
+            onChannelSelect={(channelId, channelName) => {
+              setSelectedChannelId(channelId);
+              setSelectedChannelName(channelName);
+            }}
+          />
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {selectedChannelName && `# ${selectedChannelName}`}
+          </div>
+        </div>
+
+        {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <input

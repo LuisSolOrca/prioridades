@@ -9,6 +9,7 @@ export interface IReaction {
 export interface IChannelMessage {
   _id: mongoose.Types.ObjectId;
   projectId: mongoose.Types.ObjectId;
+  channelId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   content: string;
   mentions: mongoose.Types.ObjectId[]; // Array de userIds mencionados
@@ -31,6 +32,12 @@ const ChannelMessageSchema = new mongoose.Schema({
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
+    required: true,
+    index: true
+  },
+  channelId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Channel',
     required: true,
     index: true
   },
@@ -122,9 +129,9 @@ const ChannelMessageSchema = new mongoose.Schema({
 });
 
 // Índice compuesto para búsquedas eficientes
-ChannelMessageSchema.index({ projectId: 1, createdAt: -1 });
-ChannelMessageSchema.index({ projectId: 1, parentMessageId: 1, createdAt: -1 });
-ChannelMessageSchema.index({ projectId: 1, isPinned: 1, pinnedAt: -1 }); // Para mensajes anclados
+ChannelMessageSchema.index({ projectId: 1, channelId: 1, createdAt: -1 });
+ChannelMessageSchema.index({ projectId: 1, channelId: 1, parentMessageId: 1, createdAt: -1 });
+ChannelMessageSchema.index({ projectId: 1, channelId: 1, isPinned: 1, pinnedAt: -1 }); // Para mensajes anclados
 
 export default mongoose.models.ChannelMessage ||
   mongoose.model<IChannelMessage>('ChannelMessage', ChannelMessageSchema);

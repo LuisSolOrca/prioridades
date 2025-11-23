@@ -29,6 +29,7 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
     const parentMessageId = searchParams.get('parentMessageId');
+    const channelId = searchParams.get('channelId');
     const search = searchParams.get('search') || '';
 
     // Construir query
@@ -36,6 +37,11 @@ export async function GET(
       projectId: params.id,
       isDeleted: false
     };
+
+    // Filtrar por canal si se proporciona
+    if (channelId) {
+      query.channelId = channelId;
+    }
 
     // Si se especifica parentMessageId, obtener respuestas del hilo
     if (parentMessageId) {
@@ -149,11 +155,18 @@ export async function POST(
     await connectDB();
 
     const body = await request.json();
-    const { content, mentions = [], parentMessageId, commandType, commandData } = body;
+    const { content, channelId, mentions = [], parentMessageId, commandType, commandData } = body;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
         { error: 'El contenido del mensaje es requerido' },
+        { status: 400 }
+      );
+    }
+
+    if (!channelId) {
+      return NextResponse.json(
+        { error: 'El ID del canal es requerido' },
         { status: 400 }
       );
     }
@@ -202,6 +215,7 @@ export async function POST(
     // Crear mensaje
     const message = await ChannelMessage.create({
       projectId: params.id,
+      channelId,
       userId: session.user.id,
       content: content.trim(),
       mentions,

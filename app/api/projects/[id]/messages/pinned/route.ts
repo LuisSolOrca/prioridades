@@ -23,12 +23,23 @@ export async function GET(
 
     await connectDB();
 
-    // Buscar mensajes anclados
-    const messages = await ChannelMessage.find({
+    const { searchParams } = new URL(request.url);
+    const channelId = searchParams.get('channelId');
+
+    // Construir query
+    const query: any = {
       projectId: params.id,
       isPinned: true,
       isDeleted: false
-    })
+    };
+
+    // Filtrar por canal si se proporciona
+    if (channelId) {
+      query.channelId = channelId;
+    }
+
+    // Buscar mensajes anclados
+    const messages = await ChannelMessage.find(query)
       .sort({ pinnedAt: -1 }) // Más recientes primero
       .limit(5) // Máximo 5 mensajes anclados
       .populate('userId', 'name email')
