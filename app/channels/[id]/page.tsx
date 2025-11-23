@@ -7,14 +7,24 @@ import Navbar from '@/components/Navbar';
 import ActivityFeed from '@/components/channels/ActivityFeed';
 import ChannelChat from '@/components/channels/ChannelChat';
 import ChannelLinks from '@/components/channels/ChannelLinks';
-import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft } from 'lucide-react';
+import ChannelMetrics from '@/components/channels/ChannelMetrics';
+import ProjectFormModal, { ProjectFormData } from '@/components/ProjectFormModal';
+import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft, BarChart3, FileText } from 'lucide-react';
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+}
 
 export default function ChannelPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics'>('feed');
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -27,17 +37,26 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
   const loadProject = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/projects');
-      if (!response.ok) throw new Error('Error al cargar proyecto');
+      const [projectsRes, usersRes] = await Promise.all([
+        fetch('/api/projects'),
+        fetch('/api/users')
+      ]);
 
-      const data = await response.json();
-      const projects = Array.isArray(data) ? data : data.projects || [];
+      if (!projectsRes.ok) throw new Error('Error al cargar proyecto');
+
+      const projectsData = await projectsRes.json();
+      const projects = Array.isArray(projectsData) ? projectsData : projectsData.projects || [];
       const foundProject = projects.find((p: any) => p._id === params.id);
 
       if (foundProject) {
         setProject(foundProject);
       } else {
         throw new Error('Proyecto no encontrado');
+      }
+
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        setUsers(Array.isArray(usersData) ? usersData : []);
       }
     } catch (err) {
       console.error('Error loading project:', err);
@@ -91,20 +110,30 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
               Volver a Canales
             </button>
 
-            <div className="flex items-center mb-4">
-              <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg mr-3">
-                <Hash className="text-blue-600 dark:text-blue-400" size={28} />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg mr-3">
+                  <Hash className="text-blue-600 dark:text-blue-400" size={28} />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                    {project.name}
+                  </h1>
+                  {project.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {project.description}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                  {project.name}
-                </h1>
-                {project.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {project.description}
-                  </p>
-                )}
-              </div>
+              <button
+                onClick={() => setShowProjectModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                title="Ver detalles del proyecto"
+              >
+                <FileText size={18} />
+                Breakdown
+              </button>
             </div>
 
             {/* Tabs */}
@@ -142,6 +171,17 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
                 <LinkIcon size={18} className="mr-2" />
                 Links
               </button>
+              <button
+                onClick={() => setActiveTab('metrics')}
+                className={`flex items-center px-4 py-2 rounded-t-lg transition ${
+                  activeTab === 'metrics'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <BarChart3 size={18} className="mr-2" />
+                Métricas
+              </button>
             </div>
           </div>
         </div>
@@ -152,9 +192,26 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
             {activeTab === 'feed' && <ActivityFeed projectId={params.id} />}
             {activeTab === 'chat' && <ChannelChat projectId={params.id} />}
             {activeTab === 'links' && <ChannelLinks projectId={params.id} />}
+            {activeTab === 'metrics' && <ChannelMetrics projectId={params.id} />}
           </div>
         </div>
       </div>
+
+      {/* Project Breakdown Modal */}
+      {showProjectModal && project && (
+        <ProjectFormModal
+          isOpen={showProjectModal}
+          onClose={() => setShowProjectModal(false)}
+          formData={project}
+          setFormData={() => {}} // No-op since it's read-only
+          handleSubmit={(e) => e.preventDefault()} // No-op since it's read-only
+          isEditing={true}
+          users={users}
+          projectId={project._id}
+          readOnly={true}
+          saving={false}
+        />
+      )}
     </div>
   );
 }
