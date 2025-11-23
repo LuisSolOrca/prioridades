@@ -59,6 +59,7 @@ import WheelCommand from '../slashCommands/WheelCommand';
 import MoodCommand from '../slashCommands/MoodCommand';
 import ProsConsCommand from '../slashCommands/ProsConsCommand';
 import RankingCommand from '../slashCommands/RankingCommand';
+import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 
 interface Priority {
   _id: string;
@@ -2167,6 +2168,30 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar pregunta"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'webhook-incoming' && message.commandData ? (
+                    /* Render Webhook Message Card */
+                    <div className="relative group">
+                      <WebhookMessageCard
+                        content={message.content}
+                        webhookName={message.commandData.webhookName || 'Webhook'}
+                        username={message.commandData.username || 'Sistema Externo'}
+                        metadata={message.commandData.metadata || {}}
+                        createdAt={message.createdAt}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar mensaje de webhook"
                             >
                               <Trash2 size={14} />
                             </button>
