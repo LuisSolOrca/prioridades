@@ -21,7 +21,8 @@ interface CreateNotificationParams {
     | 'WEEK_START_REMINDER'
     | 'COMMENT_REPLY'
     | 'CHANNEL_MENTION'
-    | 'CHANNEL_REPLY';
+    | 'CHANNEL_REPLY'
+    | 'QUESTION';
   title: string;
   message: string;
   priorityId?: string;
@@ -191,6 +192,18 @@ export async function createNotification(params: CreateNotificationParams) {
                 replierName,
                 projectName: params.projectName || 'Proyecto',
                 replyText: params.message,
+                channelUrl: `${baseUrl}${params.actionUrl || '/channels'}`
+              });
+            }
+            break;
+
+          case 'QUESTION':
+            if (user.emailNotifications?.newComments) {
+              const askerName = params.title.split(' te hizo una pregunta importante en ')[0];
+              emailContent = emailTemplates.question({
+                askerName,
+                projectName: params.projectName || 'Proyecto',
+                questionText: params.message,
                 channelUrl: `${baseUrl}${params.actionUrl || '/channels'}`
               });
             }
@@ -454,6 +467,28 @@ export async function notifyChannelReply(
     type: 'CHANNEL_REPLY',
     title: `${replierName} respondió a tu mensaje en #${projectName}`,
     message: replyText.substring(0, 100) + (replyText.length > 100 ? '...' : ''),
+    projectId,
+    projectName,
+    messageId,
+    actionUrl: `/channels/${projectId}?message=${messageId}`,
+    sendEmail: true
+  });
+}
+
+// Notificación: Pregunta en canal
+export async function notifyQuestion(
+  userId: string,
+  askerName: string,
+  questionText: string,
+  projectId: string,
+  projectName: string,
+  messageId: string
+) {
+  await createNotification({
+    userId,
+    type: 'QUESTION',
+    title: `${askerName} te hizo una pregunta importante en #${projectName}`,
+    message: questionText.substring(0, 150) + (questionText.length > 150 ? '...' : ''),
     projectId,
     projectName,
     messageId,

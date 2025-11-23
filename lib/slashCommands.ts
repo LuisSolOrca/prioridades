@@ -129,6 +129,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Análisis de menciones y patrones de colaboración',
     usage: '/mention-stats',
     category: 'analysis'
+  },
+  {
+    name: 'question',
+    description: 'Hacer pregunta importante a un stakeholder o miembro del equipo',
+    usage: '/question @usuario "¿Tu pregunta aquí?"',
+    category: 'collaboration'
   }
 ];
 

@@ -435,6 +435,38 @@ export const emailTemplates = {
     }),
   }),
 
+  question: (params: {
+    askerName: string;
+    projectName: string;
+    questionText: string;
+    channelUrl: string;
+  }) => ({
+    subject: `❓ ${params.askerName} te hizo una pregunta importante en #${params.projectName}`,
+    html: generateEmailHTML({
+      headerGradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      headerTitle: '❓ Pregunta Importante Pendiente',
+      content: `
+        <p style="font-weight: 600; color: #1f2937; margin-bottom: 10px;">¡Atención! ${params.askerName} necesita tu respuesta:</p>
+        <h3 style="color: #1f2937; margin: 15px 0;">#${params.projectName}</h3>
+        <div class="info-box" style="border-color: #f59e0b; background: #fffbeb;">
+          <p style="color: #92400e; font-weight: 600; margin: 0 0 10px 0;">❓ Pregunta:</p>
+          <div style="background: #ffffff; padding: 15px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+            <div style="color: #1f2937; font-size: 15px; line-height: 1.6;">"${params.questionText}"</div>
+          </div>
+        </div>
+        <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 15px; margin: 20px 0;">
+          <p style="color: #78350f; margin: 0; font-size: 14px;">
+            <strong>💡 Recordatorio:</strong> Tu respuesta quedará registrada en el canal para que todo el equipo pueda consultarla después.
+          </p>
+        </div>
+        <a href="${params.channelUrl}" class="button" style="background: #f59e0b;">Responder Ahora</a>
+        <p style="color: #6b7280; font-size: 13px; margin-top: 20px; text-align: center;">
+          Esta es una pregunta importante que requiere tu atención. Por favor responde lo antes posible.
+        </p>
+      `
+    }),
+  }),
+
   performanceReport: (params: {
     userName: string;
     periodLabel: string;

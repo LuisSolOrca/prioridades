@@ -39,6 +39,7 @@ import MyStatsCommand from '../slashCommands/MyStatsCommand';
 import DecisionCommand from '../slashCommands/DecisionCommand';
 import ScheduleCommand from '../slashCommands/ScheduleCommand';
 import MentionStatsCommand from '../slashCommands/MentionStatsCommand';
+import QuestionCommand from '../slashCommands/QuestionCommand';
 
 interface Priority {
   _id: string;
@@ -478,6 +479,85 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating decision:', error);
           alert('Error al registrar la decisión');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'question':
+        if (parsed.args.length < 2) {
+          alert('Uso: /question @usuario "¿Tu pregunta aquí?"');
+          return;
+        }
+        if (sending) return; // Evitar duplicados
+
+        const questionUser = parsed.args[0].replace('@', '');
+        const questionText = parsed.args[1];
+
+        // Buscar usuario mencionado
+        const questionedUser = users.find(u =>
+          u.name.toLowerCase() === questionUser.toLowerCase()
+        );
+
+        if (!questionedUser) {
+          alert(`Usuario ${questionUser} no encontrado. Verifica el nombre.`);
+          return;
+        }
+
+        // Crear pregunta persistente en la base de datos
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/question @${questionUser} "${questionText}"`,
+              commandType: 'question',
+              commandData: {
+                question: questionText,
+                askedTo: questionedUser.name,
+                askedToId: questionedUser._id,
+                askedBy: session?.user?.name,
+                createdAt: new Date().toISOString(),
+                answered: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const message = await response.json();
+            // Agregar mensaje directamente en lugar de recargar todos
+            setMessages((prev) => [...prev, message]);
+
+            // Notificar al usuario preguntado
+            try {
+              // Obtener datos del proyecto para la notificación
+              const projectResponse = await fetch(`/api/projects/${projectId}`);
+              if (projectResponse.ok) {
+                const projectData = await projectResponse.json();
+
+                await fetch('/api/notifications/question', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    userId: questionedUser._id,
+                    askerName: session?.user?.name,
+                    questionText,
+                    projectId,
+                    projectName: projectData.name,
+                    messageId: message._id
+                  })
+                });
+              }
+            } catch (notifError) {
+              console.error('Error sending notification:', notifError);
+              // No fallar el comando si la notificación falla
+            }
+          }
+        } catch (error) {
+          console.error('Error creating question:', error);
+          alert('Error al crear la pregunta');
         } finally {
           setSending(false);
         }
@@ -947,6 +1027,38 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar decisión"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'question' && message.commandData ? (
+                    /* Render Question Command */
+                    <div className="relative group">
+                      <QuestionCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        askedTo={message.commandData.askedTo}
+                        askedToId={message.commandData.askedToId}
+                        askedBy={message.commandData.askedBy}
+                        createdAt={message.commandData.createdAt}
+                        answered={message.commandData.answered || false}
+                        answer={message.commandData.answer}
+                        answeredAt={message.commandData.answeredAt}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Question */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar pregunta"
                             >
                               <Trash2 size={14} />
                             </button>
