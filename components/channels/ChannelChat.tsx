@@ -116,6 +116,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [editContent, setEditContent] = useState('');
   const [openThread, setOpenThread] = useState<Message | null>(null);
   const [users, setUsers] = useState<Array<{ _id: string; name: string; email: string }>>([]);
+  const [userGroups, setUserGroups] = useState<Array<{ _id: string; name: string; tag: string; color: string; members: any[] }>>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [selectedChannelName, setSelectedChannelName] = useState<string>('');
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
@@ -145,6 +146,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   useEffect(() => {
     loadUsers();
+    loadUserGroups();
     // No cargar mensajes aquí, esperar a que se seleccione un canal
   }, [projectId]);
 
@@ -314,6 +316,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       }
     } catch (err) {
       console.error('Error loading users:', err);
+    }
+  };
+
+  const loadUserGroups = async () => {
+    try {
+      const response = await fetch('/api/user-groups');
+      if (response.ok) {
+        const data = await response.json();
+        setUserGroups(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading user groups:', err);
     }
   };
 
@@ -1464,16 +1478,26 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   };
 
-  const handleMentionSelect = (user: { name: string }) => {
+  const handleMentionSelect = (item: { name?: string; tag?: string; isGroup?: boolean }) => {
     const lastAtIndex = newMessage.lastIndexOf('@');
     const beforeAt = newMessage.substring(0, lastAtIndex);
-    setNewMessage(`${beforeAt}@${user.name} `);
+    const mentionText = item.isGroup ? item.tag : item.name;
+    setNewMessage(`${beforeAt}@${mentionText} `);
     setShowUserSuggestions(false);
   };
 
-  const filteredUsers = users.filter((u) =>
-    u.name.toLowerCase().includes(mentionSearch.toLowerCase())
-  );
+  // Combinar usuarios y grupos para sugerencias de menciones
+  const filteredMentions = [
+    ...userGroups
+      .filter((g) =>
+        g.name.toLowerCase().includes(mentionSearch.toLowerCase()) ||
+        g.tag.toLowerCase().includes(mentionSearch.toLowerCase())
+      )
+      .map((g) => ({ ...g, isGroup: true })),
+    ...users
+      .filter((u) => u.name.toLowerCase().includes(mentionSearch.toLowerCase()))
+      .map((u) => ({ ...u, isGroup: false }))
+  ];
 
   if (loading) {
     return (
@@ -2513,26 +2537,58 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           </div>
         )}
 
-        {/* User Suggestions */}
-        {showUserSuggestions && filteredUsers.length > 0 && (
-          <div className="mb-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-            {filteredUsers.slice(0, 5).map((user) => (
+        {/* User and Group Suggestions */}
+        {showUserSuggestions && filteredMentions.length > 0 && (
+          <div className="mb-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+            {filteredMentions.slice(0, 8).map((item: any) => (
               <button
-                key={user._id}
-                onClick={() => handleMentionSelect(user)}
+                key={item._id}
+                onClick={() => handleMentionSelect(item)}
                 className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2 transition"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                    {user.name}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {user.email}
-                  </div>
-                </div>
+                {item.isGroup ? (
+                  <>
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs"
+                      style={{ backgroundColor: item.color || '#3b82f6' }}
+                    >
+                      👥
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                          {item.name}
+                        </span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded font-mono"
+                          style={{
+                            backgroundColor: `${item.color}20`,
+                            color: item.color || '#3b82f6'
+                          }}
+                        >
+                          @{item.tag}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {item.members?.length || 0} {(item.members?.length || 0) === 1 ? 'miembro' : 'miembros'}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs">
+                      {item.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                        {item.name}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {item.email}
+                      </div>
+                    </div>
+                  </>
+                )}
               </button>
             ))}
           </div>
