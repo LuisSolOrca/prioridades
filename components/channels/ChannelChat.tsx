@@ -35,6 +35,7 @@ import SummaryCommand from '../slashCommands/SummaryCommand';
 import ProgressCommand from '../slashCommands/ProgressCommand';
 import TeamLoadCommand from '../slashCommands/TeamLoadCommand';
 import BurndownCommand from '../slashCommands/BurndownCommand';
+import VelocityCommand from '../slashCommands/VelocityCommand';
 import SearchCommand from '../slashCommands/SearchCommand';
 import PrioritiesCommand from '../slashCommands/PrioritiesCommand';
 import RecentCommand from '../slashCommands/RecentCommand';
@@ -516,6 +517,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       case 'burndown':
         setActiveCommand({ type: 'burndown' });
+        setNewMessage('');
+        break;
+
+      case 'velocity':
+        setActiveCommand({ type: 'velocity' });
         setNewMessage('');
         break;
 
@@ -1543,6 +1549,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           )}
           {activeCommand.type === 'burndown' && (
             <BurndownCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'velocity' && (
+            <VelocityCommand
               projectId={projectId}
               onClose={() => setActiveCommand(null)}
             />

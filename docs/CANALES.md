@@ -6,16 +6,18 @@
 3. [Mensajería](#mensajería)
 4. [Tiempo Real y Presencia](#tiempo-real-y-presencia)
 5. [Canales y Subcanales](#canales-y-subcanales)
-6. [Menciones](#menciones)
-7. [Reacciones](#reacciones)
-8. [Threads (Hilos)](#threads-hilos)
-9. [Mensajes Anclados](#mensajes-anclados)
-10. [Búsqueda](#búsqueda)
-11. [Slash Commands](#slash-commands)
-12. [Notificaciones](#notificaciones)
-13. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
-14. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-15. [Roadmap Futuro](#roadmap-futuro)
+6. [Formato Markdown](#formato-markdown)
+7. [Link Previews](#link-previews)
+8. [Menciones](#menciones)
+9. [Reacciones](#reacciones)
+10. [Threads (Hilos)](#threads-hilos)
+11. [Mensajes Anclados](#mensajes-anclados)
+12. [Búsqueda](#búsqueda)
+13. [Slash Commands](#slash-commands)
+14. [Notificaciones](#notificaciones)
+15. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+16. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+17. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -44,7 +46,10 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 📜 **Scroll infinito** con lazy loading de mensajes antiguos
 - 👥 **Menciones de usuarios** con notificaciones
 - 📌 **Menciones de prioridades** con previsualizaciones
-- 😄 **Reacciones con emojis** (👍 ❤️ 😄 🎉)
+- 😄 **Reacciones con emojis** - 43 emojis organizados en categorías
+- 📝 **Formato Markdown** - negrita, cursiva, código, listas, y más
+- 🔗 **Link Previews** - previews automáticas de URLs con metadata
+- 🎨 **Syntax highlighting** - código con colores por lenguaje
 - 🧵 **Threads/hilos** para conversaciones organizadas
 - 📍 **Mensajes anclados** (máximo 5)
 - 🔍 **Búsqueda avanzada** por contenido y usuario
@@ -245,6 +250,339 @@ El selector en el header del chat permite:
 
 ---
 
+## Formato Markdown
+
+El sistema soporta **Markdown completo** para formatear mensajes con texto enriquecido, código, listas y más.
+
+### Sintaxis Soportada
+
+#### Formato de Texto
+
+| Sintaxis | Resultado | Descripción |
+|----------|-----------|-------------|
+| `**negrita**` | **negrita** | Texto en negrita |
+| `*cursiva*` | *cursiva* | Texto en cursiva |
+| `~~tachado~~` | ~~tachado~~ | Texto tachado (strikethrough) |
+| `` `código` `` | `código` | Código inline |
+
+#### Bloques de Código
+
+**Código sin lenguaje:**
+````
+```
+function ejemplo() {
+  return "Hola mundo";
+}
+```
+````
+
+**Código con syntax highlighting:**
+````
+```javascript
+function ejemplo() {
+  return "Hola mundo";
+}
+```
+````
+
+**Lenguajes soportados:**
+- JavaScript, TypeScript, Python, Java, C++, Go, Rust, PHP
+- HTML, CSS, SQL, JSON, YAML, Markdown
+- Bash, PowerShell, y muchos más
+
+El sistema usa **highlight.js** con el tema `github-dark` para colorear automáticamente el código según el lenguaje.
+
+#### Listas
+
+**Lista desordenada:**
+```
+- Item 1
+- Item 2
+  - Sub-item 2.1
+  - Sub-item 2.2
+- Item 3
+```
+
+**Lista ordenada:**
+```
+1. Primer paso
+2. Segundo paso
+3. Tercer paso
+```
+
+#### Enlaces
+
+```
+[Texto del enlace](https://ejemplo.com)
+```
+
+Los enlaces automáticamente:
+- Se abren en nueva pestaña
+- Generan previews automáticas (ver siguiente sección)
+- Detectan URLs sin formato y las convierten en links
+
+#### Citas
+
+```
+> Esto es una cita
+> Puede tener múltiples líneas
+```
+
+Resultado:
+> Esto es una cita
+> Puede tener múltiples líneas
+
+#### Encabezados
+
+```
+# Encabezado 1
+## Encabezado 2
+### Encabezado 3
+#### Encabezado 4
+```
+
+#### Tablas
+
+```
+| Columna 1 | Columna 2 | Columna 3 |
+|-----------|-----------|-----------|
+| Dato 1    | Dato 2    | Dato 3    |
+| Dato 4    | Dato 5    | Dato 6    |
+```
+
+### Ayuda de Markdown
+
+Haz clic en el botón **?** (azul) junto al campo de mensaje para ver:
+- Guía rápida de sintaxis
+- Ejemplos visuales
+- Categorías organizadas (Formato, Código, Listas, Enlaces, etc.)
+- Consejos de uso
+
+### Características Especiales
+
+#### Compatibilidad con Menciones
+
+El Markdown **coexiste** con las menciones de usuarios y prioridades:
+
+```
+**@Juan Pérez** ¿puedes revisar #implementar-api-rest?
+```
+
+Las menciones funcionan dentro del Markdown sin conflictos.
+
+#### Formato Mixto
+
+Puedes combinar múltiples formatos:
+
+```
+**Importante:** La función `getUserData()` está *deprecated*.
+Ver más en [docs](https://ejemplo.com)
+```
+
+#### Whitespace Preservation
+
+Los saltos de línea y espacios se preservan correctamente:
+- Usa **Enter** para nueva línea dentro del mensaje
+- Usa **Shift + Enter** para salto de línea sin enviar
+
+### Ejemplos de Uso
+
+**Reportar un bug:**
+```
+🐛 **Bug encontrado en login**
+
+**Pasos para reproducir:**
+1. Ir a `/login`
+2. Ingresar credenciales inválidas
+3. El error no se muestra
+
+**Código del error:**
+```javascript
+if (!user) {
+  // Falta return aquí
+  console.error('User not found');
+}
+```
+
+**Asignado a:** @María López
+```
+
+**Compartir código:**
+````
+💡 Solución para el problema de cache:
+
+```typescript
+const cache = new Map<string, CachedData>();
+
+function getCachedData(key: string) {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < TTL) {
+    return cached.data;
+  }
+  return null;
+}
+```
+
+¿Les parece bien este approach?
+````
+
+**Crear checklist:**
+```
+📋 **TODO para el sprint:**
+
+- [x] Implementar autenticación
+- [x] Crear dashboard
+- [ ] Agregar tests
+- [ ] Deploy a producción
+```
+
+---
+
+## Link Previews
+
+El sistema genera automáticamente **previews enriquecidas** de URLs compartidas en el chat, similar a Slack, Discord o WhatsApp.
+
+### Funcionamiento Automático
+
+Cuando compartes un link en el chat:
+
+```
+Miren esta documentación: https://nextjs.org/docs
+```
+
+El sistema automáticamente:
+1. ✅ Detecta la URL en el mensaje
+2. ✅ Hace fetch del HTML de la página
+3. ✅ Extrae metadata (Open Graph, Twitter Cards)
+4. ✅ Muestra una preview card debajo del mensaje
+
+### Información Extraída
+
+La preview card incluye:
+
+- **🖼️ Imagen destacada**: Imagen principal de la página (Open Graph image)
+- **📄 Título**: Título de la página o artículo
+- **📝 Descripción**: Resumen corto del contenido
+- **🌐 Favicon**: Ícono del sitio web
+- **🔗 Nombre del sitio**: Ej: "GitHub", "Medium", "YouTube"
+- **🔗 Ícono de enlace externo**: Indica que abre en nueva pestaña
+
+### Ejemplo Visual
+
+Para el link `https://github.com/vercel/next.js`:
+
+```
+┌──────────────────────────────────────────────┐
+│  Next.js by Vercel                           │
+│  The React Framework for the Web             │
+│                                    [Image]   │
+│  🌐 GitHub ↗                                 │
+└──────────────────────────────────────────────┘
+```
+
+### Características Técnicas
+
+#### Caché Inteligente
+
+- ✅ **Duración**: 24 horas por URL
+- ✅ **Almacenamiento**: En memoria del servidor
+- ✅ **Auto-limpieza**: Elimina URLs antiguas automáticamente
+- ✅ **Performance**: La segunda carga es instantánea
+
+#### Timeout Protection
+
+- ⏱️ **Timeout**: 10 segundos máximo por fetch
+- ⏱️ **No bloquea**: Si el sitio es lento, el mensaje se muestra de inmediato
+- ⏱️ **Fallback**: Si falla, solo muestra el link sin preview
+
+#### Soporte de Estándares
+
+El sistema extrae metadata de:
+- **Open Graph** (Facebook): `og:title`, `og:image`, `og:description`
+- **Twitter Cards**: `twitter:title`, `twitter:image`, `twitter:description`
+- **HTML estándar**: `<title>`, `<meta name="description">`, `<link rel="icon">`
+
+#### URLs Relativas
+
+Resuelve automáticamente:
+- Imágenes relativas: `/images/hero.png` → `https://sitio.com/images/hero.png`
+- Favicons: `/favicon.ico` → `https://sitio.com/favicon.ico`
+
+### Loading States
+
+Mientras carga la preview:
+- 📊 **Skeleton screen**: Animación de carga con "pulse"
+- ⏳ **No bloquea el chat**: Puedes seguir enviando mensajes
+- ✅ **Progressive enhancement**: El link funciona incluso sin preview
+
+### Múltiples Links
+
+Si compartes múltiples URLs en un mensaje:
+
+```
+Recursos útiles:
+- https://react.dev
+- https://nextjs.org
+- https://tailwindcss.com
+```
+
+El sistema genera **una preview por cada URL**, apiladas verticalmente.
+
+### Sitios Soportados
+
+Funciona con **cualquier sitio web** que incluya metadata, pero especialmente bien con:
+- 📰 Medium, Dev.to, blogs
+- 🎥 YouTube, Vimeo
+- 💻 GitHub, GitLab
+- 📚 Documentación (Next.js, React, etc.)
+- 🐦 Twitter/X (si público)
+- 🔗 Notion, Google Docs (si público)
+
+### Seguridad
+
+- 🔒 Solo protocolos **HTTP** y **HTTPS**
+- 🔒 Validación de URL antes de hacer fetch
+- 🔒 User-Agent identificado: `LinkPreviewBot/1.0`
+- 🔒 No ejecuta JavaScript del sitio externo
+- 🔒 Protección contra inyección XSS
+
+### Casos de Error
+
+Si el sitio no está disponible o no tiene metadata:
+- ❌ **Timeout**: Preview no aparece, link funciona normalmente
+- ❌ **404/500**: Preview no aparece, link funciona normalmente
+- ❌ **Sin metadata**: Preview no aparece, link funciona normalmente
+- ❌ **Error de red**: Preview no aparece, link funciona normalmente
+
+**La regla general:** Si algo falla, el mensaje y link siguen funcionando perfectamente, simplemente sin la preview visual.
+
+### Desactivar Previews
+
+Actualmente no hay opción para deshabilitar previews individualmente. Si necesitas compartir un link sin preview, considera:
+- Usar código inline: `` `https://ejemplo.com` ``
+- Agregar espacios: `https:// ejemplo.com` (rompe el link)
+
+### API Endpoint
+
+Las previews se generan mediante:
+```
+GET /api/link-preview?url=https://ejemplo.com
+```
+
+Respuesta JSON:
+```json
+{
+  "url": "https://ejemplo.com",
+  "title": "Título de la Página",
+  "description": "Descripción del contenido",
+  "image": "https://ejemplo.com/image.jpg",
+  "siteName": "Nombre del Sitio",
+  "favicon": "https://ejemplo.com/favicon.ico"
+}
+```
+
+---
+
 ## Menciones
 
 ### Menciones de Usuarios (@usuario)
@@ -289,15 +627,24 @@ Vincula prioridades del proyecto en tus mensajes:
 
 ### Agregar Reacciones
 
-Cada mensaje muestra 4 emojis de acceso rápido:
+Cada mensaje muestra **4 emojis de acceso rápido** y un **selector con 43 emojis** organizados en categorías:
+
+**Emojis de acceso rápido:**
 - 👍 Pulgar arriba
 - ❤️ Corazón
 - 😄 Cara feliz
 - 🎉 Celebración
 
+**Selector de emojis** (botón **😄+**):
+- **Frecuentes**: 👍 ❤️ 😄 🎉 👏 🔥 💯 ✅
+- **Emociones**: 😀 😃 😊 😍 🥰 😘 😂 🤣 😭 😢 😡 😱 😨 🤔 🙄 😴
+- **Gestos**: 👋 👌 ✌️ 🤝 🙏 💪 👊 ✊
+- **Símbolos**: ✨ ⭐ 🌟 💫 🚀 🎯 ⚡ 🔔 🎁 🎊 🎈
+
 **Uso:**
-1. Haz clic en el emoji debajo del mensaje
-2. La reacción se agrega o se quita si ya reaccionaste
+1. Haz clic en uno de los 4 emojis rápidos debajo del mensaje
+2. O haz clic en **😄+** para abrir el selector con más opciones
+3. La reacción se agrega o se quita si ya reaccionaste
 
 ### Ver Quién Reaccionó
 
@@ -306,9 +653,13 @@ Pasa el mouse sobre una reacción para ver:
 - Cantidad total de reacciones
 
 **Características:**
-- Un usuario puede reaccionar múltiples veces con diferentes emojis
-- Las reacciones se agrupan por tipo
-- Se resaltan las reacciones que tú has dado
+- ✅ **43 emojis disponibles** organizados en 4 categorías
+- ✅ **Navegación por tabs** entre categorías
+- ✅ **Hover effect** con escala 1.25x para mejor UX
+- ✅ **Click fuera para cerrar** el selector automáticamente
+- ✅ Un usuario puede reaccionar múltiples veces con diferentes emojis
+- ✅ Las reacciones se agrupan por tipo
+- ✅ Se resaltan las reacciones que tú has dado
 
 ---
 
@@ -431,6 +782,7 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/summary` | Resumen de actividad del proyecto | `/summary [24h\|week\|month]` |
 | `/team-load` | Distribución de carga por usuario | `/team-load` |
 | `/burndown` | Gráfico burndown de la semana | `/burndown` |
+| `/velocity` | Velocidad del equipo con tendencias y predicciones | `/velocity` |
 | `/blockers` | Lista de prioridades bloqueadas | `/blockers` |
 | `/risks` | Prioridades en riesgo | `/risks` |
 | `/search` | Búsqueda avanzada de datos | `/search [tipo] [término]` |
@@ -491,6 +843,127 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 /export pdf
 /export csv
 ```
+
+**Ver velocidad del equipo:**
+```
+/velocity
+```
+
+---
+
+## Comando /velocity - Velocidad del Equipo
+
+### Descripción
+
+El comando `/velocity` analiza la velocidad del equipo mostrando cuántas prioridades se completan por semana, identificando tendencias y generando predicciones basadas en datos históricos.
+
+### Uso Básico
+
+```
+/velocity
+```
+
+### Características
+
+#### 1. **Análisis de 6 Semanas**
+
+Muestra un gráfico de barras con las últimas 6 semanas, indicando:
+- Prioridades completadas por semana
+- Semana actual destacada en color púrpura/rosa
+- Barra de predicción para la próxima semana (línea punteada)
+
+#### 2. **Métricas Principales**
+
+**Promedio por Semana:**
+- Calcula el promedio de prioridades completadas en las últimas 4 semanas
+- Útil para planificación de sprints y compromisos
+
+**Tendencia:**
+- 📈 **Aumentando**: El equipo está completando más prioridades cada semana (+X%)
+- 📉 **Disminuyendo**: La velocidad está bajando, puede indicar bloqueadores (-X%)
+- ➖ **Estable**: Ritmo consistente y predecible
+
+**Predicción Próxima Semana:**
+- Usa regresión lineal simple basada en las últimas 4 semanas
+- Proyecta cuántas prioridades se completarán la próxima semana
+- Útil para planificar capacidad y compromisos
+
+#### 3. **Análisis Inteligente**
+
+El comando proporciona insights automáticos:
+
+- **Tendencia al alza**: "Excelente: La velocidad del equipo está aumentando. El equipo está completando más prioridades cada semana."
+- **Tendencia a la baja**: "Atención: La velocidad está disminuyendo. Considera revisar si hay bloqueadores o sobrecarga de trabajo."
+- **Tendencia estable**: "Consistente: La velocidad se mantiene estable. El equipo tiene un ritmo predecible."
+
+#### 4. **Visualización Clara**
+
+- **Gráfico de barras**: Muestra evolución temporal de forma visual
+- **Tooltips**: Al pasar el mouse sobre las barras, muestra información detallada
+- **Colores distintivos**:
+  - Morado/Rosa: Semana actual
+  - Púrpura claro: Semanas anteriores
+  - Índigo con borde punteado: Predicción
+
+### Casos de Uso
+
+#### Planning de Sprint
+
+```
+/velocity
+```
+Antes de planificar el próximo sprint, revisa la velocidad histórica y usa la predicción para comprometerte a un número realista de prioridades.
+
+#### Retrospectivas
+
+Usa `/velocity` en retrospectivas para:
+- Identificar si el equipo está mejorando
+- Detectar caídas de velocidad y analizar causas
+- Celebrar mejoras consistentes
+
+#### Reportes a Stakeholders
+
+Muestra tendencias objetivas basadas en datos:
+- "Nuestra velocidad promedio es de 8 prioridades/semana"
+- "Estamos en tendencia al alza (+15%)"
+- "Proyectamos completar 9 prioridades la próxima semana"
+
+#### Detección de Problemas
+
+Si la tendencia es decreciente:
+1. Ejecuta `/blockers` para ver prioridades bloqueadas
+2. Ejecuta `/team-load` para ver distribución de carga
+3. Considera hacer un `/standup` para identificar impedimentos
+
+### Cálculos Técnicos
+
+#### Velocidad Promedio
+```
+Promedio = Σ(prioridades completadas en últimas 4 semanas) / 4
+```
+
+#### Tendencia
+Compara últimas 2 semanas vs 2 anteriores:
+- Si cambio > 10% → Aumentando
+- Si cambio < -10% → Disminuyendo
+- Si -10% ≤ cambio ≤ 10% → Estable
+
+#### Predicción (Regresión Lineal Simple)
+```
+y = mx + b
+Donde:
+- x = número de semana
+- y = prioridades completadas
+- m = pendiente (tasa de cambio)
+- b = intercepto
+```
+
+### Limitaciones
+
+- Requiere al menos 3 semanas de datos históricos para predicciones confiables
+- La predicción asume que las condiciones actuales se mantendrán
+- No considera factores externos (vacaciones, cambios de equipo, etc.)
+- Solo cuenta prioridades marcadas como `COMPLETADO`
 
 ---
 
@@ -748,8 +1221,9 @@ El sistema maneja elegantemente los usuarios eliminados:
 
 - [x] ✅ WebSockets para mensajes en tiempo real
 - [x] ✅ Canales y subcanales jerárquicos
+- [x] ✅ Markdown y formato de texto enriquecido
+- [x] ✅ Link previews automáticas
 - [ ] Adjuntar archivos a mensajes
-- [ ] Markdown y formato de texto enriquecido
 - [ ] Grabaciones de voz
 - [ ] Videollamadas integradas
 - [ ] Integración con Slack/Teams
@@ -791,13 +1265,32 @@ Para problemas o sugerencias:
 ## Créditos
 
 **Desarrollado por:** Tu Empresa
-**Versión:** 1.1
+**Versión:** 1.2
 **Última actualización:** Noviembre 2025
 **Licencia:** Propietaria
 
 ---
 
 ## Changelog
+
+### v1.2 (Noviembre 2025)
+- ✅ **Selector de emojis** - 43 emojis organizados en 4 categorías (Frecuentes, Emociones, Gestos, Símbolos)
+- ✅ **Navegación por tabs** en el selector de emojis
+- ✅ **Soporte completo de Markdown** - formateo de texto enriquecido
+  - Negrita, cursiva, tachado, código inline
+  - Bloques de código con syntax highlighting (highlight.js)
+  - Listas ordenadas y desordenadas
+  - Enlaces, citas, encabezados, tablas
+  - Soporte para 40+ lenguajes de programación
+- ✅ **Botón de ayuda de Markdown** - modal con guía rápida de sintaxis
+- ✅ **Link Previews automáticas** - previews enriquecidas de URLs compartidas
+  - Extracción de metadata (Open Graph, Twitter Cards)
+  - Caché inteligente de 24 horas
+  - Timeout protection (10s)
+  - Skeleton loading states
+  - Soporte para múltiples URLs en un mensaje
+- ✅ **API endpoint** `/api/link-preview` para generación de previews
+- ✅ **Compatibilidad entre features** - Markdown coexiste con menciones de usuarios y prioridades
 
 ### v1.1 (Noviembre 2025)
 - ✅ **WebSockets con Pusher** para comunicación en tiempo real

@@ -141,6 +141,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Exportar datos del proyecto en diferentes formatos',
     usage: '/export [excel|pdf|csv] [filtros]',
     category: 'analysis'
+  },
+  {
+    name: 'velocity',
+    description: 'Velocidad del equipo con tendencias y predicciones',
+    usage: '/velocity',
+    category: 'analysis'
   }
 ];
 
