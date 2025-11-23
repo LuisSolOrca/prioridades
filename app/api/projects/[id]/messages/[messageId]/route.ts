@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
+import Priority from '@/models/Priority';
 
 /**
  * PUT /api/projects/[id]/messages/[messageId]
@@ -49,8 +50,49 @@ export async function PUT(
       );
     }
 
+    // Re-detectar menciones de prioridades
+    const priorityMentionsIds: string[] = [];
+    try {
+      // Patrón 1: #P-{ObjectId}
+      const idPattern = /#P-([a-f0-9]{24})/gi;
+      const idMatches = content.match(idPattern);
+      if (idMatches) {
+        for (const match of idMatches) {
+          const priorityId = match.substring(3);
+          const priority = await Priority.findOne({
+            _id: priorityId,
+            projectId: params.id
+          }).lean();
+          if (priority && !priorityMentionsIds.includes(priorityId)) {
+            priorityMentionsIds.push(priorityId);
+          }
+        }
+      }
+
+      // Patrón 2: #titulo-de-prioridad
+      const titlePattern = /#([\w\-áéíóúñÁÉÍÓÚÑ]+(?:\-[\w\-áéíóúñÁÉÍÓÚÑ]+)*)/gi;
+      const titleMatches = content.match(titlePattern);
+      if (titleMatches) {
+        for (const match of titleMatches) {
+          if (match.match(/^#P-[a-f0-9]{24}$/i)) continue;
+
+          const searchTitle = match.substring(1).replace(/-/g, ' ');
+          const priority = await Priority.findOne({
+            projectId: params.id,
+            title: { $regex: new RegExp(searchTitle, 'i') }
+          }).lean();
+          if (priority && !priorityMentionsIds.includes(priority._id.toString())) {
+            priorityMentionsIds.push(priority._id.toString());
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error detecting priority mentions:', err);
+    }
+
     // Actualizar mensaje
     message.content = content.trim();
+    message.priorityMentions = priorityMentionsIds as any;
     message.isEdited = true;
     await message.save();
 
@@ -58,7 +100,9 @@ export async function PUT(
     const populatedMessage = await ChannelMessage.findById(message._id)
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
+      .populate('priorityMentions', 'title status completionPercentage userId')
       .populate('reactions.userId', 'name')
+      .populate('pinnedBy', 'name')
       .lean();
 
     return NextResponse.json(populatedMessage);

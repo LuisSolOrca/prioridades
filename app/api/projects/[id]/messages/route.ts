@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import User from '@/models/User';
 import Project from '@/models/Project';
+import Priority from '@/models/Priority';
 import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
 
 /**
@@ -70,7 +71,9 @@ export async function GET(
       .limit(limit)
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
+      .populate('priorityMentions', 'title status completionPercentage userId')
       .populate('reactions.userId', 'name')
+      .populate('pinnedBy', 'name')
       .lean();
 
     // Contar total
@@ -121,15 +124,58 @@ export async function POST(
       );
     }
 
+    // Detectar menciones de prioridades (#P-123 o #titulo-prioridad)
+    const priorityMentionsIds: string[] = [];
+    try {
+      // Patrón 1: #P-{ObjectId} formato corto
+      const idPattern = /#P-([a-f0-9]{24})/gi;
+      const idMatches = content.match(idPattern);
+      if (idMatches) {
+        for (const match of idMatches) {
+          const priorityId = match.substring(3); // Quitar "#P-"
+          const priority = await Priority.findOne({
+            _id: priorityId,
+            projectId: params.id
+          }).lean();
+          if (priority && !priorityMentionsIds.includes(priorityId)) {
+            priorityMentionsIds.push(priorityId);
+          }
+        }
+      }
+
+      // Patrón 2: #titulo-de-prioridad (buscar por título)
+      const titlePattern = /#([\w\-áéíóúñÁÉÍÓÚÑ]+(?:\-[\w\-áéíóúñÁÉÍÓÚÑ]+)*)/gi;
+      const titleMatches = content.match(titlePattern);
+      if (titleMatches) {
+        for (const match of titleMatches) {
+          // Saltar si ya es formato #P-{id}
+          if (match.match(/^#P-[a-f0-9]{24}$/i)) continue;
+
+          const searchTitle = match.substring(1).replace(/-/g, ' ');
+          const priority = await Priority.findOne({
+            projectId: params.id,
+            title: { $regex: new RegExp(searchTitle, 'i') }
+          }).lean();
+          if (priority && !priorityMentionsIds.includes(priority._id.toString())) {
+            priorityMentionsIds.push(priority._id.toString());
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error detecting priority mentions:', err);
+    }
+
     // Crear mensaje
     const message = await ChannelMessage.create({
       projectId: params.id,
       userId: session.user.id,
       content: content.trim(),
       mentions,
+      priorityMentions: priorityMentionsIds,
       parentMessageId: parentMessageId || null,
       reactions: [],
       replyCount: 0,
+      isPinned: false,
       isEdited: false,
       isDeleted: false
     });
@@ -145,6 +191,7 @@ export async function POST(
     const populatedMessage = await ChannelMessage.findById(message._id)
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
+      .populate('priorityMentions', 'title status completionPercentage userId')
       .lean();
 
     // Detectar menciones y crear notificaciones

@@ -12,9 +12,13 @@ export interface IChannelMessage {
   userId: mongoose.Types.ObjectId;
   content: string;
   mentions: mongoose.Types.ObjectId[]; // Array de userIds mencionados
+  priorityMentions: mongoose.Types.ObjectId[]; // Array de priorityIds mencionados
   reactions: IReaction[];
   parentMessageId?: mongoose.Types.ObjectId; // Para hilos/respuestas
   replyCount: number; // Contador de respuestas en el hilo
+  isPinned: boolean; // Si el mensaje está anclado
+  pinnedAt?: Date; // Cuándo fue anclado
+  pinnedBy?: mongoose.Types.ObjectId; // Quién lo ancló
   isEdited: boolean;
   isDeleted: boolean;
   createdAt: Date;
@@ -42,6 +46,10 @@ const ChannelMessageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  priorityMentions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Priority'
+  }],
   reactions: [{
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -68,6 +76,20 @@ const ChannelMessageSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  isPinned: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  pinnedAt: {
+    type: Date,
+    default: null
+  },
+  pinnedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   isEdited: {
     type: Boolean,
     default: false
@@ -92,6 +114,7 @@ const ChannelMessageSchema = new mongoose.Schema({
 // Índice compuesto para búsquedas eficientes
 ChannelMessageSchema.index({ projectId: 1, createdAt: -1 });
 ChannelMessageSchema.index({ projectId: 1, parentMessageId: 1, createdAt: -1 });
+ChannelMessageSchema.index({ projectId: 1, isPinned: 1, pinnedAt: -1 }); // Para mensajes anclados
 
 export default mongoose.models.ChannelMessage ||
   mongoose.model<IChannelMessage>('ChannelMessage', ChannelMessageSchema);

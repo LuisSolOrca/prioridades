@@ -12,9 +12,23 @@ import {
   Check,
   X,
   CornerDownRight,
-  Search
+  Search,
+  Pin,
+  PinOff
 } from 'lucide-react';
 import ThreadView from './ThreadView';
+import MessageContent from './MessageContent';
+
+interface Priority {
+  _id: string;
+  title: string;
+  status: string;
+  completionPercentage: number;
+  userId?: {
+    _id: string;
+    name: string;
+  };
+}
 
 interface Message {
   _id: string;
@@ -25,6 +39,7 @@ interface Message {
   };
   content: string;
   mentions: any[];
+  priorityMentions?: Priority[];
   reactions: Array<{
     userId: { _id: string; name: string };
     emoji: string;
@@ -32,6 +47,12 @@ interface Message {
   }>;
   parentMessageId?: string;
   replyCount: number;
+  isPinned?: boolean;
+  pinnedAt?: string;
+  pinnedBy?: {
+    _id: string;
+    name: string;
+  };
   isEdited: boolean;
   isDeleted: boolean;
   createdAt: string;
@@ -44,6 +65,7 @@ interface ChannelChatProps {
 export default function ChannelChat({ projectId }: ChannelChatProps) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [pinnedMessages, setPinnedMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -59,6 +81,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   useEffect(() => {
     loadMessages();
+    loadPinnedMessages();
     loadUsers();
   }, [projectId]);
 
@@ -131,6 +154,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       console.error('Error loading messages:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPinnedMessages = async () => {
+    try {
+      // Fetch pinned messages separately
+      const response = await fetch(`/api/projects/${projectId}/messages/pinned`);
+      if (response.ok) {
+        const data = await response.json();
+        setPinnedMessages(data.messages || []);
+      }
+    } catch (err) {
+      console.error('Error loading pinned messages:', err);
     }
   };
 
@@ -270,6 +306,60 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     return summary;
   };
 
+  const handlePinMessage = async (messageId: string) => {
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/messages/${messageId}/pin`,
+        { method: 'PUT' }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Error al anclar mensaje');
+        return;
+      }
+
+      // Reload pinned messages
+      await loadPinnedMessages();
+
+      // Update message in regular list if present
+      const updatedMessage = await response.json();
+      setMessages((prev) =>
+        prev.map((m) => (m._id === messageId ? updatedMessage : m))
+      );
+    } catch (err) {
+      console.error('Error pinning message:', err);
+      alert('Error al anclar mensaje');
+    }
+  };
+
+  const handleUnpinMessage = async (messageId: string) => {
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/messages/${messageId}/pin`,
+        { method: 'DELETE' }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Error al desanclar mensaje');
+        return;
+      }
+
+      // Reload pinned messages
+      await loadPinnedMessages();
+
+      // Update message in regular list if present
+      const updatedMessage = await response.json();
+      setMessages((prev) =>
+        prev.map((m) => (m._id === messageId ? updatedMessage : m))
+      );
+    } catch (err) {
+      console.error('Error unpinning message:', err);
+      alert('Error al desanclar mensaje');
+    }
+  };
+
   const handleMentionSelect = (user: { name: string }) => {
     const lastAtIndex = newMessage.lastIndexOf('@');
     const beforeAt = newMessage.substring(0, lastAtIndex);
@@ -320,6 +410,65 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           </div>
         )}
       </div>
+
+      {/* Pinned Messages Section */}
+      {pinnedMessages.length > 0 && (
+        <div className="border-b border-gray-200 dark:border-gray-700 bg-yellow-50 dark:bg-yellow-900/10">
+          <div className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Pin size={16} className="text-yellow-600 dark:text-yellow-400" />
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                Mensajes Anclados ({pinnedMessages.length}/5)
+              </span>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {pinnedMessages.map((message) => (
+                <div
+                  key={message._id}
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                        {message.userId.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-100">
+                        {message.userId.name}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(message.createdAt).toLocaleString('es-MX', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleUnpinMessage(message._id)}
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition flex-shrink-0"
+                      title="Desanclar"
+                    >
+                      <PinOff size={14} />
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-700 dark:text-gray-300 ml-8">
+                    <MessageContent
+                      content={message.content}
+                      priorityMentions={message.priorityMentions}
+                    />
+                  </div>
+                  {message.pinnedBy && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 ml-8 mt-1">
+                      Anclado por {message.pinnedBy.name}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -410,31 +559,55 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {message.content}
-                      </p>
+                      <div className="text-sm">
+                        <MessageContent
+                          content={message.content}
+                          priorityMentions={message.priorityMentions}
+                        />
+                      </div>
 
                       {/* Actions Menu */}
-                      {isOwn && !message.isDeleted && (
+                      {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
                           <div className="flex gap-1">
-                            <button
-                              onClick={() => {
-                                setEditingId(message._id);
-                                setEditContent(message.content);
-                              }}
-                              className="p-1 bg-white/20 rounded hover:bg-white/30"
-                              title="Editar"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMessage(message._id)}
-                              className="p-1 bg-white/20 rounded hover:bg-white/30"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            {message.isPinned ? (
+                              <button
+                                onClick={() => handleUnpinMessage(message._id)}
+                                className="p-1 bg-white/20 rounded hover:bg-white/30"
+                                title="Desanclar mensaje"
+                              >
+                                <PinOff size={14} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handlePinMessage(message._id)}
+                                className="p-1 bg-white/20 rounded hover:bg-white/30"
+                                title="Anclar mensaje"
+                              >
+                                <Pin size={14} />
+                              </button>
+                            )}
+                            {isOwn && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingId(message._id);
+                                    setEditContent(message.content);
+                                  }}
+                                  className="p-1 bg-white/20 rounded hover:bg-white/30"
+                                  title="Editar"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMessage(message._id)}
+                                  className="p-1 bg-white/20 rounded hover:bg-white/30"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       )}

@@ -10,6 +10,18 @@ import {
   Check,
   MessageSquare
 } from 'lucide-react';
+import MessageContent from './MessageContent';
+
+interface Priority {
+  _id: string;
+  title: string;
+  status: string;
+  completionPercentage: number;
+  userId?: {
+    _id: string;
+    name: string;
+  };
+}
 
 interface Message {
   _id: string;
@@ -20,6 +32,7 @@ interface Message {
   };
   content: string;
   mentions: any[];
+  priorityMentions?: Priority[];
   reactions: Array<{
     userId: { _id: string; name: string };
     emoji: string;
@@ -263,9 +276,12 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
                   })}
                 </span>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
-                {parentMessage.content}
-              </p>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                <MessageContent
+                  content={parentMessage.content}
+                  priorityMentions={parentMessage.priorityMentions}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -342,9 +358,12 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
                     ) : (
                       <div className="relative group">
                         <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2">
-                          <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap break-words">
-                            {reply.content}
-                          </p>
+                          <div className="text-sm text-gray-800 dark:text-gray-100">
+                            <MessageContent
+                              content={reply.content}
+                              priorityMentions={reply.priorityMentions}
+                            />
+                          </div>
 
                           {/* Actions */}
                           {isOwn(reply) && !reply.isDeleted && (
