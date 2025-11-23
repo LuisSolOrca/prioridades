@@ -397,29 +397,34 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
           </h3>
           {topContributors.length > 0 ? (
             <div className="space-y-3">
-              {topContributors.map((user: any, index: number) => (
-                <div key={index} className="flex items-center gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {user.completed}/{user.total}
-                      </p>
+              {topContributors.map((user: any, index: number) => {
+                const userName = user.name || 'Usuario';
+                const userInitial = userName.charAt(0).toUpperCase();
+
+                return (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                      {userInitial}
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all"
-                        style={{ width: `${(user.completed / user.total) * 100}%` }}
-                      ></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                          {userName}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {user.completed}/{user.total}
+                        </p>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all"
+                          style={{ width: `${(user.completed / user.total) * 100}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">

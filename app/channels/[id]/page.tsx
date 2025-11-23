@@ -20,7 +20,7 @@ interface User {
 export default function ChannelPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics'>('metrics');
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showProjectModal, setShowProjectModal] = useState(false);
