@@ -54,14 +54,14 @@ export default function SearchCommand({
       const usersRes = await fetch('/api/users');
       if (usersRes.ok) {
         const data = await usersRes.json();
-        setUsers(data.users || []);
+        setUsers(Array.isArray(data) ? data : []);
       }
 
       // Cargar iniciativas
       const initiativesRes = await fetch('/api/initiatives');
       if (initiativesRes.ok) {
         const data = await initiativesRes.json();
-        setInitiatives(data.initiatives || []);
+        setInitiatives(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Error loading filters:', error);

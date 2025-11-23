@@ -66,11 +66,12 @@ export default function RecentCommand({
       const response = await fetch('/api/users');
       if (response.ok) {
         const data = await response.json();
-        setUsers(data.users || []);
+        const usersArray = Array.isArray(data) ? data : [];
+        setUsers(usersArray);
 
         // Si se proporcionó userName, buscar el usuario
         if (userName) {
-          const user = data.users.find((u: any) =>
+          const user = usersArray.find((u: any) =>
             u.name.toLowerCase().includes(userName.toLowerCase())
           );
           if (user) {
