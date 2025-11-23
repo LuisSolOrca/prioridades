@@ -32,6 +32,7 @@ import BurndownCommand from '../slashCommands/BurndownCommand';
 import SearchCommand from '../slashCommands/SearchCommand';
 import PrioritiesCommand from '../slashCommands/PrioritiesCommand';
 import RecentCommand from '../slashCommands/RecentCommand';
+import StandupCommand from '../slashCommands/StandupCommand';
 import CelebrateCommand from '../slashCommands/CelebrateCommand';
 
 interface Priority {
@@ -408,6 +409,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           type: 'recent',
           data: { userName: targetUser, days: isNaN(daysNum) ? 7 : daysNum }
         });
+        setNewMessage('');
+        break;
+
+      case 'standup':
+        setActiveCommand({ type: 'standup' });
         setNewMessage('');
         break;
 
@@ -1032,6 +1038,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               projectId={projectId}
               userName={activeCommand.data?.userName}
               days={activeCommand.data?.days}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'standup' && (
+            <StandupCommand
+              projectId={projectId}
               onClose={() => setActiveCommand(null)}
             />
           )}

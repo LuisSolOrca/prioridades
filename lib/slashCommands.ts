@@ -89,6 +89,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'analysis'
   },
   {
+    name: 'standup',
+    description: 'Daily standup virtual del equipo',
+    usage: '/standup',
+    category: 'collaboration'
+  },
+  {
     name: 'help',
     description: 'Muestra la lista de comandos disponibles',
     usage: '/help [comando]',
