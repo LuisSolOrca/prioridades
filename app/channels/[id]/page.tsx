@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import ActivityFeed from '@/components/channels/ActivityFeed';
+import ChannelChat from '@/components/channels/ChannelChat';
+import ChannelLinks from '@/components/channels/ChannelLinks';
 import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft } from 'lucide-react';
 
 export default function ChannelPage({ params }: { params: { id: string } }) {
@@ -145,50 +148,11 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
 
         {/* Content */}
         <div className="container mx-auto px-4 py-6">
-          {activeTab === 'feed' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-              <Activity size={48} className="mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                Feed de Actividades
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Aquí verás todas las actualizaciones del proyecto: prioridades creadas, tareas completadas, comentarios, etc.
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
-                Componente en desarrollo
-              </p>
-            </div>
-          )}
-
-          {activeTab === 'chat' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-              <MessageSquare size={48} className="mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                Chat del Proyecto
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Chatea con tu equipo, menciona usuarios con @nombre y reacciona con emojis.
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
-                Componente en desarrollo
-              </p>
-            </div>
-          )}
-
-          {activeTab === 'links' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-              <LinkIcon size={48} className="mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                Enlaces Compartidos
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Comparte y organiza enlaces importantes: documentación, repositorios, diseños, etc.
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
-                Componente en desarrollo
-              </p>
-            </div>
-          )}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {activeTab === 'feed' && <ActivityFeed projectId={params.id} />}
+            {activeTab === 'chat' && <ChannelChat projectId={params.id} />}
+            {activeTab === 'links' && <ChannelLinks projectId={params.id} />}
+          </div>
         </div>
       </div>
     </div>
