@@ -135,7 +135,7 @@ export async function POST(
       const author = await User.findById(session.user.id).lean();
 
       if (mentionsFound && author && project) {
-        const usernames = [...new Set<string>(mentionsFound.map((m) => m.substring(1).trim()))];
+        const usernames = [...new Set<string>(mentionsFound.map((m: string) => m.substring(1).trim()))];
 
         for (const username of usernames) {
           try {
