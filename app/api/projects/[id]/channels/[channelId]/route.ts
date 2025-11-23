@@ -68,14 +68,6 @@ export async function PUT(
             { status: 400 }
           );
         }
-
-        // Verificar que no se está moviendo un canal padre debajo de su propio hijo
-        if (newParent.parentId?.toString() === params.channelId) {
-          return NextResponse.json(
-            { error: 'No se puede mover un canal debajo de su propio subcanal' },
-            { status: 400 }
-          );
-        }
       }
     }
 
