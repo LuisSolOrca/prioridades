@@ -122,23 +122,22 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       setShowCommandSuggestions(false);
     }
 
-    // Detectar @ para autocompletado
-    if (!newMessage.startsWith('/')) {
-      const lastAtIndex = newMessage.lastIndexOf('@');
-      if (lastAtIndex !== -1 && lastAtIndex === newMessage.length - 1) {
-        setShowUserSuggestions(true);
-        setMentionSearch('');
-      } else if (lastAtIndex !== -1) {
-        const searchText = newMessage.substring(lastAtIndex + 1);
-        if (searchText.includes(' ')) {
-          setShowUserSuggestions(false);
-        } else {
-          setMentionSearch(searchText);
-          setShowUserSuggestions(true);
-        }
-      } else {
+    // Detectar @ para autocompletado (funciona en mensajes normales Y comandos slash)
+    const lastAtIndex = newMessage.lastIndexOf('@');
+    if (lastAtIndex !== -1 && lastAtIndex === newMessage.length - 1) {
+      setShowUserSuggestions(true);
+      setMentionSearch('');
+    } else if (lastAtIndex !== -1) {
+      const searchText = newMessage.substring(lastAtIndex + 1);
+      // Cerrar si hay espacio o comilla después del @ (significa que el usuario terminó de escribir el nombre)
+      if (searchText.includes(' ') || searchText.includes('"')) {
         setShowUserSuggestions(false);
+      } else {
+        setMentionSearch(searchText);
+        setShowUserSuggestions(true);
       }
+    } else {
+      setShowUserSuggestions(false);
     }
   }, [newMessage]);
 

@@ -52,16 +52,28 @@ export default function SearchCommand({
     try {
       // Cargar usuarios del proyecto
       const usersRes = await fetch('/api/users');
+      console.log('Users response status:', usersRes.status);
       if (usersRes.ok) {
         const data = await usersRes.json();
+        console.log('Users data received:', data);
+        console.log('Is array?', Array.isArray(data));
         setUsers(Array.isArray(data) ? data : []);
+        console.log('Users state set to:', Array.isArray(data) ? data.length : 0, 'users');
+      } else {
+        console.error('Users response not ok:', usersRes.status);
       }
 
       // Cargar iniciativas
       const initiativesRes = await fetch('/api/initiatives');
+      console.log('Initiatives response status:', initiativesRes.status);
       if (initiativesRes.ok) {
         const data = await initiativesRes.json();
+        console.log('Initiatives data received:', data);
+        console.log('Is array?', Array.isArray(data));
         setInitiatives(Array.isArray(data) ? data : []);
+        console.log('Initiatives state set to:', Array.isArray(data) ? data.length : 0, 'initiatives');
+      } else {
+        console.error('Initiatives response not ok:', initiativesRes.status);
       }
     } catch (error) {
       console.error('Error loading filters:', error);

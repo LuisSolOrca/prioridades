@@ -76,15 +76,19 @@ export default function PrioritiesCommand({
 
       // Cargar usuarios
       const usersRes = await fetch('/api/users');
+      console.log('[PrioritiesCommand] Users response status:', usersRes.status);
       if (usersRes.ok) {
         const data = await usersRes.json();
+        console.log('[PrioritiesCommand] Users data:', data, 'IsArray:', Array.isArray(data));
         setUsers(Array.isArray(data) ? data : []);
       }
 
       // Cargar iniciativas
       const initiativesRes = await fetch('/api/initiatives');
+      console.log('[PrioritiesCommand] Initiatives response status:', initiativesRes.status);
       if (initiativesRes.ok) {
         const data = await initiativesRes.json();
+        console.log('[PrioritiesCommand] Initiatives data:', data, 'IsArray:', Array.isArray(data));
         setInitiatives(Array.isArray(data) ? data : []);
       }
     } catch (error) {

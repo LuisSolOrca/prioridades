@@ -64,10 +64,13 @@ export default function RecentCommand({
   const loadUsers = async () => {
     try {
       const response = await fetch('/api/users');
+      console.log('[RecentCommand] Users response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('[RecentCommand] Users data:', data, 'IsArray:', Array.isArray(data));
         const usersArray = Array.isArray(data) ? data : [];
         setUsers(usersArray);
+        console.log('[RecentCommand] Users set:', usersArray.length);
 
         // Si se proporcionó userName, buscar el usuario
         if (userName) {
