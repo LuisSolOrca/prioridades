@@ -99,6 +99,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Muestra la lista de comandos disponibles',
     usage: '/help [comando]',
     category: 'status'
+  },
+  {
+    name: 'ai-summary',
+    description: 'Genera un resumen inteligente del chat usando IA',
+    usage: '/ai-summary [últimos N mensajes]',
+    category: 'analysis'
   }
 ];
 

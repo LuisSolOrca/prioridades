@@ -34,6 +34,7 @@ import PrioritiesCommand from '../slashCommands/PrioritiesCommand';
 import RecentCommand from '../slashCommands/RecentCommand';
 import StandupCommand from '../slashCommands/StandupCommand';
 import CelebrateCommand from '../slashCommands/CelebrateCommand';
+import AiSummaryCommand from '../slashCommands/AiSummaryCommand';
 
 interface Priority {
   _id: string;
@@ -414,6 +415,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       case 'standup':
         setActiveCommand({ type: 'standup' });
+        setNewMessage('');
+        break;
+
+      case 'ai-summary':
+        setActiveCommand({ type: 'ai-summary', args: parsed.args });
         setNewMessage('');
         break;
 
@@ -1044,6 +1050,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           {activeCommand.type === 'standup' && (
             <StandupCommand
               projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand?.type === 'ai-summary' && (
+            <AiSummaryCommand
+              projectId={projectId}
+              messages={messages}
+              args={activeCommand.args || []}
               onClose={() => setActiveCommand(null)}
             />
           )}
