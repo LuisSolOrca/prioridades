@@ -384,7 +384,9 @@ export async function PUT(
                 updatedPriority.projectId,
                 updatedPriority.userId,
                 task._id,
-                task.text
+                task.text,
+                updatedPriority._id,
+                updatedPriority.title
               );
             }
           }

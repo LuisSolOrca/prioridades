@@ -196,6 +196,14 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
             <span className="font-semibold text-green-600 dark:text-green-400">
               {metadata.taskTitle}
             </span>
+            {metadata.priorityTitle && metadata.priorityId && (
+              <> en <button
+                onClick={() => setSelectedPriorityId(metadata.priorityId!)}
+                className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                {metadata.priorityTitle}
+              </button></>
+            )}
           </>
         );
       case 'comment_added':

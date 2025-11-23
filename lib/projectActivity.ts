@@ -107,13 +107,15 @@ export async function logTaskCompleted(
   projectId: mongoose.Types.ObjectId | string,
   userId: mongoose.Types.ObjectId | string,
   taskId: mongoose.Types.ObjectId | string,
-  taskTitle: string
+  taskTitle: string,
+  priorityId?: mongoose.Types.ObjectId | string,
+  priorityTitle?: string
 ) {
   return logProjectActivity({
     projectId,
     activityType: 'task_completed',
     userId,
-    metadata: { taskId, taskTitle }
+    metadata: { taskId, taskTitle, priorityId, priorityTitle }
   });
 }
 

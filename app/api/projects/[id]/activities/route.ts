@@ -42,10 +42,31 @@ export async function GET(
 
       const userIds = matchingUsers.map(u => u._id);
 
+      // Mapeo de palabras en español a patrones en inglés
+      const searchTerm = search.trim().toLowerCase();
+      const activityTypePatterns: RegExp[] = [];
+
+      if (searchTerm.includes('tarea')) {
+        activityTypePatterns.push(/task/i);
+      }
+      if (searchTerm.includes('prioridad')) {
+        activityTypePatterns.push(/priority/i);
+      }
+      if (searchTerm.includes('comentario')) {
+        activityTypePatterns.push(/comment/i);
+      }
+      if (searchTerm.includes('usuario')) {
+        activityTypePatterns.push(/user/i);
+      }
+      if (searchTerm.includes('hito') || searchTerm.includes('milestone')) {
+        activityTypePatterns.push(/milestone/i);
+      }
+
       // Construir query con búsqueda en múltiples campos
       query.$or = [
-        // Buscar por tipo de actividad
+        // Buscar por tipo de actividad (tanto el término original como los patrones mapeados)
         { activityType: searchRegex },
+        ...activityTypePatterns.map(pattern => ({ activityType: pattern })),
         // Buscar por userId
         ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : []),
         // Buscar en metadata
