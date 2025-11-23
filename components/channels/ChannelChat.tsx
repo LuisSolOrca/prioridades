@@ -28,6 +28,7 @@ import RisksCommand from '../slashCommands/RisksCommand';
 import SummaryCommand from '../slashCommands/SummaryCommand';
 import ProgressCommand from '../slashCommands/ProgressCommand';
 import TeamLoadCommand from '../slashCommands/TeamLoadCommand';
+import BurndownCommand from '../slashCommands/BurndownCommand';
 import CelebrateCommand from '../slashCommands/CelebrateCommand';
 
 interface Priority {
@@ -267,6 +268,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       case 'team-load':
         setActiveCommand({ type: 'team-load' });
+        setNewMessage('');
+        break;
+
+      case 'burndown':
+        setActiveCommand({ type: 'burndown' });
         setNewMessage('');
         break;
 
@@ -736,27 +742,59 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     </div>
                   ) : message.commandType === 'poll' && message.commandData ? (
                     /* Render Poll Command */
-                    <PollCommand
-                      projectId={projectId}
-                      messageId={message._id}
-                      question={message.commandData.question}
-                      options={message.commandData.options || []}
-                      createdBy={message.commandData.createdBy}
-                      closed={message.commandData.closed || false}
-                      onClose={() => {}}
-                      onUpdate={loadMessages}
-                    />
+                    <div className="relative group">
+                      <PollCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        options={message.commandData.options || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Poll */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar encuesta"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ) : message.commandType === 'celebrate' && message.commandData ? (
                     /* Render Celebrate Command */
-                    <CelebrateCommand
-                      projectId={projectId}
-                      messageId={message._id}
-                      userName={message.commandData.userName}
-                      achievement={message.commandData.achievement}
-                      createdBy={message.commandData.createdBy}
-                      createdAt={message.commandData.createdAt}
-                      onClose={() => {}}
-                    />
+                    <div className="relative group">
+                      <CelebrateCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        userName={message.commandData.userName}
+                        achievement={message.commandData.achievement}
+                        createdBy={message.commandData.createdBy}
+                        createdAt={message.commandData.createdAt}
+                        onClose={() => {}}
+                      />
+                      {/* Actions Menu for Celebrate */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar celebración"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div
                       className={`relative group rounded-lg px-4 py-2 ${
@@ -805,14 +843,16 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                                 >
                                   <Edit2 size={14} />
                                 </button>
-                                <button
-                                  onClick={() => handleDeleteMessage(message._id)}
-                                  className="p-1 bg-white/20 rounded hover:bg-white/30"
-                                  title="Eliminar"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
                               </>
+                            )}
+                            {(isOwn || session?.user?.role === 'ADMIN') && (
+                              <button
+                                onClick={() => handleDeleteMessage(message._id)}
+                                className="p-1 bg-white/20 rounded hover:bg-white/30"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             )}
                           </div>
                         </div>
@@ -917,6 +957,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           )}
           {activeCommand.type === 'team-load' && (
             <TeamLoadCommand
+              projectId={projectId}
+              onClose={() => setActiveCommand(null)}
+            />
+          )}
+          {activeCommand.type === 'burndown' && (
+            <BurndownCommand
               projectId={projectId}
               onClose={() => setActiveCommand(null)}
             />

@@ -35,6 +35,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'analysis'
   },
   {
+    name: 'burndown',
+    description: 'Gráfico burndown de la semana actual con proyección',
+    usage: '/burndown',
+    category: 'analysis'
+  },
+  {
     name: 'blockers',
     description: 'Muestra todas las prioridades bloqueadas del proyecto',
     usage: '/blockers',
