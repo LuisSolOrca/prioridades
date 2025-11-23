@@ -79,10 +79,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Debug logging
+    console.log('[GET /api/priorities] Query:', JSON.stringify(query));
+    console.log('[GET /api/priorities] ProjectId requested:', projectId);
+    console.log('[GET /api/priorities] UserId requested:', userId);
+
     const priorities = await Priority.find(query)
       .populate('userId', 'name email')
       .sort({ weekStart: -1, createdAt: -1 })
       .lean();
+
+    console.log('[GET /api/priorities] Found priorities:', priorities.length);
 
     // Obtener información de Azure DevOps para las prioridades
     const priorityIds = priorities.map(p => p._id);

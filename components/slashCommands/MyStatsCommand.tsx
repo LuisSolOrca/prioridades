@@ -49,15 +49,26 @@ export default function MyStatsCommand({ projectId, onClose }: MyStatsCommandPro
     try {
       setLoading(true);
 
+      // Debug logging
+      console.log('[MyStats] projectId:', projectId);
+      console.log('[MyStats] userId:', session?.user.id);
+
       // Obtener todas las prioridades del usuario en este proyecto
-      const response = await fetch(`/api/priorities?projectId=${projectId}&userId=${session?.user.id}`);
+      const url = `/api/priorities?projectId=${projectId}&userId=${session?.user.id}`;
+      console.log('[MyStats] Fetching:', url);
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Error al cargar estadísticas');
       }
 
       const data = await response.json();
+      console.log('[MyStats] Response data:', data);
+
       const myPriorities = data.priorities || [];
+      console.log('[MyStats] My priorities count:', myPriorities.length);
+
       setPriorities(myPriorities);
 
       // Calcular estadísticas
