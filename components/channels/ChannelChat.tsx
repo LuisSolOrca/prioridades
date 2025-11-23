@@ -814,6 +814,33 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         </div>
                       )}
                     </div>
+                  ) : message.commandType === 'ai-summary' && message.commandData ? (
+                    /* Render AI Summary Command */
+                    <div className="relative group">
+                      <AiSummaryCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        messages={messages}
+                        args={[]}
+                        existingSummary={message.commandData.summary}
+                        existingMessagesAnalyzed={message.commandData.messagesAnalyzed}
+                        onClose={() => {}}
+                      />
+                      {/* Actions Menu for AI Summary */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ) : message.commandType === 'celebrate' && message.commandData ? (
                     /* Render Celebrate Command */
                     <div className="relative group">
@@ -1060,6 +1087,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               messages={messages}
               args={activeCommand.args || []}
               onClose={() => setActiveCommand(null)}
+              onSuccess={() => {
+                loadMessages();
+                setActiveCommand(null);
+              }}
             />
           )}
           {activeCommand.type === 'help' && (

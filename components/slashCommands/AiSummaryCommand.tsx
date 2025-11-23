@@ -8,17 +8,33 @@ interface AiSummaryCommandProps {
   projectId: string;
   messages: any[];
   args: string[];
+  messageId?: string;
+  existingSummary?: string;
+  existingMessagesAnalyzed?: number;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function AiSummaryCommand({ projectId, messages, args, onClose }: AiSummaryCommandProps) {
+export default function AiSummaryCommand({
+  projectId,
+  messages,
+  args,
+  messageId,
+  existingSummary,
+  existingMessagesAnalyzed,
+  onClose,
+  onSuccess
+}: AiSummaryCommandProps) {
   const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState('');
+  const [summary, setSummary] = useState(existingSummary || '');
   const [error, setError] = useState('');
-  const [messagesAnalyzed, setMessagesAnalyzed] = useState(0);
+  const [messagesAnalyzed, setMessagesAnalyzed] = useState(existingMessagesAnalyzed || 0);
 
   useEffect(() => {
-    generateSummary();
+    // Solo generar si no hay resumen existente (nuevo comando)
+    if (!existingSummary) {
+      generateSummary();
+    }
   }, []);
 
   const generateSummary = async () => {
@@ -61,6 +77,33 @@ export default function AiSummaryCommand({ projectId, messages, args, onClose }:
       const data = await response.json();
       setSummary(data.summary);
       setMessagesAnalyzed(data.messagesAnalyzed);
+
+      // Guardar el resumen como mensaje en el chat (solo si no es una regeneración de un mensaje existente)
+      if (!messageId) {
+        try {
+          const saveResponse = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/ai-summary ${maxMessages}`,
+              commandType: 'ai-summary',
+              commandData: {
+                summary: data.summary,
+                messagesAnalyzed: data.messagesAnalyzed,
+                maxMessages,
+                generatedAt: new Date().toISOString()
+              }
+            })
+          });
+
+          if (saveResponse.ok && onSuccess) {
+            onSuccess();
+          }
+        } catch (saveError) {
+          console.error('Error saving summary to chat:', saveError);
+          // No mostramos el error al usuario, el resumen ya se generó correctamente
+        }
+      }
     } catch (err: any) {
       console.error('Error generating summary:', err);
       setError(err.message || 'Error al generar el resumen del chat');
@@ -87,7 +130,7 @@ export default function AiSummaryCommand({ projectId, messages, args, onClose }:
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!loading && summary && (
+          {!loading && summary && !messageId && (
             <button
               onClick={generateSummary}
               className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition"
@@ -96,12 +139,14 @@ export default function AiSummaryCommand({ projectId, messages, args, onClose }:
               <RefreshCw size={18} />
             </button>
           )}
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          >
-            <X size={20} />
-          </button>
+          {!messageId && (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
       </div>
 
