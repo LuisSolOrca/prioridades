@@ -14,6 +14,7 @@ import {
   Search,
   X
 } from 'lucide-react';
+import PriorityDetailsModal from '../PriorityDetailsModal';
 
 interface Activity {
   _id: string;
@@ -24,7 +25,9 @@ interface Activity {
     email: string;
   };
   metadata: {
+    priorityId?: string;
     priorityTitle?: string;
+    taskId?: string;
     taskTitle?: string;
     oldStatus?: string;
     newStatus?: string;
@@ -47,6 +50,7 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
   const [offset, setOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [selectedPriorityId, setSelectedPriorityId] = useState<string | null>(null);
 
   useEffect(() => {
     loadActivities();
@@ -136,27 +140,38 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
         return (
           <>
             <strong>{userName}</strong> creó la prioridad{' '}
-            <span className="font-semibold text-blue-600">
+            <button
+              onClick={() => metadata.priorityId && setSelectedPriorityId(metadata.priorityId)}
+              className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+            >
               {metadata.priorityTitle}
-            </span>
+            </button>
           </>
         );
       case 'priority_completed':
         return (
           <>
             <strong>{userName}</strong> completó la prioridad{' '}
-            <span className="font-semibold text-green-600">
+            <button
+              onClick={() => metadata.priorityId && setSelectedPriorityId(metadata.priorityId)}
+              className="font-semibold text-green-600 dark:text-green-400 hover:underline cursor-pointer"
+            >
               {metadata.priorityTitle}
-            </span>
+            </button>
           </>
         );
       case 'priority_status_changed':
         return (
           <>
             <strong>{userName}</strong> cambió el estado de{' '}
-            <span className="font-semibold">{metadata.priorityTitle}</span> de{' '}
-            <span className="text-orange-600">{metadata.oldStatus}</span> a{' '}
-            <span className="text-blue-600">{metadata.newStatus}</span>
+            <button
+              onClick={() => metadata.priorityId && setSelectedPriorityId(metadata.priorityId)}
+              className="font-semibold text-gray-800 dark:text-gray-200 hover:underline cursor-pointer"
+            >
+              {metadata.priorityTitle}
+            </button> de{' '}
+            <span className="text-orange-600 dark:text-orange-400">{metadata.oldStatus}</span> a{' '}
+            <span className="text-blue-600 dark:text-blue-400">{metadata.newStatus}</span>
           </>
         );
       case 'task_created':
@@ -164,8 +179,13 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
           <>
             <strong>{userName}</strong> creó la tarea{' '}
             <span className="font-semibold">{metadata.taskTitle}</span>
-            {metadata.priorityTitle && (
-              <> en {metadata.priorityTitle}</>
+            {metadata.priorityTitle && metadata.priorityId && (
+              <> en <button
+                onClick={() => setSelectedPriorityId(metadata.priorityId!)}
+                className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                {metadata.priorityTitle}
+              </button></>
             )}
           </>
         );
@@ -173,7 +193,7 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
         return (
           <>
             <strong>{userName}</strong> completó la tarea{' '}
-            <span className="font-semibold text-green-600">
+            <span className="font-semibold text-green-600 dark:text-green-400">
               {metadata.taskTitle}
             </span>
           </>
@@ -182,7 +202,12 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
         return (
           <>
             <strong>{userName}</strong> comentó en{' '}
-            <span className="font-semibold">{metadata.priorityTitle}</span>
+            <button
+              onClick={() => metadata.priorityId && setSelectedPriorityId(metadata.priorityId)}
+              className="font-semibold text-gray-800 dark:text-gray-200 hover:underline cursor-pointer"
+            >
+              {metadata.priorityTitle}
+            </button>
             {metadata.commentText && (
               <div className="mt-1 text-sm text-gray-600 dark:text-gray-400 italic">
                 "{metadata.commentText}"
@@ -358,6 +383,13 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
         )}
       </div>
       )}
+
+      {/* Priority Details Modal */}
+      <PriorityDetailsModal
+        isOpen={!!selectedPriorityId}
+        priorityId={selectedPriorityId}
+        onClose={() => setSelectedPriorityId(null)}
+      />
     </div>
   );
 }
