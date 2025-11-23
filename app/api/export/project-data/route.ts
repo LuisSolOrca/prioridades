@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
         const wsMessages = XLSX.utils.json_to_sheet(data.messages);
         XLSX.utils.book_append_sheet(wb, wsPriorities, 'Prioridades');
         XLSX.utils.book_append_sheet(wb, wsMessages, 'Mensajes');
-      } else {
+      } else if (Array.isArray(data)) {
         const ws = XLSX.utils.json_to_sheet(data);
         XLSX.utils.book_append_sheet(wb, ws, dataType === 'priorities' ? 'Prioridades' : 'Mensajes');
       }
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
         data.messages.forEach((row: any) => {
           csvContent += messagesHeaders.map(h => `"${row[h] || ''}"`).join(',') + '\n';
         });
-      } else {
+      } else if (Array.isArray(data)) {
         const headers = Object.keys(data[0] || {});
         csvContent = headers.join(',') + '\n';
         data.forEach((row: any) => {
@@ -270,7 +270,7 @@ export async function GET(request: NextRequest) {
           margin: { top: 30 },
           styles: { fontSize: 8 }
         });
-      } else {
+      } else if (Array.isArray(data)) {
         const tableHeaders = Object.keys(data[0] || {});
         const tableRows = data.map((row: any) =>
           tableHeaders.map(h => row[h]?.toString() || 'N/A')
