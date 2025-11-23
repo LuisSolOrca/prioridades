@@ -10,7 +10,9 @@ import {
   AlertCircle,
   Users,
   Calendar,
-  Activity
+  Activity,
+  X,
+  ExternalLink
 } from 'lucide-react';
 
 interface Priority {
@@ -40,10 +42,17 @@ interface ChannelMetricsProps {
   projectId: string;
 }
 
+interface DrillDownData {
+  type: 'status' | 'user' | 'milestone' | 'week';
+  title: string;
+  items: any[];
+}
+
 export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
+  const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
 
   useEffect(() => {
     loadData();
@@ -169,6 +178,64 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
     .sort((a, b) => a.week.localeCompare(b.week))
     .slice(-8); // Last 8 weeks
 
+  const handleStatusClick = (status: string, statusLabel: string) => {
+    const filteredPriorities = priorities.filter(p => p.status === status);
+    setDrillDownData({
+      type: 'status',
+      title: `Prioridades: ${statusLabel}`,
+      items: filteredPriorities
+    });
+  };
+
+  const handleUserClick = (userName: string) => {
+    const filteredPriorities = priorities.filter(p => p.userId.name === userName);
+    setDrillDownData({
+      type: 'user',
+      title: `Prioridades de ${userName}`,
+      items: filteredPriorities
+    });
+  };
+
+  const handleMilestoneClick = (milestone: Milestone) => {
+    setDrillDownData({
+      type: 'milestone',
+      title: `Hito: ${milestone.title}`,
+      items: [milestone]
+    });
+  };
+
+  const handleWeekClick = (week: any) => {
+    const filteredPriorities = priorities.filter(p => {
+      const weekKey = getWeekKey(p.weekStart);
+      return weekKey === week.week;
+    });
+    setDrillDownData({
+      type: 'week',
+      title: `Semana del ${new Date(week.week).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`,
+      items: filteredPriorities
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'COMPLETADO': return 'text-green-600 bg-green-100 dark:bg-green-900/30';
+      case 'EN_TIEMPO': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
+      case 'EN_RIESGO': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30';
+      case 'BLOQUEADO': return 'text-red-600 bg-red-100 dark:bg-red-900/30';
+      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/30';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'COMPLETADO': return 'Completado';
+      case 'EN_TIEMPO': return 'En Tiempo';
+      case 'EN_RIESGO': return 'En Riesgo';
+      case 'BLOQUEADO': return 'Bloqueado';
+      default: return status;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -266,11 +333,15 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
           </h3>
           <div className="space-y-3">
             {/* Completed */}
-            <div>
+            <div
+              onClick={() => handleStatusClick('COMPLETADO', 'Completado')}
+              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition"
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-600" />
                   Completado
+                  <ExternalLink size={12} className="text-gray-400" />
                 </span>
                 <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                   {completedPriorities}
@@ -285,11 +356,15 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
             </div>
 
             {/* In Progress */}
-            <div>
+            <div
+              onClick={() => handleStatusClick('EN_TIEMPO', 'En Tiempo')}
+              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition"
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <Clock size={16} className="text-blue-600" />
                   En Tiempo
+                  <ExternalLink size={12} className="text-gray-400" />
                 </span>
                 <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                   {inProgressPriorities}
@@ -304,11 +379,15 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
             </div>
 
             {/* At Risk */}
-            <div>
+            <div
+              onClick={() => handleStatusClick('EN_RIESGO', 'En Riesgo')}
+              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition"
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <AlertCircle size={16} className="text-yellow-600" />
                   En Riesgo
+                  <ExternalLink size={12} className="text-gray-400" />
                 </span>
                 <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                   {atRiskPriorities}
@@ -323,11 +402,15 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
             </div>
 
             {/* Blocked */}
-            <div>
+            <div
+              onClick={() => handleStatusClick('BLOQUEADO', 'Bloqueado')}
+              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition"
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <AlertCircle size={16} className="text-red-600" />
                   Bloqueado
+                  <ExternalLink size={12} className="text-gray-400" />
                 </span>
                 <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                   {blockedPriorities}
@@ -402,14 +485,19 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
                 const userInitial = userName.charAt(0).toUpperCase();
 
                 return (
-                  <div key={index} className="flex items-center gap-3">
+                  <div
+                    key={index}
+                    onClick={() => handleUserClick(userName)}
+                    className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition"
+                  >
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
                       {userInitial}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
                           {userName}
+                          <ExternalLink size={12} className="text-gray-400" />
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {user.completed}/{user.total}
@@ -438,7 +526,7 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
               Progreso de Entregables
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-2 mb-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Total:</span>
                 <span className="font-bold text-gray-900 dark:text-gray-100">
@@ -455,6 +543,41 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
                 {deliverablesCompletionRate}% completado
               </p>
             </div>
+
+            {/* Milestones List */}
+            {milestones.length > 0 && (
+              <div className="space-y-2 mt-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Hitos del proyecto:</p>
+                {milestones.slice(0, 3).map((milestone) => {
+                  const completedCount = milestone.deliverables.filter(d => d.isCompleted).length;
+                  const totalCount = milestone.deliverables.length;
+                  return (
+                    <div
+                      key={milestone._id}
+                      onClick={() => handleMilestoneClick(milestone)}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 p-2 rounded transition"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                            {milestone.title}
+                          </span>
+                          <ExternalLink size={10} className="text-gray-400 flex-shrink-0" />
+                        </div>
+                        <span className="text-xs text-gray-600 dark:text-gray-400 flex-shrink-0 ml-2">
+                          {completedCount}/{totalCount}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {milestones.length > 3 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    +{milestones.length - 3} hitos más
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -526,6 +649,7 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
                       r="4"
                       fill="#3b82f6"
                       className="hover:r-6 transition-all cursor-pointer"
+                      onClick={() => handleWeekClick(w)}
                     >
                       <title>{`Semana ${w.week}: ${w.rate}% (${w.completed}/${w.total})`}</title>
                     </circle>
@@ -536,7 +660,11 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
               {/* Labels */}
               <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                 {weeklyTrend.map((w, i) => (
-                  <div key={i} className="text-center">
+                  <div
+                    key={i}
+                    onClick={() => handleWeekClick(w)}
+                    className="text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-1 rounded transition"
+                  >
                     <div>{new Date(w.week).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</div>
                     <div className="font-bold text-gray-900 dark:text-gray-100">{w.rate}%</div>
                   </div>
@@ -562,6 +690,164 @@ export default function ChannelMetrics({ projectId }: ChannelMetricsProps) {
           <p className="text-sm text-blue-700 dark:text-blue-300">
             Este proyecto aún no tiene prioridades asociadas. Crea algunas prioridades para comenzar a ver las métricas del proyecto.
           </p>
+        </div>
+      )}
+
+      {/* Drill-Down Modal */}
+      {drillDownData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                {drillDownData.title}
+              </h3>
+              <button
+                onClick={() => setDrillDownData(null)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {drillDownData.type === 'milestone' ? (
+                // Milestone Details
+                <div className="space-y-4">
+                  {drillDownData.items.map((milestone: Milestone) => (
+                    <div key={milestone._id}>
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Calendar className="text-orange-600" size={20} />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Fecha límite: {new Date(milestone.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                        {milestone.description && (
+                          <p className="text-gray-700 dark:text-gray-300 mb-4">
+                            {milestone.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                        Entregables ({milestone.deliverables.filter(d => d.isCompleted).length}/{milestone.deliverables.length})
+                      </h4>
+
+                      {milestone.deliverables.length > 0 ? (
+                        <div className="space-y-2">
+                          {milestone.deliverables.map((deliverable, idx) => (
+                            <div
+                              key={idx}
+                              className={`border rounded-lg p-3 ${
+                                deliverable.isCompleted
+                                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                              }`}
+                            >
+                              <div className="flex items-start gap-2">
+                                <CheckCircle
+                                  size={18}
+                                  className={deliverable.isCompleted ? 'text-green-600' : 'text-gray-400'}
+                                />
+                                <div className="flex-1">
+                                  <p className={`font-medium ${deliverable.isCompleted ? 'line-through text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                                    {deliverable.title}
+                                  </p>
+                                  {deliverable.description && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                      {deliverable.description}
+                                    </p>
+                                  )}
+                                  {deliverable.successCriteria && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-500 mt-1 italic">
+                                      Criterio: {deliverable.successCriteria}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                          No hay entregables definidos para este hito
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Priorities List (for status, user, week)
+                <div className="space-y-3">
+                  {drillDownData.items.length > 0 ? (
+                    drillDownData.items.map((priority: Priority) => (
+                      <div
+                        key={priority._id}
+                        className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex-1">
+                            {priority.title}
+                          </h4>
+                          <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(priority.status)}`}>
+                            {getStatusLabel(priority.status)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-1">
+                            <Users size={14} />
+                            {priority.userId.name}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar size={14} />
+                            {new Date(priority.weekStart).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(priority.weekEnd).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-600 dark:text-gray-400">Progreso</span>
+                            <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
+                              {priority.completionPercentage}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all"
+                              style={{ width: `${priority.completionPercentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <Target className="mx-auto mb-2" size={32} />
+                      <p>No hay prioridades en esta categoría</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                <span>
+                  Total de items: <strong className="text-gray-900 dark:text-gray-100">{drillDownData.items.length}</strong>
+                </span>
+                <button
+                  onClick={() => setDrillDownData(null)}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
