@@ -48,7 +48,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
         const data = await response.json();
         setChannels(data.channels || []);
         // Expandir todos los canales padre por defecto
-        const parentIds = new Set(
+        const parentIds = new Set<string>(
           data.channels
             .filter((ch: Channel) => ch.children && ch.children.length > 0)
             .map((ch: Channel) => ch._id)
