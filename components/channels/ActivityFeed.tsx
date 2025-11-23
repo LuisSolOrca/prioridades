@@ -280,7 +280,7 @@ export default function ActivityFeed({ projectId }: ActivityFeedProps) {
     );
   }
 
-  if (activities.length === 0) {
+  if (activities.length === 0 && !debouncedSearchQuery) {
     return (
       <div className="text-center py-12">
         <div className="text-6xl mb-4">📋</div>
