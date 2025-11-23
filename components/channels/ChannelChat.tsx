@@ -1073,6 +1073,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         isOwn
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
+                      } ${
+                        message.replyCount > 0
+                          ? 'border-l-4 border-blue-500 dark:border-blue-400'
+                          : ''
                       }`}
                     >
                       <div className="text-sm">
@@ -1086,6 +1090,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
                           <div className="flex gap-1">
+                            <button
+                              onClick={() => setOpenThread(message)}
+                              className="p-1 bg-white/20 rounded hover:bg-white/30"
+                              title="Responder en hilo"
+                            >
+                              <MessageSquare size={14} />
+                            </button>
                             {message.isPinned ? (
                               <button
                                 onClick={() => handleUnpinMessage(message._id)}
@@ -1175,13 +1186,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     ))}
                   </div>
 
-                  {/* Reply Button */}
+                  {/* Reply Button/Counter */}
                   {message.replyCount > 0 && (
                     <button
                       onClick={() => setOpenThread(message)}
-                      className="flex items-center gap-1 mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      className="flex items-center gap-1 mt-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition text-xs font-medium"
                     >
-                      <CornerDownRight size={14} />
+                      <MessageSquare size={14} />
                       {message.replyCount} {message.replyCount === 1 ? 'respuesta' : 'respuestas'}
                     </button>
                   )}
@@ -1445,7 +1456,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         <ThreadView
           projectId={projectId}
           parentMessage={openThread}
-          onClose={() => setOpenThread(null)}
+          onClose={() => {
+            setOpenThread(null);
+            loadMessages(); // Recargar mensajes para actualizar contador de respuestas
+          }}
         />
       )}
     </div>
