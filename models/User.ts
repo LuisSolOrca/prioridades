@@ -52,6 +52,16 @@ export interface IUser {
       excelExports: number;
       kanbanViews: number;
     };
+    channelUsage?: {
+      messagesSent: number;
+      slashCommandsUsed: number;
+      uniqueCommandTypes: string[];
+      channelsCreated: number;
+      channelsParticipated: string[];
+      reactionsReceived: number;
+      interactiveCommandsParticipated: number;
+      interactiveCommandsCreated: number;
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -179,6 +189,28 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
           kanbanViews: 0,
         },
       },
+      channelUsage: {
+        type: {
+          messagesSent: { type: Number, default: 0 },
+          slashCommandsUsed: { type: Number, default: 0 },
+          uniqueCommandTypes: [{ type: String }],
+          channelsCreated: { type: Number, default: 0 },
+          channelsParticipated: [{ type: String }],
+          reactionsReceived: { type: Number, default: 0 },
+          interactiveCommandsParticipated: { type: Number, default: 0 },
+          interactiveCommandsCreated: { type: Number, default: 0 },
+        },
+        default: {
+          messagesSent: 0,
+          slashCommandsUsed: 0,
+          uniqueCommandTypes: [],
+          channelsCreated: 0,
+          channelsParticipated: [],
+          reactionsReceived: 0,
+          interactiveCommandsParticipated: 0,
+          interactiveCommandsCreated: 0,
+        },
+      },
     },
     default: {
       points: 0,
@@ -195,6 +227,16 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
         reportsGenerated: 0,
         excelExports: 0,
         kanbanViews: 0,
+      },
+      channelUsage: {
+        messagesSent: 0,
+        slashCommandsUsed: 0,
+        uniqueCommandTypes: [],
+        channelsCreated: 0,
+        channelsParticipated: [],
+        reactionsReceived: 0,
+        interactiveCommandsParticipated: 0,
+        interactiveCommandsCreated: 0,
       },
     },
   },

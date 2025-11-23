@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
+import { trackChannelUsage } from '@/lib/gamification';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/estimation
@@ -92,6 +93,13 @@ export async function POST(
             value,
             revealed: message.commandData.revealed || false
           });
+
+          // Trackear participación en comando interactivo (solo si es nueva)
+          try {
+            await trackChannelUsage(session.user.id, 'interactiveCommandParticipation');
+          } catch (gamificationError) {
+            console.error('Error tracking gamification:', gamificationError);
+          }
         }
         break;
 

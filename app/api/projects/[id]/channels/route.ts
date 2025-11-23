@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Channel from '@/models/Channel';
 import Project from '@/models/Project';
+import { trackChannelUsage } from '@/lib/gamification';
 
 /**
  * GET /api/projects/[id]/channels
@@ -153,6 +154,9 @@ export async function POST(
     const populatedChannel = await Channel.findById(channel._id)
       .populate('createdBy', 'name email')
       .lean();
+
+    // Trackear creación de canal para gamificación
+    await trackChannelUsage(session.user.id, 'channelCreated');
 
     return NextResponse.json(populatedChannel, { status: 201 });
   } catch (error: any) {

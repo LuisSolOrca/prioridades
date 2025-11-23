@@ -113,6 +113,63 @@ export const BADGE_DEFINITIONS = {
     icon: '🎴'
   },
 
+  // Badges de canales
+  PRIMER_MENSAJE: {
+    name: 'Primer Mensaje',
+    description: 'Envió su primer mensaje en un canal',
+    icon: '💌'
+  },
+  CONVERSADOR_CANALES: {
+    name: 'Conversador de Canales',
+    description: 'Envió 50 mensajes en canales',
+    icon: '💬'
+  },
+  COMUNICADOR_ACTIVO: {
+    name: 'Comunicador Activo',
+    description: 'Envió 200 mensajes en canales',
+    icon: '📣'
+  },
+  PRIMER_COMANDO: {
+    name: 'Primer Comando',
+    description: 'Usó su primer slash command',
+    icon: '⚡'
+  },
+  MAESTRO_COMANDOS: {
+    name: 'Maestro de Comandos',
+    description: 'Usó 10 comandos slash diferentes',
+    icon: '🎯'
+  },
+  ORGANIZADOR_CANALES: {
+    name: 'Organizador de Canales',
+    description: 'Creó su primer canal',
+    icon: '📁'
+  },
+  ARQUITECTO_CANALES: {
+    name: 'Arquitecto de Canales',
+    description: 'Creó 5 canales',
+    icon: '🏗️'
+  },
+  COLABORADOR_ESTRELLA: {
+    name: 'Colaborador Estrella',
+    description: 'Participó en 5 canales diferentes',
+    icon: '⭐'
+  },
+  COMUNICADOR_EFECTIVO: {
+    name: 'Comunicador Efectivo',
+    description: 'Recibió 20 reacciones en sus mensajes',
+    icon: '👍'
+  },
+  VOTANTE_ACTIVO: {
+    name: 'Votante Activo',
+    description: 'Participó en 5 comandos interactivos',
+    icon: '🗳️'
+  },
+  FACILITADOR: {
+    name: 'Facilitador',
+    description: 'Creó 10 comandos interactivos',
+    icon: '🎪'
+  },
+
   // Badges especiales
   EXPLORADOR: {
     name: 'Explorador',
@@ -122,7 +179,7 @@ export const BADGE_DEFINITIONS = {
   POWER_USER: {
     name: 'Power User',
     description: 'Usuario avanzado: más de 50 acciones en funcionalidades premium',
-    icon: '⚡'
+    icon: '💡'
   }
 };
 
@@ -603,6 +660,171 @@ export async function getMonthlyLeaderboard() {
   } catch (error) {
     console.error('Error getting leaderboard:', error);
     return [];
+  }
+}
+
+/**
+ * Trackea el uso del sistema de canales y otorga badges correspondientes
+ */
+export async function trackChannelUsage(
+  userId: string,
+  action: 'messageSent' | 'slashCommandUsed' | 'channelCreated' | 'reactionReceived' | 'interactiveCommandParticipation' | 'interactiveCommandCreated',
+  metadata?: {
+    channelId?: string;
+    commandType?: string;
+  }
+) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return null;
+
+    // Inicializar gamification si no existe
+    if (!user.gamification) {
+      user.gamification = {
+        points: 0,
+        currentMonthPoints: 0,
+        totalPoints: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        badges: [],
+        featureUsage: {
+          aiTextImprovements: 0,
+          aiOrgAnalysis: 0,
+          powerpointExports: 0,
+          analyticsVisits: 0,
+          reportsGenerated: 0,
+          excelExports: 0,
+          kanbanViews: 0,
+        },
+        channelUsage: {
+          messagesSent: 0,
+          slashCommandsUsed: 0,
+          uniqueCommandTypes: [],
+          channelsCreated: 0,
+          channelsParticipated: [],
+          reactionsReceived: 0,
+          interactiveCommandsParticipated: 0,
+          interactiveCommandsCreated: 0
+        }
+      };
+    }
+
+    if (!user.gamification.channelUsage) {
+      user.gamification.channelUsage = {
+        messagesSent: 0,
+        slashCommandsUsed: 0,
+        uniqueCommandTypes: [],
+        channelsCreated: 0,
+        channelsParticipated: [],
+        reactionsReceived: 0,
+        interactiveCommandsParticipated: 0,
+        interactiveCommandsCreated: 0
+      };
+    }
+
+    const newBadges: string[] = [];
+
+    // Actualizar contadores según la acción
+    switch (action) {
+      case 'messageSent':
+        user.gamification.channelUsage.messagesSent += 1;
+
+        // Agregar canal a lista de canales participados
+        if (metadata?.channelId && !user.gamification.channelUsage.channelsParticipated.includes(metadata.channelId)) {
+          user.gamification.channelUsage.channelsParticipated.push(metadata.channelId);
+        }
+
+        // Badges por cantidad de mensajes
+        if (user.gamification.channelUsage.messagesSent === 1) {
+          newBadges.push('PRIMER_MENSAJE');
+        }
+        if (user.gamification.channelUsage.messagesSent === 50) {
+          newBadges.push('CONVERSADOR_CANALES');
+        }
+        if (user.gamification.channelUsage.messagesSent === 200) {
+          newBadges.push('COMUNICADOR_ACTIVO');
+        }
+
+        // Badge por participación en canales
+        if (user.gamification.channelUsage.channelsParticipated.length === 5) {
+          newBadges.push('COLABORADOR_ESTRELLA');
+        }
+        break;
+
+      case 'slashCommandUsed':
+        user.gamification.channelUsage.slashCommandsUsed += 1;
+
+        // Agregar tipo de comando a lista única
+        if (metadata?.commandType && !user.gamification.channelUsage.uniqueCommandTypes.includes(metadata.commandType)) {
+          user.gamification.channelUsage.uniqueCommandTypes.push(metadata.commandType);
+        }
+
+        // Badges por uso de comandos
+        if (user.gamification.channelUsage.slashCommandsUsed === 1) {
+          newBadges.push('PRIMER_COMANDO');
+        }
+        if (user.gamification.channelUsage.uniqueCommandTypes.length === 10) {
+          newBadges.push('MAESTRO_COMANDOS');
+        }
+        break;
+
+      case 'channelCreated':
+        user.gamification.channelUsage.channelsCreated += 1;
+
+        // Badges por creación de canales
+        if (user.gamification.channelUsage.channelsCreated === 1) {
+          newBadges.push('ORGANIZADOR_CANALES');
+        }
+        if (user.gamification.channelUsage.channelsCreated === 5) {
+          newBadges.push('ARQUITECTO_CANALES');
+        }
+        break;
+
+      case 'reactionReceived':
+        user.gamification.channelUsage.reactionsReceived += 1;
+
+        // Badge por reacciones recibidas
+        if (user.gamification.channelUsage.reactionsReceived === 20) {
+          newBadges.push('COMUNICADOR_EFECTIVO');
+        }
+        break;
+
+      case 'interactiveCommandParticipation':
+        user.gamification.channelUsage.interactiveCommandsParticipated += 1;
+
+        // Badge por participación en comandos interactivos
+        if (user.gamification.channelUsage.interactiveCommandsParticipated === 5) {
+          newBadges.push('VOTANTE_ACTIVO');
+        }
+        break;
+
+      case 'interactiveCommandCreated':
+        user.gamification.channelUsage.interactiveCommandsCreated += 1;
+
+        // Badge por creación de comandos interactivos
+        if (user.gamification.channelUsage.interactiveCommandsCreated === 10) {
+          newBadges.push('FACILITADOR');
+        }
+        break;
+    }
+
+    // Otorgar badges nuevos
+    for (const badgeId of newBadges) {
+      const alreadyHas = user.gamification.badges?.some(b => b.badgeId === badgeId);
+      if (!alreadyHas) {
+        if (!user.gamification.badges) user.gamification.badges = [];
+        user.gamification.badges.push({
+          badgeId,
+          earnedAt: new Date()
+        });
+      }
+    }
+
+    await user.save();
+    return { user, newBadges };
+  } catch (error) {
+    console.error('Error tracking channel usage:', error);
+    return null;
   }
 }
 

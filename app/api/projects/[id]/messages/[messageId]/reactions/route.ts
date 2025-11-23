@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
+import { trackChannelUsage } from '@/lib/gamification';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/reactions
@@ -61,6 +62,16 @@ export async function POST(
     });
 
     await message.save();
+
+    // Trackear reacción recibida para gamificación (del autor del mensaje, no quien reacciona)
+    try {
+      if (message.userId.toString() !== session.user.id) {
+        await trackChannelUsage(message.userId.toString(), 'reactionReceived');
+      }
+    } catch (gamificationError) {
+      console.error('Error tracking reaction gamification:', gamificationError);
+      // No fallar si la gamificación falla
+    }
 
     // Poblar y devolver
     const populatedMessage = await ChannelMessage.findById(message._id)

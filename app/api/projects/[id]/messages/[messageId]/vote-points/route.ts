@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
+import { trackChannelUsage } from '@/lib/gamification';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/vote-points
@@ -107,6 +108,13 @@ export async function POST(
             message.commandData.options[idx].points += points as number;
           }
         });
+
+        // Trackear participación en comando interactivo
+        try {
+          await trackChannelUsage(session.user.id, 'interactiveCommandParticipation');
+        } catch (gamificationError) {
+          console.error('Error tracking gamification:', gamificationError);
+        }
         break;
 
       case 'close':

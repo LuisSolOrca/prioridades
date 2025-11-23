@@ -8,6 +8,7 @@ import Project from '@/models/Project';
 import Priority from '@/models/Priority';
 import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { trackChannelUsage } from '@/lib/gamification';
 
 /**
  * GET /api/projects/[id]/messages
@@ -257,6 +258,27 @@ export async function POST(
         name: 'Usuario Eliminado',
         email: 'deleted@system.local'
       };
+    }
+
+    // Trackear para gamificación
+    try {
+      // Trackear envío de mensaje
+      await trackChannelUsage(session.user.id, 'messageSent', { channelId });
+
+      // Si es un slash command, trackear uso de comando
+      if (commandType) {
+        await trackChannelUsage(session.user.id, 'slashCommandUsed', { commandType });
+
+        // Si es un comando interactivo (no exportación, búsqueda, etc), trackear creación
+        const interactiveCommands = ['poll', 'brainstorm', 'estimation-poker', 'retrospective',
+          'incident', 'vote-points', 'checklist', 'timer', 'wheel', 'mood', 'pros-cons', 'ranking'];
+        if (interactiveCommands.includes(commandType)) {
+          await trackChannelUsage(session.user.id, 'interactiveCommandCreated');
+        }
+      }
+    } catch (gamificationError) {
+      console.error('Error tracking gamification:', gamificationError);
+      // No fallar la creación del mensaje si la gamificación falla
     }
 
     // Detectar menciones y crear notificaciones
