@@ -182,6 +182,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   useEffect(() => {
     if (initialLoad) {
       scrollToBottom();
+      // Marcar como cargado después del primer scroll
+      setTimeout(() => setInitialLoad(false), 100);
     }
   }, [messages, initialLoad]);
 
@@ -273,7 +275,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (prev.some((m) => m._id === newMsg._id)) return prev;
           return [...prev, newMsg];
         });
-        scrollToBottom();
+        // Solo hacer scroll si el usuario está cerca del fondo
+        scrollToBottomIfNearBottom();
       }
     });
 
@@ -343,6 +346,23 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Verificar si el usuario está cerca del fondo del scroll
+  const isNearBottom = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+
+    const threshold = 200; // píxeles desde el fondo
+    const position = container.scrollHeight - container.scrollTop - container.clientHeight;
+    return position < threshold;
+  };
+
+  // Hacer scroll solo si el usuario está cerca del fondo
+  const scrollToBottomIfNearBottom = () => {
+    if (isNearBottom()) {
+      scrollToBottom();
+    }
   };
 
   const loadUsers = async () => {
@@ -545,6 +565,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       const message = await response.json();
       setMessages((prev) => [...prev, message]);
       setNewMessage('');
+      // Siempre hacer scroll cuando el usuario envía su propio mensaje
+      scrollToBottom();
     } catch (err) {
       console.error('Error sending message:', err);
       alert('Error al enviar mensaje');
@@ -616,6 +638,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (messageResponse.ok) {
             const message = await messageResponse.json();
             setMessages((prev) => [...prev, message]);
+            // Hacer scroll cuando el usuario pega una imagen
+            scrollToBottom();
           } else {
             loadMessages();
           }
@@ -708,6 +732,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             const message = await response.json();
             // Agregar mensaje directamente en lugar de recargar todos
             setMessages((prev) => [...prev, message]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating celebration:', error);
@@ -750,6 +775,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             const pollMessage = await response.json();
             // Agregar mensaje directamente en lugar de recargar todos
             setMessages((prev) => [...prev, pollMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating poll:', error);
@@ -791,6 +817,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             const brainstormMessage = await response.json();
             // Agregar mensaje directamente en lugar de recargar todos
             setMessages((prev) => [...prev, brainstormMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating brainstorm:', error);
@@ -832,6 +859,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const estimationMessage = await response.json();
             setMessages((prev) => [...prev, estimationMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating estimation poker:', error);
@@ -871,6 +899,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const retroMessage = await response.json();
             setMessages((prev) => [...prev, retroMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating retrospective:', error);
@@ -918,6 +947,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const incidentMessage = await response.json();
             setMessages((prev) => [...prev, incidentMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating incident:', error);
@@ -971,6 +1001,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const voteMessage = await response.json();
             setMessages((prev) => [...prev, voteMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating vote:', error);
@@ -1010,6 +1041,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const fistMessage = await response.json();
             setMessages((prev) => [...prev, fistMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating fist-of-five:', error);
@@ -1053,6 +1085,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const checklistMessage = await response.json();
             setMessages((prev) => [...prev, checklistMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating checklist:', error);
@@ -1099,6 +1132,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const timerMessage = await response.json();
             setMessages((prev) => [...prev, timerMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating timer:', error);
@@ -1139,6 +1173,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const wheelMessage = await response.json();
             setMessages((prev) => [...prev, wheelMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating wheel:', error);
@@ -1178,6 +1213,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const moodMessage = await response.json();
             setMessages((prev) => [...prev, moodMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating mood check-in:', error);
@@ -1217,6 +1253,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const prosConsMessage = await response.json();
             setMessages((prev) => [...prev, prosConsMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating pros-cons:', error);
@@ -1258,6 +1295,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           if (response.ok) {
             const rankingMessage = await response.json();
             setMessages((prev) => [...prev, rankingMessage]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating ranking:', error);
@@ -1365,6 +1403,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             const message = await response.json();
             // Agregar mensaje directamente en lugar de recargar todos
             setMessages((prev) => [...prev, message]);
+            scrollToBottom();
           }
         } catch (error) {
           console.error('Error creating decision:', error);
@@ -1419,6 +1458,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             const message = await response.json();
             // Agregar mensaje directamente en lugar de recargar todos
             setMessages((prev) => [...prev, message]);
+            scrollToBottom();
 
             // Notificar al usuario preguntado
             try {
@@ -2853,6 +2893,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                   if (response.ok) {
                     const message = await response.json();
                     setMessages((prev) => [...prev, message]);
+            scrollToBottom();
                   } else {
                     // Si falla crear el mensaje, al menos recargar para mostrar en pestaña
                     loadMessages();
