@@ -99,20 +99,32 @@ export async function GET(
           isDeleted: false
         }).select('fileName originalName fileSize mimeType uploadedBy uploadedAt').lean();
 
-        // Poblar uploadedBy para cada attachment
+        // Poblar uploadedBy para cada attachment y convertir IDs a strings
         const populatedAttachments = await Promise.all(
           attachmentDocs.map(async (att: any) => {
             const uploader = await User.findById(att.uploadedBy).select('name email').lean();
             return {
               ...att,
-              uploadedBy: uploader || { _id: 'deleted', name: 'Usuario Eliminado', email: 'deleted@system.local' }
+              _id: att._id.toString(),
+              uploadedBy: uploader ? {
+                ...uploader,
+                _id: uploader._id.toString()
+              } : { _id: 'deleted', name: 'Usuario Eliminado', email: 'deleted@system.local' }
             };
           })
         );
 
-        return { ...msg, attachments: populatedAttachments };
+        return {
+          ...msg,
+          _id: msg._id.toString(),
+          attachments: populatedAttachments
+        };
       }
-      return { ...msg, attachments: [] };
+      return {
+        ...msg,
+        _id: msg._id.toString(),
+        attachments: []
+      };
     }));
 
     // Determinar si hay más mensajes
