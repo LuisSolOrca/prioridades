@@ -21,6 +21,7 @@ interface AttachmentCardProps {
   onDelete?: () => void;
   showDelete?: boolean;
   compact?: boolean;
+  showPreview?: boolean;
 }
 
 export default function AttachmentCard({
@@ -28,7 +29,8 @@ export default function AttachmentCard({
   projectId,
   onDelete,
   showDelete = true,
-  compact = false
+  compact = false,
+  showPreview = true
 }: AttachmentCardProps) {
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -38,9 +40,9 @@ export default function AttachmentCard({
 
   const isImage = attachment.mimeType.startsWith('image/');
 
-  // Cargar imagen si es una imagen
+  // Cargar imagen si es una imagen y showPreview está habilitado
   useEffect(() => {
-    if (!isImage) return;
+    if (!isImage || !showPreview) return;
 
     const loadImage = async () => {
       try {
@@ -61,7 +63,7 @@ export default function AttachmentCard({
     };
 
     loadImage();
-  }, [attachment._id, projectId, isImage]);
+  }, [attachment._id, projectId, isImage, showPreview]);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -124,8 +126,8 @@ export default function AttachmentCard({
   if (compact) {
     return (
       <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition group">
-        {/* Preview de imagen */}
-        {isImage && imageUrl && !imageError && (
+        {/* Preview de imagen (solo si showPreview está habilitado) */}
+        {showPreview && isImage && imageUrl && !imageError && (
           <div className="mb-2 relative group/image">
             <img
               src={imageUrl}
@@ -157,14 +159,14 @@ export default function AttachmentCard({
         )}
 
         {/* Loading state para imagen */}
-        {isImage && imageLoading && (
+        {showPreview && isImage && imageLoading && (
           <div className="mb-2 h-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse flex items-center justify-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">Cargando imagen...</p>
           </div>
         )}
 
         {/* Error state para imagen */}
-        {isImage && imageError && (
+        {showPreview && isImage && imageError && (
           <div className="mb-2 p-4 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
             <p className="text-sm text-red-600 dark:text-red-400">Error al cargar imagen</p>
           </div>
@@ -181,7 +183,7 @@ export default function AttachmentCard({
               {formatFileSize(attachment.fileSize)}
             </p>
           </div>
-          {!isImage && (
+          {(!isImage || !showPreview) && (
             <>
               <button
                 onClick={handleDownload}
@@ -210,8 +212,8 @@ export default function AttachmentCard({
 
   return (
     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition group">
-      {/* Preview de imagen */}
-      {isImage && imageUrl && !imageError && (
+      {/* Preview de imagen (solo si showPreview está habilitado) */}
+      {showPreview && isImage && imageUrl && !imageError && (
         <div className="mb-3 relative group/image">
           <img
             src={imageUrl}
@@ -243,14 +245,14 @@ export default function AttachmentCard({
       )}
 
       {/* Loading state para imagen */}
-      {isImage && imageLoading && (
+      {showPreview && isImage && imageLoading && (
         <div className="mb-3 h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse flex items-center justify-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">Cargando imagen...</p>
         </div>
       )}
 
       {/* Error state para imagen */}
-      {isImage && imageError && (
+      {showPreview && isImage && imageError && (
         <div className="mb-3 p-8 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800 text-center">
           <p className="text-sm text-red-600 dark:text-red-400">Error al cargar imagen</p>
         </div>
@@ -278,7 +280,7 @@ export default function AttachmentCard({
             })}
           </p>
         </div>
-        {!isImage && (
+        {(!isImage || !showPreview) && (
           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
             <button
               onClick={handleDownload}

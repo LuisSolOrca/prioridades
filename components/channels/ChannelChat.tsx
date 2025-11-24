@@ -2394,6 +2394,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               attachment={attachment}
                               projectId={projectId}
                               compact={true}
+                              showPreview={false}
                             />
                           ))}
                         </div>
