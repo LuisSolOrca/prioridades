@@ -45,6 +45,7 @@ export default function WebhookManagement({ projectId }: WebhookManagementProps)
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
   const [copiedSecret, setCopiedSecret] = useState<string | null>(null);
@@ -64,17 +65,31 @@ export default function WebhookManagement({ projectId }: WebhookManagementProps)
   const loadData = async () => {
     try {
       setLoading(true);
+      setError(null);
+
       const [webhooksRes, channelsRes] = await Promise.all([
         fetch(`/api/projects/${projectId}/webhooks`),
         fetch(`/api/projects/${projectId}/channels`),
       ]);
+
+      // Verificar respuestas
+      if (!webhooksRes.ok) {
+        const errorData = await webhooksRes.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || `Error ${webhooksRes.status} al cargar webhooks`);
+      }
+
+      if (!channelsRes.ok) {
+        const errorData = await channelsRes.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(errorData.error || `Error ${channelsRes.status} al cargar canales`);
+      }
 
       const [webhooksData, channelsData] = await Promise.all([
         webhooksRes.json(),
         channelsRes.json(),
       ]);
 
-      setWebhooks(webhooksData || []);
+      setWebhooks(Array.isArray(webhooksData) ? webhooksData : []);
+
       // Flatten channels (incluir padre e hijos)
       const allChannels: Channel[] = [];
       (channelsData.channels || []).forEach((ch: any) => {
@@ -88,6 +103,9 @@ export default function WebhookManagement({ projectId }: WebhookManagementProps)
       setChannels(allChannels);
     } catch (error) {
       console.error('Error loading webhooks:', error);
+      setError(error instanceof Error ? error.message : 'Error al cargar webhooks. Por favor, intenta de nuevo.');
+      setWebhooks([]);
+      setChannels([]);
     } finally {
       setLoading(false);
     }
@@ -230,6 +248,28 @@ export default function WebhookManagement({ projectId }: WebhookManagementProps)
 
   if (loading) {
     return <div className="p-4 text-gray-600 dark:text-gray-400">Cargando webhooks...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" size={20} />
+            <div className="flex-1">
+              <h3 className="text-red-900 dark:text-red-200 font-semibold mb-1">Error al cargar webhooks</h3>
+              <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+              <button
+                onClick={loadData}
+                className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
