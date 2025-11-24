@@ -2958,9 +2958,23 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           projectId={projectId}
           parentMessage={openThread}
           channelId={selectedChannelId}
-          onClose={() => {
+          onClose={async () => {
+            // Actualizar solo el mensaje padre en lugar de recargar todos
+            try {
+              const response = await fetch(`/api/projects/${projectId}/messages?channelId=${selectedChannelId}`);
+              if (response.ok) {
+                const data = await response.json();
+                const updatedParent = data.messages.find((m: Message) => m._id === openThread._id);
+                if (updatedParent) {
+                  setMessages((prev) =>
+                    prev.map((m) => (m._id === openThread._id ? updatedParent : m))
+                  );
+                }
+              }
+            } catch (error) {
+              console.error('Error updating parent message:', error);
+            }
             setOpenThread(null);
-            loadMessages(); // Recargar mensajes para actualizar contador de respuestas
           }}
         />
       )}
