@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     const comments = await Comment.find({ priorityId })
+      .populate('attachments')
       .sort({ createdAt: 1 }) // Ordenar del más antiguo al más reciente
       .lean();
 
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { priorityId, text, isSystemComment } = body;
+    const { priorityId, text, isSystemComment, attachments } = body;
 
     if (!priorityId || !text) {
       return NextResponse.json({
@@ -93,12 +94,14 @@ export async function POST(request: NextRequest) {
       priorityId,
       userId: (session.user as any).id,
       text: text.trim(),
-      isSystemComment: isSystemComment || false
+      isSystemComment: isSystemComment || false,
+      attachments: attachments || []
     });
 
-    // Poblar el usuario antes de devolver
+    // Poblar el usuario y attachments antes de devolver
     const populatedComment = await Comment.findById(comment._id)
       .populate('userId', 'name email')
+      .populate('attachments')
       .lean();
 
     // Variable para trackear si hubo mención

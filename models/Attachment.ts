@@ -2,9 +2,11 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IAttachment extends Document {
   _id: mongoose.Types.ObjectId;
-  projectId: mongoose.Types.ObjectId;
+  projectId?: mongoose.Types.ObjectId; // Para archivos de canales/proyectos
   channelId?: mongoose.Types.ObjectId;
   messageId?: mongoose.Types.ObjectId;
+  priorityId?: mongoose.Types.ObjectId; // Para archivos de comentarios en prioridades
+  commentId?: mongoose.Types.ObjectId;  // Para archivos de comentarios en prioridades
   fileName: string;
   originalName: string;
   fileSize: number; // bytes
@@ -24,7 +26,6 @@ const AttachmentSchema = new Schema<IAttachment>(
     projectId: {
       type: Schema.Types.ObjectId,
       ref: 'Project',
-      required: true,
       index: true
     },
     channelId: {
@@ -35,6 +36,16 @@ const AttachmentSchema = new Schema<IAttachment>(
     messageId: {
       type: Schema.Types.ObjectId,
       ref: 'ChannelMessage',
+      index: true
+    },
+    priorityId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Priority',
+      index: true
+    },
+    commentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Comment',
       index: true
     },
     fileName: {
@@ -97,5 +108,7 @@ const AttachmentSchema = new Schema<IAttachment>(
 AttachmentSchema.index({ projectId: 1, isDeleted: 1, uploadedAt: -1 });
 AttachmentSchema.index({ channelId: 1, isDeleted: 1, uploadedAt: -1 });
 AttachmentSchema.index({ messageId: 1 });
+AttachmentSchema.index({ priorityId: 1, isDeleted: 1, uploadedAt: -1 });
+AttachmentSchema.index({ commentId: 1 });
 
 export default mongoose.models.Attachment || mongoose.model<IAttachment>('Attachment', AttachmentSchema);

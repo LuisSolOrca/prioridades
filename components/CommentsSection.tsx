@@ -2,6 +2,21 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import CommentFileUpload from './CommentFileUpload';
+import AttachmentCard from './AttachmentCard';
+
+interface Attachment {
+  _id: string;
+  fileName: string;
+  originalName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedBy: {
+    _id: string;
+    name: string;
+  };
+  uploadedAt: string;
+}
 
 interface Comment {
   _id: string;
@@ -12,6 +27,7 @@ interface Comment {
     email: string;
   };
   isSystemComment: boolean;
+  attachments?: Attachment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +69,9 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Attachments state
+  const [pendingAttachments, setPendingAttachments] = useState<string[]>([]);
 
   // LocalStorage keys
   const NEW_COMMENT_KEY = `comment_new_${priorityId}`;
@@ -233,7 +252,8 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           priorityId,
-          text: newComment
+          text: newComment,
+          attachments: pendingAttachments
         })
       });
 
@@ -242,6 +262,7 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
       const comment = await res.json();
       setComments([...comments, comment]);
       setNewComment('');
+      setPendingAttachments([]);
       // Limpiar borrador del localStorage
       localStorage.removeItem(NEW_COMMENT_KEY);
     } catch (error) {
@@ -428,6 +449,18 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
           )}
         </div>
 
+        {/* Componente de subida de archivos */}
+        <CommentFileUpload
+          priorityId={priorityId}
+          onUploadSuccess={(attachment) => {
+            setPendingAttachments(prev => [...prev, attachment._id]);
+          }}
+          onUploadError={(error) => {
+            console.error('Error uploading file:', error);
+            alert(`Error al subir archivo: ${error}`);
+          }}
+        />
+
         <div className="flex justify-between items-center">
           <div className="text-xs text-gray-500 dark:text-gray-400">
             💡 Usa @ para mencionar usuarios
@@ -472,6 +505,15 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                       </div>
                     </div>
                     <p className="text-blue-800 dark:text-blue-300 text-sm whitespace-pre-wrap">{comment.text}</p>
+
+                    {/* Attachments para comentarios del sistema */}
+                    {comment.attachments && comment.attachments.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        {comment.attachments.map((attachment) => (
+                          <AttachmentCard key={attachment._id} attachment={attachment} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -537,7 +579,18 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{comment.text}</p>
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{comment.text}</p>
+
+                    {/* Attachments para comentarios regulares */}
+                    {comment.attachments && comment.attachments.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        {comment.attachments.map((attachment) => (
+                          <AttachmentCard key={attachment._id} attachment={attachment} />
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )
