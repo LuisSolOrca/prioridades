@@ -111,6 +111,10 @@ export async function POST(request: NextRequest) {
     // Poblar el usuario y attachments manualmente para evitar problemas en serverless
     const commentDoc = await Comment.findById(comment._id).lean();
 
+    if (!commentDoc) {
+      throw new Error('Comentario no encontrado después de crear');
+    }
+
     // Poblar usuario
     const user = await User.findById(commentDoc.userId).select('name email').lean();
 
