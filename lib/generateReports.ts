@@ -883,7 +883,12 @@ export const generateAzureDevOpsReport = async (
   const hoursByUser = new Map<string, number>(); // Acumulador de horas por usuario
 
   prioritiesWithAzureDevOps.forEach(priority => {
-    const user = users.find(u => u._id === priority.userId);
+    // Manejar el caso donde userId puede ser un objeto poblado o un string
+    const userId = typeof priority.userId === 'string'
+      ? priority.userId
+      : priority.userId?._id || priority.userId;
+
+    const user = users.find(u => u._id === userId);
     const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
 
     const workItemId = priority.azureDevOps.workItemId;
@@ -1179,7 +1184,12 @@ export const generateClientBreakdownReport = async (
     const hours = clientHours.get(clientId) || 0;
 
     clientPriorities.forEach(priority => {
-      const user = users.find(u => u._id === priority.userId);
+      // Manejar el caso donde userId puede ser un objeto poblado o un string
+      const userId = typeof priority.userId === 'string'
+        ? priority.userId
+        : priority.userId?._id || priority.userId;
+
+      const user = users.find(u => u._id === userId);
       const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
       const weekEnd = new Date(priority.weekEnd).toLocaleDateString('es-MX');
 
@@ -1304,7 +1314,12 @@ export const generateProjectBreakdownReport = async (
     const hours = projectHours.get(projectId) || 0;
 
     projectPriorities.forEach(priority => {
-      const user = users.find(u => u._id === priority.userId);
+      // Manejar el caso donde userId puede ser un objeto poblado o un string
+      const userId = typeof priority.userId === 'string'
+        ? priority.userId
+        : priority.userId?._id || priority.userId;
+
+      const user = users.find(u => u._id === userId);
       const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
       const weekEnd = new Date(priority.weekEnd).toLocaleDateString('es-MX');
 
@@ -1555,7 +1570,12 @@ export const generateRescheduleByClientProjectReport = async (
 
       // Agregar detalles de cada prioridad
       projectPriorities.forEach(priority => {
-        const user = users.find(u => u._id === priority.userId);
+        // Manejar el caso donde userId puede ser un objeto poblado o un string
+        const userId = typeof priority.userId === 'string'
+          ? priority.userId
+          : priority.userId?._id || priority.userId;
+
+        const user = users.find(u => u._id === userId);
         const userName = user?.name || 'Desconocido';
 
         const weekStart = new Date(priority.weekStart).toLocaleDateString('es-MX');
@@ -1692,7 +1712,12 @@ export const generateMilestonesReport = async (
     projectMilestones
       .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
       .forEach((milestone: any) => {
-        const user = users.find(u => u._id === milestone.userId);
+        // Manejar el caso donde userId puede ser un objeto poblado o un string
+        const userId = typeof milestone.userId === 'string'
+          ? milestone.userId
+          : milestone.userId?._id || milestone.userId;
+
+        const user = users.find(u => u._id === userId);
         const dueDate = new Date(milestone.dueDate).toLocaleDateString('es-MX', {
           year: 'numeric',
           month: 'short',
