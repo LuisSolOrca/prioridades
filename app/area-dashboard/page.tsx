@@ -213,7 +213,10 @@ function AreaPriorityCard({
               </div>
             ) : (
               areaData.priorities.map(priority => {
-                const priorityUser = allUsers.find(u => u._id === priority.userId);
+                // Manejar userId que puede ser string u objeto poblado
+                const priorityUser = typeof priority.userId === 'object'
+                  ? priority.userId
+                  : allUsers.find(u => u._id === priority.userId);
                 const priorityInitiativeIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
                 const priorityInitiatives = priorityInitiativeIds
                   .map(id => initiatives.find(i => i._id === id))
@@ -742,7 +745,9 @@ export default function AreaDashboardPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Usuario</h3>
                   <p className="text-gray-800 dark:text-gray-200">
-                    {users.find(u => u._id === selectedPriority.userId)?.name}
+                    {typeof selectedPriority.userId === 'object'
+                      ? selectedPriority.userId.name
+                      : users.find(u => u._id === selectedPriority.userId)?.name}
                   </p>
                 </div>
                 <div>
