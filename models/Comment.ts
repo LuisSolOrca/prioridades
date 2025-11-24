@@ -26,8 +26,9 @@ const CommentSchema = new Schema<IComment>({
   },
   text: {
     type: String,
-    required: true,
-    trim: true
+    required: false, // Permitir texto vacío si hay attachments
+    trim: true,
+    default: ''
   },
   isSystemComment: {
     type: Boolean,
@@ -48,5 +49,14 @@ const CommentSchema = new Schema<IComment>({
 
 // Índice compuesto para optimizar búsquedas de comentarios por prioridad
 CommentSchema.index({ priorityId: 1, createdAt: -1 });
+
+// Validación personalizada: debe tener texto O attachments
+CommentSchema.pre('validate', function(next) {
+  if (!this.text && (!this.attachments || this.attachments.length === 0)) {
+    next(new Error('Un comentario debe tener texto o archivos adjuntos'));
+  } else {
+    next();
+  }
+});
 
 export default mongoose.models.Comment || mongoose.model<IComment>('Comment', CommentSchema);

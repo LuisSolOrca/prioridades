@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import Priority from '@/models/Priority';
 import User from '@/models/User';
+import Attachment from '@/models/Attachment'; // Necesario para populate
 import { notifyComment, notifyMention } from '@/lib/notifications';
 import { trackCommentBadges } from '@/lib/gamification';
 import { sendPriorityNotificationToSlack } from '@/lib/slack';
@@ -127,12 +128,13 @@ export async function POST(request: NextRequest) {
       try {
         const priority = await Priority.findById(priorityId).lean();
         if (priority && priority.projectId) {
+          const commentText = text ? text.trim() : '📎 Adjuntó archivos';
           await logCommentAdded(
             priority.projectId,
             (session.user as any).id,
             priority._id,
             priority.title,
-            text.trim().substring(0, 100) // Limitar a 100 caracteres
+            commentText.substring(0, 100) // Limitar a 100 caracteres
           );
         }
       } catch (activityError) {
@@ -156,12 +158,14 @@ export async function POST(request: NextRequest) {
 
         // Crear notificación in-app si no es el propio dueño quien comenta
         if (priorityOwner && commentAuthor && priorityOwner._id.toString() !== commentAuthor._id.toString()) {
+          const commentText = text ? text.trim() : '📎 Adjuntó archivos';
+
           // Crear notificación de comentario
           await notifyComment(
             priorityOwner._id.toString(),
             commentAuthor.name,
             priority.title,
-            text.trim(),
+            commentText,
             priorityId,
             comment._id.toString()
           ).catch(err => console.error('[NOTIFICATION] Error creating comment notification:', err));
@@ -169,12 +173,13 @@ export async function POST(request: NextRequest) {
           // Notificar a Slack si el proyecto tiene canal configurado
           if (priority.projectId) {
             const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+            const slackMessage = commentText.length > 100 ? commentText.substring(0, 100) + '...' : commentText;
             await sendPriorityNotificationToSlack({
               projectId: priority.projectId,
               userId: priority.userId,
               eventType: 'comment',
               priorityTitle: priority.title,
-              message: `${commentAuthor.name} comentó: "${text.trim().substring(0, 100)}${text.trim().length > 100 ? '...' : ''}"`,
+              message: `${commentAuthor.name} comentó: "${slackMessage}"`,
               priorityUrl: `${baseUrl}/dashboard?priority=${priorityId}`,
             }).catch(err => console.error('[SLACK] Error sending comment notification to Slack:', err));
           }
@@ -183,7 +188,7 @@ export async function POST(request: NextRequest) {
         // Detectar menciones (@username o @NombreCompleto) y crear notificaciones
         // Regex mejorado para capturar nombres con espacios: @NombreCompleto o @Nombre
         const mentionRegex = /@([\w\s]+?)(?=\s|$|[^\w\s])/g;
-        const mentions = text.match(mentionRegex);
+        const mentions = text ? text.match(mentionRegex) : null;
 
         if (mentions && commentAuthor) {
           console.log('[NOTIFICATION] Mentions detected:', mentions);
@@ -215,11 +220,12 @@ export async function POST(request: NextRequest) {
 
               if (mentionedUser && mentionedUser._id.toString() !== commentAuthor._id.toString()) {
                 console.log(`[NOTIFICATION] Creating mention notification for user: ${mentionedUser.name}`);
+                const mentionText = text ? text.trim() : '📎 Adjuntó archivos';
                 await notifyMention(
                   mentionedUser._id.toString(),
                   commentAuthor.name,
                   priority.title,
-                  text.trim(),
+                  mentionText,
                   priorityId,
                   comment._id.toString()
                 ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
@@ -227,12 +233,13 @@ export async function POST(request: NextRequest) {
                 // Notificar a Slack si el proyecto tiene canal configurado
                 if (priority.projectId) {
                   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+                  const slackMentionMessage = mentionText.length > 100 ? mentionText.substring(0, 100) + '...' : mentionText;
                   await sendPriorityNotificationToSlack({
                     projectId: priority.projectId,
                     userId: priority.userId,
                     eventType: 'mention',
                     priorityTitle: priority.title,
-                    message: `${commentAuthor.name} mencionó a ${mentionedUser.name}: "${text.trim().substring(0, 100)}${text.trim().length > 100 ? '...' : ''}"`,
+                    message: `${commentAuthor.name} mencionó a ${mentionedUser.name}: "${slackMentionMessage}"`,
                     priorityUrl: `${baseUrl}/dashboard?priority=${priorityId}`,
                   }).catch(err => console.error('[SLACK] Error sending mention notification to Slack:', err));
                 }
