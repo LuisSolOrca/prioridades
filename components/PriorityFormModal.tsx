@@ -372,20 +372,8 @@ export default function PriorityFormModal({
             const nextMonday = new Date(currentMonday);
             nextMonday.setDate(currentMonday.getDate() + 7);
 
-            // Calcular semanas pasadas (últimas 4 semanas)
+            // Solo semana actual y siguiente
             const weeks: Array<{ label: string; monday: string; friday: string }> = [];
-            for (let i = 4; i >= 1; i--) {
-              const monday = new Date(currentMonday);
-              monday.setDate(currentMonday.getDate() - (i * 7));
-              const friday = new Date(monday);
-              friday.setDate(monday.getDate() + 4);
-              friday.setHours(23, 59, 59, 999);
-              weeks.push({
-                label: `${i} semana${i > 1 ? 's' : ''} atrás (${getWeekLabel(monday)})`,
-                monday: monday.toISOString(),
-                friday: friday.toISOString()
-              });
-            }
 
             // Agregar semana actual
             const currentFriday = new Date(currentMonday);
