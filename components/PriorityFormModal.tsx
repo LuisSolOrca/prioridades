@@ -359,61 +359,93 @@ export default function PriorityFormModal({
           )}
 
           {/* Selector de Semana (modo edición en /history) */}
-          {isEditing && formData.weekStart && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Semana *
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                    Inicio (Lunes)
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.weekStart ? new Date(formData.weekStart).toISOString().split('T')[0] : ''}
-                    onChange={(e) => {
-                      if (!e.target.value) return;
-                      const newDate = new Date(e.target.value);
-                      // Ajustar al lunes de la semana
-                      const day = newDate.getDay();
-                      const diff = day === 0 ? -6 : 1 - day;
-                      newDate.setDate(newDate.getDate() + diff);
-                      newDate.setHours(0, 0, 0, 0);
+          {isEditing && formData.weekStart && (() => {
+            // Calcular semana actual
+            const now = new Date();
+            const day = now.getDay();
+            const diff = day === 0 ? -6 : 1 - day;
+            const currentMonday = new Date(now);
+            currentMonday.setDate(now.getDate() + diff);
+            currentMonday.setHours(0, 0, 0, 0);
 
-                      // Calcular el viernes correspondiente
-                      const friday = new Date(newDate);
-                      friday.setDate(newDate.getDate() + 4);
-                      friday.setHours(23, 59, 59, 999);
+            // Calcular próxima semana
+            const nextMonday = new Date(currentMonday);
+            nextMonday.setDate(currentMonday.getDate() + 7);
 
+            // Calcular semanas pasadas (últimas 4 semanas)
+            const weeks = [];
+            for (let i = 4; i >= 1; i--) {
+              const monday = new Date(currentMonday);
+              monday.setDate(currentMonday.getDate() - (i * 7));
+              const friday = new Date(monday);
+              friday.setDate(monday.getDate() + 4);
+              friday.setHours(23, 59, 59, 999);
+              weeks.push({
+                label: `${i} semana${i > 1 ? 's' : ''} atrás (${getWeekLabel(monday)})`,
+                monday: monday.toISOString(),
+                friday: friday.toISOString()
+              });
+            }
+
+            // Agregar semana actual
+            const currentFriday = new Date(currentMonday);
+            currentFriday.setDate(currentMonday.getDate() + 4);
+            currentFriday.setHours(23, 59, 59, 999);
+            weeks.push({
+              label: `Semana Actual (${getWeekLabel(currentMonday)})`,
+              monday: currentMonday.toISOString(),
+              friday: currentFriday.toISOString()
+            });
+
+            // Agregar próxima semana
+            const nextFriday = new Date(nextMonday);
+            nextFriday.setDate(nextMonday.getDate() + 4);
+            nextFriday.setHours(23, 59, 59, 999);
+            weeks.push({
+              label: `Siguiente Semana (${getWeekLabel(nextMonday)})`,
+              monday: nextMonday.toISOString(),
+              friday: nextFriday.toISOString()
+            });
+
+            // Detectar cuál semana está seleccionada actualmente
+            const currentWeekStart = new Date(formData.weekStart).toISOString().split('T')[0];
+            const selectedWeekIndex = weeks.findIndex(w =>
+              new Date(w.monday).toISOString().split('T')[0] === currentWeekStart
+            );
+
+            return (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Semana *
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  value={selectedWeekIndex >= 0 ? selectedWeekIndex : ''}
+                  onChange={(e) => {
+                    const index = parseInt(e.target.value);
+                    if (index >= 0 && index < weeks.length) {
+                      const selectedWeek = weeks[index];
                       setFormData({
                         ...formData,
-                        weekStart: newDate.toISOString(),
-                        weekEnd: friday.toISOString()
+                        weekStart: selectedWeek.monday,
+                        weekEnd: selectedWeek.friday
                       });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                    Fin (Viernes)
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.weekEnd ? new Date(formData.weekEnd).toISOString().split('T')[0] : ''}
-                    readOnly
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm cursor-not-allowed"
-                    title="Se calcula automáticamente (Lunes + 4 días)"
-                  />
-                </div>
+                    }
+                  }}
+                  required
+                >
+                  {selectedWeekIndex < 0 && (
+                    <option value="">Semana personalizada ({new Date(formData.weekStart).toLocaleDateString('es-MX')})</option>
+                  )}
+                  {weeks.map((week, index) => (
+                    <option key={index} value={index}>
+                      {week.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                💡 Selecciona cualquier día y se ajustará automáticamente al lunes de esa semana
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Título con IA */}
           <div>
