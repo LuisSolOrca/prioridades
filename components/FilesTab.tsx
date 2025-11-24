@@ -141,6 +141,7 @@ export default function FilesTab({ projectId }: FilesTabProps) {
                 attachment={attachment}
                 projectId={projectId}
                 onDelete={handleDelete}
+                showPreview={false}
               />
             ))}
           </div>
