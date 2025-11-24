@@ -282,20 +282,29 @@ export async function POST(
     // Poblar userId
     const userId = await User.findById(messageDoc.userId).select('name email').lean();
 
-    // Poblar mentions
+    // Poblar mentions y convertir IDs a strings
     let mentionsPopulated: any[] = [];
     if (messageDoc.mentions && messageDoc.mentions.length > 0) {
-      mentionsPopulated = await User.find({
+      const mentionDocs = await User.find({
         _id: { $in: messageDoc.mentions }
       }).select('name email').lean();
+      mentionsPopulated = mentionDocs.map((m: any) => ({
+        ...m,
+        _id: m._id.toString()
+      }));
     }
 
-    // Poblar priorityMentions
+    // Poblar priorityMentions y convertir IDs a strings
     let priorityMentionsPopulated: any[] = [];
     if (messageDoc.priorityMentions && messageDoc.priorityMentions.length > 0) {
-      priorityMentionsPopulated = await Priority.find({
+      const priorityDocs = await Priority.find({
         _id: { $in: messageDoc.priorityMentions }
       }).select('title status completionPercentage userId').lean();
+      priorityMentionsPopulated = priorityDocs.map((p: any) => ({
+        ...p,
+        _id: p._id.toString(),
+        userId: typeof p.userId === 'string' ? p.userId : p.userId?.toString()
+      }));
     }
 
     // Poblar attachments manualmente
@@ -306,13 +315,17 @@ export async function POST(
         isDeleted: false
       }).select('fileName originalName fileSize mimeType uploadedBy uploadedAt').lean();
 
-      // Poblar uploadedBy para cada attachment
+      // Poblar uploadedBy para cada attachment y convertir IDs a strings
       populatedAttachments = await Promise.all(
         attachmentDocs.map(async (att: any) => {
           const uploader = await User.findById(att.uploadedBy).select('name email').lean();
           return {
             ...att,
-            uploadedBy: uploader
+            _id: att._id.toString(),
+            uploadedBy: uploader ? {
+              ...uploader,
+              _id: uploader._id.toString()
+            } : { _id: 'deleted', name: 'Usuario Eliminado', email: 'deleted@system.local' }
           };
         })
       );
@@ -320,6 +333,7 @@ export async function POST(
 
     const populatedMessage = {
       ...messageDoc,
+      _id: messageDoc._id.toString(),
       userId: userId || {
         _id: 'deleted',
         name: 'Usuario Eliminado',
@@ -327,7 +341,13 @@ export async function POST(
       },
       mentions: mentionsPopulated,
       priorityMentions: priorityMentionsPopulated,
-      attachments: populatedAttachments
+      attachments: populatedAttachments,
+      createdAt: messageDoc.createdAt || new Date().toISOString(),
+      reactions: messageDoc.reactions || [],
+      replyCount: messageDoc.replyCount || 0,
+      isPinned: messageDoc.isPinned || false,
+      isEdited: messageDoc.isEdited || false,
+      isDeleted: messageDoc.isDeleted || false
     };
 
     // Trackear para gamificación
