@@ -14,6 +14,7 @@ export interface IChannelMessage {
   content: string;
   mentions: mongoose.Types.ObjectId[]; // Array de userIds mencionados
   priorityMentions: mongoose.Types.ObjectId[]; // Array de priorityIds mencionados
+  attachments: mongoose.Types.ObjectId[]; // Array de attachmentIds
   reactions: IReaction[];
   parentMessageId?: mongoose.Types.ObjectId; // Para hilos/respuestas
   replyCount: number; // Contador de respuestas en el hilo
@@ -58,6 +59,10 @@ const ChannelMessageSchema = new mongoose.Schema({
   priorityMentions: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Priority'
+  }],
+  attachments: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Attachment'
   }],
   reactions: [{
     userId: {
