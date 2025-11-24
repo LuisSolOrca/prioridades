@@ -538,6 +538,84 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   };
 
+  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (!selectedChannelId) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    // Buscar imágenes en el clipboard
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevenir pegar texto de la imagen
+
+        const blob = item.getAsFile();
+        if (!blob) continue;
+
+        // Crear nombre de archivo con timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const extension = blob.type.split('/')[1] || 'png';
+        const fileName = `pasted-image-${timestamp}.${extension}`;
+
+        // Convertir blob a File
+        const file = new File([blob], fileName, { type: blob.type });
+
+        // Validar tamaño (50MB)
+        if (file.size > 50 * 1024 * 1024) {
+          alert('La imagen excede el tamaño máximo permitido (50MB)');
+          return;
+        }
+
+        try {
+          setSending(true);
+
+          // Subir archivo
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('channelId', selectedChannelId);
+
+          const uploadResponse = await fetch(`/api/projects/${projectId}/attachments`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error('Error al subir imagen');
+          }
+
+          const { attachment } = await uploadResponse.json();
+
+          // Crear mensaje con el attachment
+          const messageResponse = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `📸 Pegó una imagen: **${attachment.originalName}**`,
+              channelId: selectedChannelId,
+              attachments: [attachment._id]
+            })
+          });
+
+          if (messageResponse.ok) {
+            const message = await messageResponse.json();
+            setMessages((prev) => [...prev, message]);
+          } else {
+            loadMessages();
+          }
+        } catch (error) {
+          console.error('Error uploading pasted image:', error);
+          alert('Error al subir la imagen pegada');
+        } finally {
+          setSending(false);
+        }
+
+        break; // Solo procesar la primera imagen
+      }
+    }
+  };
+
   const handleSlashCommand = async (commandText: string) => {
     const parsed = parseSlashCommand(commandText);
     if (!parsed) return;
@@ -2795,6 +2873,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                 handleSendMessage();
               }
             }}
+            onPaste={handlePaste}
             placeholder="Escribe un mensaje... (@ para mencionar, / para comandos, Markdown soportado)"
             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={sending}
@@ -2810,7 +2889,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           </button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          <span className="font-medium">Enter</span> para enviar • <span className="font-medium">Shift+Enter</span> para nueva línea • Soporta <span className="font-medium">Markdown</span> (haz clic en ? para ayuda)
+          <span className="font-medium">Enter</span> para enviar • <span className="font-medium">Shift+Enter</span> para nueva línea • <span className="font-medium">Ctrl+V</span> para pegar imágenes • Soporta <span className="font-medium">Markdown</span> (haz clic en ? para ayuda)
         </p>
       </div>
 
