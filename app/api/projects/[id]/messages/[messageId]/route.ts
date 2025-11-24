@@ -164,3 +164,54 @@ export async function DELETE(
     );
   }
 }
+
+/**
+ * PATCH /api/projects/[id]/messages/[messageId]
+ * Actualiza el commandData de un mensaje (para widgets interactivos)
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string; messageId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const body = await request.json();
+    const { commandData } = body;
+
+    if (!commandData) {
+      return NextResponse.json(
+        { error: 'commandData es requerido' },
+        { status: 400 }
+      );
+    }
+
+    // Buscar el mensaje
+    const message = await ChannelMessage.findById(params.messageId);
+
+    if (!message) {
+      return NextResponse.json(
+        { error: 'Mensaje no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Actualizar solo commandData
+    message.commandData = commandData;
+    await message.save();
+
+    return NextResponse.json({ success: true, message: 'CommandData actualizado' });
+  } catch (error) {
+    console.error('Error updating commandData:', error);
+    return NextResponse.json(
+      { error: 'Error actualizando commandData' },
+      { status: 500 }
+    );
+  }
+}

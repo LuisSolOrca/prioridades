@@ -22,18 +22,66 @@ export default function TimerCommand({
   paused: initialPaused,
   onClose
 }: TimerCommandProps) {
-  const [remaining, setRemaining] = useState(duration);
+  // Calcular tiempo restante basado en startTime
+  const calculateRemaining = () => {
+    if (!initialStartTime) return duration;
+    const elapsed = Math.floor((Date.now() - initialStartTime) / 1000);
+    return Math.max(0, duration - elapsed);
+  };
+
+  const [remaining, setRemaining] = useState(calculateRemaining);
   const [paused, setPaused] = useState(initialPaused);
+
+  // Recalcular remaining cuando el componente se monta o se actualiza
+  useEffect(() => {
+    if (!paused && initialStartTime) {
+      setRemaining(calculateRemaining());
+    }
+  }, [initialStartTime, duration]);
+
+  // Función para actualizar el estado del timer en el servidor
+  const updateTimerState = async (newPaused: boolean) => {
+    if (!messageId) return;
+
+    try {
+      await fetch(`/api/projects/${projectId}/messages/${messageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commandData: {
+            title,
+            duration,
+            startTime: initialStartTime,
+            paused: newPaused,
+          }
+        })
+      });
+    } catch (error) {
+      console.error('Error updating timer state:', error);
+    }
+  };
+
+  // Función para pausar/reanudar
+  const togglePause = () => {
+    const newPaused = !paused;
+    setPaused(newPaused);
+    updateTimerState(newPaused);
+  };
 
   useEffect(() => {
     if (paused || remaining <= 0) return;
 
     const interval = setInterval(() => {
-      setRemaining(prev => Math.max(0, prev - 1));
+      if (initialStartTime) {
+        // Recalcular basado en tiempo real para evitar drift
+        setRemaining(calculateRemaining());
+      } else {
+        setRemaining(prev => Math.max(0, prev - 1));
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [paused, remaining]);
+  }, [paused, remaining, initialStartTime]);
 
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
@@ -68,15 +116,19 @@ export default function TimerCommand({
 
       <div className="flex gap-2">
         <button
-          onClick={() => setPaused(!paused)}
+          onClick={togglePause}
           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-medium flex items-center justify-center gap-2"
         >
           {paused ? <Play size={18} /> : <Pause size={18} />}
-          {paused ? 'Resume' : 'Pause'}
+          {paused ? 'Reanudar' : 'Pausar'}
         </button>
         <button
-          onClick={() => setRemaining(duration)}
+          onClick={() => {
+            setRemaining(duration);
+            setPaused(false);
+          }}
           className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+          title="Reiniciar timer"
         >
           <RotateCcw size={18} />
         </button>
