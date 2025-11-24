@@ -26,7 +26,7 @@ export async function GET(
     await connectDB();
 
     const { id } = await params;
-    const attachment = await Attachment.findById(id).lean();
+    const attachment = await Attachment.findById(id).lean() as any;
 
     if (!attachment) {
       return NextResponse.json({ error: 'Archivo no encontrado' }, { status: 404 });
