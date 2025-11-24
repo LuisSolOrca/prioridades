@@ -70,6 +70,8 @@ export async function PUT(
       answeredAt: answeredAt || new Date().toISOString()
     };
 
+    // Marcar como modificado el campo Mixed
+    message.markModified('commandData');
     await message.save();
 
     // Poblar el mensaje actualizado

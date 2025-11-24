@@ -72,7 +72,8 @@ export default function QuestionCommand({
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar la respuesta');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar la respuesta');
       }
 
       setShowAnswerForm(false);
@@ -81,9 +82,9 @@ export default function QuestionCommand({
       if (onUpdate) {
         onUpdate();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting answer:', error);
-      alert('Error al enviar la respuesta');
+      alert(error.message || 'Error al enviar la respuesta');
     } finally {
       setSubmitting(false);
     }
