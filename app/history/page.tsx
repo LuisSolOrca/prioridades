@@ -563,7 +563,7 @@ export default function HistoryPage() {
                             <div key={priority._id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700" style={{ borderLeftColor: primaryInitiative?.color || '#ccc', borderLeftWidth: '3px' }}>
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <div className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{priority.title}</div>
                                     <span className={`text-xs px-2 py-0.5 rounded ${
                                       (priority.type || 'ESTRATEGICA') === 'ESTRATEGICA'
@@ -572,6 +572,11 @@ export default function HistoryPage() {
                                     }`}>
                                       {(priority.type || 'ESTRATEGICA') === 'ESTRATEGICA' ? 'Estratégica' : 'Operativa'}
                                     </span>
+                                    {priority.isCarriedOver && (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200">
+                                        🔄 Traída
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-1 items-center">
                                     <span>{user?.name}</span>
