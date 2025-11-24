@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Attachment from '@/models/Attachment';
-import { getSignedDownloadUrl } from '@/lib/r2-client';
+import { getDownloadUrl } from '@/lib/r2-client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,7 +37,10 @@ export async function GET(
     }
 
     // Generar URL firmada temporal (válida por 1 hora)
-    const downloadUrl = await getSignedDownloadUrl(attachment.r2Key, 3600);
+    const downloadUrl = await getDownloadUrl({
+      key: attachment.r2Key,
+      expiresIn: 3600
+    });
 
     return NextResponse.json({
       downloadUrl,
