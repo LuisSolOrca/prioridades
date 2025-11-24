@@ -7,6 +7,7 @@ import User from '@/models/User';
 import Project from '@/models/Project';
 import Priority from '@/models/Priority';
 import UserGroup from '@/models/UserGroup';
+import Attachment from '@/models/Attachment'; // Necesario para populate
 import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 import { trackChannelUsage } from '@/lib/gamification';
@@ -88,20 +89,35 @@ export async function GET(
       .populate('priorityMentions', 'title status completionPercentage userId')
       .populate('reactions.userId', 'name')
       .populate('pinnedBy', 'name')
-      .populate({
-        path: 'attachments',
-        match: { isDeleted: false },
-        select: 'fileName originalName fileSize mimeType uploadedBy uploadedAt',
-        populate: {
-          path: 'uploadedBy',
-          select: 'name email'
-        }
-      })
       .lean();
 
+    // Poblar attachments manualmente para evitar problemas en serverless
+    const messagesWithAttachments = await Promise.all(messages.map(async (msg: any) => {
+      if (msg.attachments && msg.attachments.length > 0) {
+        const attachmentDocs = await Attachment.find({
+          _id: { $in: msg.attachments },
+          isDeleted: false
+        }).select('fileName originalName fileSize mimeType uploadedBy uploadedAt').lean();
+
+        // Poblar uploadedBy para cada attachment
+        const populatedAttachments = await Promise.all(
+          attachmentDocs.map(async (att: any) => {
+            const uploader = await User.findById(att.uploadedBy).select('name email').lean();
+            return {
+              ...att,
+              uploadedBy: uploader || { _id: 'deleted', name: 'Usuario Eliminado', email: 'deleted@system.local' }
+            };
+          })
+        );
+
+        return { ...msg, attachments: populatedAttachments };
+      }
+      return { ...msg, attachments: [] };
+    }));
+
     // Determinar si hay más mensajes
-    const hasMore = messages.length > limit;
-    const messagesToReturn = hasMore ? messages.slice(0, limit) : messages;
+    const hasMore = messagesWithAttachments.length > limit;
+    const messagesToReturn = hasMore ? messagesWithAttachments.slice(0, limit) : messagesWithAttachments;
     const nextCursor = hasMore ? messagesToReturn[messagesToReturn.length - 1]._id : null;
 
     // Manejar usuarios eliminados - reemplazar con objeto de usuario eliminado
@@ -256,30 +272,63 @@ export async function POST(
       });
     }
 
-    // Poblar el mensaje creado
-    let populatedMessage: any = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate({
-        path: 'attachments',
-        match: { isDeleted: false },
-        select: 'fileName originalName fileSize mimeType uploadedBy uploadedAt',
-        populate: {
-          path: 'uploadedBy',
-          select: 'name email'
-        }
-      })
-      .lean();
+    // Poblar el mensaje creado manualmente para evitar problemas en serverless
+    const messageDoc = await ChannelMessage.findById(message._id).lean();
 
-    // Manejar usuarios eliminados (aunque poco probable en mensaje recién creado)
-    if (!populatedMessage.userId) {
-      populatedMessage.userId = {
+    if (!messageDoc) {
+      throw new Error('Mensaje no encontrado después de crear');
+    }
+
+    // Poblar userId
+    const userId = await User.findById(messageDoc.userId).select('name email').lean();
+
+    // Poblar mentions
+    let mentionsPopulated = [];
+    if (messageDoc.mentions && messageDoc.mentions.length > 0) {
+      mentionsPopulated = await User.find({
+        _id: { $in: messageDoc.mentions }
+      }).select('name email').lean();
+    }
+
+    // Poblar priorityMentions
+    let priorityMentionsPopulated = [];
+    if (messageDoc.priorityMentions && messageDoc.priorityMentions.length > 0) {
+      priorityMentionsPopulated = await Priority.find({
+        _id: { $in: messageDoc.priorityMentions }
+      }).select('title status completionPercentage userId').lean();
+    }
+
+    // Poblar attachments manualmente
+    let populatedAttachments = [];
+    if (messageDoc.attachments && messageDoc.attachments.length > 0) {
+      const attachmentDocs = await Attachment.find({
+        _id: { $in: messageDoc.attachments },
+        isDeleted: false
+      }).select('fileName originalName fileSize mimeType uploadedBy uploadedAt').lean();
+
+      // Poblar uploadedBy para cada attachment
+      populatedAttachments = await Promise.all(
+        attachmentDocs.map(async (att: any) => {
+          const uploader = await User.findById(att.uploadedBy).select('name email').lean();
+          return {
+            ...att,
+            uploadedBy: uploader
+          };
+        })
+      );
+    }
+
+    const populatedMessage = {
+      ...messageDoc,
+      userId: userId || {
         _id: 'deleted',
         name: 'Usuario Eliminado',
         email: 'deleted@system.local'
-      };
-    }
+      },
+      mentions: mentionsPopulated,
+      priorityMentions: priorityMentionsPopulated,
+      attachments: populatedAttachments
+    };
 
     // Trackear para gamificación
     try {
