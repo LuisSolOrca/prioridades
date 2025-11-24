@@ -28,13 +28,12 @@ export async function POST() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Calculate next week's Monday and Friday using the same logic as the rest of the app
-    // Add 7 days to get next week from current date
-    const nextWeekDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const nextWeek = getWeekDates(nextWeekDate);
-    const nextMonday = nextWeek.monday;
-    const nextFriday = new Date(nextWeek.friday);
-    nextFriday.setHours(23, 59, 59, 999);
+    // Get current week's Monday and Friday using the same logic as the rest of the app
+    // This will reschedule expired priorities to the current week
+    const currentWeek = getWeekDates(now);
+    const currentMonday = currentWeek.monday;
+    const currentFriday = new Date(currentWeek.friday);
+    currentFriday.setHours(23, 59, 59, 999);
 
     // Find priorities that:
     // 1. Have weekEnd before today (expired)
@@ -64,12 +63,12 @@ export async function POST() {
           { new: true, runValidators: true }
         );
 
-        // Create a new copy for next week
+        // Create a new copy for current week
         const newPriority = new Priority({
           title: priority.title,
           description: priority.description,
-          weekStart: nextMonday,
-          weekEnd: nextFriday,
+          weekStart: currentMonday,
+          weekEnd: currentFriday,
           completionPercentage: 0, // Reset progress
           status: 'EN_TIEMPO',
           type: priority.type,
@@ -92,7 +91,7 @@ export async function POST() {
         await Comment.create({
           priorityId: priority._id,
           userId: priority.userId,
-          text: `🤖 Prioridad reprogramada automáticamente • Estado cambiado de "En Tiempo" a "Reprogramado" • Reprogramado de "Semana del ${priority.weekStart.toLocaleDateString('es-MX')}" a "Semana del ${nextMonday.toLocaleDateString('es-MX')}"`,
+          text: `🤖 Prioridad reprogramada automáticamente • Estado cambiado de "En Tiempo" a "Reprogramado" • Reprogramado de "Semana del ${priority.weekStart.toLocaleDateString('es-MX')}" a "Semana del ${currentMonday.toLocaleDateString('es-MX')}"`,
           isSystemComment: true
         });
 
@@ -133,9 +132,9 @@ export async function POST() {
     return NextResponse.json({
       message: `Auto-rescheduling completed: ${rescheduledCount.success} successful, ${rescheduledCount.failed} failed`,
       stats: rescheduledCount,
-      nextWeek: {
-        monday: nextMonday.toISOString(),
-        friday: nextFriday.toISOString()
+      currentWeek: {
+        monday: currentMonday.toISOString(),
+        friday: currentFriday.toISOString()
       },
       results
     });

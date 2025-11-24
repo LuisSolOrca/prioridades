@@ -358,6 +358,63 @@ export default function PriorityFormModal({
             </div>
           )}
 
+          {/* Selector de Semana (modo edición en /history) */}
+          {isEditing && formData.weekStart && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Semana *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                    Inicio (Lunes)
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.weekStart ? new Date(formData.weekStart).toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      const newDate = new Date(e.target.value);
+                      // Ajustar al lunes de la semana
+                      const day = newDate.getDay();
+                      const diff = day === 0 ? -6 : 1 - day;
+                      newDate.setDate(newDate.getDate() + diff);
+                      newDate.setHours(0, 0, 0, 0);
+
+                      // Calcular el viernes correspondiente
+                      const friday = new Date(newDate);
+                      friday.setDate(newDate.getDate() + 4);
+                      friday.setHours(23, 59, 59, 999);
+
+                      setFormData({
+                        ...formData,
+                        weekStart: newDate.toISOString(),
+                        weekEnd: friday.toISOString()
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                    Fin (Viernes)
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.weekEnd ? new Date(formData.weekEnd).toISOString().split('T')[0] : ''}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm cursor-not-allowed"
+                    title="Se calcula automáticamente (Lunes + 4 días)"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                💡 Selecciona cualquier día y se ajustará automáticamente al lunes de esa semana
+              </p>
+            </div>
+          )}
+
           {/* Título con IA */}
           <div>
             <div className="flex items-center justify-between mb-2">
