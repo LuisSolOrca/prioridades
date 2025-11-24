@@ -277,6 +277,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       }
     });
 
+    // Evento: mensaje actualizado (widgets colaborativos)
+    channel.bind('message-updated', (updatedMsg: Message) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === updatedMsg._id ? updatedMsg : m))
+      );
+    });
+
     // Evento: usuario escribiendo
     channel.bind('client-typing', (data: { userId: string; userName: string }) => {
       if (data.userId !== session?.user.id) {

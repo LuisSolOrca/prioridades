@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
+import { triggerPusherEvent } from '@/lib/pusher-server';
 
 /**
  * PUT /api/projects/[id]/messages/[messageId]/answer
@@ -76,7 +77,20 @@ export async function PUT(
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
       .populate('priorityMentions', 'title status completionPercentage userId')
+      .populate('reactions.userId', 'name')
+      .populate('pinnedBy', 'name')
       .lean();
+
+    // Emitir evento de Pusher para actualización en tiempo real
+    try {
+      await triggerPusherEvent(
+        `presence-channel-${message.channelId}`,
+        'message-updated',
+        updatedMessage
+      );
+    } catch (pusherError) {
+      console.error('Error triggering Pusher event:', pusherError);
+    }
 
     return NextResponse.json(updatedMessage);
   } catch (error) {

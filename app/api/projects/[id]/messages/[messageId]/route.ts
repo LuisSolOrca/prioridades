@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import Priority from '@/models/Priority';
+import { triggerPusherEvent } from '@/lib/pusher-server';
 
 /**
  * PUT /api/projects/[id]/messages/[messageId]
@@ -205,6 +206,26 @@ export async function PATCH(
     // Actualizar solo commandData
     message.commandData = commandData;
     await message.save();
+
+    // Poblar el mensaje para enviarlo completo
+    const populatedMessage = await ChannelMessage.findById(message._id)
+      .populate('userId', 'name email')
+      .populate('mentions', 'name email')
+      .populate('priorityMentions', 'title status completionPercentage userId')
+      .populate('reactions.userId', 'name')
+      .populate('pinnedBy', 'name')
+      .lean();
+
+    // Emitir evento de Pusher para actualización en tiempo real
+    try {
+      await triggerPusherEvent(
+        `presence-channel-${message.channelId}`,
+        'message-updated',
+        populatedMessage
+      );
+    } catch (pusherError) {
+      console.error('Error triggering Pusher event:', pusherError);
+    }
 
     return NextResponse.json({ success: true, message: 'CommandData actualizado' });
   } catch (error) {
