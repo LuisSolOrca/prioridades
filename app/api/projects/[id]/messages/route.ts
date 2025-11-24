@@ -91,7 +91,11 @@ export async function GET(
       .populate({
         path: 'attachments',
         match: { isDeleted: false },
-        select: 'fileName originalName fileSize mimeType uploadedBy uploadedAt'
+        select: 'fileName originalName fileSize mimeType uploadedBy uploadedAt',
+        populate: {
+          path: 'uploadedBy',
+          select: 'name email'
+        }
       })
       .lean();
 

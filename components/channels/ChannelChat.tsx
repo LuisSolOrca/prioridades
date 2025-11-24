@@ -82,7 +82,11 @@ interface Attachment {
   originalName: string;
   fileSize: number;
   mimeType: string;
-  uploadedBy: string;
+  uploadedBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
   uploadedAt: string;
 }
 
