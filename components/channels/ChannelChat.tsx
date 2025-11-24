@@ -37,6 +37,7 @@ import BrainstormCommand from '../slashCommands/BrainstormCommand';
 import DotVotingCommand from '../slashCommands/DotVotingCommand';
 import BlindVoteCommand from '../slashCommands/BlindVoteCommand';
 import RetroCommand from '../slashCommands/RetroCommand';
+import NPSCommand from '../slashCommands/NPSCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 import BlockersCommand from '../slashCommands/BlockersCommand';
 import RisksCommand from '../slashCommands/RisksCommand';
@@ -1111,6 +1112,46 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating swot:', error);
           alert('Error al crear análisis SWOT');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'nps':
+        if (parsed.args.length < 1) {
+          alert('Uso: /nps "¿Pregunta de satisfacción?"');
+          return;
+        }
+        if (sending) return;
+        const npsQuestion = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/nps ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'nps',
+              commandData: {
+                question: npsQuestion,
+                votes: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const npsMessage = await response.json();
+            setMessages((prev) => [...prev, npsMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating nps:', error);
+          alert('Error al crear encuesta NPS');
         } finally {
           setSending(false);
         }
@@ -2374,6 +2415,34 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar retrospectiva"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'nps' && message.commandData ? (
+                    /* Render NPS Command */
+                    <div className="relative group">
+                      <NPSCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        votes={message.commandData.votes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for NPS */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar NPS"
                             >
                               <Trash2 size={14} />
                             </button>
