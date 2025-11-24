@@ -196,7 +196,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="flex-1 px-2 py-1 text-sm border rounded"
+                className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                 placeholder="Nombre del canal"
                 disabled={isGeneralChannel}
               />
@@ -204,7 +204,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
                 type="text"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="flex-1 px-2 py-1 text-sm border rounded"
+                className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                 placeholder="Descripción (opcional)"
               />
             </div>
@@ -337,19 +337,19 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Nombre del canal"
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             />
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Descripción (opcional)"
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             />
             <select
               value={formData.icon}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             >
               <option value="Hash">Hash (#)</option>
               <option value="Folder">Carpeta</option>
@@ -371,7 +371,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
                   setShowCreateForm(false);
                   resetForm();
                 }}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300"
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
               >
                 Cancelar
               </button>
