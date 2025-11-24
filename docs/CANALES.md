@@ -15,11 +15,12 @@
 12. [Búsqueda](#búsqueda)
 13. [Slash Commands](#slash-commands)
 14. [Webhooks](#webhooks)
-15. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
-16. [Notificaciones](#notificaciones)
-17. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
-18. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-19. [Roadmap Futuro](#roadmap-futuro)
+15. [Archivos Adjuntos](#archivos-adjuntos)
+16. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
+17. [Notificaciones](#notificaciones)
+18. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+19. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+20. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -63,6 +64,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🔌 **Webhooks entrantes y salientes** para integración con sistemas externos
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
+- 📎 **Archivos adjuntos** con Cloudflare R2 - subir/descargar archivos en mensajes y pestaña dedicada
 
 ---
 
@@ -1458,6 +1460,239 @@ function validateSignature(secret, timestamp, signature, body) {
 
 ---
 
+## Archivos Adjuntos
+
+El sistema de **archivos adjuntos** permite compartir documentos, imágenes, videos y cualquier tipo de archivo dentro de los canales y organizar todos los archivos del proyecto en una pestaña dedicada.
+
+### Almacenamiento con Cloudflare R2
+
+Los archivos se almacenan en **Cloudflare R2**, un servicio de almacenamiento de objetos compatible con S3:
+
+**Ventajas:**
+- ✅ **Sin costos de egreso**: Descargas ilimitadas gratis
+- ✅ **Económico**: ~$0.015/GB al mes (vs $0.023/GB + egreso en S3)
+- ✅ **URLs firmadas**: Seguridad con expiración de 1 hora
+- ✅ **Escalable**: Soporta archivos de hasta 50MB por defecto
+- ✅ **Compatible S3**: Usa AWS SDK estándar
+
+### Subir Archivos en el Chat
+
+**Ubicación del botón:**
+- Ícono 📎 **Paperclip** junto al campo de mensaje
+- Disponible solo cuando hay un canal seleccionado
+
+**Proceso de subida:**
+1. Haz clic en el botón 📎 Paperclip
+2. Se abre panel de carga de archivos
+3. Selecciona archivo desde tu dispositivo
+4. Validación automática:
+   - Tamaño máximo: **50MB**
+   - Todos los tipos de archivo permitidos
+5. Barra de progreso durante la subida
+6. Confirmación visual al completar
+7. Panel se cierra automáticamente
+
+**Características:**
+- ✅ Nombres con caracteres especiales (acentos, ñ, etc.) se normalizan automáticamente
+- ✅ Asociación automática al canal actual
+- ✅ Metadata incluye: proyecto, canal, usuario que subió
+- ✅ Timestamp de subida
+
+### Ver Archivos en Mensajes
+
+Los archivos adjuntos aparecen como **cards compactas** debajo del contenido del mensaje:
+
+**Información mostrada:**
+- 📎 **Ícono** según tipo de archivo (🖼️ imágenes, 📄 PDFs, 📊 Excel, etc.)
+- 📝 **Nombre original** del archivo
+- 💾 **Tamaño** en formato legible (KB, MB, GB)
+- 👤 **Usuario** que subió el archivo
+- 📅 **Fecha y hora** de subida
+
+**Acciones disponibles:**
+- ⬇️ **Descargar**: Genera URL firmada válida por 1 hora
+- 🗑️ **Eliminar**: Solo quien subió o admin puede eliminar
+
+### Pestaña de Archivos del Proyecto
+
+Accede a todos los archivos del proyecto desde la pestaña dedicada **"Archivos"**:
+
+**Funcionalidades:**
+
+#### 1. **Subir Nuevos Archivos**
+- Botón "📎 Subir Archivo" en la parte superior
+- Mismo proceso que en el chat
+- Se asocian al proyecto (sin canal específico si se sube desde la pestaña)
+
+#### 2. **Búsqueda en Tiempo Real**
+```
+🔍 Buscar archivos...
+```
+- Busca por nombre de archivo
+- Resultados instantáneos mientras escribes
+- Ignora mayúsculas/minúsculas
+
+#### 3. **Filtros por Tipo**
+- **Todos**: Muestra todos los archivos
+- **🖼️ Imágenes**: Solo imágenes (image/*)
+- **📄 Documentos**: PDFs, Word, etc.
+- **🎥 Videos**: Archivos de video (video/*)
+- **🎵 Audio**: Archivos de audio (audio/*)
+
+#### 4. **Vista en Cuadrícula**
+- Cards grandes con vista previa visual
+- Información completa del archivo
+- Botones de acción visibles
+
+#### 5. **Paginación**
+- 20 archivos por página
+- Navegación con botones anterior/siguiente
+- Contador: "Mostrando 1-20 de 45"
+
+### Gestión de Archivos
+
+#### Descargar Archivos
+
+**Proceso seguro:**
+1. Usuario hace clic en "⬇️ Descargar"
+2. Backend genera **URL firmada** con AWS S3 SDK
+3. URL válida por **1 hora** (3600 segundos)
+4. Descarga directa desde Cloudflare R2
+5. URL expira automáticamente
+
+**Ventajas de URLs firmadas:**
+- 🔒 No se pueden compartir permanentemente
+- 🔒 Requieren autenticación para generarlas
+- 🔒 Previenen hotlinking no autorizado
+- ⏱️ Expiración automática
+
+#### Eliminar Archivos
+
+**Permisos:**
+- ✅ Usuario que subió el archivo puede eliminarlo
+- ✅ Administradores pueden eliminar cualquier archivo
+- ❌ Otros usuarios no pueden eliminar
+
+**Proceso de eliminación:**
+1. **Soft delete** en base de datos:
+   - Campo `isDeleted: true`
+   - Campos `deletedAt` y `deletedBy` se actualizan
+2. **Hard delete** en R2:
+   - Archivo se elimina permanentemente de R2
+   - No ocupa espacio de almacenamiento
+
+**Nota:** Si falla la eliminación en R2, el archivo se marca como eliminado en la DB de todas formas para evitar inconsistencias.
+
+### Tipos de Archivos y Iconos
+
+El sistema detecta automáticamente el tipo de archivo y muestra el ícono apropiado:
+
+| Tipo | Ícono | MIME types |
+|------|-------|------------|
+| Imágenes | 🖼️ | image/* |
+| Videos | 🎥 | video/* |
+| Audio | 🎵 | audio/* |
+| PDFs | 📄 | application/pdf |
+| Word | 📝 | .doc, .docx, document |
+| Excel | 📊 | .xls, .xlsx, spreadsheet |
+| PowerPoint | 📽️ | .ppt, .pptx, presentation |
+| Comprimidos | 📦 | .zip, .rar, compressed |
+| Texto | 📃 | text/* |
+| Otros | 📎 | Cualquier otro |
+
+### Validaciones de Seguridad
+
+#### Tamaño de Archivo
+```javascript
+Máximo: 50 MB por archivo
+```
+
+**Mensaje de error:**
+```
+"El archivo excede el tamaño máximo permitido (50MB)"
+```
+
+#### Sanitización de Nombres
+
+Los nombres de archivo con caracteres especiales se normalizan:
+
+**Ejemplos:**
+- `Especificación Técnica.pdf` → `Especificacion Tecnica.pdf`
+- `Año 2025.xlsx` → `Ano 2025.xlsx`
+- `München Straße.doc` → `Munchen Strasse.doc`
+
+**Proceso:**
+1. Normalización NFD (descompone caracteres acentuados)
+2. Eliminación de diacríticos (acentos)
+3. Reemplazo de caracteres especiales (ñ→n, ü→u, etc.)
+4. Solo mantiene caracteres ASCII imprimibles
+
+**Razón:** AWS S3/R2 metadata solo acepta caracteres US-ASCII. Esto previene errores `SignatureDoesNotMatch`.
+
+#### Generación de Keys Únicos
+
+Cada archivo recibe un **key único** en R2:
+
+**Formato:**
+```
+projects/{projectId}/{timestamp}-{random}-{sanitizedFileName}
+```
+
+**Ejemplo:**
+```
+projects/507f1f77bcf86cd799439011/1732435200000-x9t4j2k8p-documento.pdf
+```
+
+**Ventajas:**
+- ✅ Previene colisiones de nombres
+- ✅ Organizado por proyecto
+- ✅ Fácil de identificar y depurar
+- ✅ Timestamp permite ordenamiento
+
+### Configuración de R2
+
+Para usar archivos adjuntos, debes configurar Cloudflare R2:
+
+**Variables de entorno requeridas:**
+```env
+R2_ACCOUNT_ID=your-cloudflare-account-id
+R2_ACCESS_KEY_ID=your-r2-access-key-id
+R2_SECRET_ACCESS_KEY=your-r2-secret-access-key
+R2_BUCKET_NAME=your-bucket-name
+```
+
+**Documentación completa:**
+Ver `docs/R2_SETUP.md` para guía paso a paso.
+
+### Límites y Cuotas
+
+**Límites por defecto:**
+- Tamaño máximo por archivo: **50 MB**
+- Sin límite de cantidad de archivos
+- Sin límite de almacenamiento total
+
+**R2 Free Tier (Cloudflare):**
+- 10 GB de almacenamiento gratis al mes
+- Sin costos de egreso (descargas ilimitadas gratis)
+- 1 millón de Class A operations gratis
+- 10 millones de Class B operations gratis
+
+### Mejores Prácticas
+
+**Para usuarios:**
+- 📝 Usa nombres descriptivos para tus archivos
+- 🗂️ Aprovecha los filtros para encontrar archivos rápidamente
+- 🗑️ Elimina archivos obsoletos para liberar espacio
+- 📎 Adjunta archivos relevantes al contexto de la conversación
+
+**Para administradores:**
+- 📊 Monitorea el uso de almacenamiento en Cloudflare dashboard
+- 🔒 Revisa periódicamente los permisos de R2 API tokens
+- 💾 Haz backup de archivos críticos fuera de R2
+- ⚙️ Configura alertas en Cloudflare para cuotas
+
+---
+
 ## Integración con Microsoft Teams
 
 Conecta Microsoft Teams con tus canales para recibir mensajes automáticamente sin servicios externos de pago.
@@ -1750,7 +1985,7 @@ El sistema maneja elegantemente los usuarios eliminados:
 - [x] ✅ Link previews automáticas
 - [x] ✅ Webhooks entrantes y salientes
 - [x] ✅ Integración con Microsoft Teams
-- [ ] Adjuntar archivos a mensajes
+- [x] ✅ Archivos adjuntos con Cloudflare R2
 - [ ] Grabaciones de voz
 - [ ] Videollamadas integradas
 - [ ] Integración con Slack
@@ -1799,6 +2034,23 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v1.3 (Noviembre 2025)
+- ✅ **Archivos adjuntos con Cloudflare R2** - sistema completo de gestión de archivos
+  - Subir archivos desde el chat (botón 📎 Paperclip)
+  - Pestaña dedicada "Archivos" por proyecto
+  - Búsqueda y filtros por tipo (imágenes, documentos, videos, audio)
+  - URLs firmadas con expiración de 1 hora
+  - Sanitización automática de nombres con acentos
+  - Soft delete en DB, hard delete en R2
+  - Límite de 50MB por archivo
+  - Iconos automáticos según tipo MIME
+  - Paginación (20 archivos por página)
+- ✅ **AttachmentCard component** - visualización compacta en mensajes
+- ✅ **FilesTab component** - gestión completa de archivos del proyecto
+- ✅ **Modelo Attachment** en MongoDB con índices optimizados
+- ✅ **API endpoints** - upload, list, download URL, delete
+- ✅ **Documentación R2** - guía paso a paso en docs/R2_SETUP.md
 
 ### v1.2 (Noviembre 2025)
 - ✅ **Selector de emojis** - 43 emojis organizados en 4 categorías (Frecuentes, Emociones, Gestos, Símbolos)
