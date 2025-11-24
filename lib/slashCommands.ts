@@ -219,6 +219,78 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Velocidad del equipo con tendencias y predicciones',
     usage: '/velocity',
     category: 'analysis'
+  },
+  {
+    name: 'dot-voting',
+    description: 'Cada usuario tiene N puntos para distribuir - Priorización democrática',
+    usage: '/dot-voting "Pregunta" 5 "Opción 1" "Opción 2" ...',
+    category: 'collaboration'
+  },
+  {
+    name: 'blind-vote',
+    description: 'Votos ocultos hasta que todos voten - Evitar sesgo de grupo',
+    usage: '/blind-vote "Pregunta" "Opción 1" "Opción 2" ...',
+    category: 'collaboration'
+  },
+  {
+    name: 'decision-matrix',
+    description: 'Matriz criterios vs opciones con puntajes - Decisiones complejas',
+    usage: '/decision-matrix "Decisión" "Criterio 1" "Criterio 2" ...',
+    category: 'analysis'
+  },
+  {
+    name: 'swot',
+    description: 'Análisis SWOT colaborativo - Análisis estratégico',
+    usage: '/swot "Título del análisis"',
+    category: 'analysis'
+  },
+  {
+    name: 'mind-map',
+    description: 'Mapa mental colaborativo - Explorar ideas',
+    usage: '/mind-map "Tema central"',
+    category: 'collaboration'
+  },
+  {
+    name: 'crazy-8s',
+    description: '8 ideas en 8 minutos - Design sprint',
+    usage: '/crazy-8s "Problema o reto"',
+    category: 'collaboration'
+  },
+  {
+    name: 'affinity-map',
+    description: 'Agrupar ideas por categorías - Organizar brainstorm',
+    usage: '/affinity-map "Tema"',
+    category: 'collaboration'
+  },
+  {
+    name: 'six-hats',
+    description: 'Análisis con los 6 sombreros de Bono - Perspectivas múltiples',
+    usage: '/six-hats "Tema a analizar"',
+    category: 'analysis'
+  },
+  {
+    name: 'rose-bud-thorn',
+    description: '🌹 Positivo, 🌱 Potencial, 🌵 Problemas - Feedback estructurado',
+    usage: '/rose-bud-thorn "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'sailboat',
+    description: '⛵ Viento, ancla, rocas, isla - Retrospectiva visual',
+    usage: '/sailboat "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'start-stop-continue',
+    description: 'Qué empezar, parar, continuar - Retrospectiva simple',
+    usage: '/start-stop-continue "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'nps',
+    description: 'Net Promoter Score rápido - Medir satisfacción',
+    usage: '/nps "¿Pregunta de satisfacción?"',
+    category: 'collaboration'
   }
 ];
 

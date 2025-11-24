@@ -16,7 +16,11 @@ import {
   Pin,
   PinOff,
   Zap,
-  Paperclip
+  Paperclip,
+  Flower2,
+  Ship,
+  PlayCircle,
+  Target
 } from 'lucide-react';
 import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
@@ -30,6 +34,9 @@ import type { PresenceChannel } from 'pusher-js';
 import StatusCommand from '../slashCommands/StatusCommand';
 import PollCommand from '../slashCommands/PollCommand';
 import BrainstormCommand from '../slashCommands/BrainstormCommand';
+import DotVotingCommand from '../slashCommands/DotVotingCommand';
+import BlindVoteCommand from '../slashCommands/BlindVoteCommand';
+import RetroCommand from '../slashCommands/RetroCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 import BlockersCommand from '../slashCommands/BlockersCommand';
 import RisksCommand from '../slashCommands/RisksCommand';
@@ -823,6 +830,287 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating brainstorm:', error);
           alert('Error al crear la sesión de brainstorming');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'dot-voting':
+        if (parsed.args.length < 4) {
+          alert('Uso: /dot-voting "Pregunta" 5 "Opción 1" "Opción 2" ...');
+          return;
+        }
+        if (sending) return;
+        const dotQuestion = parsed.args[0];
+        const totalDotsStr = parsed.args[1];
+        const totalDots = parseInt(totalDotsStr, 10);
+
+        if (isNaN(totalDots) || totalDots <= 0) {
+          alert('El segundo argumento debe ser un número positivo de puntos por persona');
+          return;
+        }
+
+        const dotOptions = parsed.args.slice(2);
+        if (dotOptions.length < 2) {
+          alert('Debes proporcionar al menos 2 opciones');
+          return;
+        }
+
+        // Crear dot-voting persistente en la base de datos
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/dot-voting ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'dot-voting',
+              commandData: {
+                question: dotQuestion,
+                totalDotsPerUser: totalDots,
+                options: dotOptions.map((opt: string) => ({ text: opt, dots: [] })),
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const dotVotingMessage = await response.json();
+            setMessages((prev) => [...prev, dotVotingMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating dot-voting:', error);
+          alert('Error al crear la votación');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'blind-vote':
+        if (parsed.args.length < 3) {
+          alert('Uso: /blind-vote "Pregunta" "Opción 1" "Opción 2" ...');
+          return;
+        }
+        if (sending) return;
+        const blindQuestion = parsed.args[0];
+        const blindOptions = parsed.args.slice(1);
+
+        if (blindOptions.length < 2) {
+          alert('Debes proporcionar al menos 2 opciones');
+          return;
+        }
+
+        // Crear blind-vote persistente
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/blind-vote ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'blind-vote',
+              commandData: {
+                question: blindQuestion,
+                options: blindOptions.map((opt: string) => ({ text: opt, votes: [] })),
+                createdBy: session?.user?.id,
+                revealed: false,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const blindVoteMessage = await response.json();
+            setMessages((prev) => [...prev, blindVoteMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating blind-vote:', error);
+          alert('Error al crear la votación ciega');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'rose-bud-thorn':
+        if (parsed.args.length < 1) {
+          alert('Uso: /rose-bud-thorn "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        const roseTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/rose-bud-thorn ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'rose-bud-thorn',
+              commandData: {
+                title: roseTitle,
+                sections: [
+                  { id: 'rose', title: 'Rosas (Positivo)', icon: '🌹', color: '#ec4899', items: [] },
+                  { id: 'bud', title: 'Brotes (Potencial)', icon: '🌱', color: '#10b981', items: [] },
+                  { id: 'thorn', title: 'Espinas (Problemas)', icon: '🌵', color: '#f59e0b', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const retroMessage = await response.json();
+            setMessages((prev) => [...prev, retroMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating rose-bud-thorn:', error);
+          alert('Error al crear retrospectiva');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'sailboat':
+        if (parsed.args.length < 1) {
+          alert('Uso: /sailboat "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        const sailTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/sailboat ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'sailboat',
+              commandData: {
+                title: sailTitle,
+                sections: [
+                  { id: 'wind', title: 'Viento (Impulsa)', icon: '💨', color: '#3b82f6', items: [] },
+                  { id: 'anchor', title: 'Ancla (Frena)', icon: '⚓', color: '#64748b', items: [] },
+                  { id: 'rocks', title: 'Rocas (Riesgos)', icon: '🪨', color: '#ef4444', items: [] },
+                  { id: 'island', title: 'Isla (Meta)', icon: '🏝️', color: '#10b981', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const sailMessage = await response.json();
+            setMessages((prev) => [...prev, sailMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating sailboat:', error);
+          alert('Error al crear retrospectiva');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'start-stop-continue':
+        if (parsed.args.length < 1) {
+          alert('Uso: /start-stop-continue "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        const sscTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/start-stop-continue ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'start-stop-continue',
+              commandData: {
+                title: sscTitle,
+                sections: [
+                  { id: 'start', title: 'Empezar a hacer', icon: '▶️', color: '#10b981', items: [] },
+                  { id: 'stop', title: 'Dejar de hacer', icon: '⏹️', color: '#ef4444', items: [] },
+                  { id: 'continue', title: 'Continuar haciendo', icon: '🔄', color: '#3b82f6', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const sscMessage = await response.json();
+            setMessages((prev) => [...prev, sscMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating start-stop-continue:', error);
+          alert('Error al crear retrospectiva');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'swot':
+        if (parsed.args.length < 1) {
+          alert('Uso: /swot "Título del análisis"');
+          return;
+        }
+        if (sending) return;
+        const swotTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/swot ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'swot',
+              commandData: {
+                title: swotTitle,
+                sections: [
+                  { id: 'strengths', title: 'Fortalezas', icon: '💪', color: '#10b981', items: [] },
+                  { id: 'weaknesses', title: 'Debilidades', icon: '⚠️', color: '#f59e0b', items: [] },
+                  { id: 'opportunities', title: 'Oportunidades', icon: '🎯', color: '#3b82f6', items: [] },
+                  { id: 'threats', title: 'Amenazas', icon: '⚡', color: '#ef4444', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const swotMessage = await response.json();
+            setMessages((prev) => [...prev, swotMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating swot:', error);
+          alert('Error al crear análisis SWOT');
         } finally {
           setSending(false);
         }
@@ -1979,6 +2267,113 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar brainstorming"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'dot-voting' && message.commandData ? (
+                    /* Render Dot Voting Command */
+                    <div className="relative group">
+                      <DotVotingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        options={message.commandData.options || []}
+                        totalDotsPerUser={message.commandData.totalDotsPerUser || 5}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Dot Voting */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar votación"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'blind-vote' && message.commandData ? (
+                    /* Render Blind Vote Command */
+                    <div className="relative group">
+                      <BlindVoteCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        options={message.commandData.options || []}
+                        createdBy={message.commandData.createdBy}
+                        revealed={message.commandData.revealed || false}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Blind Vote */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar votación"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (message.commandType === 'rose-bud-thorn' || message.commandType === 'sailboat' ||
+                       message.commandType === 'start-stop-continue' || message.commandType === 'swot') &&
+                       message.commandData ? (
+                    /* Render Retro Command */
+                    <div className="relative group">
+                      <RetroCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        sections={message.commandData.sections || []}
+                        type={message.commandType as any}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        icon={
+                          message.commandType === 'rose-bud-thorn' ? <Flower2 className="text-white" size={20} /> :
+                          message.commandType === 'sailboat' ? <Ship className="text-white" size={20} /> :
+                          message.commandType === 'start-stop-continue' ? <PlayCircle className="text-white" size={20} /> :
+                          <Target className="text-white" size={20} />
+                        }
+                        gradient={
+                          message.commandType === 'rose-bud-thorn' ? 'from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'sailboat' ? 'from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'start-stop-continue' ? 'from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900' :
+                          'from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900'
+                        }
+                        border={
+                          message.commandType === 'rose-bud-thorn' ? 'border-pink-400 dark:border-pink-600' :
+                          message.commandType === 'sailboat' ? 'border-blue-400 dark:border-blue-600' :
+                          message.commandType === 'start-stop-continue' ? 'border-green-400 dark:border-green-600' :
+                          'border-purple-400 dark:border-purple-600'
+                        }
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Retro */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar retrospectiva"
                             >
                               <Trash2 size={14} />
                             </button>
