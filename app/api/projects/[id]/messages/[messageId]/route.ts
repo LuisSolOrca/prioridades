@@ -156,6 +156,13 @@ export async function DELETE(
     message.content = '[Mensaje eliminado]';
     await message.save();
 
+    // Si es una respuesta, decrementar contador en el mensaje padre
+    if (message.parentMessageId) {
+      await ChannelMessage.findByIdAndUpdate(message.parentMessageId, {
+        $inc: { replyCount: -1 }
+      });
+    }
+
     return NextResponse.json({ message: 'Mensaje eliminado correctamente' });
   } catch (error) {
     console.error('Error deleting message:', error);
