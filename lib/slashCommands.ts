@@ -95,6 +95,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'collaboration'
   },
   {
+    name: 'fist-of-five',
+    description: 'Votación ágil Fist of Five (0-5 dedos) para medir consenso',
+    usage: '/fist-of-five "¿Pregunta o decisión?"',
+    category: 'collaboration'
+  },
+  {
     name: 'checklist',
     description: 'Lista de tareas colaborativa con progreso visual',
     usage: '/checklist "Título" ["Item 1" "Item 2" ...]',
