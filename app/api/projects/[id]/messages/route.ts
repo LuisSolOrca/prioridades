@@ -334,7 +334,10 @@ export async function POST(
     const populatedMessage = {
       ...messageDoc,
       _id: messageDoc._id.toString(),
-      userId: userId || {
+      userId: userId ? {
+        ...userId,
+        _id: userId._id.toString()
+      } : {
         _id: 'deleted',
         name: 'Usuario Eliminado',
         email: 'deleted@system.local'
