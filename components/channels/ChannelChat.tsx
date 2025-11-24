@@ -2712,7 +2712,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               onUploadSuccess={(attachment) => {
                 setShowAttachments(false);
                 // Refresh messages to show new attachment
-                fetchMessages();
+                loadMessages();
               }}
               onUploadError={(error) => {
                 console.error('Error uploading file:', error);
