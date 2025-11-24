@@ -51,9 +51,22 @@ export async function PUT(
     }
 
     // Verificar que el usuario puede responder (es el destinatario o admin)
+    const sessionUserId = (session.user as any).id;
+    const askedToId = message.commandData.askedToId;
+
+    // Comparar como strings para manejar ObjectId vs string
     const canAnswer =
-      (session.user as any).id === message.commandData.askedToId ||
+      sessionUserId === askedToId ||
+      sessionUserId === askedToId?.toString() ||
+      askedToId === sessionUserId?.toString() ||
       (session.user as any).role === 'ADMIN';
+
+    console.log('Permission check:', {
+      sessionUserId,
+      askedToId,
+      role: (session.user as any).role,
+      canAnswer
+    });
 
     if (!canAnswer) {
       return NextResponse.json(
