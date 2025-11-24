@@ -108,17 +108,36 @@ export async function POST(request: NextRequest) {
       attachments: attachments || []
     });
 
-    // Poblar el usuario y attachments antes de devolver
-    const populatedComment = await Comment.findById(comment._id)
-      .populate('userId', 'name email')
-      .populate({
-        path: 'attachments',
-        populate: {
-          path: 'uploadedBy',
-          select: 'name email'
-        }
-      })
-      .lean();
+    // Poblar el usuario y attachments manualmente para evitar problemas en serverless
+    const commentDoc = await Comment.findById(comment._id).lean();
+
+    // Poblar usuario
+    const user = await User.findById(commentDoc.userId).select('name email').lean();
+
+    // Poblar attachments si existen
+    let populatedAttachments = [];
+    if (commentDoc.attachments && commentDoc.attachments.length > 0) {
+      const attachmentDocs = await Attachment.find({
+        _id: { $in: commentDoc.attachments }
+      }).lean();
+
+      // Poblar uploadedBy para cada attachment
+      populatedAttachments = await Promise.all(
+        attachmentDocs.map(async (att: any) => {
+          const uploader = await User.findById(att.uploadedBy).select('name email').lean();
+          return {
+            ...att,
+            uploadedBy: uploader
+          };
+        })
+      );
+    }
+
+    const populatedComment = {
+      ...commentDoc,
+      userId: user,
+      attachments: populatedAttachments
+    };
 
     // Variable para trackear si hubo mención
     let hasMention = false;
