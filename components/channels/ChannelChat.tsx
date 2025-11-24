@@ -2576,174 +2576,182 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Active Command Display */}
+      {/* Active Command Modal Overlay */}
       {activeCommand && (
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          {activeCommand.type === 'status' && (
-            <StatusCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'blockers' && (
-            <BlockersCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'risks' && (
-            <RisksCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'summary' && (
-            <SummaryCommand
-              projectId={projectId}
-              period={activeCommand.data?.period}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'progress' && (
-            <ProgressCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'team-load' && (
-            <TeamLoadCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'burndown' && (
-            <BurndownCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'velocity' && (
-            <VelocityCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {/* Poll y Celebrate se renderizan directamente en la lista de mensajes ya que se persisten */}
-          {activeCommand.type === 'quick-priority' && activeCommand.data && (
-            <QuickPriorityCommand
-              projectId={projectId}
-              initialTitle={activeCommand.data.title}
-              onClose={() => setActiveCommand(null)}
-              onSuccess={() => {
-                loadMessages();
-                setActiveCommand(null);
-              }}
-            />
-          )}
-          {activeCommand.type === 'search' && (
-            <SearchCommand
-              projectId={projectId}
-              initialType={activeCommand.data?.type}
-              initialTerm={activeCommand.data?.term}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'priorities' && (
-            <PrioritiesCommand
-              projectId={projectId}
-              initialFilters={activeCommand.data?.filters}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'recent' && (
-            <RecentCommand
-              projectId={projectId}
-              userName={activeCommand.data?.userName}
-              days={activeCommand.data?.days}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'standup' && (
-            <StandupCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand?.type === 'ai-summary' && (
-            <AiSummaryCommand
-              projectId={projectId}
-              messages={messages}
-              args={activeCommand.args || []}
-              onClose={() => setActiveCommand(null)}
-              onSuccess={() => {
-                loadMessages();
-                setActiveCommand(null);
-              }}
-            />
-          )}
-          {activeCommand.type === 'my-stats' && (
-            <MyStatsCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'schedule' && (
-            <ScheduleCommand
-              projectId={projectId}
-              view={activeCommand.data?.view}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'mention-stats' && (
-            <MentionStatsCommand
-              projectId={projectId}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'export' && (
-            <ExportCommand
-              projectId={projectId}
-              initialFormat={activeCommand.data?.format}
-              onClose={() => setActiveCommand(null)}
-            />
-          )}
-          {activeCommand.type === 'help' && (
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-gray-300 dark:border-gray-700 p-6 my-2">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
-                    <Zap className="text-white" size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">Comandos Disponibles</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Escribe / para ver comandos</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setActiveCommand(null)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="space-y-3">
-                {SLASH_COMMANDS.map(cmd => (
-                  <div key={cmd.name} className="bg-white dark:bg-gray-700 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <code className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm font-mono">
-                        /{cmd.name}
-                      </code>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
-                        {cmd.category}
-                      </span>
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4"
+          onClick={() => setActiveCommand(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-4xl max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {activeCommand.type === 'status' && (
+              <StatusCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'blockers' && (
+              <BlockersCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'risks' && (
+              <RisksCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'summary' && (
+              <SummaryCommand
+                projectId={projectId}
+                period={activeCommand.data?.period}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'progress' && (
+              <ProgressCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'team-load' && (
+              <TeamLoadCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'burndown' && (
+              <BurndownCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'velocity' && (
+              <VelocityCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {/* Poll y Celebrate se renderizan directamente en la lista de mensajes ya que se persisten */}
+            {activeCommand.type === 'quick-priority' && activeCommand.data && (
+              <QuickPriorityCommand
+                projectId={projectId}
+                initialTitle={activeCommand.data.title}
+                onClose={() => setActiveCommand(null)}
+                onSuccess={() => {
+                  loadMessages();
+                  setActiveCommand(null);
+                }}
+              />
+            )}
+            {activeCommand.type === 'search' && (
+              <SearchCommand
+                projectId={projectId}
+                initialType={activeCommand.data?.type}
+                initialTerm={activeCommand.data?.term}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'priorities' && (
+              <PrioritiesCommand
+                projectId={projectId}
+                initialFilters={activeCommand.data?.filters}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'recent' && (
+              <RecentCommand
+                projectId={projectId}
+                userName={activeCommand.data?.userName}
+                days={activeCommand.data?.days}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'standup' && (
+              <StandupCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand?.type === 'ai-summary' && (
+              <AiSummaryCommand
+                projectId={projectId}
+                messages={messages}
+                args={activeCommand.args || []}
+                onClose={() => setActiveCommand(null)}
+                onSuccess={() => {
+                  loadMessages();
+                  setActiveCommand(null);
+                }}
+              />
+            )}
+            {activeCommand.type === 'my-stats' && (
+              <MyStatsCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'schedule' && (
+              <ScheduleCommand
+                projectId={projectId}
+                view={activeCommand.data?.view}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'mention-stats' && (
+              <MentionStatsCommand
+                projectId={projectId}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'export' && (
+              <ExportCommand
+                projectId={projectId}
+                initialFormat={activeCommand.data?.format}
+                onClose={() => setActiveCommand(null)}
+              />
+            )}
+            {activeCommand.type === 'help' && (
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-gray-300 dark:border-gray-700 p-6 m-2">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                      <Zap className="text-white" size={20} />
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{cmd.description}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{cmd.usage}</p>
+                    <div>
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">Comandos Disponibles</h3>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Escribe / para ver comandos</p>
+                    </div>
                   </div>
-                ))}
+                  <button
+                    onClick={() => setActiveCommand(null)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {SLASH_COMMANDS.map(cmd => (
+                    <div key={cmd.name} className="bg-white dark:bg-gray-700 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <code className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm font-mono">
+                          /{cmd.name}
+                        </code>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
+                          {cmd.category}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{cmd.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{cmd.usage}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
