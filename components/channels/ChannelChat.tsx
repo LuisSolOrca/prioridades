@@ -15,7 +15,8 @@ import {
   Search,
   Pin,
   PinOff,
-  Zap
+  Zap,
+  Paperclip
 } from 'lucide-react';
 import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
@@ -61,6 +62,7 @@ import MoodCommand from '../slashCommands/MoodCommand';
 import ProsConsCommand from '../slashCommands/ProsConsCommand';
 import RankingCommand from '../slashCommands/RankingCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
+import FileUpload from '../FileUpload';
 
 interface Priority {
   _id: string;
@@ -138,6 +140,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [pusherChannel, setPusherChannel] = useState<PresenceChannel | null>(null);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; info: { name: string; email: string } }>>([]);
+  const [showAttachments, setShowAttachments] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Infinite scroll states
@@ -2689,7 +2692,44 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           </div>
         )}
 
+        {/* File Upload Area */}
+        {showAttachments && selectedChannelId && (
+          <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Adjuntar archivo
+              </h3>
+              <button
+                onClick={() => setShowAttachments(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <FileUpload
+              projectId={projectId}
+              channelId={selectedChannelId}
+              onUploadSuccess={(attachment) => {
+                setShowAttachments(false);
+                // Refresh messages to show new attachment
+                fetchMessages();
+              }}
+              onUploadError={(error) => {
+                console.error('Error uploading file:', error);
+              }}
+            />
+          </div>
+        )}
+
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowAttachments(!showAttachments)}
+            disabled={!selectedChannelId}
+            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
+            title="Adjuntar archivo"
+          >
+            <Paperclip size={18} />
+          </button>
           <input
             type="text"
             value={newMessage}
