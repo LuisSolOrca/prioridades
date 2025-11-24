@@ -1415,7 +1415,6 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         break;
 
       case 'question':
-        console.log('Question command triggered, parsed args:', parsed.args);
         if (parsed.args.length < 2) {
           alert('Uso: /question @usuario "¿Tu pregunta aquí?"');
           return;
@@ -1424,9 +1423,6 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
         const questionUser = parsed.args[0].replace('@', '');
         const questionText = parsed.args[1];
-
-        console.log('Question user:', questionUser, 'Question text:', questionText);
-        console.log('Available users:', users.map(u => u.name));
 
         // Buscar usuario mencionado (buscar por nombre completo o parcial)
         const questionedUser = users.find(u =>
@@ -1438,7 +1434,6 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           alert(`Usuario ${questionUser} no encontrado. Verifica el nombre.`);
           return;
         }
-        console.log('Questioned user found:', questionedUser);
 
         // Crear pregunta persistente en la base de datos
         try {
@@ -1463,38 +1458,30 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
           if (response.ok) {
             const message = await response.json();
-            console.log('Question message created:', message);
             // Agregar mensaje directamente en lugar de recargar todos
             setMessages((prev) => [...prev, message]);
             scrollToBottom();
 
             // Notificar al usuario preguntado
             try {
-              // Obtener datos del proyecto para la notificación
-              const projectResponse = await fetch(`/api/projects/${projectId}`);
-              if (projectResponse.ok) {
-                const projectData = await projectResponse.json();
-
-                await fetch('/api/notifications/question', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    userId: questionedUser._id,
-                    askerName: session?.user?.name,
-                    questionText,
-                    projectId,
-                    projectName: projectData.name,
-                    messageId: message._id
-                  })
-                });
-              }
+              await fetch('/api/notifications/question', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: questionedUser._id,
+                  askerName: session?.user?.name,
+                  questionText,
+                  projectId,
+                  projectName: 'Proyecto', // Nombre genérico por ahora
+                  messageId: message._id
+                })
+              });
             } catch (notifError) {
               console.error('Error sending notification:', notifError);
               // No fallar el comando si la notificación falla
             }
           } else {
             const errorData = await response.json();
-            console.error('Error response:', errorData);
             alert(`Error al crear la pregunta: ${errorData.error || 'Error desconocido'}`);
           }
         } catch (error) {
