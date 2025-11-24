@@ -2739,10 +2739,32 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             <FileUpload
               projectId={projectId}
               channelId={selectedChannelId}
-              onUploadSuccess={(attachment) => {
+              onUploadSuccess={async (attachment) => {
                 setShowAttachments(false);
-                // Refresh messages to show new attachment
-                loadMessages();
+
+                // Crear mensaje en el chat con el archivo adjunto
+                try {
+                  const response = await fetch(`/api/projects/${projectId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      content: `📎 Subió el archivo: **${attachment.originalName}**`,
+                      channelId: selectedChannelId,
+                      attachments: [attachment._id]
+                    })
+                  });
+
+                  if (response.ok) {
+                    const message = await response.json();
+                    setMessages((prev) => [...prev, message]);
+                  } else {
+                    // Si falla crear el mensaje, al menos recargar para mostrar en pestaña
+                    loadMessages();
+                  }
+                } catch (error) {
+                  console.error('Error creating message with attachment:', error);
+                  loadMessages();
+                }
               }}
               onUploadError={(error) => {
                 console.error('Error uploading file:', error);

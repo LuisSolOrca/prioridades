@@ -173,7 +173,7 @@ export async function POST(
     await connectDB();
 
     const body = await request.json();
-    const { content, channelId, mentions = [], parentMessageId, commandType, commandData } = body;
+    const { content, channelId, mentions = [], parentMessageId, commandType, commandData, attachments = [] } = body;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -241,6 +241,7 @@ export async function POST(
       parentMessageId: parentMessageId || null,
       commandType: commandType || null,
       commandData: commandData || null,
+      attachments: attachments || [],
       reactions: [],
       replyCount: 0,
       isPinned: false,
@@ -260,6 +261,15 @@ export async function POST(
       .populate('userId', 'name email')
       .populate('mentions', 'name email')
       .populate('priorityMentions', 'title status completionPercentage userId')
+      .populate({
+        path: 'attachments',
+        match: { isDeleted: false },
+        select: 'fileName originalName fileSize mimeType uploadedBy uploadedAt',
+        populate: {
+          path: 'uploadedBy',
+          select: 'name email'
+        }
+      })
       .lean();
 
     // Manejar usuarios eliminados (aunque poco probable en mensaje recién creado)
