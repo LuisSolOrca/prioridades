@@ -2701,23 +2701,25 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-        {/* Typing Indicator */}
-        {typingUsers.length > 0 && (
-          <div className="mb-2 text-xs text-gray-500 dark:text-gray-400 italic flex items-center gap-1">
-            <span className="inline-flex gap-0.5">
-              <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-              <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-              <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-            </span>
-            <span>
-              {typingUsers.length === 1
-                ? `${typingUsers[0]} está escribiendo...`
-                : typingUsers.length === 2
-                ? `${typingUsers[0]} y ${typingUsers[1]} están escribiendo...`
-                : `${typingUsers[0]}, ${typingUsers[1]} y ${typingUsers.length - 2} más están escribiendo...`}
-            </span>
-          </div>
-        )}
+        {/* Typing Indicator - con altura fija para evitar rebote */}
+        <div className="mb-2 h-4 text-xs text-gray-500 dark:text-gray-400 italic flex items-center gap-1 transition-opacity duration-200" style={{ opacity: typingUsers.length > 0 ? 1 : 0 }}>
+          {typingUsers.length > 0 && (
+            <>
+              <span className="inline-flex gap-0.5">
+                <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </span>
+              <span>
+                {typingUsers.length === 1
+                  ? `${typingUsers[0]} está escribiendo...`
+                  : typingUsers.length === 2
+                  ? `${typingUsers[0]} y ${typingUsers[1]} están escribiendo...`
+                  : `${typingUsers[0]}, ${typingUsers[1]} y ${typingUsers.length - 2} más están escribiendo...`}
+              </span>
+            </>
+          )}
+        </div>
 
         {/* Command Suggestions */}
         {showCommandSuggestions && (
