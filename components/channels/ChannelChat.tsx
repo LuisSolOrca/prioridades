@@ -171,6 +171,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     // No cargar mensajes aquí, esperar a que se seleccione un canal
   }, [projectId]);
 
+  // Cargar mensajes cuando se selecciona un canal o cambia la búsqueda
+  useEffect(() => {
+    if (selectedChannelId) {
+      loadMessages();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId, debouncedSearchQuery]);
+
   useEffect(() => {
     if (initialLoad) {
       scrollToBottom();
