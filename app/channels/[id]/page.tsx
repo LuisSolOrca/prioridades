@@ -225,13 +225,13 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
         {/* Content */}
         <div className="container mx-auto px-4 py-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            {activeTab === 'feed' && <ActivityFeed projectId={params.id} />}
-            {activeTab === 'chat' && <ChannelChat projectId={params.id} />}
-            {activeTab === 'links' && <ChannelLinks projectId={params.id} />}
-            {activeTab === 'metrics' && <ChannelMetrics projectId={params.id} />}
-            {activeTab === 'canales' && <ChannelManagement projectId={params.id} />}
-            {activeTab === 'webhooks' && <WebhookManagement projectId={params.id} />}
-            {activeTab === 'files' && <FilesTab projectId={params.id} />}
+            {activeTab === 'feed' && <ActivityFeed key="feed" projectId={params.id} />}
+            {activeTab === 'chat' && <ChannelChat key="chat" projectId={params.id} />}
+            {activeTab === 'links' && <ChannelLinks key="links" projectId={params.id} />}
+            {activeTab === 'metrics' && <ChannelMetrics key="metrics" projectId={params.id} />}
+            {activeTab === 'canales' && <ChannelManagement key="canales" projectId={params.id} />}
+            {activeTab === 'webhooks' && <WebhookManagement key="webhooks" projectId={params.id} />}
+            {activeTab === 'files' && <FilesTab key="files" projectId={params.id} />}
           </div>
         </div>
       </div>
