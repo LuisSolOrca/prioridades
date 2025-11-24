@@ -69,6 +69,7 @@ interface PriorityFormModalProps {
   selectedUserId?: string; // Usuario actual seleccionado
   onUserChange?: (userId: string) => void; // Callback para cambiar usuario
   hasAzureDevOpsLink?: boolean; // Si la prioridad está vinculada a Azure DevOps
+  allowWeekEdit?: boolean; // Permitir editar la semana (solo en /history)
 }
 
 export default function PriorityFormModal({
@@ -92,7 +93,8 @@ export default function PriorityFormModal({
   users = [],
   selectedUserId,
   onUserChange,
-  hasAzureDevOpsLink = false
+  hasAzureDevOpsLink = false,
+  allowWeekEdit = false
 }: PriorityFormModalProps) {
   const { hasPermission } = usePermissions();
   const [aiLoading, setAiLoading] = useState<'title' | 'description' | null>(null);
@@ -359,7 +361,7 @@ export default function PriorityFormModal({
           )}
 
           {/* Selector de Semana (modo edición en /history) */}
-          {isEditing && formData.weekStart && (() => {
+          {isEditing && allowWeekEdit && formData.weekStart && (() => {
             // Calcular semana actual
             const now = new Date();
             const day = now.getDay();

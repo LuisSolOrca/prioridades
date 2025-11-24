@@ -668,6 +668,7 @@ export default function HistoryPage() {
         isEditing={true}
         weekLabel={editingPriority ? getWeekLabel(new Date(editingPriority.weekStart)) : ''}
         allowUserReassignment={canEditHistoricalPriorities}
+        allowWeekEdit={true}
         users={users}
         selectedUserId={selectedUserId}
         onUserChange={setSelectedUserId}
