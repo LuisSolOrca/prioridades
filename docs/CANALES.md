@@ -14,10 +14,12 @@
 11. [Mensajes Anclados](#mensajes-anclados)
 12. [Búsqueda](#búsqueda)
 13. [Slash Commands](#slash-commands)
-14. [Notificaciones](#notificaciones)
-15. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
-16. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-17. [Roadmap Futuro](#roadmap-futuro)
+14. [Webhooks](#webhooks)
+15. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
+16. [Notificaciones](#notificaciones)
+17. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+18. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+19. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -58,6 +60,9 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🔔 **Notificaciones** por email y en aplicación
 - 👻 **Soporte para usuarios eliminados**
 - 🗂️ **Sistema de canales y subcanales** jerárquico (máx 2 niveles)
+- 🔌 **Webhooks entrantes y salientes** para integración con sistemas externos
+- 👥 **Grupos de usuarios** para menciones masivas
+- 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
 
 ---
 
@@ -1240,6 +1245,350 @@ Una vez procesada la exportación:
 
 ---
 
+## Webhooks
+
+Los **webhooks** permiten integrar tus canales con sistemas externos para enviar y recibir información automáticamente.
+
+### Tipos de Webhooks
+
+#### 🔽 Webhooks Entrantes (Incoming)
+
+Reciben datos de sistemas externos y los publican en el canal como mensajes.
+
+**Casos de uso:**
+- Notificaciones de CI/CD (Jenkins, GitHub Actions)
+- Alertas de monitoreo (Datadog, New Relic)
+- Actualizaciones de CRM (Salesforce, HubSpot)
+- Eventos de sistemas personalizados
+
+**Ejemplo visual:**
+
+Los mensajes de webhooks se muestran con una **card morada distintiva** que incluye:
+- 🔮 Header degradado púrpura/índigo
+- 👤 Nombre personalizable del sistema externo
+- 📊 Badge "Sistema Externo"
+- 📝 Contenido del mensaje formateado
+- 🔍 Metadata expandible (opcional)
+
+#### 🔼 Webhooks Salientes (Outgoing)
+
+Envían eventos del canal a sistemas externos cuando ocurren ciertas acciones.
+
+**Eventos disponibles:**
+- `message.created` - Nuevo mensaje enviado
+- `message.updated` - Mensaje editado
+- `message.deleted` - Mensaje eliminado
+- `message.pinned` - Mensaje anclado
+- `message.reaction` - Reacción agregada
+
+**Casos de uso:**
+- Notificar a Slack cuando hay actividad importante
+- Registrar mensajes en sistemas de auditoría
+- Disparar automatizaciones en Zapier/Make
+- Sincronizar con bases de datos externas
+
+### Configuración de Webhooks
+
+#### Crear Webhook Entrante
+
+1. Ve a tu proyecto → Pestaña **"Webhooks"**
+2. Clic en **"Nuevo Webhook"**
+3. Configura:
+   - **Nombre**: Identifica el webhook (ej: "GitHub Notifications")
+   - **Tipo**: Selecciona **"Entrante"**
+   - **Canal**: Elige el canal donde aparecerán los mensajes (opcional)
+   - **Descripción**: Notas sobre el webhook
+4. Clic en **"Crear Webhook"**
+5. **Copia la URL y el Secret Token** que se generan automáticamente
+
+**URL generada:**
+```
+https://tu-app.vercel.app/api/webhooks/incoming/a1b2c3d4e5f6...
+```
+
+#### Crear Webhook Saliente
+
+1. Ve a tu proyecto → Pestaña **"Webhooks"**
+2. Clic en **"Nuevo Webhook"**
+3. Configura:
+   - **Nombre**: Identifica el webhook
+   - **Tipo**: Selecciona **"Saliente"**
+   - **URL de destino**: Donde se enviarán los eventos (ej: https://hooks.slack.com/...)
+   - **Eventos**: Marca los eventos que dispararán el webhook
+   - **Canal**: Específico o todos los canales (opcional)
+4. Clic en **"Crear Webhook"**
+5. **Guarda el Secret Token** para validar firmas HMAC
+
+### Usar Webhooks Entrantes
+
+**Formato del payload:**
+```json
+POST https://tu-app.vercel.app/api/webhooks/incoming/[SECRET]
+Content-Type: application/json
+
+{
+  "content": "Mensaje que aparecerá en el canal",
+  "username": "Nombre del Bot",
+  "metadata": {
+    "clave1": "valor1",
+    "clave2": "valor2"
+  }
+}
+```
+
+**Ejemplo real (GitHub Actions):**
+```json
+{
+  "content": "🚀 Build #1234 completado exitosamente\n\nRama: feature/webhooks\nDuración: 2m 34s",
+  "username": "GitHub CI",
+  "metadata": {
+    "buildNumber": "1234",
+    "branch": "feature/webhooks",
+    "status": "success",
+    "url": "https://github.com/repo/actions/runs/1234"
+  }
+}
+```
+
+**Ejemplo con curl:**
+```bash
+curl -X POST https://tu-app.vercel.app/api/webhooks/incoming/abc123... \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "⚠️ Alerta: CPU al 90% en servidor producción",
+    "username": "Datadog",
+    "metadata": {
+      "severity": "warning",
+      "server": "prod-01",
+      "cpu": "90%"
+    }
+  }'
+```
+
+### Recibir Webhooks Salientes
+
+Cuando configuras un webhook saliente, tu endpoint recibirá POST requests con este formato:
+
+**Headers:**
+```
+Content-Type: application/json
+X-Webhook-Signature: [HMAC SHA-256 signature]
+X-Webhook-Timestamp: [timestamp en milisegundos]
+X-Webhook-Event: message.created
+X-Webhook-Id: [ID del webhook]
+```
+
+**Body:**
+```json
+{
+  "message": {
+    "_id": "...",
+    "userId": {...},
+    "content": "Contenido del mensaje",
+    "createdAt": "2025-11-23T..."
+  },
+  "project": { "id": "..." },
+  "channel": { "id": "..." },
+  "timestamp": "2025-11-23T..."
+}
+```
+
+**Validar firma HMAC:**
+```javascript
+const crypto = require('crypto');
+
+function validateSignature(secret, timestamp, signature, body) {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(timestamp + JSON.stringify(body))
+    .digest('hex');
+
+  return signature === expectedSignature;
+}
+```
+
+### Gestión de Webhooks
+
+**Ver webhooks activos:**
+- Lista completa con tipo, estado, eventos, último uso
+- Indicadores visuales (🔽 Entrante, 🔼 Saliente)
+- Badges de estado (Activo/Inactivo)
+
+**Editar webhook:**
+- Cambiar nombre, descripción, URL, eventos
+- **No se puede cambiar el tipo** después de creado
+- El secret token permanece constante
+
+**Activar/Desactivar:**
+- Toggle rápido sin eliminar el webhook
+- Útil para pausar temporalmente integraciones
+
+**Eliminar webhook:**
+- Confirmación requerida
+- Elimina permanentemente el webhook y su historial
+
+### Seguridad
+
+**Webhooks Entrantes:**
+- ✅ Secret token único de 64 caracteres (256 bits)
+- ✅ URL pública pero imposible de adivinar
+- ✅ Sin autenticación adicional requerida (el secret es suficiente)
+- ✅ Rate limiting en servidor
+
+**Webhooks Salientes:**
+- ✅ Firma HMAC SHA-256 en cada request
+- ✅ Timestamp para prevenir replay attacks
+- ✅ Timeout de 10 segundos por request
+- ✅ Headers identificativos (X-Webhook-*)
+
+### Características Avanzadas
+
+**Canal específico vs todos:**
+- Configura webhook para un canal específico
+- O déjalo en "Todos los canales" para recibir/enviar globalmente
+
+**Metadata personalizada:**
+- Los webhooks entrantes pueden incluir metadata arbitraria
+- Se muestra en footer expandible en el mensaje
+- Útil para tracking, debugging, o información adicional
+
+**Historial de activación:**
+- Campo `lastTriggered` muestra última vez que se usó
+- Útil para detectar webhooks no usados
+
+---
+
+## Integración con Microsoft Teams
+
+Conecta Microsoft Teams con tus canales para recibir mensajes automáticamente sin servicios externos de pago.
+
+### Arquitectura de la Integración
+
+```
+Teams → Outgoing Webhook → Tu App (Bridge Endpoint) → Webhook Interno → Canal
+```
+
+La integración usa un **endpoint bridge** que:
+- ✅ Recibe mensajes de Teams Outgoing Webhook
+- ✅ Valida firmas HMAC (opcional)
+- ✅ Limpia menciones XML de Teams
+- ✅ Reenvía al webhook interno
+- ✅ Responde a Teams con confirmación
+
+### Configuración (3 Pasos)
+
+#### **Paso 1: Crear Webhook en tu App** (2 min)
+
+1. Ve a tu proyecto → Pestaña **"Webhooks"**
+2. **"Nuevo Webhook"** → Tipo: **Entrante**
+3. Copia el **Secret Token** generado
+
+#### **Paso 2: Configurar Variable de Entorno** (3 min)
+
+En Vercel:
+1. **Settings** → **Environment Variables**
+2. Agrega:
+   - **Name**: `TEAMS_TARGET_WEBHOOK_SECRET`
+   - **Value**: [El Secret Token del Paso 1]
+   - **Environments**: Production, Preview, Development
+3. **Save** y **Redeploy**
+
+#### **Paso 3: Configurar Outgoing Webhook en Teams** (5 min)
+
+1. En Teams → Tu canal → **⋯** → **"Conectores"**
+2. Busca **"Outgoing Webhook"** → **"Configurar"**
+3. Completa:
+   - **Nombre**: `PrioridadesBot`
+   - **Callback URL**:
+     ```
+     https://tu-app.vercel.app/api/webhooks/teams-bridge
+     ```
+   - **Descripción**: `Bot para enviar mensajes`
+4. **"Crear"** y guarda el Security Token (opcional)
+
+### Uso Diario
+
+Para enviar mensajes desde Teams a tu app:
+
+```
+@PrioridadesBot Tu mensaje aquí
+```
+
+**Ejemplos:**
+```
+@PrioridadesBot Recordatorio: Reunión a las 3pm
+@PrioridadesBot Build #1234 completado exitosamente
+@PrioridadesBot ⚠️ Incidente en producción
+```
+
+Todos aparecerán como **cards moradas** en el canal configurado.
+
+### Características de la Integración
+
+**Limpieza automática:**
+- Teams envía menciones en formato XML: `<at>BotName</at> mensaje`
+- El bridge las elimina automáticamente
+- Solo el mensaje limpio aparece en tu app
+
+**Metadata rica:**
+- Nombre del usuario de Teams como autor
+- Nombre del canal de Teams
+- Timestamp original
+- ID del mensaje de Teams
+
+**Validación HMAC (opcional):**
+- Configura `TEAMS_WEBHOOK_SECRET` con el Security Token de Teams
+- Valida firma HMAC SHA-256 en cada request
+- Mayor seguridad contra solicitudes falsas
+
+**Respuestas a Teams:**
+- Bot responde: "✅ Mensaje recibido y publicado"
+- Feedback inmediato al usuario de Teams
+- Manejo elegante de errores
+
+### Debugging
+
+**Verificar configuración:**
+```
+https://tu-app.vercel.app/api/webhooks/teams-bridge
+```
+
+Debe mostrar:
+```json
+{
+  "status": "ok",
+  "configured": {
+    "teamsSecret": false,
+    "targetSecret": true  ← Debe ser true
+  }
+}
+```
+
+**Logs en Vercel:**
+- Deployments → Functions
+- Busca errores de `teams-bridge`
+
+**Problemas comunes:**
+- ❌ **No responde el bot**: Verifica que escribiste `@PrioridadesBot` exacto
+- ❌ **Error 500**: Variable `TEAMS_TARGET_WEBHOOK_SECRET` no configurada
+- ❌ **No llega el mensaje**: Verifica redeploy después de agregar variable
+
+### Ventajas vs Power Automate
+
+| Power Automate | Solución Bridge |
+|----------------|-----------------|
+| Requiere licencia Premium | ✅ Gratis, sin costo |
+| Límites mensuales (100-1000 ops) | ✅ Sin límites |
+| Depende de servicio externo | ✅ Tu propia infraestructura |
+| Puede tener latencia | ✅ Rápido (<1s) |
+| Configuración visual compleja | ✅ 3 pasos simples |
+
+### Documentación Completa
+
+Ver: `docs/TEAMS_INTEGRATION.md` para guía paso a paso detallada.
+
+---
+
 ## Notificaciones
 
 ### Tipos de Notificaciones
@@ -1399,10 +1748,12 @@ El sistema maneja elegantemente los usuarios eliminados:
 - [x] ✅ Canales y subcanales jerárquicos
 - [x] ✅ Markdown y formato de texto enriquecido
 - [x] ✅ Link previews automáticas
+- [x] ✅ Webhooks entrantes y salientes
+- [x] ✅ Integración con Microsoft Teams
 - [ ] Adjuntar archivos a mensajes
 - [ ] Grabaciones de voz
 - [ ] Videollamadas integradas
-- [ ] Integración con Slack/Teams
+- [ ] Integración con Slack
 - [ ] Mensajes programados
 - [ ] Traducción automática
 - [ ] Transcripciones de reuniones
@@ -1413,7 +1764,7 @@ El sistema maneja elegantemente los usuarios eliminados:
 - [x] ✅ Scroll infinito para mensajes antiguos
 - [x] ✅ Indicadores de "escribiendo..."
 - [x] ✅ Estado en línea/fuera de línea
-- [ ] Mención de equipos/grupos
+- [x] ✅ Mención de equipos/grupos de usuarios
 - [ ] Hilos anidados (threads de threads)
 - [ ] Reacciones personalizadas
 - [ ] Temas y personalización

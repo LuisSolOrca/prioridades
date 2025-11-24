@@ -235,8 +235,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
     // Evento: nuevo mensaje
     channel.bind('new-message', (newMsg: Message) => {
-      // Solo agregar si no es del usuario actual (para evitar duplicados)
-      if (newMsg.userId._id !== session?.user.id) {
+      // Siempre agregar mensajes de webhook, o si no es del usuario actual
+      const isWebhookMessage = newMsg.commandType === 'webhook-incoming';
+      const isFromCurrentUser = newMsg.userId._id === session?.user.id;
+
+      if (isWebhookMessage || !isFromCurrentUser) {
         setMessages((prev) => {
           // Evitar duplicados
           if (prev.some((m) => m._id === newMsg._id)) return prev;
