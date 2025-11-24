@@ -65,17 +65,24 @@ export async function POST(request: Request) {
     // Generar key único para R2 (usar priorityId como prefijo)
     const r2Key = generateR2Key(`priority-${priorityId}`, file.name);
 
+    // Preparar metadata
+    const metadata: Record<string, string> = {
+      priorityId,
+      uploadedBy: (session.user as any).id,
+      originalName: sanitizeMetadata(file.name)
+    };
+
+    // Solo agregar commentId si existe
+    if (commentId) {
+      metadata.commentId = commentId;
+    }
+
     // Subir a R2
     await uploadFileToR2({
       key: r2Key,
       body: buffer,
       contentType: file.type || 'application/octet-stream',
-      metadata: {
-        priorityId,
-        commentId: commentId || undefined,
-        uploadedBy: (session.user as any).id,
-        originalName: sanitizeMetadata(file.name)
-      }
+      metadata
     });
 
     // Guardar en base de datos
