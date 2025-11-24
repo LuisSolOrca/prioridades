@@ -223,7 +223,7 @@ export default function PriorityDetailsModal({
                   {(() => {
                     const userId = typeof priority.userId === 'string'
                       ? priority.userId
-                      : priority.userId?._id || priority.userId;
+                      : (priority.userId as any)?._id || priority.userId;
                     return users.find(u => u._id === userId)?.name || 'Cargando...';
                   })()}
                 </p>

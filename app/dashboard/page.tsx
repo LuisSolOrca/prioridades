@@ -778,7 +778,7 @@ export default function DashboardPage() {
                     {(() => {
                       const userId = typeof selectedPriority.userId === 'string'
                         ? selectedPriority.userId
-                        : selectedPriority.userId?._id || selectedPriority.userId;
+                        : (selectedPriority.userId as any)?._id || selectedPriority.userId;
                       return users.find(u => u._id === userId)?.name;
                     })()}
                   </p>

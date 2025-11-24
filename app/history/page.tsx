@@ -554,7 +554,7 @@ export default function HistoryPage() {
                           // Manejar el caso donde userId puede ser un objeto poblado o un string
                           const userId = typeof priority.userId === 'string'
                             ? priority.userId
-                            : priority.userId?._id || priority.userId;
+                            : (priority.userId as any)?._id || priority.userId;
 
                           const user = users.find(u => u._id === userId);
                           // Obtener iniciativas (compatibilidad con ambos campos)

@@ -545,7 +545,7 @@ export default function ProjectsPage() {
                 // Combinar y ordenar todos los items
                 const allItems = [
                   ...milestones.map((m: any) => {
-                    const mUserId = typeof m.userId === 'string' ? m.userId : m.userId?._id || m.userId;
+                    const mUserId = typeof m.userId === 'string' ? m.userId : (m.userId as any)?._id || m.userId;
                     return {
                       type: 'milestone',
                       title: m.title,
@@ -558,7 +558,7 @@ export default function ProjectsPage() {
                     };
                   }),
                   ...priorities.map((p: any) => {
-                    const pUserId = typeof p.userId === 'string' ? p.userId : p.userId?._id || p.userId;
+                    const pUserId = typeof p.userId === 'string' ? p.userId : (p.userId as any)?._id || p.userId;
                     return {
                       type: 'priority',
                       title: p.title,
