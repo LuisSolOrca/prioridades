@@ -373,7 +373,7 @@ export default function PriorityFormModal({
             nextMonday.setDate(currentMonday.getDate() + 7);
 
             // Calcular semanas pasadas (últimas 4 semanas)
-            const weeks = [];
+            const weeks: Array<{ label: string; monday: string; friday: string }> = [];
             for (let i = 4; i >= 1; i--) {
               const monday = new Date(currentMonday);
               monday.setDate(currentMonday.getDate() - (i * 7));
