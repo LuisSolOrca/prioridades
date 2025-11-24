@@ -14,6 +14,7 @@ interface Attachment {
   uploadedBy: {
     _id: string;
     name: string;
+    email: string;
   };
   uploadedAt: string;
 }

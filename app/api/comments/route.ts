@@ -28,7 +28,13 @@ export async function GET(request: NextRequest) {
     }
 
     const comments = await Comment.find({ priorityId })
-      .populate('attachments')
+      .populate({
+        path: 'attachments',
+        populate: {
+          path: 'uploadedBy',
+          select: 'name email'
+        }
+      })
       .sort({ createdAt: 1 }) // Ordenar del más antiguo al más reciente
       .lean();
 
@@ -101,7 +107,13 @@ export async function POST(request: NextRequest) {
     // Poblar el usuario y attachments antes de devolver
     const populatedComment = await Comment.findById(comment._id)
       .populate('userId', 'name email')
-      .populate('attachments')
+      .populate({
+        path: 'attachments',
+        populate: {
+          path: 'uploadedBy',
+          select: 'name email'
+        }
+      })
       .lean();
 
     // Variable para trackear si hubo mención
