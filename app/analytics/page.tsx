@@ -150,15 +150,20 @@ export default function AnalyticsPage() {
       if (priority.userId !== selectedUser) return false;
     }
 
+    // Manejar el caso donde userId puede ser un objeto poblado o un string
+    const userId = typeof priority.userId === 'string'
+      ? priority.userId
+      : priority.userId?._id || priority.userId;
+
     // Filtro por rol de usuario (incluir/excluir admins)
     if (!includeAdmins) {
-      const user = users.find(u => u._id === priority.userId);
+      const user = users.find(u => u._id === userId);
       if (user && user.role === 'ADMIN') return false;
     }
 
     // Filtro por área
     if (selectedArea !== 'all') {
-      const user = users.find(u => u._id === priority.userId);
+      const user = users.find(u => u._id === userId);
       if (!user || user.area !== selectedArea) return false;
     }
 

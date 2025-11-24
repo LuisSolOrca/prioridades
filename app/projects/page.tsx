@@ -336,7 +336,11 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => {
             const stats = getCompletionStats(project);
-            const pmUser = users.find(u => u._id === project.projectManager?.userId);
+            // Manejar el caso donde userId puede ser un objeto poblado o un string
+            const pmUserId = typeof project.projectManager?.userId === 'string'
+              ? project.projectManager.userId
+              : project.projectManager?.userId?._id || project.projectManager?.userId;
+            const pmUser = users.find(u => u._id === pmUserId);
 
             return (
               <div
@@ -540,26 +544,32 @@ export default function ProjectsPage() {
               {(() => {
                 // Combinar y ordenar todos los items
                 const allItems = [
-                  ...milestones.map((m: any) => ({
-                    type: 'milestone',
-                    title: m.title,
-                    user: users.find(u => u._id === m.userId)?.name || 'N/A',
-                    date: new Date(m.dueDate),
-                    endDate: new Date(m.dueDate),
-                    isCompleted: m.isCompleted,
-                    deliverables: m.deliverables || [],
-                    status: m.isCompleted ? 'completado' : 'pendiente'
-                  })),
-                  ...priorities.map((p: any) => ({
-                    type: 'priority',
-                    title: p.title,
-                    user: users.find(u => u._id === p.userId)?.name || 'N/A',
-                    date: new Date(p.weekStart),
-                    endDate: new Date(p.weekEnd),
-                    isCompleted: p.status === 'COMPLETADO',
-                    status: p.status,
-                    progress: p.completionPercentage
-                  }))
+                  ...milestones.map((m: any) => {
+                    const mUserId = typeof m.userId === 'string' ? m.userId : m.userId?._id || m.userId;
+                    return {
+                      type: 'milestone',
+                      title: m.title,
+                      user: users.find(u => u._id === mUserId)?.name || 'N/A',
+                      date: new Date(m.dueDate),
+                      endDate: new Date(m.dueDate),
+                      isCompleted: m.isCompleted,
+                      deliverables: m.deliverables || [],
+                      status: m.isCompleted ? 'completado' : 'pendiente'
+                    };
+                  }),
+                  ...priorities.map((p: any) => {
+                    const pUserId = typeof p.userId === 'string' ? p.userId : p.userId?._id || p.userId;
+                    return {
+                      type: 'priority',
+                      title: p.title,
+                      user: users.find(u => u._id === pUserId)?.name || 'N/A',
+                      date: new Date(p.weekStart),
+                      endDate: new Date(p.weekEnd),
+                      isCompleted: p.status === 'COMPLETADO',
+                      status: p.status,
+                      progress: p.completionPercentage
+                    };
+                  })
                 ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
                 if (allItems.length === 0) {

@@ -775,7 +775,12 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Usuario</h3>
                   <p className="text-gray-800 dark:text-gray-200">
-                    {users.find(u => u._id === selectedPriority.userId)?.name}
+                    {(() => {
+                      const userId = typeof selectedPriority.userId === 'string'
+                        ? selectedPriority.userId
+                        : selectedPriority.userId?._id || selectedPriority.userId;
+                      return users.find(u => u._id === userId)?.name;
+                    })()}
                   </p>
                 </div>
                 <div>

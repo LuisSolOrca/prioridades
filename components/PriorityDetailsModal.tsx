@@ -220,7 +220,12 @@ export default function PriorityDetailsModal({
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Usuario</h3>
                 <p className="text-gray-800 dark:text-gray-200">
-                  {users.find(u => u._id === priority.userId)?.name || 'Cargando...'}
+                  {(() => {
+                    const userId = typeof priority.userId === 'string'
+                      ? priority.userId
+                      : priority.userId?._id || priority.userId;
+                    return users.find(u => u._id === userId)?.name || 'Cargando...';
+                  })()}
                 </p>
               </div>
               <div>

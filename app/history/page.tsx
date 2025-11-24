@@ -551,7 +551,12 @@ export default function HistoryPage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {week.priorities.map(priority => {
-                          const user = users.find(u => u._id === priority.userId);
+                          // Manejar el caso donde userId puede ser un objeto poblado o un string
+                          const userId = typeof priority.userId === 'string'
+                            ? priority.userId
+                            : priority.userId?._id || priority.userId;
+
+                          const user = users.find(u => u._id === userId);
                           // Obtener iniciativas (compatibilidad con ambos campos)
                           const priorityInitiativeIds = priority.initiativeIds || (priority.initiativeId ? [priority.initiativeId] : []);
                           const priorityInitiatives = priorityInitiativeIds
