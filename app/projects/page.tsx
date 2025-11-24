@@ -339,7 +339,7 @@ export default function ProjectsPage() {
             // Manejar el caso donde userId puede ser un objeto poblado o un string
             const pmUserId = typeof project.projectManager?.userId === 'string'
               ? project.projectManager.userId
-              : project.projectManager?.userId?._id || project.projectManager?.userId;
+              : (project.projectManager?.userId as any)?._id || project.projectManager?.userId;
             const pmUser = users.find(u => u._id === pmUserId);
 
             return (
