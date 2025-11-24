@@ -90,16 +90,11 @@ export default function AttachmentCard({
 
       const data = await response.json();
 
-      // Descargar archivo
-      const link = document.createElement('a');
-      link.href = data.downloadUrl;
-      link.download = attachment.originalName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Abrir en nueva pestaña
+      window.open(data.downloadUrl, '_blank');
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Error al descargar el archivo');
+      alert('Error al abrir el archivo');
     } finally {
       setDownloading(false);
     }
@@ -143,7 +138,7 @@ export default function AttachmentCard({
                 onClick={handleDownload}
                 disabled={downloading}
                 className="p-2 bg-black/50 hover:bg-black/70 text-white rounded backdrop-blur-sm transition"
-                title="Descargar"
+                title="Abrir en nueva pestaña"
               >
                 <Download size={16} />
               </button>
@@ -192,7 +187,7 @@ export default function AttachmentCard({
                 onClick={handleDownload}
                 disabled={downloading}
                 className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition"
-                title="Descargar"
+                title="Abrir en nueva pestaña"
               >
                 <Download size={16} />
               </button>
@@ -229,7 +224,7 @@ export default function AttachmentCard({
               onClick={handleDownload}
               disabled={downloading}
               className="p-2 bg-black/60 hover:bg-black/80 text-white rounded backdrop-blur-sm transition"
-              title="Descargar"
+              title="Abrir en nueva pestaña"
             >
               <Download size={18} />
             </button>
@@ -289,7 +284,7 @@ export default function AttachmentCard({
               onClick={handleDownload}
               disabled={downloading}
               className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition"
-              title="Descargar"
+              title="Abrir en nueva pestaña"
             >
               <Download size={18} />
             </button>
