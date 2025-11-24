@@ -283,7 +283,7 @@ export async function POST(
     const userId = await User.findById(messageDoc.userId).select('name email').lean();
 
     // Poblar mentions
-    let mentionsPopulated = [];
+    let mentionsPopulated: any[] = [];
     if (messageDoc.mentions && messageDoc.mentions.length > 0) {
       mentionsPopulated = await User.find({
         _id: { $in: messageDoc.mentions }
@@ -291,7 +291,7 @@ export async function POST(
     }
 
     // Poblar priorityMentions
-    let priorityMentionsPopulated = [];
+    let priorityMentionsPopulated: any[] = [];
     if (messageDoc.priorityMentions && messageDoc.priorityMentions.length > 0) {
       priorityMentionsPopulated = await Priority.find({
         _id: { $in: messageDoc.priorityMentions }
@@ -299,7 +299,7 @@ export async function POST(
     }
 
     // Poblar attachments manualmente
-    let populatedAttachments = [];
+    let populatedAttachments: any[] = [];
     if (messageDoc.attachments && messageDoc.attachments.length > 0) {
       const attachmentDocs = await Attachment.find({
         _id: { $in: messageDoc.attachments },
