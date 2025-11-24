@@ -84,22 +84,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { priorityId, text, isSystemComment, attachments } = body;
 
-    if (!priorityId || !text) {
+    if (!priorityId) {
       return NextResponse.json({
-        error: 'priorityId y text son requeridos'
+        error: 'priorityId es requerido'
       }, { status: 400 });
     }
 
-    if (text.trim().length === 0) {
-      return NextResponse.json({
-        error: 'El comentario no puede estar vacío'
-      }, { status: 400 });
+    // Permitir comentarios sin texto si hay attachments
+    if (!text || text.trim().length === 0) {
+      if (!attachments || attachments.length === 0) {
+        return NextResponse.json({
+          error: 'Debes proporcionar texto o archivos adjuntos'
+        }, { status: 400 });
+      }
     }
 
     const comment = await Comment.create({
       priorityId,
       userId: (session.user as any).id,
-      text: text.trim(),
+      text: text ? text.trim() : '', // Permitir texto vacío si hay attachments
       isSystemComment: isSystemComment || false,
       attachments: attachments || []
     });

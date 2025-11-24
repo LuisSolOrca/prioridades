@@ -244,16 +244,24 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+
+    // Permitir enviar si hay texto O archivos adjuntos
+    if (!newComment.trim() && pendingAttachments.length === 0) return;
 
     try {
       setSubmitting(true);
+
+      // Si no hay texto pero hay archivos, crear mensaje automático
+      const commentText = newComment.trim()
+        ? newComment
+        : `📎 Subió ${pendingAttachments.length} archivo${pendingAttachments.length > 1 ? 's' : ''}`;
+
       const res = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           priorityId,
-          text: newComment,
+          text: commentText,
           attachments: pendingAttachments
         })
       });
@@ -464,11 +472,15 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
 
         <div className="flex justify-between items-center">
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            💡 Usa @ para mencionar usuarios
+            {pendingAttachments.length > 0 ? (
+              <span>📎 {pendingAttachments.length} archivo{pendingAttachments.length > 1 ? 's' : ''} listo{pendingAttachments.length > 1 ? 's' : ''} para enviar</span>
+            ) : (
+              <span>💡 Usa @ para mencionar usuarios</span>
+            )}
           </div>
           <button
             type="submit"
-            disabled={submitting || !newComment.trim()}
+            disabled={submitting || (!newComment.trim() && pendingAttachments.length === 0)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
           >
             {submitting ? 'Enviando...' : 'Comentar'}
