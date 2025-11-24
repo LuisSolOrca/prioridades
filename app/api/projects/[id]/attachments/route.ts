@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Attachment from '@/models/Attachment';
-import { uploadFileToR2, generateR2Key, validateFileSize, validateFileType, isR2Configured } from '@/lib/r2-client';
+import { uploadFileToR2, generateR2Key, validateFileSize, validateFileType, isR2Configured, sanitizeMetadata } from '@/lib/r2-client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -69,7 +69,7 @@ export async function POST(
       metadata: {
         projectId: params.id,
         uploadedBy: session.user.id,
-        originalName: file.name
+        originalName: sanitizeMetadata(file.name) // Sanitizar para evitar caracteres especiales
       }
     });
 

@@ -174,4 +174,32 @@ export function getFileIcon(mimeType: string): string {
   return '📎';
 }
 
+/**
+ * Sanitiza un string para usarlo como metadata en R2/S3
+ * AWS S3/R2 metadata solo acepta caracteres US-ASCII
+ */
+export function sanitizeMetadata(value: string): string {
+  // Normalizar y remover diacríticos (acentos)
+  const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Reemplazar caracteres especiales comunes
+  const replacements: Record<string, string> = {
+    'ñ': 'n',
+    'Ñ': 'N',
+    'ü': 'u',
+    'Ü': 'U',
+    'ç': 'c',
+    'Ç': 'C',
+    'ß': 'ss'
+  };
+
+  let result = normalized;
+  Object.entries(replacements).forEach(([char, replacement]) => {
+    result = result.replace(new RegExp(char, 'g'), replacement);
+  });
+
+  // Mantener solo caracteres ASCII imprimibles (espacio a ~)
+  return result.replace(/[^\x20-\x7E]/g, '_');
+}
+
 export default r2Client;

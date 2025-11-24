@@ -88,6 +88,11 @@ export async function GET(
       .populate('priorityMentions', 'title status completionPercentage userId')
       .populate('reactions.userId', 'name')
       .populate('pinnedBy', 'name')
+      .populate({
+        path: 'attachments',
+        match: { isDeleted: false },
+        select: 'fileName originalName fileSize mimeType uploadedBy uploadedAt'
+      })
       .lean();
 
     // Determinar si hay más mensajes

@@ -63,6 +63,7 @@ import ProsConsCommand from '../slashCommands/ProsConsCommand';
 import RankingCommand from '../slashCommands/RankingCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
+import AttachmentCard from '../AttachmentCard';
 
 interface Priority {
   _id: string;
@@ -73,6 +74,16 @@ interface Priority {
     _id: string;
     name: string;
   };
+}
+
+interface Attachment {
+  _id: string;
+  fileName: string;
+  originalName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedBy: string;
+  uploadedAt: string;
 }
 
 interface Message {
@@ -103,6 +114,7 @@ interface Message {
   isEdited: boolean;
   isDeleted: boolean;
   createdAt: string;
+  attachments?: Attachment[];
 }
 
 interface ChannelChatProps {
@@ -2290,6 +2302,20 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           priorityMentions={message.priorityMentions}
                         />
                       </div>
+
+                      {/* Attachments */}
+                      {message.attachments && message.attachments.length > 0 && (
+                        <div className="mt-2 space-y-2">
+                          {message.attachments.map((attachment) => (
+                            <AttachmentCard
+                              key={attachment._id}
+                              attachment={attachment}
+                              projectId={projectId}
+                              compact={true}
+                            />
+                          ))}
+                        </div>
+                      )}
 
                       {/* Actions Menu */}
                       {!message.isDeleted && (
