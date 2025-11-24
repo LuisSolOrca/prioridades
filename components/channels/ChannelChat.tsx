@@ -718,6 +718,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/celebrate @${userName} "${achievement}"`,
+              channelId: selectedChannelId,
               commandType: 'celebrate',
               commandData: {
                 userName,
@@ -1390,6 +1391,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: `/decision "${decisionText}"`,
+              channelId: selectedChannelId,
               commandType: 'decision',
               commandData: {
                 decision: decisionText,
