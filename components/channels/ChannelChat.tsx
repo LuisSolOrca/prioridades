@@ -53,6 +53,7 @@ import EstimationPokerCommand from '../slashCommands/EstimationPokerCommand';
 import RetrospectiveCommand from '../slashCommands/RetrospectiveCommand';
 import IncidentCommand from '../slashCommands/IncidentCommand';
 import VoteCommand from '../slashCommands/VoteCommand';
+import FistOfFiveCommand from '../slashCommands/FistOfFiveCommand';
 import ChecklistCommand from '../slashCommands/ChecklistCommand';
 import TimerCommand from '../slashCommands/TimerCommand';
 import WheelCommand from '../slashCommands/WheelCommand';
@@ -861,6 +862,45 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           }
         } catch (error) {
           console.error('Error creating vote:', error);
+          alert('Error al crear la votación');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'fist-of-five':
+        if (parsed.args.length < 1) {
+          alert('Uso: /fist-of-five "Pregunta o decisión"');
+          return;
+        }
+        if (sending) return;
+        const fistQuestion = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/fist-of-five ${fistQuestion}`,
+              channelId: selectedChannelId,
+              commandType: 'fist-of-five',
+              commandData: {
+                question: fistQuestion,
+                votes: [],
+                closed: false,
+                createdBy: session?.user?.id
+              }
+            })
+          });
+
+          if (response.ok) {
+            const fistMessage = await response.json();
+            setMessages((prev) => [...prev, fistMessage]);
+          }
+        } catch (error) {
+          console.error('Error creating fist-of-five:', error);
           alert('Error al crear la votación');
         } finally {
           setSending(false);
@@ -1900,6 +1940,33 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar votación"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'fist-of-five' && message.commandData ? (
+                    /* Render Fist of Five Command */
+                    <div className="relative group">
+                      <FistOfFiveCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        votes={message.commandData.votes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar votación Fist of Five"
                             >
                               <Trash2 size={14} />
                             </button>
