@@ -50,10 +50,11 @@ interface Message {
 interface ThreadViewProps {
   projectId: string;
   parentMessage: Message;
+  channelId: string;
   onClose: () => void;
 }
 
-export default function ThreadView({ projectId, parentMessage, onClose }: ThreadViewProps) {
+export default function ThreadView({ projectId, parentMessage, channelId, onClose }: ThreadViewProps) {
   const { data: session } = useSession();
   const [replies, setReplies] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +107,7 @@ export default function ThreadView({ projectId, parentMessage, onClose }: Thread
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newReply.trim(),
+          channelId: channelId,
           mentions: [], // TODO: detectar menciones
           parentMessageId: parentMessage._id
         })

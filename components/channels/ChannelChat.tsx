@@ -2953,10 +2953,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       </div>
 
       {/* Thread View Modal */}
-      {openThread && (
+      {openThread && selectedChannelId && (
         <ThreadView
           projectId={projectId}
           parentMessage={openThread}
+          channelId={selectedChannelId}
           onClose={() => {
             setOpenThread(null);
             loadMessages(); // Recargar mensajes para actualizar contador de respuestas
