@@ -17,7 +17,8 @@ interface AttachmentCardProps {
     };
     uploadedAt: string;
   };
-  projectId: string;
+  projectId?: string; // Opcional para soportar attachments de comentarios de prioridades
+  priorityId?: string; // Opcional para attachments de prioridades
   onDelete?: () => void;
   showDelete?: boolean;
   compact?: boolean;
@@ -49,7 +50,12 @@ export default function AttachmentCard({
         setImageLoading(true);
         setImageError(false);
 
-        const response = await fetch(`/api/projects/${projectId}/attachments/${attachment._id}`);
+        // Usar endpoint genérico si no hay projectId
+        const url = projectId
+          ? `/api/projects/${projectId}/attachments/${attachment._id}`
+          : `/api/attachments/${attachment._id}`;
+
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Error loading image');
 
         const data = await response.json();
@@ -86,8 +92,12 @@ export default function AttachmentCard({
     try {
       setDownloading(true);
 
-      // Obtener URL firmada
-      const response = await fetch(`/api/projects/${projectId}/attachments/${attachment._id}`);
+      // Obtener URL firmada - usar endpoint genérico si no hay projectId
+      const url = projectId
+        ? `/api/projects/${projectId}/attachments/${attachment._id}`
+        : `/api/attachments/${attachment._id}`;
+
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Error al obtener URL de descarga');
 
       const data = await response.json();
@@ -104,6 +114,12 @@ export default function AttachmentCard({
 
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de eliminar este archivo?')) return;
+
+    // No permitir delete si no hay projectId (attachments de comentarios no son eliminables por ahora)
+    if (!projectId) {
+      alert('No se pueden eliminar archivos de comentarios');
+      return;
+    }
 
     try {
       setDeleting(true);

@@ -510,7 +510,12 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                     {comment.attachments && comment.attachments.length > 0 && (
                       <div className="mt-2 space-y-2">
                         {comment.attachments.map((attachment) => (
-                          <AttachmentCard key={attachment._id} attachment={attachment} />
+                          <AttachmentCard
+                            key={attachment._id}
+                            attachment={attachment}
+                            showDelete={false}
+                            compact={true}
+                          />
                         ))}
                       </div>
                     )}
@@ -586,7 +591,12 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
                     {comment.attachments && comment.attachments.length > 0 && (
                       <div className="mt-2 space-y-2">
                         {comment.attachments.map((attachment) => (
-                          <AttachmentCard key={attachment._id} attachment={attachment} />
+                          <AttachmentCard
+                            key={attachment._id}
+                            attachment={attachment}
+                            showDelete={false}
+                            compact={true}
+                          />
                         ))}
                       </div>
                     )}
