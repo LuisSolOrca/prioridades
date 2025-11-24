@@ -117,12 +117,14 @@ export async function GET(
         return {
           ...msg,
           _id: msg._id.toString(),
+          userId: msg.userId ? { ...msg.userId, _id: msg.userId._id?.toString() || msg.userId._id } : msg.userId,
           attachments: populatedAttachments
         };
       }
       return {
         ...msg,
         _id: msg._id.toString(),
+        userId: msg.userId ? { ...msg.userId, _id: msg.userId._id?.toString() || msg.userId._id } : msg.userId,
         attachments: []
       };
     }));
