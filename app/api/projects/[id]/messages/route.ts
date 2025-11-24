@@ -273,7 +273,7 @@ export async function POST(
     }
 
     // Poblar el mensaje creado manualmente para evitar problemas en serverless
-    const messageDoc = await ChannelMessage.findById(message._id).lean();
+    const messageDoc = await ChannelMessage.findById(message._id).lean() as any;
 
     if (!messageDoc) {
       throw new Error('Mensaje no encontrado después de crear');
