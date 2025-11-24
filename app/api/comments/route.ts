@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Poblar el usuario y attachments manualmente para evitar problemas en serverless
-    const commentDoc = await Comment.findById(comment._id).lean();
+    const commentDoc = await Comment.findById(comment._id).lean() as any;
 
     if (!commentDoc) {
       throw new Error('Comentario no encontrado después de crear');
