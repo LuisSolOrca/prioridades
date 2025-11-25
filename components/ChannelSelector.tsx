@@ -63,11 +63,17 @@ export default function ChannelSelector({
         const data = await response.json();
         setChannels(data.channels || []);
 
-        // Si no hay canal seleccionado, seleccionar General por defecto
+        // Si no hay canal seleccionado, seleccionar General por defecto (o el primer canal disponible)
         if (!selectedChannelId && data.channels.length > 0) {
           const generalChannel = findGeneralChannel(data.channels);
           if (generalChannel) {
             onChannelSelect(generalChannel._id, generalChannel.name);
+          } else {
+            // Si no hay canal General, seleccionar el primer canal disponible
+            const firstChannel = findFirstChannel(data.channels);
+            if (firstChannel) {
+              onChannelSelect(firstChannel._id, firstChannel.name);
+            }
           }
         }
       }
@@ -80,7 +86,8 @@ export default function ChannelSelector({
 
   const findGeneralChannel = (channelList: Channel[]): Channel | null => {
     for (const channel of channelList) {
-      if (channel.name === 'General' && !channel.parentId) {
+      // Buscar canal "General" o "general" (case insensitive)
+      if (channel.name.toLowerCase() === 'general' && !channel.parentId) {
         return channel;
       }
       if (channel.children) {
@@ -89,6 +96,17 @@ export default function ChannelSelector({
       }
     }
     return null;
+  };
+
+  const findFirstChannel = (channelList: Channel[]): Channel | null => {
+    // Retornar el primer canal sin padre (canal raíz)
+    for (const channel of channelList) {
+      if (!channel.parentId) {
+        return channel;
+      }
+    }
+    // Si todos tienen padre, retornar el primero de la lista
+    return channelList.length > 0 ? channelList[0] : null;
   };
 
   const findChannelById = (channelList: Channel[], id: string): Channel | null => {

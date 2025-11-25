@@ -193,14 +193,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     // No cargar mensajes aquí, esperar a que se seleccione un canal
   }, [projectId]);
 
-  // Cargar mensajes cuando se selecciona un canal o cambia la búsqueda
-  useEffect(() => {
-    if (selectedChannelId) {
-      loadMessages();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChannelId, debouncedSearchQuery]);
-
+  // Scroll inicial cuando cargan los mensajes
   useEffect(() => {
     if (initialLoad) {
       scrollToBottom();
@@ -553,6 +546,12 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || sending) return;
 
+    // Validar que hay un canal seleccionado
+    if (!selectedChannelId) {
+      alert('Por favor selecciona un canal primero');
+      return;
+    }
+
     // Emitir stop-typing al enviar mensaje
     if (pusherChannel && session?.user) {
       pusherChannel.trigger('client-stop-typing', {
@@ -567,6 +566,9 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       return;
     }
 
+    // Guardar el mensaje antes de limpiar (para restaurar en caso de error)
+    const messageToSend = newMessage.trim();
+
     try {
       setSending(true);
 
@@ -574,24 +576,26 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: newMessage.trim(),
+          content: messageToSend,
           channelId: selectedChannelId,
           mentions: [] // TODO: detectar menciones @usuario
         })
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar mensaje');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al enviar mensaje');
       }
 
       const message = await response.json();
       setMessages((prev) => [...prev, message]);
+      // Solo limpiar input después de éxito confirmado
       setNewMessage('');
       // Siempre hacer scroll cuando el usuario envía su propio mensaje
       scrollToBottom();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error sending message:', err);
-      alert('Error al enviar mensaje');
+      alert(err.message || 'Error al enviar mensaje');
     } finally {
       setSending(false);
     }
