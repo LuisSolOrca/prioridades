@@ -15,7 +15,7 @@ const DYNAMIC_COMMAND_TYPES = [
   'brainstorm', 'mind-map', 'pros-cons', 'decision-matrix', 'ranking',
   'retrospective', 'retro', 'team-health', 'mood',
   'action-items', 'checklist', 'agenda', 'parking-lot', 'pomodoro', 'estimation-poker',
-  'kudos-wall', 'icebreaker', 'inception-deck', 'delegation-poker'
+  'kudos-wall', 'icebreaker', 'inception-deck', 'delegation-poker', 'moving-motivators'
 ];
 
 interface DynamicMessage {
@@ -317,6 +317,12 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
           topics: [
             { id: '1', title: title, votes: [], revealed: false }
           ]
+        };
+      case 'moving-motivators':
+        return {
+          ...base,
+          context: '',
+          rankings: []
         };
       default:
         return base;

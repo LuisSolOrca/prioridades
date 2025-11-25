@@ -113,6 +113,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
     dynamics: [
       { type: 'inception-deck', name: 'Incepción Ágil', description: 'Mazo de 10 cartas para alinear al equipo' },
       { type: 'delegation-poker', name: 'Delegation Poker', description: 'Definir niveles de delegación (Management 3.0)' },
+      { type: 'moving-motivators', name: 'Moving Motivators', description: 'Descubrir motivaciones del equipo (Management 3.0)' },
     ]
   }
 ];

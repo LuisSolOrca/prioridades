@@ -72,6 +72,7 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   // Frameworks
   'inception-deck': { icon: Layers, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
   'delegation-poker': { icon: Users, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30' },
+  'moving-motivators': { icon: Heart, color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-900/30' },
 };
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {
