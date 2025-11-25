@@ -16,7 +16,8 @@ import {
   Timer,
   Play,
   Pause,
-  RotateCw
+  RotateCw,
+  Layers
 } from 'lucide-react';
 
 // Import all collaborative widgets
@@ -43,6 +44,7 @@ import ChecklistCommand from '../slashCommands/ChecklistCommand';
 import EstimationPokerCommand from '../slashCommands/EstimationPokerCommand';
 import RetrospectiveCommand from '../slashCommands/RetrospectiveCommand';
 import IcebreakerCommand from '../slashCommands/IcebreakerCommand';
+import InceptionDeckCommand from '../slashCommands/InceptionDeckCommand';
 
 interface DynamicMessage {
   _id: string;
@@ -98,6 +100,7 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'estimation-poker': { icon: Target, color: 'text-green-600' },
   'kudos-wall': { icon: Heart, color: 'text-pink-600' },
   'icebreaker': { icon: Heart, color: 'text-pink-600' },
+  'inception-deck': { icon: Layers, color: 'text-indigo-600' },
 };
 
 export default function DynamicFullscreen({
@@ -504,6 +507,17 @@ export default function DynamicFullscreen({
             {...commonProps}
             question={dynamic.commandData.question || dynamic.commandData.title}
             responses={dynamic.commandData.responses || []}
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+          />
+        );
+      case 'inception-deck':
+        return (
+          <InceptionDeckCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            cards={dynamic.commandData.cards || []}
+            currentCardIndex={dynamic.commandData.currentCardIndex || 0}
             createdBy={dynamic.commandData.createdBy}
             closed={dynamic.commandData.closed}
           />

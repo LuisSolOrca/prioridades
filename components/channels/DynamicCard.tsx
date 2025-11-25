@@ -13,7 +13,8 @@ import {
   Lock,
   Play,
   Trash2,
-  Loader2
+  Loader2,
+  Layers
 } from 'lucide-react';
 
 interface DynamicCardProps {
@@ -68,6 +69,8 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   // Reconocimiento
   'kudos-wall': { icon: Heart, color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
   'icebreaker': { icon: Heart, color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
+  // Frameworks
+  'inception-deck': { icon: Layers, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
 };
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {

@@ -102,6 +102,17 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'kudos-wall', name: 'Muro de Kudos', description: 'Reconocimientos del equipo' },
       { type: 'icebreaker', name: 'Icebreaker', description: 'Pregunta para romper el hielo' },
     ]
+  },
+  {
+    id: 'frameworks',
+    name: 'Frameworks',
+    icon: Lightbulb,
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+    borderColor: 'border-indigo-200 dark:border-indigo-800',
+    dynamics: [
+      { type: 'inception-deck', name: 'Incepción Ágil', description: 'Mazo de 10 cartas para alinear al equipo' },
+    ]
   }
 ];
 

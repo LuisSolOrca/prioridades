@@ -15,7 +15,7 @@ const DYNAMIC_COMMAND_TYPES = [
   'brainstorm', 'mind-map', 'pros-cons', 'decision-matrix', 'ranking',
   'retrospective', 'retro', 'team-health', 'mood',
   'action-items', 'checklist', 'agenda', 'parking-lot', 'pomodoro', 'estimation-poker',
-  'kudos-wall', 'icebreaker'
+  'kudos-wall', 'icebreaker', 'inception-deck'
 ];
 
 interface DynamicMessage {
@@ -293,6 +293,23 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
         };
       case 'icebreaker':
         return { ...base, question: title, responses: [] };
+      case 'inception-deck':
+        return {
+          ...base,
+          currentCardIndex: 0,
+          cards: [
+            { id: '1', title: '¿Por qué estamos aquí?', question: '¿Cuál es el propósito principal de este proyecto?', description: 'Define la razón de ser del proyecto y qué problema resuelve.', icon: 'target', color: 'bg-blue-500', responses: [], completed: false },
+            { id: '2', title: 'Elevator Pitch', question: 'Resume el proyecto en 30 segundos', description: 'Para [cliente objetivo] que [necesidad], el [producto] es un [categoría] que [beneficio clave].', icon: 'rocket', color: 'bg-purple-500', responses: [], completed: false },
+            { id: '3', title: 'Caja del Producto', question: '¿Cómo venderías este producto?', description: 'Diseña la "caja" del producto: nombre, eslogan, 3 beneficios principales.', icon: 'package', color: 'bg-pink-500', responses: [], completed: false },
+            { id: '4', title: 'Lista de NO', question: '¿Qué NO vamos a hacer?', description: 'Define claramente qué está fuera del alcance.', icon: 'x', color: 'bg-red-500', responses: [], completed: false },
+            { id: '5', title: 'Conoce a tus Vecinos', question: '¿Quiénes son los stakeholders?', description: 'Identifica a todas las personas y equipos involucrados.', icon: 'users', color: 'bg-green-500', responses: [], completed: false },
+            { id: '6', title: 'Muestra la Solución', question: '¿Cómo se ve la arquitectura?', description: 'Dibuja un diagrama de alto nivel de la solución.', icon: 'layers', color: 'bg-indigo-500', responses: [], completed: false },
+            { id: '7', title: '¿Qué nos quita el sueño?', question: '¿Cuáles son los mayores riesgos?', description: 'Identifica los riesgos que podrían hacer fracasar el proyecto.', icon: 'alert', color: 'bg-orange-500', responses: [], completed: false },
+            { id: '8', title: 'Tamaño del Proyecto', question: '¿Qué tan grande es esto?', description: 'Estima el tamaño: ¿semanas, meses? ¿Cuántas personas?', icon: 'clock', color: 'bg-teal-500', responses: [], completed: false },
+            { id: '9', title: '¿Qué vamos a sacrificar?', question: 'Tiempo, Alcance, Presupuesto, Calidad - ¿qué es negociable?', description: 'Define las prioridades y qué estamos dispuestos a ceder.', icon: 'target', color: 'bg-yellow-500', responses: [], completed: false },
+            { id: '10', title: '¿Cuánto va a costar?', question: '¿Cuál es la inversión necesaria?', description: 'Estima el costo en tiempo, dinero y recursos.', icon: 'dollar', color: 'bg-emerald-500', responses: [], completed: false }
+          ]
+        };
       default:
         return base;
     }
