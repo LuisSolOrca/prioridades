@@ -15,7 +15,9 @@ const DYNAMIC_COMMAND_TYPES = [
   'brainstorm', 'mind-map', 'pros-cons', 'decision-matrix', 'ranking',
   'retrospective', 'retro', 'team-health', 'mood',
   'action-items', 'checklist', 'agenda', 'parking-lot', 'pomodoro', 'estimation-poker',
-  'kudos-wall', 'icebreaker', 'inception-deck', 'delegation-poker', 'moving-motivators'
+  'kudos-wall', 'icebreaker', 'inception-deck', 'delegation-poker', 'moving-motivators',
+  'swot', 'soar', 'six-hats', 'crazy-8s', 'affinity-map',
+  'rose-bud-thorn', 'sailboat', 'start-stop-continue', 'standup'
 ];
 
 interface DynamicMessage {
