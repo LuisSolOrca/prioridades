@@ -38,6 +38,7 @@ import DotVotingCommand from '../slashCommands/DotVotingCommand';
 import BlindVoteCommand from '../slashCommands/BlindVoteCommand';
 import RetroCommand from '../slashCommands/RetroCommand';
 import NPSCommand from '../slashCommands/NPSCommand';
+import DecisionMatrixCommand from '../slashCommands/DecisionMatrixCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 import BlockersCommand from '../slashCommands/BlockersCommand';
 import RisksCommand from '../slashCommands/RisksCommand';
@@ -1152,6 +1153,111 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating nps:', error);
           alert('Error al crear encuesta NPS');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'six-hats':
+        if (parsed.args.length < 1) {
+          alert('Uso: /six-hats "Tema a analizar"');
+          return;
+        }
+        if (sending) return;
+        const sixHatsTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/six-hats ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'six-hats',
+              commandData: {
+                title: sixHatsTitle,
+                sections: [
+                  { id: 'white', title: 'Blanco (Hechos)', icon: '⚪', color: '#e5e7eb', items: [] },
+                  { id: 'red', title: 'Rojo (Emociones)', icon: '🔴', color: '#ef4444', items: [] },
+                  { id: 'black', title: 'Negro (Crítica)', icon: '⚫', color: '#1f2937', items: [] },
+                  { id: 'yellow', title: 'Amarillo (Beneficios)', icon: '🟡', color: '#eab308', items: [] },
+                  { id: 'green', title: 'Verde (Creatividad)', icon: '🟢', color: '#22c55e', items: [] },
+                  { id: 'blue', title: 'Azul (Control)', icon: '🔵', color: '#3b82f6', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const sixHatsMessage = await response.json();
+            setMessages((prev) => [...prev, sixHatsMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating six-hats:', error);
+          alert('Error al crear análisis de 6 sombreros');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'decision-matrix':
+        if (parsed.args.length < 3) {
+          alert('Uso: /decision-matrix "Decisión" "Criterio 1" "Criterio 2" ...');
+          return;
+        }
+        if (sending) return;
+        const matrixTitle = parsed.args[0];
+        const matrixCriteria = parsed.args.slice(1);
+
+        if (matrixCriteria.length < 2) {
+          alert('Debes proporcionar al menos 2 criterios');
+          return;
+        }
+
+        // Pedir opciones al usuario
+        const optionsInput = prompt('Ingresa las opciones separadas por comas (ej: Opción A, Opción B, Opción C):');
+        if (!optionsInput) return;
+
+        const matrixOptions = optionsInput.split(',').map(o => o.trim()).filter(o => o);
+        if (matrixOptions.length < 2) {
+          alert('Debes proporcionar al menos 2 opciones');
+          return;
+        }
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/decision-matrix ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'decision-matrix',
+              commandData: {
+                title: matrixTitle,
+                criteria: matrixCriteria,
+                options: matrixOptions,
+                cells: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const matrixMessage = await response.json();
+            setMessages((prev) => [...prev, matrixMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating decision-matrix:', error);
+          alert('Error al crear matriz de decisión');
         } finally {
           setSending(false);
         }
@@ -2374,7 +2480,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       )}
                     </div>
                   ) : (message.commandType === 'rose-bud-thorn' || message.commandType === 'sailboat' ||
-                       message.commandType === 'start-stop-continue' || message.commandType === 'swot') &&
+                       message.commandType === 'start-stop-continue' || message.commandType === 'swot' ||
+                       message.commandType === 'six-hats') &&
                        message.commandData ? (
                     /* Render Retro Command */
                     <div className="relative group">
@@ -2390,18 +2497,21 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'rose-bud-thorn' ? <Flower2 className="text-white" size={20} /> :
                           message.commandType === 'sailboat' ? <Ship className="text-white" size={20} /> :
                           message.commandType === 'start-stop-continue' ? <PlayCircle className="text-white" size={20} /> :
+                          message.commandType === 'six-hats' ? <span className="text-white text-xl">🎩</span> :
                           <Target className="text-white" size={20} />
                         }
                         gradient={
                           message.commandType === 'rose-bud-thorn' ? 'from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'sailboat' ? 'from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'start-stop-continue' ? 'from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'six-hats' ? 'from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900' :
                           'from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900'
                         }
                         border={
                           message.commandType === 'rose-bud-thorn' ? 'border-pink-400 dark:border-pink-600' :
                           message.commandType === 'sailboat' ? 'border-blue-400 dark:border-blue-600' :
                           message.commandType === 'start-stop-continue' ? 'border-green-400 dark:border-green-600' :
+                          message.commandType === 'six-hats' ? 'border-slate-400 dark:border-slate-600' :
                           'border-purple-400 dark:border-purple-600'
                         }
                         onClose={() => {}}
@@ -2443,6 +2553,36 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar NPS"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'decision-matrix' && message.commandData ? (
+                    /* Render Decision Matrix Command */
+                    <div className="relative group">
+                      <DecisionMatrixCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        options={message.commandData.options || []}
+                        criteria={message.commandData.criteria || []}
+                        cells={message.commandData.cells || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Decision Matrix */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar matriz"
                             >
                               <Trash2 size={14} />
                             </button>

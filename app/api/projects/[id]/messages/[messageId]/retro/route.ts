@@ -5,7 +5,7 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 
-const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot'];
+const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot', 'six-hats'];
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/retro
