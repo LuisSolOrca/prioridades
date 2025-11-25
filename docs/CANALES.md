@@ -834,6 +834,12 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/action-items` | Lista de acciones con responsable y fecha | `/action-items "Título"` |
 | `/team-health` | Health check del equipo (Spotify model) | `/team-health "Título"` |
 | `/confidence-vote` | ¿Qué tan seguros estamos? (1-5) | `/confidence-vote "¿Pregunta?"` |
+| `/pomodoro` | Temporizador pomodoro compartido (25/5 min) | `/pomodoro "Título"` |
+| `/agenda` | Agenda de reunión con tiempos por tema | `/agenda "Título de la reunión"` |
+| `/capacity` | Capacidad disponible del equipo | `/capacity "Título"` |
+| `/dependency-map` | Visualizar dependencias entre tareas | `/dependency-map "Título"` |
+| `/okr` | Definir y trackear OKRs | `/okr "Título"` |
+| `/roadmap` | Timeline visual con milestones | `/roadmap "Título"` |
 | `/standup` | Daily standup virtual | `/standup` |
 | `/question` | Pregunta a un stakeholder | `/question @usuario "¿pregunta?"` |
 
@@ -1808,6 +1814,155 @@ SOAR se enfoca en lo positivo (fortalezas y oportunidades) y el futuro (aspiraci
 - **2.5-3.4**: Confianza moderada, explorar preocupaciones
 - **<2.5**: Baja confianza, abordar riesgos antes de proceder
 
+#### `/pomodoro` - Temporizador Pomodoro Compartido
+
+**Funcionalidad:**
+- ⏱️ Temporizador pomodoro compartido para el equipo
+- Ciclos de trabajo (25 min) y descanso (5 min)
+- Control de inicio, pausa y reset
+- Contador de sesiones completadas
+- Sincronización en tiempo real para todos los usuarios
+
+**Cómo funciona:**
+1. Crear con `/pomodoro "Sesión de coding"`
+2. Iniciar el temporizador (25 minutos de trabajo)
+3. Todos ven el countdown en tiempo real
+4. Al terminar, automáticamente cambia a descanso (5 min)
+5. Contador de sesiones completadas
+6. Solo el creador puede cerrar
+
+**Cuándo usar:**
+- Pair programming o mob programming
+- Sesiones de focus time en equipo
+- Timeboxing para reuniones
+- Sprint planning con tiempo limitado
+
+#### `/agenda` - Agenda de Reunión
+
+**Funcionalidad:**
+- 📋 Agenda estructurada para reuniones
+- Temas con tiempo asignado y responsable
+- Marcar temas como completados durante la reunión
+- Cálculo automático de tiempo total
+- Ayuda a mantener reuniones enfocadas
+
+**Cómo funciona:**
+1. Crear con `/agenda "Daily Standup"`
+2. Agregar temas: descripción, tiempo (minutos), responsable
+3. Durante la reunión, marcar temas completados
+4. Ver tiempo total asignado
+5. Solo el creador puede cerrar
+
+**Cuándo usar:**
+- Daily standups
+- Sprint planning
+- Retrospectivas
+- Reuniones con stakeholders
+- Workshops con múltiples temas
+
+#### `/capacity` - Capacidad del Equipo
+
+**Funcionalidad:**
+- 👥 Tracking de capacidad disponible del equipo
+- Miembros con horas disponibles por día
+- Cálculo automático de totales
+- Horas/día, horas/semana, días/semana
+- Útil para sprint planning
+
+**Cómo funciona:**
+1. Crear con `/capacity "Sprint 24"`
+2. Agregar miembros con sus horas disponibles por día
+3. Ver totales calculados automáticamente
+4. Solo el creador puede cerrar
+
+**Cuándo usar:**
+- Sprint planning
+- Planificación de releases
+- Evaluación de carga de trabajo
+- Resource planning
+
+#### `/dependency-map` - Mapa de Dependencias
+
+**Funcionalidad:**
+- 🔗 Visualización de dependencias entre tareas
+- Lógica de bloqueo automática
+- No se puede completar una tarea hasta que sus dependencias estén listas
+- Indicadores visuales de tareas bloqueadas
+- Ideal para planificación compleja
+
+**Cómo funciona:**
+1. Crear con `/dependency-map "Desarrollo Feature X"`
+2. Agregar tareas con sus dependencias
+3. Dependencias separadas por comas (ej: "Tarea A, Tarea B")
+4. Sistema bloquea automáticamente tareas con dependencias pendientes
+5. Marcar como completado cuando está listo
+6. Solo el creador puede cerrar
+
+**Indicadores:**
+- 🔒 **Bloqueado** - Dependencias pendientes (rojo)
+- 🟢 **Verde** - Dependencia completada
+- 🟡 **Amarillo** - Dependencia pendiente
+
+**Cuándo usar:**
+- Features con múltiples tareas interdependientes
+- Migraciones complejas
+- Lanzamientos con prerequisites
+- Proyectos con workflow secuencial
+
+#### `/okr` - Objectives and Key Results
+
+**Funcionalidad:**
+- 🎯 Sistema completo de OKRs
+- Objetivos con múltiples key results
+- Progress tracking con sliders (0-100%)
+- Promedio de progreso por objetivo
+- Visualización clara de avance
+
+**Estructura:**
+- **Objetivo**: Meta cualitativa (ej: "Mejorar experiencia del usuario")
+- **Key Results**: Métricas cuantificables (ej: "Reducir tiempo de carga a <2s")
+
+**Cómo funciona:**
+1. Crear con `/okr "Q4 2025"`
+2. Agregar objetivos
+3. Agregar key results a cada objetivo
+4. Actualizar progreso con sliders
+5. Ver promedio de progreso por objetivo
+6. Solo el creador puede cerrar
+
+**Cuándo usar:**
+- Planning trimestral/anual
+- Alignment de equipo con objetivos de negocio
+- Tracking de metas estratégicas
+- Retrospectivas de OKRs
+
+#### `/roadmap` - Timeline de Milestones
+
+**Funcionalidad:**
+- 🗺️ Timeline visual de milestones
+- Milestones con fecha y status
+- Ordenamiento cronológico automático
+- Visual timeline con puntos de colores
+- Tracking de progreso a lo largo del tiempo
+
+**Estados de milestone:**
+- ⚪ **Pending** - No iniciado (gris)
+- 🟡 **In Progress** - En desarrollo (amarillo)
+- 🟢 **Completed** - Completado (verde)
+
+**Cómo funciona:**
+1. Crear con `/roadmap "Proyecto Mobile App"`
+2. Agregar milestones con título y fecha
+3. Actualizar status a medida que avanzan
+4. Milestones se ordenan automáticamente por fecha
+5. Solo el creador puede cerrar
+
+**Cuándo usar:**
+- Planificación de releases
+- Proyectos de largo plazo
+- Comunicación de roadmap a stakeholders
+- Tracking de hitos importantes
+
 ### Flujo General de Retrospectivas
 
 1. **Crear**: Líder ejecuta comando con título
@@ -2606,6 +2761,43 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v1.4.4 (Noviembre 2025) - Fase 3: Comandos de Productividad Avanzada
+- ✅ **6 nuevos slash commands de complejidad media-alta** - herramientas avanzadas para planificación y tracking
+  - `/pomodoro` - Temporizador pomodoro compartido (25/5 min)
+    - Ciclos de trabajo y descanso configurables
+    - Control de inicio, pausa y reset
+    - Contador de sesiones completadas
+    - Sincronización en tiempo real para todos
+    - Perfecto para pair/mob programming
+  - `/agenda` - Agenda de reunión con tiempos por tema
+    - Temas con tiempo asignado y responsable
+    - Marcar completados durante la reunión
+    - Cálculo automático de tiempo total
+    - Mantiene reuniones enfocadas y eficientes
+  - `/capacity` - Capacidad disponible del equipo
+    - Miembros con horas disponibles por día
+    - Cálculos automáticos: horas/día, horas/semana, días/semana
+    - Ideal para sprint planning y resource planning
+  - `/dependency-map` - Visualización de dependencias entre tareas
+    - Tareas con dependencias entre ellas
+    - Lógica de bloqueo automática
+    - Indicadores visuales de tareas bloqueadas
+    - No se puede completar hasta resolver dependencias
+  - `/okr` - Definir y trackear OKRs
+    - Objetivos con múltiples key results
+    - Progress tracking con sliders (0-100%)
+    - Promedio de progreso por objetivo
+    - Sistema completo de OKRs
+  - `/roadmap` - Timeline visual con milestones
+    - Milestones con fecha y status
+    - Ordenamiento cronológico automático
+    - Visual timeline con puntos de colores
+    - Estados: pending, in-progress, completed
+- ✅ **Componentes especializados** - PomodoroCommand, AgendaCommand, CapacityCommand, DependencyMapCommand, OKRCommand, RoadmapCommand
+- ✅ **API endpoints completos** - 6 nuevos routes con operaciones CRUD
+- ✅ **Features avanzados** - timers client-side, blocking logic, progress tracking, date sorting
+- ✅ **Integración completa** en ChannelChat.tsx con handlers y rendering
 
 ### v1.4.3 (Noviembre 2025) - Fase 2: Comandos de Alta Prioridad
 - ✅ **3 nuevos slash commands de alta prioridad** - herramientas para gestión y health del equipo

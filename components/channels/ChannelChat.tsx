@@ -77,6 +77,12 @@ import IcebreakerCommand from '../slashCommands/IcebreakerCommand';
 import ActionItemsCommand from '../slashCommands/ActionItemsCommand';
 import TeamHealthCommand from '../slashCommands/TeamHealthCommand';
 import ConfidenceVoteCommand from '../slashCommands/ConfidenceVoteCommand';
+import PomodoroCommand from '../slashCommands/PomodoroCommand';
+import AgendaCommand from '../slashCommands/AgendaCommand';
+import CapacityCommand from '../slashCommands/CapacityCommand';
+import DependencyMapCommand from '../slashCommands/DependencyMapCommand';
+import OKRCommand from '../slashCommands/OKRCommand';
+import RoadmapCommand from '../slashCommands/RoadmapCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
@@ -1431,6 +1437,252 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating confidence-vote:', error);
           alert('Error al crear voto de confianza');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'pomodoro':
+        if (parsed.args.length < 1) {
+          alert('Uso: /pomodoro "Título"');
+          return;
+        }
+        if (sending) return;
+        const pomodoroTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/pomodoro ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'pomodoro',
+              commandData: {
+                title: pomodoroTitle,
+                workMinutes: 25,
+                breakMinutes: 5,
+                sessionsCompleted: 0,
+                isRunning: false,
+                isPaused: false,
+                isBreak: false,
+                timeRemaining: 25 * 60,
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const pomodoroMessage = await response.json();
+            setMessages((prev) => [...prev, pomodoroMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating pomodoro:', error);
+          alert('Error al crear pomodoro');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'agenda':
+        if (parsed.args.length < 1) {
+          alert('Uso: /agenda "Título de la reunión"');
+          return;
+        }
+        if (sending) return;
+        const agendaTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/agenda ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'agenda',
+              commandData: {
+                title: agendaTitle,
+                items: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const agendaMessage = await response.json();
+            setMessages((prev) => [...prev, agendaMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating agenda:', error);
+          alert('Error al crear agenda');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'capacity':
+        if (parsed.args.length < 1) {
+          alert('Uso: /capacity "Título"');
+          return;
+        }
+        if (sending) return;
+        const capacityTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/capacity ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'capacity',
+              commandData: {
+                title: capacityTitle,
+                members: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const capacityMessage = await response.json();
+            setMessages((prev) => [...prev, capacityMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating capacity:', error);
+          alert('Error al crear capacity');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'dependency-map':
+        if (parsed.args.length < 1) {
+          alert('Uso: /dependency-map "Título"');
+          return;
+        }
+        if (sending) return;
+        const dependencyMapTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/dependency-map ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'dependency-map',
+              commandData: {
+                title: dependencyMapTitle,
+                tasks: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const dependencyMapMessage = await response.json();
+            setMessages((prev) => [...prev, dependencyMapMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating dependency-map:', error);
+          alert('Error al crear mapa de dependencias');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'okr':
+        if (parsed.args.length < 1) {
+          alert('Uso: /okr "Título"');
+          return;
+        }
+        if (sending) return;
+        const okrTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/okr ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'okr',
+              commandData: {
+                title: okrTitle,
+                objectives: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const okrMessage = await response.json();
+            setMessages((prev) => [...prev, okrMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating okr:', error);
+          alert('Error al crear OKR');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'roadmap':
+        if (parsed.args.length < 1) {
+          alert('Uso: /roadmap "Título"');
+          return;
+        }
+        if (sending) return;
+        const roadmapTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/roadmap ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'roadmap',
+              commandData: {
+                title: roadmapTitle,
+                milestones: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const roadmapMessage = await response.json();
+            setMessages((prev) => [...prev, roadmapMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating roadmap:', error);
+          alert('Error al crear roadmap');
         } finally {
           setSending(false);
         }
@@ -3205,6 +3457,180 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar voto de confianza"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'pomodoro' && message.commandData ? (
+                    /* Render Pomodoro Command */
+                    <div className="relative group">
+                      <PomodoroCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        workMinutes={message.commandData.workMinutes}
+                        breakMinutes={message.commandData.breakMinutes}
+                        sessionsCompleted={message.commandData.sessionsCompleted}
+                        isRunning={message.commandData.isRunning}
+                        isPaused={message.commandData.isPaused}
+                        isBreak={message.commandData.isBreak}
+                        timeRemaining={message.commandData.timeRemaining}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Pomodoro */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar pomodoro"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'agenda' && message.commandData ? (
+                    /* Render Agenda Command */
+                    <div className="relative group">
+                      <AgendaCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Agenda */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar agenda"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'capacity' && message.commandData ? (
+                    /* Render Capacity Command */
+                    <div className="relative group">
+                      <CapacityCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        members={message.commandData.members || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Capacity */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar capacity"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'dependency-map' && message.commandData ? (
+                    /* Render Dependency Map Command */
+                    <div className="relative group">
+                      <DependencyMapCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        tasks={message.commandData.tasks || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Dependency Map */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar mapa de dependencias"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'okr' && message.commandData ? (
+                    /* Render OKR Command */
+                    <div className="relative group">
+                      <OKRCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        objectives={message.commandData.objectives || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for OKR */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar OKR"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'roadmap' && message.commandData ? (
+                    /* Render Roadmap Command */
+                    <div className="relative group">
+                      <RoadmapCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        milestones={message.commandData.milestones || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Roadmap */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar roadmap"
                             >
                               <Trash2 size={14} />
                             </button>
