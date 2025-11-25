@@ -105,6 +105,16 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'inception-deck': { icon: Layers, color: 'text-indigo-600' },
   'delegation-poker': { icon: Users, color: 'text-violet-600' },
   'moving-motivators': { icon: Heart, color: 'text-rose-600' },
+  // Análisis estratégico
+  'swot': { icon: Target, color: 'text-emerald-600' },
+  'soar': { icon: Target, color: 'text-teal-600' },
+  'six-hats': { icon: Lightbulb, color: 'text-slate-600' },
+  'crazy-8s': { icon: Lightbulb, color: 'text-fuchsia-600' },
+  'affinity-map': { icon: Layers, color: 'text-amber-600' },
+  // Retros adicionales
+  'rose-bud-thorn': { icon: RotateCcw, color: 'text-pink-600' },
+  'sailboat': { icon: RotateCcw, color: 'text-cyan-600' },
+  'start-stop-continue': { icon: RotateCcw, color: 'text-green-600' },
 };
 
 export default function DynamicFullscreen({
@@ -548,6 +558,118 @@ export default function DynamicFullscreen({
             closed={dynamic.commandData.closed}
           />
         );
+      case 'swot':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="swot"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<Target className="text-white" size={20} />}
+            gradient="from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-emerald-400 dark:border-emerald-600"
+          />
+        );
+      case 'soar':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="soar"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<span className="text-white text-xl">🚀</span>}
+            gradient="from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-teal-400 dark:border-teal-600"
+          />
+        );
+      case 'six-hats':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="six-hats"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<span className="text-white text-xl">🎩</span>}
+            gradient="from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-slate-400 dark:border-slate-600"
+          />
+        );
+      case 'crazy-8s':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="crazy-8s"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<span className="text-white text-xl">🎨</span>}
+            gradient="from-fuchsia-50 to-pink-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-fuchsia-400 dark:border-fuchsia-600"
+          />
+        );
+      case 'affinity-map':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="affinity-map"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<span className="text-white text-xl">📌</span>}
+            gradient="from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-amber-400 dark:border-amber-600"
+          />
+        );
+      case 'rose-bud-thorn':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="rose-bud-thorn"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<span className="text-white text-xl">🌹</span>}
+            gradient="from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-pink-400 dark:border-pink-600"
+          />
+        );
+      case 'sailboat':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="sailboat"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<span className="text-white text-xl">⛵</span>}
+            gradient="from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-blue-400 dark:border-blue-600"
+          />
+        );
+      case 'start-stop-continue':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            sections={dynamic.commandData.sections || []}
+            type="start-stop-continue"
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+            icon={<span className="text-white text-xl">🚦</span>}
+            gradient="from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-green-400 dark:border-green-600"
+          />
+        );
       default:
         return (
           <div className="text-center py-12 text-gray-500">
@@ -752,8 +874,8 @@ export default function DynamicFullscreen({
       </div>
 
       {/* Dynamic Content */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-5xl mx-auto">
+      <div className="flex-1 overflow-auto p-4">
+        <div className="w-full h-full">
           {renderDynamicComponent()}
         </div>
       </div>

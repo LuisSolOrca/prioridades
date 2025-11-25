@@ -73,6 +73,16 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   'inception-deck': { icon: Layers, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
   'delegation-poker': { icon: Users, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30' },
   'moving-motivators': { icon: Heart, color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-900/30' },
+  // Análisis estratégico
+  'swot': { icon: Target, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  'soar': { icon: Target, color: 'text-teal-600', bg: 'bg-teal-100 dark:bg-teal-900/30' },
+  'six-hats': { icon: Lightbulb, color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-900/30' },
+  'crazy-8s': { icon: Lightbulb, color: 'text-fuchsia-600', bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/30' },
+  'affinity-map': { icon: Layers, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+  // Retros adicionales
+  'rose-bud-thorn': { icon: RotateCcw, color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
+  'sailboat': { icon: RotateCcw, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+  'start-stop-continue': { icon: RotateCcw, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
 };
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {

@@ -195,10 +195,31 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   // Scroll inicial cuando cargan los mensajes
   useEffect(() => {
-    if (initialLoad) {
-      scrollToBottom();
-      // Marcar como cargado después del primer scroll
-      setTimeout(() => setInitialLoad(false), 100);
+    if (messages.length > 0 && !loading) {
+      // Usar requestAnimationFrame para asegurar que el DOM se ha actualizado
+      requestAnimationFrame(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+          // Scroll directo al fondo sin animación para carga inicial
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    }
+  }, [selectedChannelId]); // Solo cuando cambia el canal
+
+  // Scroll adicional después de la carga inicial de mensajes
+  useEffect(() => {
+    if (initialLoad && messages.length > 0) {
+      // Doble requestAnimationFrame para asegurar renderizado completo
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const container = messagesContainerRef.current;
+          if (container) {
+            container.scrollTop = container.scrollHeight;
+          }
+          setInitialLoad(false);
+        });
+      });
     }
   }, [messages, initialLoad]);
 
@@ -432,7 +453,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       setMessages(Array.from(messageMap.values()));
       setHasMore(data.pagination?.hasMore || false);
       setNextCursor(data.pagination?.nextCursor || null);
-      setInitialLoad(false);
+      // El scroll inicial se maneja en el useEffect correspondiente
     } catch (err) {
       console.error('Error loading messages:', err);
     } finally {
