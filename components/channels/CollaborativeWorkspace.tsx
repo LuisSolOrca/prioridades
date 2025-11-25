@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { getPusherClient } from '@/lib/pusher-client';
 import type { PresenceChannel } from 'pusher-js';
-import { Loader2, Zap, History, Hash, ChevronRight } from 'lucide-react';
+import { Loader2, Zap, History, Hash, ChevronRight, FileText, Sparkles } from 'lucide-react';
 import DynamicsMenu from './DynamicsMenu';
 import DynamicCard from './DynamicCard';
 import DynamicFullscreen from './DynamicFullscreen';
+import GenerateDocumentModal from './GenerateDocumentModal';
 
 // Dynamic command types for filtering
 const DYNAMIC_COMMAND_TYPES = [
@@ -62,6 +63,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   const [creating, setCreating] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
 
   // Flatten hierarchical channels into a flat list
   const flattenChannels = (channels: any[]): Channel[] => {
@@ -509,26 +511,47 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
 
   return (
     <div className="space-y-6">
-      {/* Channel Selector */}
-      <div className="flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Canal:</span>
-        <div className="flex flex-wrap gap-2">
-          {channels.map((channel) => (
-            <button
-              key={channel._id}
-              onClick={() => setSelectedChannelId(channel._id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-                selectedChannelId === channel._id
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              <Hash size={14} />
-              {channel.name}
-            </button>
-          ))}
+      {/* Header with Channel Selector and Generate Document Button */}
+      <div className="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-4 flex-1">
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Canal:</span>
+          <div className="flex flex-wrap gap-2">
+            {channels.map((channel) => (
+              <button
+                key={channel._id}
+                onClick={() => setSelectedChannelId(channel._id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+                  selectedChannelId === channel._id
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Hash size={14} />
+                {channel.name}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Generate Document Button */}
+        {validDynamics.length > 0 && (
+          <button
+            onClick={() => setShowDocumentModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-indigo-700 transition shadow-md"
+          >
+            <Sparkles size={16} />
+            Generar Documento
+          </button>
+        )}
       </div>
+
+      {/* Generate Document Modal */}
+      <GenerateDocumentModal
+        isOpen={showDocumentModal}
+        onClose={() => setShowDocumentModal(false)}
+        dynamics={validDynamics}
+        projectId={projectId}
+      />
 
       {/* Loading dynamics */}
       {loading && (
