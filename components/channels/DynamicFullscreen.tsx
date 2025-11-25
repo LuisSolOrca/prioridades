@@ -238,6 +238,21 @@ export default function DynamicFullscreen({
   }, [onMinimize]);
 
   const renderDynamicComponent = () => {
+    // Safety check for invalid dynamic data
+    if (!dynamic || !dynamic.commandType || !dynamic.commandData) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-2">Error: Datos de dinámica inválidos</p>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg text-sm"
+          >
+            Volver
+          </button>
+        </div>
+      );
+    }
+
     const commonProps = {
       projectId,
       messageId: dynamic._id,
@@ -512,10 +527,10 @@ export default function DynamicFullscreen({
           </div>
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">
-              {dynamic.commandData.title || dynamic.commandData.question || 'Dinámica'}
+              {dynamic.commandData?.title || dynamic.commandData?.question || 'Dinámica'}
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Creado por {dynamic.userId.name}
+              Creado por {dynamic.userId?.name || 'Usuario'}
             </p>
           </div>
         </div>

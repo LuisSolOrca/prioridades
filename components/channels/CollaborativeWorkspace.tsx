@@ -304,6 +304,15 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
     // loadDynamics is now called by DynamicFullscreen after close
   };
 
+  // Safe open dynamic with validation
+  const handleOpenDynamic = (dynamic: DynamicMessage) => {
+    if (!dynamic || !dynamic.commandData || !dynamic.commandType) {
+      alert('Esta dinámica tiene datos inválidos y no se puede abrir');
+      return;
+    }
+    setActiveDynamic(dynamic);
+  };
+
   // Handle dynamic delete
   const handleDeleteDynamic = async (dynamicId: string) => {
     try {
@@ -431,7 +440,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
                     key={dynamic._id}
                     dynamic={dynamic}
                     participantCount={onlineUsers.length}
-                    onClick={() => setActiveDynamic(dynamic)}
+                    onClick={() => handleOpenDynamic(dynamic)}
                     onDelete={handleDeleteDynamic}
                     canDelete={dynamic.commandData?.createdBy === session?.user?.id || dynamic.userId?._id === session?.user?.id}
                   />
@@ -460,7 +469,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
                     <DynamicCard
                       key={dynamic._id}
                       dynamic={dynamic}
-                      onClick={() => setActiveDynamic(dynamic)}
+                      onClick={() => handleOpenDynamic(dynamic)}
                       onDelete={handleDeleteDynamic}
                       canDelete={dynamic.commandData?.createdBy === session?.user?.id || dynamic.userId?._id === session?.user?.id}
                     />
