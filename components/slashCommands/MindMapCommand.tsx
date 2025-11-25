@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 import ReactFlow, {
   Node,
   Edge,
@@ -27,6 +28,7 @@ interface MindMapNode {
 interface MindMapCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   nodes: MindMapNode[];
   createdBy: string;
@@ -38,6 +40,7 @@ interface MindMapCommandProps {
 export default function MindMapCommand({
   projectId,
   messageId,
+  channelId,
   title,
   nodes: initialNodes,
   createdBy,
@@ -49,6 +52,7 @@ export default function MindMapCommand({
   const [mindMapNodes, setMindMapNodes] = useState(initialNodes);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // Convertir nodos de BD a formato ReactFlow
   const convertToFlowNodes = useCallback((mindNodes: MindMapNode[]): Node[] => {
@@ -204,6 +208,16 @@ export default function MindMapCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'mind-map',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/mind-map`, {
         method: 'PATCH'
       });
@@ -220,6 +234,8 @@ export default function MindMapCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -229,7 +245,7 @@ export default function MindMapCommand({
   );
 
   return (
-    <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-cyan-400 dark:border-cyan-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-cyan-400 dark:border-cyan-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">

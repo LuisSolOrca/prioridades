@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Sparkles, Eye, EyeOff, Calculator, Check } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Estimate {
   userId: string;
@@ -14,6 +15,7 @@ interface Estimate {
 interface EstimationPokerCommandProps {
   projectId: string;
   messageId?: string;
+  channelId: string;
   topic: string;
   estimates: Estimate[];
   revealed: boolean;
@@ -29,6 +31,7 @@ const POKER_CARDS = ['1', '2', '3', '5', '8', '13', '21', '∞', '?'];
 export default function EstimationPokerCommand({
   projectId,
   messageId,
+  channelId,
   topic,
   estimates: initialEstimates,
   revealed: initialRevealed,
@@ -44,6 +47,7 @@ export default function EstimationPokerCommand({
   const [finalEstimate, setFinalEstimate] = useState(initialFinalEstimate);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setEstimates(initialEstimates);
@@ -123,6 +127,16 @@ export default function EstimationPokerCommand({
     }
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'estimation-poker',
+        title: topic
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/estimation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,6 +150,8 @@ export default function EstimationPokerCommand({
       onUpdate?.();
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -162,7 +178,7 @@ export default function EstimationPokerCommand({
   const stats = revealed ? calculateStats() : null;
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-300 dark:border-indigo-700 p-6 my-2 max-w-4xl w-full">
+    <div ref={cardRef} className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-300 dark:border-indigo-700 p-6 my-2 max-w-4xl w-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">

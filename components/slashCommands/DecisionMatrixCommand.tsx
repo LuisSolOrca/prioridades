@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Grid3x3, Trophy } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface MatrixScore {
   userId: string;
@@ -19,6 +20,7 @@ interface MatrixCell {
 interface DecisionMatrixCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   options: string[];
   criteria: string[];
@@ -32,6 +34,7 @@ interface DecisionMatrixCommandProps {
 export default function DecisionMatrixCommand({
   projectId,
   messageId,
+  channelId,
   title,
   options,
   criteria,
@@ -45,6 +48,7 @@ export default function DecisionMatrixCommand({
   const [cells, setCells] = useState(initialCells);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleScore = async (optionIndex: number, criteriaIndex: number, score: number) => {
     if (!session?.user || closed || submitting) return;
@@ -78,6 +82,16 @@ export default function DecisionMatrixCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'decision-matrix',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/decision-matrix`, {
         method: 'DELETE'
       });
@@ -94,6 +108,8 @@ export default function DecisionMatrixCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -129,7 +145,7 @@ export default function DecisionMatrixCommand({
   }, 0);
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-violet-400 dark:border-violet-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-violet-400 dark:border-violet-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">

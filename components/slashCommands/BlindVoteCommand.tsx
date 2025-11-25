@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { EyeOff, Eye, CheckCircle } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface BlindVoteOption {
   text: string;
@@ -12,6 +13,7 @@ interface BlindVoteOption {
 interface BlindVoteCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   question: string;
   options: BlindVoteOption[];
   createdBy: string;
@@ -24,6 +26,7 @@ interface BlindVoteCommandProps {
 export default function BlindVoteCommand({
   projectId,
   messageId,
+  channelId,
   question,
   options: initialOptions,
   createdBy,
@@ -37,6 +40,7 @@ export default function BlindVoteCommand({
   const [revealed, setRevealed] = useState(initialRevealed);
   const [closed, setClosed] = useState(initialClosed);
   const [voting, setVoting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const hasVoted = options.some(opt => opt.votes.includes(session?.user?.id || ''));
 
@@ -100,6 +104,16 @@ export default function BlindVoteCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setVoting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'blind-vote',
+        title: question
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/blind-vote`, {
         method: 'DELETE'
       });
@@ -116,6 +130,8 @@ export default function BlindVoteCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar votación');
+    } finally {
+      setVoting(false);
     }
   };
 
@@ -130,7 +146,7 @@ export default function BlindVoteCommand({
   , options[0]);
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-400 dark:border-indigo-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-400 dark:border-indigo-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">

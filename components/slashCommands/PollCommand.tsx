@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { BarChart3, CheckCircle } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface PollOption {
   text: string;
@@ -20,6 +21,7 @@ interface Poll {
 interface PollCommandProps {
   projectId: string;
   messageId?: string; // ID del mensaje que contiene el poll (si es persistente)
+  channelId: string;
   question: string;
   options: PollOption[];
   createdBy: string;
@@ -31,6 +33,7 @@ interface PollCommandProps {
 export default function PollCommand({
   projectId,
   messageId,
+  channelId,
   question,
   options: initialOptions,
   createdBy,
@@ -48,6 +51,7 @@ export default function PollCommand({
   });
   const [hasVoted, setHasVoted] = useState(false);
   const [voting, setVoting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Verificar si el usuario ya votó
@@ -118,6 +122,16 @@ export default function PollCommand({
 
     // Poll persistente: usar API
     try {
+      setVoting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'poll',
+        title: question
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/vote`, {
         method: 'DELETE'
       });
@@ -137,6 +151,8 @@ export default function PollCommand({
     } catch (error) {
       console.error('Error closing poll:', error);
       alert('Error al cerrar la encuesta');
+    } finally {
+      setVoting(false);
     }
   };
 
@@ -152,7 +168,7 @@ export default function PollCommand({
   , poll.options[0]);
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-purple-300 dark:border-purple-700 p-6 my-2">
+    <div ref={cardRef} className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-purple-300 dark:border-purple-700 p-6 my-2">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">

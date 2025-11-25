@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { MessageSquare, ThumbsUp, Plus, Check } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface RetroItem {
   id: string;
@@ -15,6 +16,7 @@ interface RetroItem {
 interface RetrospectiveCommandProps {
   projectId: string;
   messageId?: string;
+  channelId: string;
   title: string;
   items: RetroItem[];
   createdBy: string;
@@ -26,6 +28,7 @@ interface RetrospectiveCommandProps {
 export default function RetrospectiveCommand({
   projectId,
   messageId,
+  channelId,
   title,
   items: initialItems,
   createdBy,
@@ -38,6 +41,7 @@ export default function RetrospectiveCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [newItem, setNewItem] = useState({ well: '', improve: '', actions: '' });
   const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setItems(initialItems);
@@ -123,6 +127,16 @@ export default function RetrospectiveCommand({
     }
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'retrospective',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/retrospective`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -135,6 +149,8 @@ export default function RetrospectiveCommand({
       onUpdate?.();
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -148,7 +164,7 @@ export default function RetrospectiveCommand({
   ];
 
   return (
-    <div className="bg-gradient-to-br from-green-50 via-yellow-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-green-300 dark:border-green-700 p-6 my-2 max-w-6xl w-full">
+    <div ref={cardRef} className="bg-gradient-to-br from-green-50 via-yellow-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-green-300 dark:border-green-700 p-6 my-2 max-w-6xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">

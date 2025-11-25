@@ -3075,6 +3075,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <PollCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
                         options={message.commandData.options || []}
                         createdBy={message.commandData.createdBy}
@@ -3103,6 +3104,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <BrainstormCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         topic={message.commandData.topic}
                         ideas={message.commandData.ideas || []}
                         createdBy={message.commandData.createdBy}
@@ -3131,6 +3133,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <DotVotingCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
                         options={message.commandData.options || []}
                         totalDotsPerUser={message.commandData.totalDotsPerUser || 5}
@@ -3160,6 +3163,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <BlindVoteCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
                         options={message.commandData.options || []}
                         createdBy={message.commandData.createdBy}
@@ -3189,6 +3193,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <MindMapCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         nodes={message.commandData.nodes || []}
                         createdBy={message.commandData.createdBy}
@@ -3221,6 +3226,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <RetroCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         sections={message.commandData.sections || []}
                         type={message.commandType as any}
@@ -3280,6 +3286,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <NPSCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
                         votes={message.commandData.votes || []}
                         createdBy={message.commandData.createdBy}
@@ -3655,6 +3662,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <DecisionMatrixCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         options={message.commandData.options || []}
                         criteria={message.commandData.criteria || []}
@@ -3685,6 +3693,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <EstimationPokerCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         topic={message.commandData.topic}
                         estimates={message.commandData.estimates || []}
                         revealed={message.commandData.revealed || false}
@@ -3714,6 +3723,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <RetrospectiveCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         items={message.commandData.items || []}
                         closed={message.commandData.closed || false}
@@ -3903,6 +3913,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <MoodCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
                         moods={message.commandData.moods || []}
                         closed={message.commandData.closed || false}
@@ -3957,6 +3968,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <RankingCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
                         options={message.commandData.options || []}
                         rankings={message.commandData.rankings || []}

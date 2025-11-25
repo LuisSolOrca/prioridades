@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Lightbulb, ThumbsUp, Send, Lock, TrendingUp, User } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Idea {
   id: string;
@@ -18,6 +19,7 @@ interface Idea {
 interface BrainstormCommandProps {
   projectId: string;
   messageId?: string;
+  channelId: string;
   topic: string;
   ideas: Idea[];
   createdBy: string;
@@ -29,6 +31,7 @@ interface BrainstormCommandProps {
 export default function BrainstormCommand({
   projectId,
   messageId,
+  channelId,
   topic,
   ideas: initialIdeas,
   createdBy,
@@ -42,6 +45,7 @@ export default function BrainstormCommand({
   const [newIdea, setNewIdea] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sortBy, setSortBy] = useState<'votes' | 'recent'>('votes');
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIdeas(initialIdeas);
@@ -159,6 +163,16 @@ export default function BrainstormCommand({
 
     // Brainstorm persistente: usar API
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'brainstorm',
+        title: topic
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/brainstorm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,6 +191,8 @@ export default function BrainstormCommand({
     } catch (error) {
       console.error('Error closing brainstorm:', error);
       alert('Error al cerrar la sesión');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -185,7 +201,7 @@ export default function BrainstormCommand({
   const topIdea = sortedIdeas[0];
 
   return (
-    <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-yellow-300 dark:border-yellow-700 p-6 my-2 max-w-4xl w-full">
+    <div ref={cardRef} className="bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-yellow-300 dark:border-yellow-700 p-6 my-2 max-w-4xl w-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">

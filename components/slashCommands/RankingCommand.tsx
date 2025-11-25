@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { ListOrdered, GripVertical, Trophy } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface UserRanking {
   userId: string;
@@ -13,6 +14,7 @@ interface UserRanking {
 interface RankingCommandProps {
   projectId: string;
   messageId?: string;
+  channelId: string;
   question: string;
   options: string[];
   rankings: UserRanking[];
@@ -25,6 +27,7 @@ interface RankingCommandProps {
 export default function RankingCommand({
   projectId,
   messageId,
+  channelId,
   question,
   options: initialOptions,
   rankings: initialRankings,
@@ -39,6 +42,7 @@ export default function RankingCommand({
   const [myRanking, setMyRanking] = useState<string[]>(initialOptions);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const userRanking = rankings.find(r => r.userId === session?.user?.id);
 
@@ -101,6 +105,16 @@ export default function RankingCommand({
     }
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'ranking',
+        title: question
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/ranking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -113,6 +127,8 @@ export default function RankingCommand({
       onUpdate?.();
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -155,7 +171,7 @@ export default function RankingCommand({
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-300 dark:border-indigo-700 p-6 my-2 max-w-4xl w-full">
+    <div ref={cardRef} className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-300 dark:border-indigo-700 p-6 my-2 max-w-4xl w-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">

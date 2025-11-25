@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Trash2 } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface RetroSection {
   id: string;
@@ -15,6 +16,7 @@ interface RetroSection {
 interface RetroCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   sections: RetroSection[];
   type: 'rose-bud-thorn' | 'sailboat' | 'start-stop-continue' | 'swot';
@@ -30,6 +32,7 @@ interface RetroCommandProps {
 export default function RetroCommand({
   projectId,
   messageId,
+  channelId,
   title,
   sections: initialSections,
   type,
@@ -46,6 +49,7 @@ export default function RetroCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [newItems, setNewItems] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleAddItem = async (sectionId: string) => {
     const text = newItems[sectionId]?.trim();
@@ -109,6 +113,16 @@ export default function RetroCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'retro',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/retro`, {
         method: 'DELETE'
       });
@@ -125,11 +139,13 @@ export default function RetroCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className={`bg-gradient-to-br ${gradient} rounded-lg border-2 ${border} p-6 my-2 shadow-lg`}>
+    <div ref={cardRef} className={`bg-gradient-to-br ${gradient} rounded-lg border-2 ${border} p-6 my-2 shadow-lg`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${border.replace('border-', 'from-').replace('-400', '-500').replace('dark:border-', 'to-').replace('-600', '-600')}`}>

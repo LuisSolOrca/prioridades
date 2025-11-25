@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface NPSVote {
   userId: string;
@@ -13,6 +14,7 @@ interface NPSVote {
 interface NPSCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   question: string;
   votes: NPSVote[];
   createdBy: string;
@@ -24,6 +26,7 @@ interface NPSCommandProps {
 export default function NPSCommand({
   projectId,
   messageId,
+  channelId,
   question,
   votes: initialVotes,
   createdBy,
@@ -35,6 +38,7 @@ export default function NPSCommand({
   const [votes, setVotes] = useState(initialVotes);
   const [closed, setClosed] = useState(initialClosed);
   const [voting, setVoting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const hasVoted = votes.some(v => v.userId === session?.user?.id);
   const userVote = votes.find(v => v.userId === session?.user?.id);
@@ -72,6 +76,16 @@ export default function NPSCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setVoting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'nps',
+        title: question
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/nps`, {
         method: 'DELETE'
       });
@@ -88,6 +102,8 @@ export default function NPSCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setVoting(false);
     }
   };
 
@@ -111,7 +127,7 @@ export default function NPSCommand({
   };
 
   return (
-    <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-emerald-400 dark:border-emerald-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-emerald-400 dark:border-emerald-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">

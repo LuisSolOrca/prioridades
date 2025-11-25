@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Target, Circle, CheckCircle } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface DotVotingOption {
   text: string;
@@ -12,6 +13,7 @@ interface DotVotingOption {
 interface DotVotingCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   question: string;
   options: DotVotingOption[];
   totalDotsPerUser: number;
@@ -24,6 +26,7 @@ interface DotVotingCommandProps {
 export default function DotVotingCommand({
   projectId,
   messageId,
+  channelId,
   question,
   options: initialOptions,
   totalDotsPerUser,
@@ -36,6 +39,7 @@ export default function DotVotingCommand({
   const [options, setOptions] = useState(initialOptions);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // Calcular puntos usados por el usuario
   const getUserDotsUsed = () => {
@@ -83,6 +87,16 @@ export default function DotVotingCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'dot-voting',
+        title: question
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/dot-voting`, {
         method: 'DELETE'
       });
@@ -99,6 +113,8 @@ export default function DotVotingCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar votación');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -124,7 +140,7 @@ export default function DotVotingCommand({
   , options[0]);
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-blue-400 dark:border-blue-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-blue-400 dark:border-blue-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center flex-shrink-0">
