@@ -806,6 +806,18 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/celebrate` | Celebra logros del equipo | `/celebrate @usuario "logro"` |
 | `/poll` | Crea una encuesta | `/poll "¿Pregunta?" "Op1" "Op2"` |
 | `/brainstorm` | Sesión de brainstorming colaborativa | `/brainstorm "¿Tema o pregunta?"` |
+| `/dot-voting` | Votación con N puntos para distribuir | `/dot-voting "¿Pregunta?" 5 "Op1" "Op2"` |
+| `/blind-vote` | Votos ocultos hasta que todos voten | `/blind-vote "¿Pregunta?" "Op1" "Op2"` |
+| `/decision-matrix` | Matriz criterios vs opciones con puntajes | `/decision-matrix "Decisión" "Crit1" "Crit2"` |
+| `/nps` | Net Promoter Score rápido (0-10) | `/nps "¿Recomendarías X?"` |
+| `/rose-bud-thorn` | 🌹 Positivo, 🌱 Potencial, 🌵 Problemas | `/rose-bud-thorn "Sprint N"` |
+| `/sailboat` | ⛵ Viento, ancla, rocas, isla | `/sailboat "Retrospectiva Q4"` |
+| `/start-stop-continue` | Qué empezar, parar, continuar | `/start-stop-continue "Sprint N"` |
+| `/swot` | Análisis SWOT colaborativo | `/swot "Producto X"` |
+| `/six-hats` | Análisis con los 6 sombreros de Bono | `/six-hats "Decisión"` |
+| `/mind-map` | Mapa mental colaborativo gráfico | `/mind-map "Tema central"` |
+| `/crazy-8s` | 8 ideas en 8 minutos (Design Sprint) | `/crazy-8s "Problema o reto"` |
+| `/affinity-map` | Agrupar ideas por categorías | `/affinity-map "Sesión brainstorm"` |
 | `/estimation-poker` | Planning Poker para estimación de tareas | `/estimation-poker "¿Tarea?"` |
 | `/retrospective` | Retrospectiva ágil con 3 columnas | `/retrospective "Sprint N"` |
 | `/vote-points` | Votación por distribución de puntos | `/vote "¿Pregunta?" 10 "Op1" "Op2"` |
@@ -1244,6 +1256,369 @@ Una vez procesada la exportación:
 - Usuarios: [seleccionar miembros específicos]
 - Rango: último mes
 ```
+
+---
+
+## Comando /mind-map - Mapa Mental Colaborativo Gráfico
+
+### Descripción
+
+El comando `/mind-map` crea un mapa mental visual e interactivo usando ReactFlow, donde el equipo puede organizar ideas jerárquicamente con nodos conectados en tiempo real.
+
+### Uso Básico
+
+```
+/mind-map "Tema central o pregunta"
+```
+
+### Características
+
+#### 1. **Visualización Gráfica con ReactFlow**
+
+- **Nodos visuales**: Cada idea es un nodo rectangular con información del autor
+- **Layout automático**: Los nodos se posicionan automáticamente por niveles jerárquicos
+- **Nodos raíz**: Destacados en azul para identificar ideas principales
+- **Edges animados**: Conexiones animadas entre nodos padre-hijo
+- **Controles interactivos**: Pan, zoom, fit view integrados
+
+#### 2. **Jerarquía Parent-Child**
+
+- Cada nodo puede tener múltiples hijos
+- Los nodos se organizan por niveles:
+  - **Nivel 0**: Nodos raíz (ideas principales)
+  - **Nivel 1+**: Nodos hijos (sub-ideas)
+- Layout inteligente evita solapamientos
+
+#### 3. **Acciones Rápidas**
+
+- **Agregar Nodo Raíz**: Botón principal para crear ideas de primer nivel
+- **➕ Agregar hijo**: Cada nodo tiene botón + para expandir la idea
+- **➖ Eliminar nodo**: Solo el creador del nodo puede eliminarlo (elimina también todos sus hijos)
+
+#### 4. **Lista de Acciones**
+
+Panel lateral muestra todos los nodos con:
+- Texto de la idea
+- Nombre del autor
+- Botones de acción rápida
+
+#### 5. **Cierre de Sesión**
+
+El creador puede cerrar el mapa cuando termine:
+- Estado queda guardado permanentemente
+- Útil para documentar sesiones de brainstorming
+
+### Casos de Uso
+
+#### Exploración de Ideas
+
+```
+/mind-map "¿Cómo mejorar la retención de usuarios?"
+```
+
+Ideal para:
+- Analizar problemas complejos desde múltiples ángulos
+- Descomponer features grandes en componentes
+- Mapear dependencias entre ideas
+
+#### Planificación de Proyectos
+
+```
+/mind-map "Plan de lanzamiento Q1"
+```
+
+Usa para:
+- Desglosar entregables por fase
+- Identificar tareas y subtareas
+- Visualizar el scope completo
+
+#### Brainstorming Estructurado
+
+```
+/mind-map "Ideas para reducir costos"
+```
+
+Perfecto para:
+- Generar ideas categorizadas
+- Construir sobre ideas de otros
+- Ver relaciones entre conceptos
+
+### Ventajas sobre Mapas Tradicionales
+
+| Mapa Mental Tradicional | /mind-map en Canales |
+|-------------------------|---------------------|
+| Requiere herramienta externa | ✅ Integrado en el flujo de trabajo |
+| Difícil colaborar en tiempo real | ✅ Colaboración simultánea |
+| Se pierde el contexto | ✅ Guardado con la conversación |
+| Estático | ✅ Interactivo y navegable |
+| No muestra autoría | ✅ Cada nodo identifica al autor |
+
+---
+
+## Comando /decision-matrix - Matriz de Decisión Colaborativa
+
+### Descripción
+
+El comando `/decision-matrix` crea una matriz interactiva para evaluar opciones contra múltiples criterios, permitiendo que el equipo puntúe colaborativamente y llegue a decisiones basadas en datos.
+
+### Uso Básico
+
+```
+/decision-matrix "¿Qué decisión tomar?" "Criterio 1" "Criterio 2" "Criterio 3"
+```
+
+Después te pedirá ingresar las opciones separadas por comas.
+
+### Características
+
+#### 1. **Matriz Interactiva**
+
+- **Filas**: Opciones a evaluar
+- **Columnas**: Criterios de evaluación
+- **Celdas**: Cada usuario puntúa de 1 a 5
+- **Total**: Suma automática por opción
+
+#### 2. **Sistema de Puntuación**
+
+**Escala:**
+- 1 = Muy bajo
+- 2 = Bajo
+- 3 = Medio
+- 4 = Alto
+- 5 = Muy alto
+
+**Mecánica:**
+- Click en botones 1-5 para puntuar
+- Una vez puntuada, no se puede cambiar (evita sesgo)
+- Cada celda muestra el promedio de todos los votos
+
+#### 3. **Identificación del Ganador**
+
+- **🏆 Insignia de trofeo**: La opción con mayor puntaje total
+- **Resaltado visual**: Borde o color especial
+- **Útil para**: Tomar decisiones objetivas basadas en consenso
+
+#### 4. **Transparencia**
+
+- Todos ven los promedios en tiempo real
+- No se muestran votaciones individuales (reduce sesgo)
+- El total es visible para comparar opciones
+
+### Casos de Uso
+
+#### Selección de Tecnología
+
+```
+/decision-matrix "¿Qué framework usar?" "Performance" "Curva de aprendizaje" "Comunidad" "Ecosistema"
+
+Opciones: React, Vue, Svelte, Angular
+```
+
+Evalúa tecnologías objetivamente contra criterios importantes.
+
+#### Priorización de Features
+
+```
+/decision-matrix "Features para Q1" "Impacto en usuarios" "Esfuerzo de desarrollo" "ROI estimado"
+
+Opciones: Feature A, Feature B, Feature C
+```
+
+Decide qué features construir primero basado en múltiples factores.
+
+#### Selección de Proveedores
+
+```
+/decision-matrix "Proveedor de Cloud" "Costo" "Performance" "Soporte" "Escalabilidad"
+
+Opciones: AWS, GCP, Azure, DigitalOcean
+```
+
+Compara proveedores de servicios de forma estructurada.
+
+### Consejos de Uso
+
+- **Criterios SMART**: Usa criterios medibles y específicos
+- **Balance de criterios**: No más de 5-6 criterios (evita parálisis)
+- **Opciones viables**: Solo incluye opciones realmente considerables
+- **Participación diversa**: Busca input de diferentes roles (PM, Dev, Design)
+
+---
+
+## Comando /dot-voting - Votación con Puntos
+
+### Descripción
+
+El comando `/dot-voting` implementa la técnica de "dot voting" donde cada participante tiene un número limitado de puntos para distribuir entre opciones, permitiendo priorización democrática.
+
+### Uso Básico
+
+```
+/dot-voting "¿Pregunta?" 5 "Opción 1" "Opción 2" "Opción 3"
+```
+
+Cada usuario recibirá 5 puntos para distribuir libremente.
+
+### Características
+
+#### 1. **Distribución Flexible**
+
+- **Puntos totales**: Configurables (ej: 3, 5, 10 puntos)
+- **Distribución libre**: Puedes poner todos los puntos en una opción
+- **Múltiples votos**: O distribuirlos entre varias opciones
+- **Control visual**: Muestra cuántos puntos te quedan
+
+#### 2. **Indicadores Visuales**
+
+- **Puntos por opción**: Círculos (dots) mostrando votos
+- **Total de votos**: Número grande por opción
+- **Ganador destacado**: Opción con más puntos resaltada
+- **Tu voto**: Diferente color para tus propios puntos
+
+#### 3. **Cierre y Resultados**
+
+Al cerrar:
+- Se muestra la opción ganadora
+- Total de puntos por opción
+- Útil para documentar decisiones
+
+### Casos de Uso
+
+#### Priorización de Backlog
+
+```
+/dot-voting "¿Qué trabajar en el próximo sprint?" 3 "Feature A" "Feature B" "Feature C" "Bug Fix D"
+```
+
+El equipo distribuye puntos según prioridad percibida.
+
+#### Retrospectivas
+
+```
+/dot-voting "¿Qué tema discutir en profundidad?" 5 "Comunicación" "Procesos" "Herramientas" "Colaboración"
+```
+
+Enfoca la retro en los temas más votados.
+
+#### Naming o Decisiones Creativas
+
+```
+/dot-voting "Nombre del proyecto" 3 "Phoenix" "Nexus" "Catalyst" "Horizon"
+```
+
+Democráticamente elige entre opciones creativas.
+
+### Ventajas de Dot Voting
+
+- ✅ **Rápido**: Más rápido que discutir cada opción
+- ✅ **Inclusivo**: Todas las voces cuentan igual
+- ✅ **Flexible**: Permite expresar intensidad de preferencia
+- ✅ **Visual**: Resultados inmediatamente claros
+- ✅ **Escalable**: Funciona con 3 o 30 opciones
+
+---
+
+## Comandos de Retrospectiva
+
+El sistema incluye **7 formatos diferentes** de retrospectiva ágil, cada uno con un enfoque único para generar insights del equipo.
+
+### Formatos Disponibles
+
+#### `/rose-bud-thorn` - Feedback Estructurado
+
+**Secciones:**
+- 🌹 **Roses (Positivo)**: Qué salió bien, celebraciones
+- 🌱 **Buds (Potencial)**: Oportunidades, ideas emergentes
+- 🌵 **Thorns (Problemas)**: Obstáculos, frustraciones
+
+**Cuándo usar:**
+- Retrospectivas regulares de sprint
+- Cuando buscas balance entre positivo y negativo
+- Equipos que tienden a enfocarse solo en problemas
+
+#### `/sailboat` - Retrospectiva Visual
+
+**Secciones:**
+- ⛵ **Viento**: Qué nos impulsa hacia adelante
+- ⚓ **Ancla**: Qué nos frena o detiene
+- 🪨 **Rocas**: Riesgos y obstáculos futuros
+- 🏝️ **Isla**: Meta u objetivo que queremos alcanzar
+
+**Cuándo usar:**
+- Proyectos a largo plazo
+- Cuando necesitas visualizar el viaje completo
+- Planificación de roadmap
+
+#### `/start-stop-continue` - Retrospectiva Simple
+
+**Secciones:**
+- ▶️ **Start (Empezar)**: Qué deberíamos comenzar a hacer
+- ⏹️ **Stop (Parar)**: Qué deberíamos dejar de hacer
+- ▶️ **Continue (Continuar)**: Qué está funcionando bien
+
+**Cuándo usar:**
+- Equipos nuevos en retrospectivas
+- Cuando necesitas acciones claras e inmediatas
+- Time-boxed (retrospectivas cortas)
+
+#### `/swot` - Análisis Estratégico
+
+**Secciones:**
+- 💪 **Strengths (Fortalezas)**: Ventajas internas
+- ⚠️ **Weaknesses (Debilidades)**: Áreas de mejora internas
+- 🎯 **Opportunities (Oportunidades)**: Factores externos positivos
+- 🚨 **Threats (Amenazas)**: Riesgos externos
+
+**Cuándo usar:**
+- Planificación trimestral o anual
+- Análisis de producto o iniciativa
+- Decisiones estratégicas
+
+#### `/six-hats` - Pensamiento Paralelo
+
+**Secciones (6 sombreros de Edward de Bono):**
+- 🎩 **Blanco**: Hechos y datos objetivos
+- 💛 **Amarillo**: Optimismo y beneficios
+- 🖤 **Negro**: Precaución y riesgos
+- 🔴 **Rojo**: Emociones e intuición
+- 💚 **Verde**: Creatividad e ideas nuevas
+- 🔵 **Azul**: Control y proceso
+
+**Cuándo usar:**
+- Decisiones complejas que requieren múltiples perspectivas
+- Equipos con pensamiento grupal
+- Análisis profundo de problemas
+
+#### `/crazy-8s` - Design Sprint
+
+**Secciones:**
+- 8 cuadrantes numerados para ideas rápidas
+- Basado en metodología de Design Sprint de Google
+
+**Cuándo usar:**
+- Sesiones de ideación rápida
+- Generar muchas opciones en poco tiempo
+- Problemas de diseño o UX
+
+#### `/affinity-map` - Organización de Ideas
+
+**Secciones:**
+- 📌 Categorías personalizables
+- Agrupa ideas similares por tema
+
+**Cuándo usar:**
+- Después de brainstorming extenso
+- Organizar feedback de usuarios
+- Identificar patrones en datos cualitativos
+
+### Flujo General de Retrospectivas
+
+1. **Crear**: Líder ejecuta comando con título
+2. **Ideación** (10-15 min): Equipo agrega items en silencio
+3. **Revisión** (10 min): Lean todos los items juntos
+4. **Discusión** (15-20 min): Hablen sobre los más importantes
+5. **Acciones** (10 min): Usen `/quick-priority` para crear tareas
+6. **Cierre**: Creador cierra la retrospectiva
 
 ---
 
@@ -2027,13 +2402,49 @@ Para problemas o sugerencias:
 ## Créditos
 
 **Desarrollado por:** Tu Empresa
-**Versión:** 1.2
+**Versión:** 1.4
 **Última actualización:** Noviembre 2025
 **Licencia:** Propietaria
 
 ---
 
 ## Changelog
+
+### v1.4 (Noviembre 2025)
+- ✅ **12 nuevos slash commands colaborativos** - herramientas avanzadas para facilitación de equipos
+  - `/dot-voting` - Votación con N puntos para distribuir, priorización democrática
+  - `/blind-vote` - Votos ocultos hasta que todos voten, evita sesgo de grupo
+  - `/decision-matrix` - Matriz criterios vs opciones con puntajes colaborativos
+  - `/nps` - Net Promoter Score rápido (escala 0-10) para medir satisfacción
+  - `/rose-bud-thorn` - Retrospectiva con 🌹 Positivo, 🌱 Potencial, 🌵 Problemas
+  - `/sailboat` - Retrospectiva visual con ⛵ Viento, ⚓ Ancla, 🪨 Rocas, 🏝️ Isla
+  - `/start-stop-continue` - Retrospectiva simple: qué empezar, parar, continuar
+  - `/swot` - Análisis SWOT colaborativo (Fortalezas, Debilidades, Oportunidades, Amenazas)
+  - `/six-hats` - Análisis con los 6 sombreros del pensamiento de Edward de Bono
+  - `/mind-map` - Mapa mental gráfico colaborativo con ReactFlow, nodos jerárquicos interactivos
+  - `/crazy-8s` - 8 ideas en 8 minutos basado en Design Sprint de Google
+  - `/affinity-map` - Agrupar y organizar ideas por categorías
+- ✅ **MindMapCommand component** - visualización gráfica con ReactFlow
+  - Layout automático por niveles jerárquicos
+  - Nodos raíz destacados en azul
+  - Edges animados conectando padres e hijos
+  - Controles de pan/zoom integrados
+  - Botones + y - para agregar/eliminar nodos
+  - Eliminación recursiva de nodos hijos
+- ✅ **DecisionMatrixCommand component** - matriz interactiva para decisiones complejas
+  - Puntuación 1-5 por criterio y opción
+  - Promediado automático de votos
+  - Identificación de opción ganadora con 🏆
+  - Entrada de opciones mediante prompt
+- ✅ **RetroCommand component reutilizable** - maneja 7 formatos de retrospectiva
+  - Secciones personalizables con íconos y colores
+  - Grid responsivo adaptado al número de secciones
+  - Sistema de agregar/eliminar items por sección
+- ✅ **Componentes especializados** - DotVotingCommand, BlindVoteCommand, NPSCommand
+- ✅ **API endpoints** para todos los comandos con validaciones y Pusher events
+- ✅ **Área de chat ampliada** - altura aumentada de 600px a 800px
+- ✅ **Widgets más anchos** - max-width de mensajes de xl (576px) a 5xl (1024px)
+- ✅ **Documentación completa** - secciones detalladas en CANALES.md para comandos principales
 
 ### v1.3 (Noviembre 2025)
 - ✅ **Archivos adjuntos con Cloudflare R2** - sistema completo de gestión de archivos
