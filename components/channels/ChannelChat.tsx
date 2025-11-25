@@ -3085,7 +3085,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Poll */}
                       {!message.isDeleted && (
@@ -3114,7 +3114,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Brainstorm */}
                       {!message.isDeleted && (
@@ -3144,7 +3144,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Dot Voting */}
                       {!message.isDeleted && (
@@ -3174,7 +3174,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         revealed={message.commandData.revealed || false}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Blind Vote */}
                       {!message.isDeleted && (
@@ -3203,7 +3203,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Mind Map */}
                       {!message.isDeleted && (
@@ -3267,7 +3267,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           'border-purple-400 dark:border-purple-600'
                         }
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Retro */}
                       {!message.isDeleted && (
@@ -3296,7 +3296,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for NPS */}
                       {!message.isDeleted && (
@@ -3325,7 +3325,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Parking Lot */}
                       {!message.isDeleted && (
@@ -3354,7 +3354,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Kudos Wall */}
                       {!message.isDeleted && (
@@ -3383,7 +3383,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Icebreaker */}
                       {!message.isDeleted && (
@@ -3412,7 +3412,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Action Items */}
                       {!message.isDeleted && (
@@ -3441,7 +3441,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Team Health */}
                       {!message.isDeleted && (
@@ -3470,7 +3470,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Confidence Vote */}
                       {!message.isDeleted && (
@@ -3505,7 +3505,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Pomodoro */}
                       {!message.isDeleted && (
@@ -3534,7 +3534,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Agenda */}
                       {!message.isDeleted && (
@@ -3563,7 +3563,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Capacity */}
                       {!message.isDeleted && (
@@ -3592,7 +3592,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Dependency Map */}
                       {!message.isDeleted && (
@@ -3621,7 +3621,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for OKR */}
                       {!message.isDeleted && (
@@ -3650,7 +3650,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Roadmap */}
                       {!message.isDeleted && (
@@ -3681,7 +3681,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Decision Matrix */}
                       {!message.isDeleted && (
@@ -3712,7 +3712,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         closed={message.commandData.closed || false}
                         createdBy={message.commandData.createdBy}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3740,7 +3740,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         closed={message.commandData.closed || false}
                         createdBy={message.commandData.createdBy}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3769,7 +3769,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         resolved={message.commandData.resolved || false}
                         createdBy={message.commandData.createdBy}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3798,7 +3798,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3825,7 +3825,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3851,7 +3851,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         items={message.commandData.items || []}
                         createdBy={message.commandData.createdBy}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3930,7 +3930,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         closed={message.commandData.closed || false}
                         createdBy={message.commandData.createdBy}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3957,7 +3957,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         cons={message.commandData.cons || []}
                         createdBy={message.commandData.createdBy}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -3986,7 +3986,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         closed={message.commandData.closed || false}
                         createdBy={message.commandData.createdBy}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
@@ -4097,7 +4097,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         answer={message.commandData.answer}
                         answeredAt={message.commandData.answeredAt}
                         onClose={() => {}}
-                        onUpdate={loadMessages}
+                        onUpdate={() => {}}
                       />
                       {/* Actions Menu for Question */}
                       {!message.isDeleted && (
