@@ -71,6 +71,9 @@ import WheelCommand from '../slashCommands/WheelCommand';
 import MoodCommand from '../slashCommands/MoodCommand';
 import ProsConsCommand from '../slashCommands/ProsConsCommand';
 import RankingCommand from '../slashCommands/RankingCommand';
+import ParkingLotCommand from '../slashCommands/ParkingLotCommand';
+import KudosWallCommand from '../slashCommands/KudosWallCommand';
+import IcebreakerCommand from '../slashCommands/IcebreakerCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
@@ -1159,6 +1162,139 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating soar:', error);
           alert('Error al crear análisis SOAR');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'parking-lot':
+        if (parsed.args.length < 1) {
+          alert('Uso: /parking-lot "Título"');
+          return;
+        }
+        if (sending) return;
+        const parkingLotTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/parking-lot ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'parking-lot',
+              commandData: {
+                title: parkingLotTitle,
+                items: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const parkingLotMessage = await response.json();
+            setMessages((prev) => [...prev, parkingLotMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating parking-lot:', error);
+          alert('Error al crear parking lot');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'kudos-wall':
+        if (parsed.args.length < 1) {
+          alert('Uso: /kudos-wall "Título"');
+          return;
+        }
+        if (sending) return;
+        const kudosWallTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/kudos-wall ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'kudos-wall',
+              commandData: {
+                title: kudosWallTitle,
+                kudos: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const kudosWallMessage = await response.json();
+            setMessages((prev) => [...prev, kudosWallMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating kudos-wall:', error);
+          alert('Error al crear muro de kudos');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'icebreaker':
+        if (sending) return;
+
+        // Random icebreaker questions
+        const icebreakerQuestions = [
+          '¿Cuál fue tu primera mascota?',
+          '¿Qué superpoder te gustaría tener y por qué?',
+          '¿Cuál es tu comida favorita de la infancia?',
+          '¿Qué lugar del mundo te gustaría visitar?',
+          'Si pudieras cenar con cualquier persona (viva o fallecida), ¿quién sería?',
+          '¿Cuál es tu película favorita de todos los tiempos?',
+          '¿Qué hobby o actividad te gustaría aprender?',
+          'Si pudieras tener cualquier trabajo por un día, ¿cuál sería?',
+          '¿Cuál es el mejor consejo que has recibido?',
+          '¿Qué te hace reír sin falta?',
+          '¿Cuál es tu recuerdo favorito de vacaciones?',
+          'Si fueras un animal, ¿cuál serías y por qué?',
+          '¿Qué canción no puedes dejar de escuchar últimamente?',
+          '¿Cuál es tu tradición familiar favorita?',
+          'Si pudieras vivir en cualquier época, ¿cuál elegirías?'
+        ];
+
+        const randomQuestion = icebreakerQuestions[Math.floor(Math.random() * icebreakerQuestions.length)];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/icebreaker`,
+              channelId: selectedChannelId,
+              commandType: 'icebreaker',
+              commandData: {
+                question: randomQuestion
+              }
+            })
+          });
+
+          if (response.ok) {
+            const icebreakerMessage = await response.json();
+            setMessages((prev) => [...prev, icebreakerMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating icebreaker:', error);
+          alert('Error al crear icebreaker');
         } finally {
           setSending(false);
         }
@@ -2771,6 +2907,84 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar NPS"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'parking-lot' && message.commandData ? (
+                    /* Render Parking Lot Command */
+                    <div className="relative group">
+                      <ParkingLotCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Parking Lot */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar parking lot"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'kudos-wall' && message.commandData ? (
+                    /* Render Kudos Wall Command */
+                    <div className="relative group">
+                      <KudosWallCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        kudos={message.commandData.kudos || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Kudos Wall */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar kudos wall"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'icebreaker' && message.commandData ? (
+                    /* Render Icebreaker Command */
+                    <div className="relative group">
+                      <IcebreakerCommand
+                        question={message.commandData.question}
+                        onClose={() => {}}
+                      />
+                      {/* Actions Menu for Icebreaker */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar icebreaker"
                             >
                               <Trash2 size={14} />
                             </button>

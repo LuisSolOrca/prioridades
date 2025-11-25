@@ -297,6 +297,78 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Net Promoter Score rápido - Medir satisfacción',
     usage: '/nps "¿Pregunta de satisfacción?"',
     category: 'collaboration'
+  },
+  {
+    name: 'pomodoro',
+    description: 'Temporizador pomodoro compartido (25/5 min)',
+    usage: '/pomodoro "Título de la sesión"',
+    category: 'collaboration'
+  },
+  {
+    name: 'agenda',
+    description: 'Agenda de reunión con tiempos por tema',
+    usage: '/agenda "Título de reunión"',
+    category: 'management'
+  },
+  {
+    name: 'parking-lot',
+    description: 'Temas para discutir después',
+    usage: '/parking-lot "Título"',
+    category: 'collaboration'
+  },
+  {
+    name: 'action-items',
+    description: 'Lista de acciones con responsable y fecha',
+    usage: '/action-items "Título"',
+    category: 'management'
+  },
+  {
+    name: 'icebreaker',
+    description: 'Pregunta aleatoria para romper el hielo',
+    usage: '/icebreaker',
+    category: 'collaboration'
+  },
+  {
+    name: 'kudos-wall',
+    description: 'Muro de reconocimientos acumulados',
+    usage: '/kudos-wall "Título"',
+    category: 'collaboration'
+  },
+  {
+    name: 'team-health',
+    description: 'Health check del equipo (Spotify model)',
+    usage: '/team-health "Sprint o período"',
+    category: 'analysis'
+  },
+  {
+    name: 'confidence-vote',
+    description: '¿Qué tan seguros estamos? (1-5)',
+    usage: '/confidence-vote "¿Pregunta?"',
+    category: 'collaboration'
+  },
+  {
+    name: 'capacity',
+    description: 'Capacidad disponible del equipo',
+    usage: '/capacity "Sprint o período"',
+    category: 'analysis'
+  },
+  {
+    name: 'dependency-map',
+    description: 'Visualizar dependencias entre tareas',
+    usage: '/dependency-map "Proyecto"',
+    category: 'management'
+  },
+  {
+    name: 'okr',
+    description: 'Definir y trackear OKRs',
+    usage: '/okr "Título del OKR"',
+    category: 'management'
+  },
+  {
+    name: 'roadmap',
+    description: 'Timeline visual con milestones',
+    usage: '/roadmap "Título del roadmap"',
+    category: 'management'
   }
 ];
 

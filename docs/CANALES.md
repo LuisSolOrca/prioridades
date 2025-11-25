@@ -828,6 +828,9 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/mood` | Check-in de estado del equipo | `/mood "¿Cómo están?"` |
 | `/pros-cons` | Tabla de pros y contras | `/pros-cons "Título"` |
 | `/ranking` | Ranking colaborativo drag & drop | `/ranking "¿Pregunta?" "Op1" "Op2"` |
+| `/parking-lot` | Temas para discutir después | `/parking-lot "Título"` |
+| `/kudos-wall` | Muro de reconocimientos acumulados | `/kudos-wall "Título"` |
+| `/icebreaker` | Pregunta aleatoria para romper el hielo | `/icebreaker` |
 | `/standup` | Daily standup virtual | `/standup` |
 | `/question` | Pregunta a un stakeholder | `/question @usuario "¿pregunta?"` |
 
@@ -1629,6 +1632,73 @@ SOAR se enfoca en lo positivo (fortalezas y oportunidades) y el futuro (aspiraci
 - Organizar feedback de usuarios
 - Identificar patrones en datos cualitativos
 
+#### `/parking-lot` - Temas Pendientes
+
+**Funcionalidad:**
+- 🅿️ Lista colaborativa de temas para discutir después
+- Los miembros agregan items con su nombre automáticamente
+- Solo el creador del item puede eliminarlo
+- Cerrar el parking lot cuando se complete
+
+**Cuándo usar:**
+- Durante reuniones para no desviarse del tema principal
+- Guardar ideas que surgen fuera de contexto
+- Temas que requieren más investigación antes de discutir
+
+**Cómo funciona:**
+1. Crear con `/parking-lot "Título"`
+2. Cada miembro agrega temas escribiendo en el campo de texto
+3. Los temas se acumulan con el nombre del autor
+4. Solo el creador o admin puede cerrar el parking lot
+5. Solo el autor de un item puede eliminarlo
+
+#### `/kudos-wall` - Reconocimientos
+
+**Funcionalidad:**
+- 💝 Muro de reconocimientos y agradecimientos
+- Enviar kudos públicos a compañeros de equipo
+- Especificar destinatario y mensaje de reconocimiento
+- Acumular todos los kudos en un solo lugar
+
+**Cuándo usar:**
+- Al final de sprints o proyectos
+- Celebrar logros individuales o de equipo
+- Fomentar cultura de apreciación
+- Retrospectivas positivas
+
+**Cómo funciona:**
+1. Crear con `/kudos-wall "Título"`
+2. Los miembros envían kudos especificando:
+   - **Para**: Nombre del compañero
+   - **Mensaje**: Reconocimiento o agradecimiento
+3. Todos los kudos se muestran en formato de tarjetas
+4. Solo el creador puede cerrar el muro
+
+#### `/icebreaker` - Romper el Hielo
+
+**Funcionalidad:**
+- ☕ Genera pregunta aleatoria para conocerse mejor
+- 15 preguntas diferentes rotativas
+- Sin necesidad de parámetros adicionales
+
+**Cuándo usar:**
+- Al inicio de reuniones con equipos nuevos
+- Kickoffs de proyectos
+- Después de incorporación de nuevos miembros
+- Crear ambiente relajado antes de reuniones importantes
+
+**Preguntas incluidas:**
+- Temas personales ligeros (mascota, comida favorita)
+- Preferencias y aspiraciones (superpoder, lugar a visitar)
+- Entretenimiento (película favorita, canción actual)
+- Reflexiones (mejor consejo, tradición familiar)
+
+**Cómo funciona:**
+1. Ejecutar `/icebreaker`
+2. Se muestra una pregunta aleatoria
+3. Tomar 1-2 minutos para que cada persona comparta
+4. Responder en el chat de forma informal
+
 ### Flujo General de Retrospectivas
 
 1. **Crear**: Líder ejecuta comando con título
@@ -2427,6 +2497,27 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v1.4.2 (Noviembre 2025) - Fase 1: Comandos de Colaboración
+- ✅ **3 nuevos slash commands de colaboración** - herramientas simples y prácticas para equipos
+  - `/parking-lot` - Temas para discutir después durante reuniones
+    - Lista colaborativa de temas pendientes
+    - Cada item muestra el nombre del autor
+    - Solo el autor puede eliminar su item
+    - Ideal para no desviarse del tema principal
+  - `/kudos-wall` - Muro de reconocimientos acumulados
+    - Enviar kudos públicos a compañeros
+    - Especificar destinatario y mensaje
+    - Fomentar cultura de apreciación
+    - Perfecto para retrospectivas positivas
+  - `/icebreaker` - Pregunta aleatoria para romper el hielo
+    - 15 preguntas rotativas diferentes
+    - Temas personales ligeros y reflexiones
+    - Sin parámetros necesarios
+    - Para crear ambiente relajado al inicio de reuniones
+- ✅ **Componentes especializados** - ParkingLotCommand, KudosWallCommand, IcebreakerCommand
+- ✅ **API endpoints** - parking-lot y kudos-wall con validaciones y permisos
+- ✅ **Permisos granulares** - solo creador puede cerrar, solo autor puede eliminar items
 
 ### v1.4.1 (Noviembre 2025)
 - ✅ **Comando /soar** - Análisis SOAR colaborativo orientado al futuro
