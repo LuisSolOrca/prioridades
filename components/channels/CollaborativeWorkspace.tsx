@@ -61,16 +61,34 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Flatten hierarchical channels into a flat list
+  const flattenChannels = (channels: any[]): Channel[] => {
+    const result: Channel[] = [];
+    const processChannel = (channel: any) => {
+      result.push({
+        _id: channel._id,
+        name: channel.name,
+        description: channel.description
+      });
+      if (channel.children && channel.children.length > 0) {
+        channel.children.forEach(processChannel);
+      }
+    };
+    channels.forEach(processChannel);
+    return result;
+  };
+
   // Load channels
   const loadChannels = async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/channels`);
       if (response.ok) {
         const data = await response.json();
-        setChannels(data.channels || []);
+        const flatChannels = flattenChannels(data.channels || []);
+        setChannels(flatChannels);
         // Auto-select first channel if available
-        if (data.channels && data.channels.length > 0 && !selectedChannelId) {
-          setSelectedChannelId(data.channels[0]._id);
+        if (flatChannels.length > 0 && !selectedChannelId) {
+          setSelectedChannelId(flatChannels[0]._id);
         }
       }
     } catch (error) {
