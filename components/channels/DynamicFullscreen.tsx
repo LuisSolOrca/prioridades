@@ -47,6 +47,7 @@ import IcebreakerCommand from '../slashCommands/IcebreakerCommand';
 import InceptionDeckCommand from '../slashCommands/InceptionDeckCommand';
 import DelegationPokerCommand from '../slashCommands/DelegationPokerCommand';
 import MovingMotivatorsCommand from '../slashCommands/MovingMotivatorsCommand';
+import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
   _id: string;
@@ -256,7 +257,7 @@ export default function DynamicFullscreen({
 
   const renderDynamicComponent = () => {
     // Safety check for invalid dynamic data
-    if (!dynamic || !dynamic.commandType || !dynamic.commandData) {
+    if (!dynamic || !dynamic.commandType) {
       return (
         <div className="text-center py-12">
           <p className="text-red-500 mb-2">Error: Datos de dinámica inválidos</p>
@@ -269,6 +270,15 @@ export default function DynamicFullscreen({
         </div>
       );
     }
+
+    // Ensure commandData exists with safe defaults
+    const data = dynamic.commandData || {};
+
+    // Safe getters for common fields
+    const getTitle = () => data.title || data.question || data.topic || 'Sin título';
+    const getQuestion = () => data.question || data.title || 'Sin pregunta';
+    const getCreatedBy = () => data.createdBy || '';
+    const isClosed = () => data.closed ?? false;
 
     const commonProps = {
       projectId,
@@ -283,233 +293,233 @@ export default function DynamicFullscreen({
         return (
           <PollCommand
             {...commonProps}
-            question={dynamic.commandData.question}
-            options={dynamic.commandData.options || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            options={data.options || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'brainstorm':
         return (
           <BrainstormCommand
             {...commonProps}
-            topic={dynamic.commandData.title || dynamic.commandData.topic}
-            ideas={dynamic.commandData.ideas || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            topic={getTitle()}
+            ideas={data.ideas || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'dot-voting':
         return (
           <DotVotingCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            options={dynamic.commandData.options || []}
-            totalDotsPerUser={dynamic.commandData.totalDotsPerUser || 5}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            options={data.options || []}
+            totalDotsPerUser={data.totalDotsPerUser || 5}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'blind-vote':
         return (
           <BlindVoteCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            options={dynamic.commandData.options || []}
-            createdBy={dynamic.commandData.createdBy}
-            revealed={dynamic.commandData.revealed || false}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            options={data.options || []}
+            createdBy={getCreatedBy()}
+            revealed={data.revealed || false}
+            closed={isClosed()}
           />
         );
       case 'nps':
         return (
           <NPSCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            votes={dynamic.commandData.votes || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            votes={data.votes || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'mind-map':
         return (
           <MindMapCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            nodes={dynamic.commandData.nodes || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            nodes={data.nodes || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'decision-matrix':
         return (
           <DecisionMatrixCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            options={dynamic.commandData.options || []}
-            criteria={dynamic.commandData.criteria || []}
-            cells={dynamic.commandData.cells || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            options={data.options || []}
+            criteria={data.criteria || []}
+            cells={data.cells || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'action-items':
         return (
           <ActionItemsCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            items={dynamic.commandData.items || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'team-health':
         return (
           <TeamHealthCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            areas={dynamic.commandData.areas || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            areas={data.areas || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'confidence-vote':
         return (
           <ConfidenceVoteCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            votes={dynamic.commandData.votes || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            votes={data.votes || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'agenda':
         return (
           <AgendaCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            items={dynamic.commandData.items || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'parking-lot':
         return (
           <ParkingLotCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            items={dynamic.commandData.items || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'kudos-wall':
         return (
           <KudosWallCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            kudos={dynamic.commandData.kudos || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            kudos={data.kudos || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'pomodoro':
         return (
           <PomodoroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            workMinutes={dynamic.commandData.workMinutes || 25}
-            breakMinutes={dynamic.commandData.breakMinutes || 5}
-            isRunning={dynamic.commandData.isRunning || false}
-            isPaused={dynamic.commandData.isPaused || false}
-            timeRemaining={dynamic.commandData.timeRemaining || 25 * 60}
-            isBreak={dynamic.commandData.isBreak || false}
-            sessionsCompleted={dynamic.commandData.sessionsCompleted || 0}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            workMinutes={data.workMinutes || 25}
+            breakMinutes={data.breakMinutes || 5}
+            isRunning={data.isRunning || false}
+            isPaused={data.isPaused || false}
+            timeRemaining={data.timeRemaining || 25 * 60}
+            isBreak={data.isBreak || false}
+            sessionsCompleted={data.sessionsCompleted || 0}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'fist-of-five':
         return (
           <FistOfFiveCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            votes={dynamic.commandData.votes || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            votes={data.votes || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'mood':
         return (
           <MoodCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            moods={dynamic.commandData.moods || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            moods={data.moods || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'pros-cons':
         return (
           <ProsConsCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            pros={dynamic.commandData.pros || []}
-            cons={dynamic.commandData.cons || []}
-            createdBy={dynamic.commandData.createdBy}
+            title={getTitle()}
+            pros={data.pros || []}
+            cons={data.cons || []}
+            createdBy={getCreatedBy()}
           />
         );
       case 'ranking':
         return (
           <RankingCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            options={dynamic.commandData.options || []}
-            rankings={dynamic.commandData.rankings || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            options={data.options || []}
+            rankings={data.rankings || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'checklist':
         return (
           <ChecklistCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            items={dynamic.commandData.items || []}
-            createdBy={dynamic.commandData.createdBy}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
           />
         );
       case 'estimation-poker':
         return (
           <EstimationPokerCommand
             {...commonProps}
-            topic={dynamic.commandData.story || dynamic.commandData.title}
-            estimates={dynamic.commandData.estimates || []}
-            revealed={dynamic.commandData.revealed || false}
-            finalEstimate={dynamic.commandData.finalEstimate}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            topic={data.story || getTitle()}
+            estimates={data.estimates || []}
+            revealed={data.revealed || false}
+            finalEstimate={data.finalEstimate}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'retrospective':
         return (
           <RetrospectiveCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            items={dynamic.commandData.items || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'retro':
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
-            type={dynamic.commandData.type || 'rose-bud-thorn'}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            sections={data.sections || []}
+            type={data.type || 'rose-bud-thorn'}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<RotateCcw className="text-white" size={20} />}
             gradient="from-pink-50 to-green-50"
             border="border-pink-400"
@@ -519,54 +529,54 @@ export default function DynamicFullscreen({
         return (
           <IcebreakerCommand
             {...commonProps}
-            question={dynamic.commandData.question || dynamic.commandData.title}
-            responses={dynamic.commandData.responses || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            question={getQuestion()}
+            responses={data.responses || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'inception-deck':
         return (
           <InceptionDeckCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            cards={dynamic.commandData.cards || []}
-            currentCardIndex={dynamic.commandData.currentCardIndex || 0}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            cards={data.cards || []}
+            currentCardIndex={data.currentCardIndex || 0}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'delegation-poker':
         return (
           <DelegationPokerCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            topics={dynamic.commandData.topics || []}
-            currentTopicIndex={dynamic.commandData.currentTopicIndex || 0}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            topics={data.topics || []}
+            currentTopicIndex={data.currentTopicIndex || 0}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'moving-motivators':
         return (
           <MovingMotivatorsCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            context={dynamic.commandData.context || ''}
-            rankings={dynamic.commandData.rankings || []}
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            title={getTitle()}
+            context={data.context || ''}
+            rankings={data.rankings || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       case 'swot':
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="swot"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<Target className="text-white" size={20} />}
             gradient="from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900"
             border="border-emerald-400 dark:border-emerald-600"
@@ -576,11 +586,11 @@ export default function DynamicFullscreen({
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="soar"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<span className="text-white text-xl">🚀</span>}
             gradient="from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900"
             border="border-teal-400 dark:border-teal-600"
@@ -590,11 +600,11 @@ export default function DynamicFullscreen({
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="six-hats"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<span className="text-white text-xl">🎩</span>}
             gradient="from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900"
             border="border-slate-400 dark:border-slate-600"
@@ -604,11 +614,11 @@ export default function DynamicFullscreen({
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="crazy-8s"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<span className="text-white text-xl">🎨</span>}
             gradient="from-fuchsia-50 to-pink-50 dark:from-gray-800 dark:to-gray-900"
             border="border-fuchsia-400 dark:border-fuchsia-600"
@@ -618,11 +628,11 @@ export default function DynamicFullscreen({
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="affinity-map"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<span className="text-white text-xl">📌</span>}
             gradient="from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900"
             border="border-amber-400 dark:border-amber-600"
@@ -632,11 +642,11 @@ export default function DynamicFullscreen({
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="rose-bud-thorn"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<span className="text-white text-xl">🌹</span>}
             gradient="from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900"
             border="border-pink-400 dark:border-pink-600"
@@ -646,11 +656,11 @@ export default function DynamicFullscreen({
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="sailboat"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<span className="text-white text-xl">⛵</span>}
             gradient="from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900"
             border="border-blue-400 dark:border-blue-600"
@@ -660,11 +670,11 @@ export default function DynamicFullscreen({
         return (
           <RetroCommand
             {...commonProps}
-            title={dynamic.commandData.title}
-            sections={dynamic.commandData.sections || []}
+            title={getTitle()}
+            sections={data.sections || []}
             type="start-stop-continue"
-            createdBy={dynamic.commandData.createdBy}
-            closed={dynamic.commandData.closed}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
             icon={<span className="text-white text-xl">🚦</span>}
             gradient="from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900"
             border="border-green-400 dark:border-green-600"
@@ -876,7 +886,12 @@ export default function DynamicFullscreen({
       {/* Dynamic Content */}
       <div className="flex-1 overflow-auto p-4">
         <div className="w-full h-full">
-          {renderDynamicComponent()}
+          <ErrorBoundary
+            componentName={`dinámica ${dynamic.commandType}`}
+            onClose={onClose}
+          >
+            {renderDynamicComponent()}
+          </ErrorBoundary>
         </div>
       </div>
     </div>
