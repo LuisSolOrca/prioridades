@@ -301,9 +301,10 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
     loadDynamics(); // Reload to get updated state
   };
 
-  // Separate active and closed dynamics
-  const activeDynamics = dynamics.filter(d => !d.commandData?.closed);
-  const closedDynamics = dynamics.filter(d => d.commandData?.closed);
+  // Separate active and closed dynamics (filter out any without commandData)
+  const validDynamics = dynamics.filter(d => d.commandData !== null && d.commandData !== undefined);
+  const activeDynamics = validDynamics.filter(d => !d.commandData.closed);
+  const closedDynamics = validDynamics.filter(d => d.commandData.closed);
 
   // Loading channels
   if (loadingChannels) {

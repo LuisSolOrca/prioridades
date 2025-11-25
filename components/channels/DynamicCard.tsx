@@ -71,7 +71,9 @@ export default function DynamicCard({ dynamic, participantCount = 0, onClick }: 
     bg: 'bg-gray-100 dark:bg-gray-900/30'
   };
   const Icon = iconConfig.icon;
-  const isClosed = dynamic.commandData.closed;
+  const isClosed = dynamic.commandData?.closed ?? false;
+  const title = dynamic.commandData?.title || 'Sin título';
+  const userName = dynamic.userId?.name || 'Usuario';
 
   return (
     <button
@@ -89,17 +91,17 @@ export default function DynamicCard({ dynamic, participantCount = 0, onClick }: 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-              {dynamic.commandData.title}
+              {title}
             </h4>
             {isClosed && (
               <Lock size={14} className="text-gray-400 flex-shrink-0" />
             )}
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            por {dynamic.userId.name} · {formatDistanceToNow(new Date(dynamic.createdAt), {
+            por {userName} · {dynamic.createdAt ? formatDistanceToNow(new Date(dynamic.createdAt), {
               addSuffix: true,
               locale: es
-            })}
+            }) : 'hace un momento'}
           </p>
           <div className="flex items-center gap-3 mt-2">
             <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
