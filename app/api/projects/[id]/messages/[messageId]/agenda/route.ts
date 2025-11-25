@@ -18,9 +18,9 @@ export async function POST(request: Request, { params }: { params: { id: string;
     message.commandData.items.push({ topic: topic.trim(), timeMinutes, speaker: speaker.trim(), completed: false });
     message.markModified('commandData');
     await message.save();
-    const populated = await ChannelMessage.findById(message._id).populate('userId', 'name email').populate('mentions', 'name email').populate('priorityMentions', 'title status completionPercentage userId').populate('reactions.userId', 'name').populate('pinnedBy', 'name').lean();
-    try { await triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populated); } catch (e) { console.error(e); }
-    return NextResponse.json(populated);
+    const saved = message.toObject();
+    (async () => { try { const populated = await ChannelMessage.findById(message._id).populate('userId', 'name email').populate('mentions', 'name email').populate('priorityMentions', 'title status completionPercentage userId').populate('reactions.userId', 'name').populate('pinnedBy', 'name').lean(); await triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populated); } catch (e) { console.error(e); } })();
+    return NextResponse.json(saved);
   } catch (error) {
     return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
@@ -37,9 +37,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (action === 'toggle') message.commandData.items[itemIndex].completed = !message.commandData.items[itemIndex].completed;
     message.markModified('commandData');
     await message.save();
-    const populated = await ChannelMessage.findById(message._id).populate('userId', 'name email').populate('mentions', 'name email').populate('priorityMentions', 'title status completionPercentage userId').populate('reactions.userId', 'name').populate('pinnedBy', 'name').lean();
-    try { await triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populated); } catch (e) { console.error(e); }
-    return NextResponse.json(populated);
+    const saved = message.toObject();
+    (async () => { try { const populated = await ChannelMessage.findById(message._id).populate('userId', 'name email').populate('mentions', 'name email').populate('priorityMentions', 'title status completionPercentage userId').populate('reactions.userId', 'name').populate('pinnedBy', 'name').lean(); await triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populated); } catch (e) { console.error(e); } })();
+    return NextResponse.json(saved);
   } catch (error) {
     return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
@@ -57,9 +57,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     message.commandData.closed = true;
     message.markModified('commandData');
     await message.save();
-    const populated = await ChannelMessage.findById(message._id).populate('userId', 'name email').populate('mentions', 'name email').populate('priorityMentions', 'title status completionPercentage userId').populate('reactions.userId', 'name').populate('pinnedBy', 'name').lean();
-    try { await triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populated); } catch (e) { console.error(e); }
-    return NextResponse.json(populated);
+    const saved = message.toObject();
+    (async () => { try { const populated = await ChannelMessage.findById(message._id).populate('userId', 'name email').populate('mentions', 'name email').populate('priorityMentions', 'title status completionPercentage userId').populate('reactions.userId', 'name').populate('pinnedBy', 'name').lean(); await triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populated); } catch (e) { console.error(e); } })();
+    return NextResponse.json(saved);
   } catch (error) {
     return NextResponse.json({ error: 'Error' }, { status: 500 });
   }

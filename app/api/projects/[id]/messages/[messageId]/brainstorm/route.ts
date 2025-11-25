@@ -147,31 +147,33 @@ export async function POST(
     message.markModified('commandData');
     await message.save();
 
-    
-    // Poblar el mensaje para enviarlo completo
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    // Retornar éxito inmediatamente después de guardar
+    const savedCommandData = message.commandData;
 
-    // Emitir evento de Pusher para actualización en tiempo real
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    // Pusher en segundo plano (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
 
     return NextResponse.json({
       success: true,
-      commandData: message.commandData
+      commandData: savedCommandData
     });
   } catch (error) {
     console.error('Error in brainstorm action:', error);

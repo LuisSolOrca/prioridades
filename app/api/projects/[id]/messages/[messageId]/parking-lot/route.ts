@@ -55,25 +55,29 @@ export async function POST(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    const savedMessage = message.toObject();
 
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(populatedMessage);
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error in parking-lot add:', error);
     return NextResponse.json({ error: 'Error al agregar item' }, { status: 500 });
@@ -127,25 +131,29 @@ export async function PATCH(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    const savedMessage = message.toObject();
 
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(populatedMessage);
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error in parking-lot delete:', error);
     return NextResponse.json({ error: 'Error al eliminar item' }, { status: 500 });
@@ -186,25 +194,29 @@ export async function DELETE(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    const savedMessage = message.toObject();
 
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(populatedMessage);
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error closing parking-lot:', error);
     return NextResponse.json({ error: 'Error al cerrar' }, { status: 500 });
