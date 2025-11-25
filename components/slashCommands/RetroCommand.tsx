@@ -19,7 +19,7 @@ interface RetroCommandProps {
   channelId: string;
   title: string;
   sections: RetroSection[];
-  type: 'rose-bud-thorn' | 'sailboat' | 'start-stop-continue' | 'swot';
+  type: 'rose-bud-thorn' | 'sailboat' | 'start-stop-continue' | 'swot' | 'soar' | 'six-hats' | 'crazy-8s' | 'affinity-map';
   createdBy: string;
   closed: boolean;
   icon: React.ReactNode;
