@@ -83,6 +83,8 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   'rose-bud-thorn': { icon: RotateCcw, color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
   'sailboat': { icon: RotateCcw, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
   'start-stop-continue': { icon: RotateCcw, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
+  // Standup
+  'standup': { icon: Users, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
 };
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {

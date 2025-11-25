@@ -100,6 +100,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
     bgColor: 'bg-green-50 dark:bg-green-900/20',
     borderColor: 'border-green-200 dark:border-green-800',
     dynamics: [
+      { type: 'standup', name: 'Daily Standup', description: 'Reporte diario del equipo' },
       { type: 'action-items', name: 'Acciones', description: 'Lista con responsable y fecha' },
       { type: 'checklist', name: 'Checklist', description: 'Lista de verificación' },
       { type: 'agenda', name: 'Agenda', description: 'Temas de reunión con tiempos' },

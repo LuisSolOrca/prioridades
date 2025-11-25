@@ -324,6 +324,96 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
           context: '',
           rankings: []
         };
+      case 'swot':
+        return {
+          ...base,
+          sections: [
+            { id: 'strengths', title: 'Fortalezas', icon: '💪', color: '#10b981', items: [] },
+            { id: 'weaknesses', title: 'Debilidades', icon: '⚠️', color: '#f59e0b', items: [] },
+            { id: 'opportunities', title: 'Oportunidades', icon: '🎯', color: '#3b82f6', items: [] },
+            { id: 'threats', title: 'Amenazas', icon: '⚡', color: '#ef4444', items: [] }
+          ]
+        };
+      case 'soar':
+        return {
+          ...base,
+          sections: [
+            { id: 'strengths', title: 'Fortalezas', icon: '💪', color: '#10b981', items: [] },
+            { id: 'opportunities', title: 'Oportunidades', icon: '🎯', color: '#3b82f6', items: [] },
+            { id: 'aspirations', title: 'Aspiraciones', icon: '✨', color: '#8b5cf6', items: [] },
+            { id: 'results', title: 'Resultados', icon: '🏆', color: '#f59e0b', items: [] }
+          ]
+        };
+      case 'six-hats':
+        return {
+          ...base,
+          sections: [
+            { id: 'white', title: 'Blanco (Hechos)', icon: '⚪', color: '#e5e7eb', items: [] },
+            { id: 'red', title: 'Rojo (Emociones)', icon: '🔴', color: '#ef4444', items: [] },
+            { id: 'black', title: 'Negro (Crítica)', icon: '⚫', color: '#1f2937', items: [] },
+            { id: 'yellow', title: 'Amarillo (Beneficios)', icon: '🟡', color: '#eab308', items: [] },
+            { id: 'green', title: 'Verde (Creatividad)', icon: '🟢', color: '#22c55e', items: [] },
+            { id: 'blue', title: 'Azul (Control)', icon: '🔵', color: '#3b82f6', items: [] }
+          ]
+        };
+      case 'crazy-8s':
+        return {
+          ...base,
+          sections: [
+            { id: 'idea1', title: 'Idea 1', icon: '1️⃣', color: '#ef4444', items: [] },
+            { id: 'idea2', title: 'Idea 2', icon: '2️⃣', color: '#f59e0b', items: [] },
+            { id: 'idea3', title: 'Idea 3', icon: '3️⃣', color: '#eab308', items: [] },
+            { id: 'idea4', title: 'Idea 4', icon: '4️⃣', color: '#84cc16', items: [] },
+            { id: 'idea5', title: 'Idea 5', icon: '5️⃣', color: '#10b981', items: [] },
+            { id: 'idea6', title: 'Idea 6', icon: '6️⃣', color: '#06b6d4', items: [] },
+            { id: 'idea7', title: 'Idea 7', icon: '7️⃣', color: '#3b82f6', items: [] },
+            { id: 'idea8', title: 'Idea 8', icon: '8️⃣', color: '#8b5cf6', items: [] }
+          ]
+        };
+      case 'affinity-map':
+        return {
+          ...base,
+          sections: [
+            { id: 'group-a', title: 'Grupo A', icon: '🅰️', color: '#3b82f6', items: [] },
+            { id: 'group-b', title: 'Grupo B', icon: '🅱️', color: '#10b981', items: [] },
+            { id: 'group-c', title: 'Grupo C', icon: '©️', color: '#f59e0b', items: [] },
+            { id: 'ungrouped', title: 'Sin Agrupar', icon: '📝', color: '#6b7280', items: [] }
+          ]
+        };
+      case 'rose-bud-thorn':
+        return {
+          ...base,
+          sections: [
+            { id: 'rose', title: 'Rosas', icon: '🌹', color: '#ec4899', items: [] },
+            { id: 'bud', title: 'Brotes', icon: '🌱', color: '#10b981', items: [] },
+            { id: 'thorn', title: 'Espinas', icon: '🌵', color: '#f59e0b', items: [] }
+          ]
+        };
+      case 'sailboat':
+        return {
+          ...base,
+          sections: [
+            { id: 'wind', title: 'Viento (Impulso)', icon: '💨', color: '#06b6d4', items: [] },
+            { id: 'anchor', title: 'Ancla (Freno)', icon: '⚓', color: '#6b7280', items: [] },
+            { id: 'rocks', title: 'Rocas (Riesgos)', icon: '🪨', color: '#ef4444', items: [] },
+            { id: 'island', title: 'Isla (Meta)', icon: '🏝️', color: '#10b981', items: [] }
+          ]
+        };
+      case 'start-stop-continue':
+        return {
+          ...base,
+          sections: [
+            { id: 'start', title: 'Empezar', icon: '🟢', color: '#10b981', items: [] },
+            { id: 'stop', title: 'Parar', icon: '🔴', color: '#ef4444', items: [] },
+            { id: 'continue', title: 'Continuar', icon: '🟡', color: '#eab308', items: [] }
+          ]
+        };
+      case 'standup':
+        return {
+          ...base,
+          question: title,
+          entries: []
+        };
       default:
         return base;
     }

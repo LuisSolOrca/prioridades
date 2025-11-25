@@ -47,6 +47,7 @@ import IcebreakerCommand from '../slashCommands/IcebreakerCommand';
 import InceptionDeckCommand from '../slashCommands/InceptionDeckCommand';
 import DelegationPokerCommand from '../slashCommands/DelegationPokerCommand';
 import MovingMotivatorsCommand from '../slashCommands/MovingMotivatorsCommand';
+import StandupCommand from '../slashCommands/StandupCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -116,6 +117,8 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'rose-bud-thorn': { icon: RotateCcw, color: 'text-pink-600' },
   'sailboat': { icon: RotateCcw, color: 'text-cyan-600' },
   'start-stop-continue': { icon: RotateCcw, color: 'text-green-600' },
+  // Standup
+  'standup': { icon: Users, color: 'text-orange-600' },
 };
 
 export default function DynamicFullscreen({
@@ -678,6 +681,13 @@ export default function DynamicFullscreen({
             icon={<span className="text-white text-xl">🚦</span>}
             gradient="from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900"
             border="border-green-400 dark:border-green-600"
+          />
+        );
+      case 'standup':
+        return (
+          <StandupCommand
+            projectId={projectId}
+            onClose={onClose}
           />
         );
       default:
