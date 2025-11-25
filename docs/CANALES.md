@@ -814,6 +814,7 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/sailboat` | ⛵ Viento, ancla, rocas, isla | `/sailboat "Retrospectiva Q4"` |
 | `/start-stop-continue` | Qué empezar, parar, continuar | `/start-stop-continue "Sprint N"` |
 | `/swot` | Análisis SWOT colaborativo | `/swot "Producto X"` |
+| `/soar` | Análisis SOAR orientado al futuro | `/soar "Plan estratégico"` |
 | `/six-hats` | Análisis con los 6 sombreros de Bono | `/six-hats "Decisión"` |
 | `/mind-map` | Mapa mental colaborativo gráfico | `/mind-map "Tema central"` |
 | `/crazy-8s` | 8 ideas en 8 minutos (Design Sprint) | `/crazy-8s "Problema o reto"` |
@@ -1573,6 +1574,23 @@ El sistema incluye **7 formatos diferentes** de retrospectiva ágil, cada uno co
 - Planificación trimestral o anual
 - Análisis de producto o iniciativa
 - Decisiones estratégicas
+
+#### `/soar` - Framework Orientado al Futuro
+
+**Secciones:**
+- 💪 **Strengths (Fortalezas)**: Qué hacemos bien actualmente
+- 🎯 **Opportunities (Oportunidades)**: Posibilidades de crecimiento
+- ✨ **Aspirations (Aspiraciones)**: Hacia dónde queremos ir
+- 🏆 **Results (Resultados)**: Qué éxito se ve como
+
+**Cuándo usar:**
+- Planificación estratégica positiva
+- Cuando el equipo necesita motivación
+- Alternativa a SWOT enfocada en lo positivo y el futuro
+- Sesiones de visión y misión
+
+**Diferencia con SWOT:**
+SOAR se enfoca en lo positivo (fortalezas y oportunidades) y el futuro (aspiraciones y resultados), mientras que SWOT analiza tanto aspectos positivos como negativos (debilidades y amenazas). SOAR es más apropiado cuando buscas inspirar y motivar al equipo hacia el futuro.
 
 #### `/six-hats` - Pensamiento Paralelo
 
@@ -2402,13 +2420,20 @@ Para problemas o sugerencias:
 ## Créditos
 
 **Desarrollado por:** Tu Empresa
-**Versión:** 1.4
+**Versión:** 1.4.1
 **Última actualización:** Noviembre 2025
 **Licencia:** Propietaria
 
 ---
 
 ## Changelog
+
+### v1.4.1 (Noviembre 2025)
+- ✅ **Comando /soar** - Análisis SOAR colaborativo orientado al futuro
+  - Framework positivo alternativo a SWOT
+  - 4 secciones: Strengths, Opportunities, Aspirations, Results
+  - Enfocado en motivación y visión futura
+  - Útil para planificación estratégica positiva y sesiones de visión
 
 ### v1.4 (Noviembre 2025)
 - ✅ **12 nuevos slash commands colaborativos** - herramientas avanzadas para facilitación de equipos

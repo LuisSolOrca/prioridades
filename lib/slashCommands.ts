@@ -245,6 +245,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'analysis'
   },
   {
+    name: 'soar',
+    description: 'Análisis SOAR colaborativo - Framework orientado al futuro',
+    usage: '/soar "Título del análisis"',
+    category: 'analysis'
+  },
+  {
     name: 'mind-map',
     description: 'Mapa mental colaborativo - Explorar ideas',
     usage: '/mind-map "Tema central"',

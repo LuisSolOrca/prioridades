@@ -1120,6 +1120,51 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         setNewMessage('');
         break;
 
+      case 'soar':
+        if (parsed.args.length < 1) {
+          alert('Uso: /soar "Título del análisis"');
+          return;
+        }
+        if (sending) return;
+        const soarTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/soar ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'soar',
+              commandData: {
+                title: soarTitle,
+                sections: [
+                  { id: 'strengths', title: 'Fortalezas', icon: '💪', color: '#10b981', items: [] },
+                  { id: 'opportunities', title: 'Oportunidades', icon: '🎯', color: '#3b82f6', items: [] },
+                  { id: 'aspirations', title: 'Aspiraciones', icon: '✨', color: '#8b5cf6', items: [] },
+                  { id: 'results', title: 'Resultados', icon: '🏆', color: '#f59e0b', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const soarMessage = await response.json();
+            setMessages((prev) => [...prev, soarMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating soar:', error);
+          alert('Error al crear análisis SOAR');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
       case 'nps':
         if (parsed.args.length < 1) {
           alert('Uso: /nps "¿Pregunta de satisfacción?"');
@@ -2644,8 +2689,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     </div>
                   ) : (message.commandType === 'rose-bud-thorn' || message.commandType === 'sailboat' ||
                        message.commandType === 'start-stop-continue' || message.commandType === 'swot' ||
-                       message.commandType === 'six-hats' || message.commandType === 'crazy-8s' ||
-                       message.commandType === 'affinity-map') &&
+                       message.commandType === 'soar' || message.commandType === 'six-hats' ||
+                       message.commandType === 'crazy-8s' || message.commandType === 'affinity-map') &&
                        message.commandData ? (
                     /* Render Retro Command */
                     <div className="relative group">
@@ -2661,6 +2706,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'rose-bud-thorn' ? <Flower2 className="text-white" size={20} /> :
                           message.commandType === 'sailboat' ? <Ship className="text-white" size={20} /> :
                           message.commandType === 'start-stop-continue' ? <PlayCircle className="text-white" size={20} /> :
+                          message.commandType === 'soar' ? <span className="text-white text-xl">🚀</span> :
                           message.commandType === 'six-hats' ? <span className="text-white text-xl">🎩</span> :
                           message.commandType === 'crazy-8s' ? <span className="text-white text-xl">🎨</span> :
                           message.commandType === 'affinity-map' ? <span className="text-white text-xl">📌</span> :
@@ -2670,6 +2716,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'rose-bud-thorn' ? 'from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'sailboat' ? 'from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'start-stop-continue' ? 'from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'soar' ? 'from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'six-hats' ? 'from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'crazy-8s' ? 'from-fuchsia-50 to-pink-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'affinity-map' ? 'from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900' :
@@ -2679,6 +2726,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'rose-bud-thorn' ? 'border-pink-400 dark:border-pink-600' :
                           message.commandType === 'sailboat' ? 'border-blue-400 dark:border-blue-600' :
                           message.commandType === 'start-stop-continue' ? 'border-green-400 dark:border-green-600' :
+                          message.commandType === 'soar' ? 'border-teal-400 dark:border-teal-600' :
                           message.commandType === 'six-hats' ? 'border-slate-400 dark:border-slate-600' :
                           message.commandType === 'crazy-8s' ? 'border-fuchsia-400 dark:border-fuchsia-600' :
                           message.commandType === 'affinity-map' ? 'border-amber-400 dark:border-amber-600' :
