@@ -3371,8 +3371,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     /* Render Icebreaker Command */
                     <div className="relative group">
                       <IcebreakerCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
+                        responses={message.commandData.responses || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
                         onClose={() => {}}
+                        onUpdate={loadMessages}
                       />
                       {/* Actions Menu for Icebreaker */}
                       {!message.isDeleted && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import {
   X,
@@ -12,7 +12,11 @@ import {
   Target,
   Heart,
   Lock,
-  Loader2
+  Loader2,
+  Timer,
+  Play,
+  Pause,
+  RotateCw
 } from 'lucide-react';
 
 // Import all collaborative widgets
@@ -107,12 +111,75 @@ export default function DynamicFullscreen({
 }: DynamicFullscreenProps) {
   const { data: session } = useSession();
   const [closing, setClosing] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
+  const [timerMinutes, setTimerMinutes] = useState(5);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerInitialSeconds, setTimerInitialSeconds] = useState(5 * 60);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const iconConfig = DYNAMIC_ICONS[dynamic.commandType] || { icon: Target, color: 'text-gray-600' };
   const Icon = iconConfig.icon;
 
   const isClosed = dynamic.commandData?.closed ?? false;
   const isCreator = dynamic.commandData?.createdBy === session?.user?.id ||
                     dynamic.userId?._id === session?.user?.id;
+
+  // Timer functionality
+  useEffect(() => {
+    if (timerRunning && (timerMinutes > 0 || timerSeconds > 0)) {
+      timerRef.current = setInterval(() => {
+        setTimerSeconds(prev => {
+          if (prev === 0) {
+            setTimerMinutes(m => {
+              if (m === 0) {
+                // Timer finished
+                setTimerRunning(false);
+                // Play sound
+                if (audioRef.current) {
+                  audioRef.current.play().catch(() => {});
+                }
+                return 0;
+              }
+              return m - 1;
+            });
+            return 59;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [timerRunning, timerMinutes, timerSeconds]);
+
+  const startTimer = (minutes: number) => {
+    setTimerMinutes(minutes);
+    setTimerSeconds(0);
+    setTimerInitialSeconds(minutes * 60);
+    setTimerRunning(true);
+    setShowTimer(true);
+  };
+
+  const toggleTimer = () => {
+    setTimerRunning(!timerRunning);
+  };
+
+  const resetTimer = () => {
+    setTimerRunning(false);
+    const mins = Math.floor(timerInitialSeconds / 60);
+    setTimerMinutes(mins);
+    setTimerSeconds(0);
+  };
+
+  const timerProgress = timerInitialSeconds > 0
+    ? ((timerMinutes * 60 + timerSeconds) / timerInitialSeconds) * 100
+    : 0;
 
   // Prevent body scroll when fullscreen is open
   useEffect(() => {
@@ -415,8 +482,11 @@ export default function DynamicFullscreen({
       case 'icebreaker':
         return (
           <IcebreakerCommand
+            {...commonProps}
             question={dynamic.commandData.question || dynamic.commandData.title}
-            onClose={onClose}
+            responses={dynamic.commandData.responses || []}
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
           />
         );
       default:
@@ -469,6 +539,93 @@ export default function DynamicFullscreen({
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {onlineUsers.length} online
             </span>
+          </div>
+
+          {/* Timer */}
+          <div className="flex items-center gap-2">
+            {!showTimer ? (
+              <div className="relative group">
+                <button
+                  onClick={() => setShowTimer(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition text-sm font-medium"
+                >
+                  <Timer size={16} />
+                  Timer
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                {/* Timer presets */}
+                {!timerRunning && timerMinutes === Math.floor(timerInitialSeconds / 60) && timerSeconds === 0 && (
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 5, 10].map(mins => (
+                      <button
+                        key={mins}
+                        onClick={() => startTimer(mins)}
+                        className="px-2 py-0.5 text-xs rounded bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-200 hover:bg-purple-300 dark:hover:bg-purple-700"
+                      >
+                        {mins}m
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Timer display */}
+                {(timerRunning || timerMinutes !== Math.floor(timerInitialSeconds / 60) || timerSeconds !== 0) && (
+                  <>
+                    <div className="relative w-10 h-10">
+                      <svg className="w-10 h-10 -rotate-90">
+                        <circle
+                          cx="20"
+                          cy="20"
+                          r="16"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          fill="none"
+                          className="text-purple-200 dark:text-purple-800"
+                        />
+                        <circle
+                          cx="20"
+                          cy="20"
+                          r="16"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          fill="none"
+                          strokeDasharray={100}
+                          strokeDashoffset={100 - timerProgress}
+                          className={`${timerMinutes === 0 && timerSeconds <= 30 ? 'text-red-500' : 'text-purple-600 dark:text-purple-400'}`}
+                        />
+                      </svg>
+                      <span className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${timerMinutes === 0 && timerSeconds <= 30 ? 'text-red-600' : 'text-purple-700 dark:text-purple-300'}`}>
+                        {timerMinutes}:{timerSeconds.toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    <button
+                      onClick={toggleTimer}
+                      className="p-1.5 rounded-lg bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-200 hover:bg-purple-300"
+                    >
+                      {timerRunning ? <Pause size={14} /> : <Play size={14} />}
+                    </button>
+                    <button
+                      onClick={resetTimer}
+                      className="p-1.5 rounded-lg bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-200 hover:bg-purple-300"
+                    >
+                      <RotateCw size={14} />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => {
+                    setShowTimer(false);
+                    setTimerRunning(false);
+                  }}
+                  className="p-1 text-purple-500 hover:text-purple-700"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            {/* Hidden audio for timer end */}
+            <audio ref={audioRef} src="/sounds/timer-end.mp3" preload="auto" />
           </div>
 
           {/* Controls */}
