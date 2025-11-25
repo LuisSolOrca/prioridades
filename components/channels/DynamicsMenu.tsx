@@ -59,6 +59,9 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'pros-cons', name: 'Pros y Contras', description: 'Análisis de ventajas y desventajas' },
       { type: 'decision-matrix', name: 'Matriz de Decisión', description: 'Criterios ponderados' },
       { type: 'ranking', name: 'Ranking', description: 'Ordenar opciones por preferencia' },
+      { type: 'six-hats', name: '6 Sombreros', description: '6 sombreros de Bono - perspectivas múltiples' },
+      { type: 'crazy-8s', name: 'Crazy 8s', description: '8 ideas en 8 minutos - design sprint' },
+      { type: 'affinity-map', name: 'Mapa de Afinidad', description: 'Agrupar ideas por categorías' },
     ]
   },
   {
@@ -70,9 +73,23 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
     borderColor: 'border-purple-200 dark:border-purple-800',
     dynamics: [
       { type: 'retrospective', name: 'Retro Ágil', description: 'Bien / Mejorar / Acciones' },
-      { type: 'retro', name: 'Rose-Bud-Thorn', description: 'Rosas, brotes y espinas' },
+      { type: 'rose-bud-thorn', name: 'Rose-Bud-Thorn', description: 'Rosas, brotes y espinas' },
+      { type: 'sailboat', name: 'Velero', description: 'Viento, ancla, rocas, isla' },
+      { type: 'start-stop-continue', name: 'Start-Stop-Continue', description: 'Qué empezar, parar, continuar' },
       { type: 'team-health', name: 'Team Health', description: 'Salud del equipo (Spotify)' },
       { type: 'mood', name: 'Check-in', description: 'Estado de ánimo del equipo' },
+    ]
+  },
+  {
+    id: 'strategy',
+    name: 'Análisis',
+    icon: Target,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+    borderColor: 'border-emerald-200 dark:border-emerald-800',
+    dynamics: [
+      { type: 'swot', name: 'SWOT', description: 'Fortalezas, Debilidades, Oportunidades, Amenazas' },
+      { type: 'soar', name: 'SOAR', description: 'Fortalezas, Oportunidades, Aspiraciones, Resultados' },
     ]
   },
   {
@@ -215,7 +232,7 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
       </div>
 
       {/* Categories */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {DYNAMIC_CATEGORIES.map(category => {
           const Icon = category.icon;
           const isSelected = selectedCategory === category.id;
