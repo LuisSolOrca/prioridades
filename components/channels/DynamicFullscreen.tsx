@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   X,
   Minimize2,
@@ -9,7 +10,9 @@ import {
   Lightbulb,
   RotateCcw,
   Target,
-  Heart
+  Heart,
+  Lock,
+  Loader2
 } from 'lucide-react';
 
 // Import all collaborative widgets
@@ -102,8 +105,14 @@ export default function DynamicFullscreen({
   onMinimize,
   onUpdate
 }: DynamicFullscreenProps) {
+  const { data: session } = useSession();
+  const [closing, setClosing] = useState(false);
   const iconConfig = DYNAMIC_ICONS[dynamic.commandType] || { icon: Target, color: 'text-gray-600' };
   const Icon = iconConfig.icon;
+
+  const isClosed = dynamic.commandData?.closed ?? false;
+  const isCreator = dynamic.commandData?.createdBy === session?.user?.id ||
+                    dynamic.userId?._id === session?.user?.id;
 
   // Prevent body scroll when fullscreen is open
   useEffect(() => {
@@ -112,6 +121,39 @@ export default function DynamicFullscreen({
       document.body.style.overflow = 'auto';
     };
   }, []);
+
+  // Close/finalize the dynamic
+  const handleCloseDynamic = async () => {
+    if (!confirm('¿Estás seguro de que quieres finalizar esta dinámica? No se podrán hacer más cambios.')) {
+      return;
+    }
+
+    setClosing(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/messages/${dynamic._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commandData: {
+            ...dynamic.commandData,
+            closed: true
+          }
+        })
+      });
+
+      if (response.ok) {
+        onUpdate();
+        onClose();
+      } else {
+        alert('Error al cerrar la dinámica');
+      }
+    } catch (error) {
+      console.error('Error closing dynamic:', error);
+      alert('Error al cerrar la dinámica');
+    } finally {
+      setClosing(false);
+    }
+  };
 
   // Handle escape key
   useEffect(() => {
@@ -431,6 +473,28 @@ export default function DynamicFullscreen({
 
           {/* Controls */}
           <div className="flex items-center gap-2">
+            {/* Finalizar button - only for creator and not closed */}
+            {isCreator && !isClosed && (
+              <button
+                onClick={handleCloseDynamic}
+                disabled={closing}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition text-sm font-medium disabled:opacity-50"
+                title="Finalizar dinámica"
+              >
+                {closing ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Lock size={16} />
+                )}
+                Finalizar
+              </button>
+            )}
+            {isClosed && (
+              <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                <Lock size={14} />
+                Finalizada
+              </span>
+            )}
             <button
               onClick={onMinimize}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition"
@@ -441,7 +505,7 @@ export default function DynamicFullscreen({
             <button
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition"
-              title="Cerrar dinámica"
+              title="Salir"
             >
               <X size={20} />
             </button>
