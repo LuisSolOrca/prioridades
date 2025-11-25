@@ -9,7 +9,8 @@ import {
   Heart,
   Search,
   Plus,
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 
 interface DynamicType {
@@ -104,8 +105,11 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
   }
 ];
 
+// Types that need options input
+const TYPES_WITH_OPTIONS = ['poll', 'dot-voting', 'blind-vote', 'ranking'];
+
 interface DynamicsMenuProps {
-  onSelectDynamic: (type: string, title: string) => void;
+  onSelectDynamic: (type: string, title: string, options?: string[]) => void;
 }
 
 export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
@@ -114,6 +118,8 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
   const [showTitleModal, setShowTitleModal] = useState(false);
   const [selectedDynamic, setSelectedDynamic] = useState<DynamicType | null>(null);
   const [dynamicTitle, setDynamicTitle] = useState('');
+  const [options, setOptions] = useState<string[]>(['', '']);
+  const [newOption, setNewOption] = useState('');
 
   const filteredCategories = DYNAMIC_CATEGORIES.map(category => ({
     ...category,
@@ -126,15 +132,48 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
   const handleDynamicClick = (dynamic: DynamicType) => {
     setSelectedDynamic(dynamic);
     setDynamicTitle('');
+    setOptions(['', '']);
+    setNewOption('');
     setShowTitleModal(true);
+  };
+
+  const needsOptions = selectedDynamic ? TYPES_WITH_OPTIONS.includes(selectedDynamic.type) : false;
+
+  const handleAddOption = () => {
+    if (newOption.trim()) {
+      setOptions([...options, newOption.trim()]);
+      setNewOption('');
+    }
+  };
+
+  const handleRemoveOption = (index: number) => {
+    if (options.length > 2) {
+      setOptions(options.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleOptionChange = (index: number, value: string) => {
+    const newOptions = [...options];
+    newOptions[index] = value;
+    setOptions(newOptions);
   };
 
   const handleCreateDynamic = () => {
     if (selectedDynamic && dynamicTitle.trim()) {
-      onSelectDynamic(selectedDynamic.type, dynamicTitle.trim());
+      if (needsOptions) {
+        const validOptions = options.filter(o => o.trim());
+        if (validOptions.length < 2) {
+          alert('Necesitas al menos 2 opciones');
+          return;
+        }
+        onSelectDynamic(selectedDynamic.type, dynamicTitle.trim(), validOptions);
+      } else {
+        onSelectDynamic(selectedDynamic.type, dynamicTitle.trim());
+      }
       setShowTitleModal(false);
       setSelectedDynamic(null);
       setDynamicTitle('');
+      setOptions(['', '']);
     }
   };
 
@@ -230,7 +269,7 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
       {/* Title Modal */}
       {showTitleModal && selectedDynamic && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Nueva {selectedDynamic.name}
@@ -245,15 +284,69 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               {selectedDynamic.description}
             </p>
-            <input
-              type="text"
-              placeholder="Título de la dinámica..."
-              value={dynamicTitle}
-              onChange={(e) => setDynamicTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateDynamic()}
-              autoFocus
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+
+            {/* Title/Question input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {needsOptions ? 'Pregunta' : 'Título'}
+              </label>
+              <input
+                type="text"
+                placeholder={needsOptions ? "¿Cuál es tu pregunta?" : "Título de la dinámica..."}
+                value={dynamicTitle}
+                onChange={(e) => setDynamicTitle(e.target.value)}
+                autoFocus
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Options input for poll-type dynamics */}
+            {needsOptions && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Opciones (mínimo 2)
+                </label>
+                <div className="space-y-2">
+                  {options.map((option, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder={`Opción ${index + 1}`}
+                        value={option}
+                        onChange={(e) => handleOptionChange(index, e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      />
+                      {options.length > 2 && (
+                        <button
+                          onClick={() => handleRemoveOption(index)}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="Agregar otra opción..."
+                    value={newOption}
+                    onChange={(e) => setNewOption(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddOption())}
+                    className="flex-1 px-3 py-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  <button
+                    onClick={handleAddOption}
+                    disabled={!newOption.trim()}
+                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-sm"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => setShowTitleModal(false)}
@@ -263,7 +356,7 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
               </button>
               <button
                 onClick={handleCreateDynamic}
-                disabled={!dynamicTitle.trim()}
+                disabled={!dynamicTitle.trim() || (needsOptions && options.filter(o => o.trim()).length < 2)}
                 className="flex-1 px-4 py-2 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Crear Dinámica

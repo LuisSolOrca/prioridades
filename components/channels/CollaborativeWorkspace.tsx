@@ -187,13 +187,13 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   }, [selectedChannelId, activeDynamic]);
 
   // Create new dynamic
-  const handleCreateDynamic = async (type: string, title: string) => {
+  const handleCreateDynamic = async (type: string, title: string, options?: string[]) => {
     if (!session?.user || !selectedChannelId) return;
 
     setCreating(true);
     try {
       // Build initial commandData based on type
-      const commandData = buildInitialCommandData(type, title, session.user.id);
+      const commandData = buildInitialCommandData(type, title, session.user.id, options);
 
       const response = await fetch(`/api/projects/${projectId}/messages`, {
         method: 'POST',
@@ -223,16 +223,19 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   };
 
   // Build initial commandData for each type
-  const buildInitialCommandData = (type: string, title: string, userId: string) => {
+  const buildInitialCommandData = (type: string, title: string, userId: string, options?: string[]) => {
     const base = { title, createdBy: userId, closed: false };
+
+    // Format options for poll-type dynamics
+    const formattedOptions = options?.map(text => ({ text, votes: [] })) || [];
 
     switch (type) {
       case 'poll':
-        return { ...base, question: title, options: [] };
+        return { ...base, question: title, options: formattedOptions };
       case 'dot-voting':
-        return { ...base, question: title, options: [], totalDotsPerUser: 5 };
+        return { ...base, question: title, options: formattedOptions, totalDotsPerUser: 5 };
       case 'blind-vote':
-        return { ...base, question: title, options: [], revealed: false };
+        return { ...base, question: title, options: formattedOptions, revealed: false };
       case 'brainstorm':
         return { ...base, topic: title, ideas: [] };
       case 'mind-map':
@@ -271,7 +274,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
       case 'pros-cons':
         return { ...base, pros: [], cons: [] };
       case 'ranking':
-        return { ...base, question: title, options: [], rankings: [] };
+        return { ...base, question: title, options: formattedOptions, rankings: [] };
       case 'checklist':
         return { ...base, items: [] };
       case 'estimation-poker':
