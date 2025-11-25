@@ -45,6 +45,7 @@ import EstimationPokerCommand from '../slashCommands/EstimationPokerCommand';
 import RetrospectiveCommand from '../slashCommands/RetrospectiveCommand';
 import IcebreakerCommand from '../slashCommands/IcebreakerCommand';
 import InceptionDeckCommand from '../slashCommands/InceptionDeckCommand';
+import DelegationPokerCommand from '../slashCommands/DelegationPokerCommand';
 
 interface DynamicMessage {
   _id: string;
@@ -101,6 +102,7 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'kudos-wall': { icon: Heart, color: 'text-pink-600' },
   'icebreaker': { icon: Heart, color: 'text-pink-600' },
   'inception-deck': { icon: Layers, color: 'text-indigo-600' },
+  'delegation-poker': { icon: Users, color: 'text-violet-600' },
 };
 
 export default function DynamicFullscreen({
@@ -518,6 +520,17 @@ export default function DynamicFullscreen({
             title={dynamic.commandData.title}
             cards={dynamic.commandData.cards || []}
             currentCardIndex={dynamic.commandData.currentCardIndex || 0}
+            createdBy={dynamic.commandData.createdBy}
+            closed={dynamic.commandData.closed}
+          />
+        );
+      case 'delegation-poker':
+        return (
+          <DelegationPokerCommand
+            {...commonProps}
+            title={dynamic.commandData.title}
+            topics={dynamic.commandData.topics || []}
+            currentTopicIndex={dynamic.commandData.currentTopicIndex || 0}
             createdBy={dynamic.commandData.createdBy}
             closed={dynamic.commandData.closed}
           />

@@ -15,7 +15,7 @@ const DYNAMIC_COMMAND_TYPES = [
   'brainstorm', 'mind-map', 'pros-cons', 'decision-matrix', 'ranking',
   'retrospective', 'retro', 'team-health', 'mood',
   'action-items', 'checklist', 'agenda', 'parking-lot', 'pomodoro', 'estimation-poker',
-  'kudos-wall', 'icebreaker', 'inception-deck'
+  'kudos-wall', 'icebreaker', 'inception-deck', 'delegation-poker'
 ];
 
 interface DynamicMessage {
@@ -308,6 +308,14 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
             { id: '8', title: 'Tamaño del Proyecto', question: '¿Qué tan grande es esto?', description: 'Estima el tamaño: ¿semanas, meses? ¿Cuántas personas?', icon: 'clock', color: 'bg-teal-500', responses: [], completed: false },
             { id: '9', title: '¿Qué vamos a sacrificar?', question: 'Tiempo, Alcance, Presupuesto, Calidad - ¿qué es negociable?', description: 'Define las prioridades y qué estamos dispuestos a ceder.', icon: 'target', color: 'bg-yellow-500', responses: [], completed: false },
             { id: '10', title: '¿Cuánto va a costar?', question: '¿Cuál es la inversión necesaria?', description: 'Estima el costo en tiempo, dinero y recursos.', icon: 'dollar', color: 'bg-emerald-500', responses: [], completed: false }
+          ]
+        };
+      case 'delegation-poker':
+        return {
+          ...base,
+          currentTopicIndex: 0,
+          topics: [
+            { id: '1', title: title, votes: [], revealed: false }
           ]
         };
       default:
