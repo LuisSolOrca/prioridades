@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Heart, Sparkles } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -44,6 +44,12 @@ export default function KudosWallCommand({
   const [toUser, setToUser] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setKudos(initialKudos);
+    setClosed(initialClosed);
+  }, [initialKudos, initialClosed]);
 
   const handleAddKudos = async () => {
     const kudosMessage = message.trim();

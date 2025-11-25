@@ -46,6 +46,13 @@ export default function VoteCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [myVotes, setMyVotes] = useState<{ [key: number]: number }>({});
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setOptions(initialOptions);
+    setUserVotes(initialUserVotes);
+    setClosed(initialClosed);
+  }, [initialOptions, initialUserVotes, initialClosed]);
+
   const userVote = userVotes.find(v => v.userId === session?.user?.id);
   const pointsUsed = Object.values(myVotes).reduce((sum, p) => sum + p, 0);
   const pointsLeft = totalPoints - pointsUsed;

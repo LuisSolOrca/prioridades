@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { ListOrdered, GripVertical, Trophy } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -43,6 +43,12 @@ export default function RankingCommand({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setRankings(initialRankings);
+    setClosed(initialClosed);
+  }, [initialRankings, initialClosed]);
 
   const userRanking = rankings.find(r => r.userId === session?.user?.id);
 

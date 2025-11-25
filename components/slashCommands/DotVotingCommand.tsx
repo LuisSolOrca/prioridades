@@ -41,6 +41,12 @@ export default function DotVotingCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setOptions(initialOptions);
+    setClosed(initialClosed);
+  }, [initialOptions, initialClosed]);
+
   // Calcular puntos usados por el usuario
   const getUserDotsUsed = () => {
     if (!session?.user?.id) return 0;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Scale, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
 
@@ -37,6 +37,12 @@ export default function ProsConsCommand({
   const [newPro, setNewPro] = useState('');
   const [newCon, setNewCon] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setPros(initialPros);
+    setCons(initialCons);
+  }, [initialPros, initialCons]);
 
   const handleAddItem = async (type: 'pro' | 'con', text: string) => {
     const trimmedText = text.trim();

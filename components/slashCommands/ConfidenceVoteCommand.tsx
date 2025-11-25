@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { TrendingUp } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -48,6 +48,12 @@ export default function ConfidenceVoteCommand({
   const [votes, setVotes] = useState(initialVotes);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setVotes(initialVotes);
+    setClosed(initialClosed);
+  }, [initialVotes, initialClosed]);
 
   const handleVote = async (confidence: number) => {
     if (!session?.user || submitting || closed) return;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Users } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -40,6 +40,12 @@ export default function CapacityCommand({
   const [userName, setUserName] = useState('');
   const [hoursPerDay, setHoursPerDay] = useState(8);
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setMembers(initialMembers);
+    setClosed(initialClosed);
+  }, [initialMembers, initialClosed]);
 
   const handleAdd = async () => {
     if (!userName.trim() || submitting || closed) return;

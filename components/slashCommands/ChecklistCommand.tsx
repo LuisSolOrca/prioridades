@@ -34,6 +34,11 @@ export default function ChecklistCommand({
   const [items, setItems] = useState<ChecklistItem[]>(initialItems);
   const [newItem, setNewItem] = useState('');
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setItems(initialItems);
+  }, [initialItems]);
+
   const handleToggle = async (itemId: string) => {
     if (!session?.user?.id) return;
 

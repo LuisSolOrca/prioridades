@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Activity } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -53,6 +53,12 @@ export default function TeamHealthCommand({
   const [areas, setAreas] = useState(initialAreas);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setAreas(initialAreas);
+    setClosed(initialClosed);
+  }, [initialAreas, initialClosed]);
 
   const handleVote = async (areaId: string, rating: number) => {
     if (!session?.user || submitting || closed) return;

@@ -50,6 +50,16 @@ export default function PomodoroCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setIsRunning(initialIsRunning);
+    setIsPaused(initialIsPaused);
+    setTimeRemaining(initialTimeRemaining);
+    setIsBreak(initialIsBreak);
+    setSessionsCompleted(initialSessionsCompleted);
+    setClosed(initialClosed);
+  }, [initialIsRunning, initialIsPaused, initialTimeRemaining, initialIsBreak, initialSessionsCompleted, initialClosed]);
+
   // Local timer countdown
   useEffect(() => {
     if (!isRunning || isPaused || timeRemaining <= 0) return;

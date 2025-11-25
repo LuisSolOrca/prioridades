@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { GitBranch, Plus } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -41,6 +41,12 @@ export default function DependencyMapCommand({
   const [taskName, setTaskName] = useState('');
   const [dependencies, setDependencies] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setTasks(initialTasks);
+    setClosed(initialClosed);
+  }, [initialTasks, initialClosed]);
 
   const handleAdd = async () => {
     if (!taskName.trim() || submitting || closed) return;

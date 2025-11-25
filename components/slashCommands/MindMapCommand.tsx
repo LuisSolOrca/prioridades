@@ -54,6 +54,12 @@ export default function MindMapCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setMindMapNodes(initialNodes);
+    setClosed(initialClosed);
+  }, [initialNodes, initialClosed]);
+
   // Convertir nodos de BD a formato ReactFlow
   const convertToFlowNodes = useCallback((mindNodes: MindMapNode[]): Node[] => {
     const flowNodes: Node[] = [];

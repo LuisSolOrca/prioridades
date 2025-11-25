@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Map, Plus } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -41,6 +41,12 @@ export default function RoadmapCommand({
   const [msTitle, setMsTitle] = useState('');
   const [msDate, setMsDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setMilestones(initialMilestones);
+    setClosed(initialClosed);
+  }, [initialMilestones, initialClosed]);
 
   const handleAdd = async () => {
     if (!msTitle.trim() || !msDate || submitting || closed) return;

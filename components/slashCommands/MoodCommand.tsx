@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Smile, TrendingUp } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -50,6 +50,12 @@ export default function MoodCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setMoods(initialMoods);
+    setClosed(initialClosed);
+  }, [initialMoods, initialClosed]);
 
   const userMood = moods.find(m => m.userId === session?.user?.id);
 

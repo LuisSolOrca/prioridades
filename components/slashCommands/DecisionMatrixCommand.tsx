@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Grid3x3, Trophy } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -49,6 +49,12 @@ export default function DecisionMatrixCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setCells(initialCells);
+    setClosed(initialClosed);
+  }, [initialCells, initialClosed]);
 
   const handleScore = async (optionIndex: number, criteriaIndex: number, score: number) => {
     if (!session?.user || closed || submitting) return;

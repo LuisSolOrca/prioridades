@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -50,6 +50,12 @@ export default function RetroCommand({
   const [newItems, setNewItems] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setSections(initialSections);
+    setClosed(initialClosed);
+  }, [initialSections, initialClosed]);
 
   const handleAddItem = async (sectionId: string) => {
     const text = newItems[sectionId]?.trim();

@@ -42,6 +42,12 @@ export default function IncidentCommand({
   const [newEvent, setNewEvent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setTimeline(initialTimeline);
+    setResolved(initialResolved);
+  }, [initialTimeline, initialResolved]);
+
   const handleAddEvent = async () => {
     const text = newEvent.trim();
     if (!text || !session?.user?.id || resolved || submitting) return;

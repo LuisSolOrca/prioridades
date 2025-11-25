@@ -40,6 +40,12 @@ export default function NPSCommand({
   const [voting, setVoting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setVotes(initialVotes);
+    setClosed(initialClosed);
+  }, [initialVotes, initialClosed]);
+
   const hasVoted = votes.some(v => v.userId === session?.user?.id);
   const userVote = votes.find(v => v.userId === session?.user?.id);
 

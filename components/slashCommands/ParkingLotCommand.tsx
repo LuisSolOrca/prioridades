@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Trash2, ParkingCircle } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -40,6 +40,12 @@ export default function ParkingLotCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [newItem, setNewItem] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setItems(initialItems);
+    setClosed(initialClosed);
+  }, [initialItems, initialClosed]);
 
   const handleAddItem = async () => {
     const text = newItem.trim();

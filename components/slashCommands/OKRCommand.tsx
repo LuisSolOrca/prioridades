@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Target, Plus } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -45,6 +45,12 @@ export default function OKRCommand({
   const [objTitle, setObjTitle] = useState('');
   const [krDesc, setKrDesc] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setObjectives(initialObjectives);
+    setClosed(initialClosed);
+  }, [initialObjectives, initialClosed]);
 
   const handleAddObjective = async () => {
     if (!objTitle.trim() || submitting || closed) return;

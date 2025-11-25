@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { CheckSquare, Square, Trash2, Plus } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
@@ -47,6 +47,12 @@ export default function ActionItemsCommand({
   const [assignedTo, setAssignedTo] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setItems(initialItems);
+    setClosed(initialClosed);
+  }, [initialItems, initialClosed]);
 
   const handleAddItem = async () => {
     const desc = description.trim();

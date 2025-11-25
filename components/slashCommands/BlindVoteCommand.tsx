@@ -42,6 +42,13 @@ export default function BlindVoteCommand({
   const [voting, setVoting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setOptions(initialOptions);
+    setRevealed(initialRevealed);
+    setClosed(initialClosed);
+  }, [initialOptions, initialRevealed, initialClosed]);
+
   const hasVoted = options.some(opt => opt.votes.includes(session?.user?.id || ''));
 
   const handleVote = async (optionIndex: number) => {

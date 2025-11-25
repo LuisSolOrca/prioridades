@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Hand, TrendingUp, X } from 'lucide-react';
 
@@ -45,6 +45,12 @@ export default function FistOfFiveCommand({
   const [closed, setClosed] = useState(initialClosed);
   const [selectedValue, setSelectedValue] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  useEffect(() => {
+    setVotes(initialVotes);
+    setClosed(initialClosed);
+  }, [initialVotes, initialClosed]);
 
   const userVote = votes.find(v => v.userId === session?.user?.id);
   const hasVoted = !!userVote;
