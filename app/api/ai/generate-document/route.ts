@@ -69,11 +69,47 @@ function formatDynamicForAI(dynamic: DynamicData): string {
       break;
 
     case 'ranking':
-      if (commandData.rankings) {
-        content += 'Rankings:\n';
+      if (commandData.options && commandData.options.length > 0) {
+        content += `Opciones a rankear: ${commandData.options.join(', ')}\n`;
+      }
+      if (commandData.rankings && commandData.rankings.length > 0) {
+        content += `\nRankings individuales (${commandData.rankings.length} participante${commandData.rankings.length > 1 ? 's' : ''}):\n`;
         commandData.rankings.forEach((r: any) => {
-          content += `- ${r.userName}: ${r.order?.join(' > ') || 'Sin orden'}\n`;
+          const ranking = r.ranking || r.order || [];
+          content += `- ${r.name || r.userName}: ${ranking.join(' > ')}\n`;
         });
+
+        // Calculate consensus ranking
+        if (commandData.rankings.length > 0) {
+          const positionSums: Record<string, { sum: number; count: number }> = {};
+          commandData.rankings.forEach((r: any) => {
+            const ranking = r.ranking || r.order || [];
+            ranking.forEach((option: string, index: number) => {
+              if (!positionSums[option]) {
+                positionSums[option] = { sum: 0, count: 0 };
+              }
+              positionSums[option].sum += index + 1;
+              positionSums[option].count += 1;
+            });
+          });
+
+          const consensusRanking = Object.entries(positionSums)
+            .map(([option, data]) => ({
+              option,
+              avgPosition: data.sum / data.count
+            }))
+            .sort((a, b) => a.avgPosition - b.avgPosition);
+
+          if (consensusRanking.length > 0) {
+            content += '\nRanking consensuado (por posición promedio):\n';
+            consensusRanking.forEach((item, index) => {
+              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+              content += `${medal} ${item.option} (pos. promedio: ${item.avgPosition.toFixed(1)})\n`;
+            });
+          }
+        }
+      } else {
+        content += 'No se han registrado rankings aún.\n';
       }
       break;
 
