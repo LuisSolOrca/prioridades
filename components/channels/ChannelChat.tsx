@@ -2278,7 +2278,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   }
 
   return (
-    <div className="flex flex-col h-[600px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col h-[800px] bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       {/* Channel Selector & Search Bar */}
       <div className="border-b border-gray-200 dark:border-gray-700 p-3 space-y-3">
         {/* Channel Selector */}
@@ -2455,7 +2455,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                 </div>
 
                 {/* Message Content */}
-                <div className={`flex-1 max-w-xl ${isOwn ? 'items-end' : ''}`}>
+                <div className={`flex-1 max-w-5xl ${isOwn ? 'items-end' : ''}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-sm font-semibold ${
                       message.userId._id === 'deleted'
