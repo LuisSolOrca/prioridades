@@ -189,13 +189,13 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   }, [selectedChannelId, activeDynamic]);
 
   // Create new dynamic
-  const handleCreateDynamic = async (type: string, title: string, options?: string[]) => {
+  const handleCreateDynamic = async (type: string, title: string, options?: string[], criteria?: string[]) => {
     if (!session?.user || !selectedChannelId) return;
 
     setCreating(true);
     try {
       // Build initial commandData based on type
-      const commandData = buildInitialCommandData(type, title, session.user.id, options);
+      const commandData = buildInitialCommandData(type, title, session.user.id, options, criteria);
 
       const response = await fetch(`/api/projects/${projectId}/messages`, {
         method: 'POST',
@@ -225,7 +225,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   };
 
   // Build initial commandData for each type
-  const buildInitialCommandData = (type: string, title: string, userId: string, options?: string[]) => {
+  const buildInitialCommandData = (type: string, title: string, userId: string, options?: string[], criteria?: string[]) => {
     const base = { title, createdBy: userId, closed: false };
 
     // Format options for poll-type dynamics (with votes array)
@@ -245,7 +245,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
       case 'mind-map':
         return { ...base, nodes: [] };
       case 'decision-matrix':
-        return { ...base, options: [], criteria: [], cells: [] };
+        return { ...base, options: options || [], criteria: criteria || [], cells: [] };
       case 'action-items':
         return { ...base, items: [] };
       case 'team-health':

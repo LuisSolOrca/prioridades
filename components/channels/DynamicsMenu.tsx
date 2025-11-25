@@ -138,9 +138,11 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
 
 // Types that need options input
 const TYPES_WITH_OPTIONS = ['poll', 'dot-voting', 'blind-vote', 'ranking'];
+// Types that need matrix input (options + criteria)
+const TYPES_WITH_MATRIX = ['decision-matrix'];
 
 interface DynamicsMenuProps {
-  onSelectDynamic: (type: string, title: string, options?: string[]) => void;
+  onSelectDynamic: (type: string, title: string, options?: string[], criteria?: string[]) => void;
 }
 
 export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
@@ -151,6 +153,8 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
   const [dynamicTitle, setDynamicTitle] = useState('');
   const [options, setOptions] = useState<string[]>(['', '']);
   const [newOption, setNewOption] = useState('');
+  const [criteria, setCriteria] = useState<string[]>(['', '']);
+  const [newCriterion, setNewCriterion] = useState('');
 
   const filteredCategories = DYNAMIC_CATEGORIES.map(category => ({
     ...category,
@@ -165,10 +169,13 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
     setDynamicTitle('');
     setOptions(['', '']);
     setNewOption('');
+    setCriteria(['', '']);
+    setNewCriterion('');
     setShowTitleModal(true);
   };
 
   const needsOptions = selectedDynamic ? TYPES_WITH_OPTIONS.includes(selectedDynamic.type) : false;
+  const needsMatrix = selectedDynamic ? TYPES_WITH_MATRIX.includes(selectedDynamic.type) : false;
 
   const handleAddOption = () => {
     if (newOption.trim()) {
@@ -189,9 +196,40 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
     setOptions(newOptions);
   };
 
+  const handleAddCriterion = () => {
+    if (newCriterion.trim()) {
+      setCriteria([...criteria, newCriterion.trim()]);
+      setNewCriterion('');
+    }
+  };
+
+  const handleRemoveCriterion = (index: number) => {
+    if (criteria.length > 2) {
+      setCriteria(criteria.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleCriterionChange = (index: number, value: string) => {
+    const newCriteria = [...criteria];
+    newCriteria[index] = value;
+    setCriteria(newCriteria);
+  };
+
   const handleCreateDynamic = () => {
     if (selectedDynamic && dynamicTitle.trim()) {
-      if (needsOptions) {
+      if (needsMatrix) {
+        const validOptions = options.filter(o => o.trim());
+        const validCriteria = criteria.filter(c => c.trim());
+        if (validOptions.length < 2) {
+          alert('Necesitas al menos 2 opciones');
+          return;
+        }
+        if (validCriteria.length < 2) {
+          alert('Necesitas al menos 2 criterios');
+          return;
+        }
+        onSelectDynamic(selectedDynamic.type, dynamicTitle.trim(), validOptions, validCriteria);
+      } else if (needsOptions) {
         const validOptions = options.filter(o => o.trim());
         if (validOptions.length < 2) {
           alert('Necesitas al menos 2 opciones');
@@ -205,6 +243,7 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
       setSelectedDynamic(null);
       setDynamicTitle('');
       setOptions(['', '']);
+      setCriteria(['', '']);
     }
   };
 
@@ -376,6 +415,101 @@ export default function DynamicsMenu({ onSelectDynamic }: DynamicsMenuProps) {
                   </button>
                 </div>
               </div>
+            )}
+
+            {/* Matrix inputs for decision-matrix */}
+            {needsMatrix && (
+              <>
+                {/* Options */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Opciones a evaluar (mínimo 2)
+                  </label>
+                  <div className="space-y-2">
+                    {options.map((option, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder={`Opción ${index + 1}`}
+                          value={option}
+                          onChange={(e) => handleOptionChange(index, e.target.value)}
+                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+                        />
+                        {options.length > 2 && (
+                          <button
+                            onClick={() => handleRemoveOption(index)}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      placeholder="Agregar otra opción..."
+                      value={newOption}
+                      onChange={(e) => setNewOption(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddOption())}
+                      className="flex-1 px-3 py-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+                    />
+                    <button
+                      onClick={handleAddOption}
+                      disabled={!newOption.trim()}
+                      className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-sm"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Criteria */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Criterios de evaluación (mínimo 2)
+                  </label>
+                  <div className="space-y-2">
+                    {criteria.map((criterion, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder={`Criterio ${index + 1}`}
+                          value={criterion}
+                          onChange={(e) => handleCriterionChange(index, e.target.value)}
+                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                        />
+                        {criteria.length > 2 && (
+                          <button
+                            onClick={() => handleRemoveCriterion(index)}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      placeholder="Agregar otro criterio..."
+                      value={newCriterion}
+                      onChange={(e) => setNewCriterion(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCriterion())}
+                      className="flex-1 px-3 py-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    />
+                    <button
+                      onClick={handleAddCriterion}
+                      disabled={!newCriterion.trim()}
+                      className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 text-sm"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="flex gap-3 mt-4">
