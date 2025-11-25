@@ -278,7 +278,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
       case 'pros-cons':
         return { ...base, pros: [], cons: [] };
       case 'ranking':
-        return { ...base, question: title, options: formattedOptions, rankings: [] };
+        return { ...base, question: title, options: options || [], rankings: [] };
       case 'checklist':
         return { ...base, items: [] };
       case 'estimation-poker':
