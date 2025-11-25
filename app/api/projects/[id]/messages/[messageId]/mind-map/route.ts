@@ -59,28 +59,39 @@ export async function POST(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    // Retornar éxito inmediatamente después de guardar
+    // El populate y Pusher se hacen en segundo plano para mejorar respuesta
+    const savedMessage = message.toObject();
 
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    // Trigger Pusher en segundo plano (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(populatedMessage);
-  } catch (error) {
-    console.error('Error in mind-map add:', error);
-    return NextResponse.json({ error: 'Error al agregar nodo' }, { status: 500 });
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
+  } catch (error: any) {
+    console.error('Error in mind-map add:', error?.message || error);
+    console.error('Error stack:', error?.stack);
+    return NextResponse.json({
+      error: 'Error al agregar nodo',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: 500 });
   }
 }
 
@@ -148,27 +159,33 @@ export async function DELETE(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    // Retornar éxito inmediatamente después de guardar
+    const savedMessage = message.toObject();
 
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    // Trigger Pusher en segundo plano (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(populatedMessage);
-  } catch (error) {
-    console.error('Error in mind-map delete:', error);
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
+  } catch (error: any) {
+    console.error('Error in mind-map delete:', error?.message || error);
     return NextResponse.json({ error: 'Error al eliminar nodo' }, { status: 500 });
   }
 }
@@ -207,27 +224,33 @@ export async function PATCH(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    // Retornar éxito inmediatamente después de guardar
+    const savedMessage = message.toObject();
 
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    // Trigger Pusher en segundo plano (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(populatedMessage);
-  } catch (error) {
-    console.error('Error closing mind-map:', error);
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
+  } catch (error: any) {
+    console.error('Error closing mind-map:', error?.message || error);
     return NextResponse.json({ error: 'Error al cerrar' }, { status: 500 });
   }
 }

@@ -155,18 +155,27 @@ export default function MindMapCommand({
         body: JSON.stringify({ parentId, label: label.trim() })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || 'Error al agregar nodo');
+        alert(data.error || 'Error al agregar nodo');
         return;
       }
 
-      const data = await response.json();
-      setMindMapNodes(data.commandData.nodes);
+      // Validar que los datos existan antes de actualizar
+      // Puede venir como commandData.nodes o directamente en data.nodes
+      const newNodes = data?.commandData?.nodes || data?.nodes;
+      if (newNodes) {
+        setMindMapNodes(newNodes);
+      }
       onUpdate?.();
     } catch (error) {
       console.error('Error adding node:', error);
-      alert('Error al agregar nodo');
+      // Solo mostrar alerta si realmente hubo un error de red
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        alert('Error de conexión al agregar nodo');
+      }
+      // No mostrar alerta para otros errores ya que el nodo podría haberse guardado
     } finally {
       setSubmitting(false);
     }
@@ -193,18 +202,23 @@ export default function MindMapCommand({
         body: JSON.stringify({ nodeId })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || 'Error al eliminar nodo');
+        alert(data.error || 'Error al eliminar nodo');
         return;
       }
 
-      const data = await response.json();
-      setMindMapNodes(data.commandData.nodes);
+      const newNodes = data?.commandData?.nodes || data?.nodes;
+      if (newNodes) {
+        setMindMapNodes(newNodes);
+      }
       onUpdate?.();
     } catch (error) {
       console.error('Error deleting node:', error);
-      alert('Error al eliminar nodo');
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        alert('Error de conexión al eliminar nodo');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -228,18 +242,21 @@ export default function MindMapCommand({
         method: 'PATCH'
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || 'Error al cerrar');
+        alert(data.error || 'Error al cerrar');
         return;
       }
 
-      const data = await response.json();
-      setClosed(data.commandData.closed);
+      const isClosed = data?.commandData?.closed ?? data?.closed ?? true;
+      setClosed(isClosed);
       onUpdate?.();
     } catch (error) {
       console.error('Error closing:', error);
-      alert('Error al cerrar');
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        alert('Error de conexión al cerrar');
+      }
     } finally {
       setSubmitting(false);
     }
