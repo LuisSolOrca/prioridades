@@ -831,6 +831,9 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/parking-lot` | Temas para discutir después | `/parking-lot "Título"` |
 | `/kudos-wall` | Muro de reconocimientos acumulados | `/kudos-wall "Título"` |
 | `/icebreaker` | Pregunta aleatoria para romper el hielo | `/icebreaker` |
+| `/action-items` | Lista de acciones con responsable y fecha | `/action-items "Título"` |
+| `/team-health` | Health check del equipo (Spotify model) | `/team-health "Título"` |
+| `/confidence-vote` | ¿Qué tan seguros estamos? (1-5) | `/confidence-vote "¿Pregunta?"` |
 | `/standup` | Daily standup virtual | `/standup` |
 | `/question` | Pregunta a un stakeholder | `/question @usuario "¿pregunta?"` |
 
@@ -1699,6 +1702,112 @@ SOAR se enfoca en lo positivo (fortalezas y oportunidades) y el futuro (aspiraci
 3. Tomar 1-2 minutos para que cada persona comparta
 4. Responder en el chat de forma informal
 
+#### `/action-items` - Gestión de Acciones
+
+**Funcionalidad:**
+- ✅ Lista colaborativa de acciones con seguimiento
+- Cada acción tiene descripción, responsable y fecha límite
+- Marcar/desmarcar como completado con un clic
+- Indicadores visuales de items vencidos
+- Solo el creador del item o admin puede eliminarlo
+
+**Características:**
+- Contador de completados vs total
+- Alerta visual de items vencidos (borde rojo)
+- Fecha de completación automática
+- Progreso en porcentaje al cerrar
+
+**Cuándo usar:**
+- Al final de reuniones para capturar acciones
+- Seguimiento de compromisos del equipo
+- Retrospectivas para definir mejoras
+- Decisiones que requieren seguimiento
+
+**Cómo funciona:**
+1. Crear con `/action-items "Título"`
+2. Agregar acciones especificando:
+   - **Descripción**: Qué hacer
+   - **Responsable**: Nombre del encargado
+   - **Fecha límite**: Formato YYYY-MM-DD
+3. Cualquiera puede marcar como completado
+4. Solo creador del item puede eliminarlo
+5. Solo creador del widget puede cerrarlo
+
+#### `/team-health` - Spotify Health Check
+
+**Funcionalidad:**
+- 📊 Health check del equipo basado en el modelo Spotify
+- 9 áreas predefinidas del modelo oficial
+- Votación con emojis del 1 al 5 (😞 Bad → 😀 Awesome)
+- Promedios y distribución visual por área
+- Cada usuario puede votar una vez por área (actualizable)
+
+**Áreas evaluadas:**
+1. **Delivering Value** - ¿Entregamos valor a usuarios?
+2. **Fun** - ¿Es divertido trabajar aquí?
+3. **Health of Codebase** - ¿Está sano nuestro código?
+4. **Learning** - ¿Estamos aprendiendo cosas nuevas?
+5. **Mission** - ¿Entendemos por qué estamos aquí?
+6. **Pawns or Players** - ¿Tenemos control de nuestro destino?
+7. **Speed** - ¿Podemos entregar rápido?
+8. **Support** - ¿Tenemos el apoyo necesario?
+9. **Teamwork** - ¿Trabajamos bien juntos?
+
+**Escala de votación:**
+- 😞 **Bad (1)** - No confío en absoluto
+- 🙁 **Concerning (2)** - Tengo muchas dudas
+- 😐 **Okay (3)** - Hay incertidumbre
+- 🙂 **Good (4)** - Bastante seguro
+- 😀 **Awesome (5)** - Totalmente confiado
+
+**Cuándo usar:**
+- Retrospectivas de sprint o quarterly
+- Identificar áreas que necesitan atención
+- Trackear mejora del equipo en el tiempo
+- One-on-ones con el equipo completo
+
+**Cómo funciona:**
+1. Crear con `/team-health "Sprint N"`
+2. Cada miembro vota en cada área (1-5)
+3. Los votos se pueden actualizar antes de cerrar
+4. Se muestra promedio y distribución por área
+5. Solo el creador puede cerrar el health check
+
+#### `/confidence-vote` - Nivel de Confianza
+
+**Funcionalidad:**
+- 📈 Votación rápida de nivel de confianza (1-5)
+- Útil para PI Planning, releases, decisiones importantes
+- Promedio visible con emoji representativo
+- Gráfico de distribución de votos
+- Lista de quién votó qué
+
+**Escala:**
+- 😰 **Muy bajo (1)** - No confío en absoluto
+- 😟 **Bajo (2)** - Tengo muchas dudas
+- 😐 **Moderado (3)** - Hay incertidumbre
+- 🙂 **Alto (4)** - Bastante seguro
+- 😄 **Muy alto (5)** - Totalmente confiado
+
+**Cuándo usar:**
+- PI Planning: ¿Confiamos en los objetivos?
+- Antes de releases: ¿Estamos listos?
+- Decisiones técnicas: ¿Confiamos en este approach?
+- Estimaciones: ¿Qué tan seguros estamos?
+
+**Cómo funciona:**
+1. Crear con `/confidence-vote "¿Pregunta?"`
+2. Cada miembro vota su nivel de confianza (1-5)
+3. Los votos se pueden actualizar
+4. Se calcula y muestra promedio automáticamente
+5. Solo el creador puede cerrar la votación
+
+**Interpretación de resultados:**
+- **≥4.5**: Excelente confianza, adelante
+- **3.5-4.4**: Buena confianza, con algunas reservas
+- **2.5-3.4**: Confianza moderada, explorar preocupaciones
+- **<2.5**: Baja confianza, abordar riesgos antes de proceder
+
 ### Flujo General de Retrospectivas
 
 1. **Crear**: Líder ejecuta comando con título
@@ -2497,6 +2606,31 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v1.4.3 (Noviembre 2025) - Fase 2: Comandos de Alta Prioridad
+- ✅ **3 nuevos slash commands de alta prioridad** - herramientas para gestión y health del equipo
+  - `/action-items` - Lista de acciones con responsable y fecha límite
+    - Descripción, responsable y fecha por cada acción
+    - Toggle completado/pendiente con un clic
+    - Indicadores de items vencidos (borde rojo)
+    - Contador de completados vs total
+    - Fecha de completación automática
+    - Solo creador del item puede eliminarlo
+  - `/team-health` - Spotify Health Check Model con 9 áreas
+    - 9 áreas predefinidas del modelo oficial Spotify
+    - Votación 1-5 con emojis (😞 Bad → 😀 Awesome)
+    - Promedios y distribución visual por área
+    - Votos actualizables antes de cerrar
+    - Perfecto para retrospectivas quarterly
+  - `/confidence-vote` - Votación de nivel de confianza (1-5)
+    - Escala de confianza con emojis y colores
+    - Promedio visible con emoji representativo
+    - Gráfico de distribución de votos
+    - Lista de votantes con su nivel
+    - Guía de interpretación de resultados
+- ✅ **Componentes especializados** - ActionItemsCommand, TeamHealthCommand, ConfidenceVoteCommand
+- ✅ **API endpoints** - action-items, team-health, confidence-vote con validaciones
+- ✅ **Features avanzados** - toggle completado, actualizar votos, tracking de vencimientos
 
 ### v1.4.2 (Noviembre 2025) - Fase 1: Comandos de Colaboración
 - ✅ **3 nuevos slash commands de colaboración** - herramientas simples y prácticas para equipos

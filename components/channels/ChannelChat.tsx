@@ -74,6 +74,9 @@ import RankingCommand from '../slashCommands/RankingCommand';
 import ParkingLotCommand from '../slashCommands/ParkingLotCommand';
 import KudosWallCommand from '../slashCommands/KudosWallCommand';
 import IcebreakerCommand from '../slashCommands/IcebreakerCommand';
+import ActionItemsCommand from '../slashCommands/ActionItemsCommand';
+import TeamHealthCommand from '../slashCommands/TeamHealthCommand';
+import ConfidenceVoteCommand from '../slashCommands/ConfidenceVoteCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
@@ -1295,6 +1298,139 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating icebreaker:', error);
           alert('Error al crear icebreaker');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'action-items':
+        if (parsed.args.length < 1) {
+          alert('Uso: /action-items "Título"');
+          return;
+        }
+        if (sending) return;
+        const actionItemsTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/action-items ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'action-items',
+              commandData: {
+                title: actionItemsTitle,
+                items: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const actionItemsMessage = await response.json();
+            setMessages((prev) => [...prev, actionItemsMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating action-items:', error);
+          alert('Error al crear action items');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'team-health':
+        if (parsed.args.length < 1) {
+          alert('Uso: /team-health "Título"');
+          return;
+        }
+        if (sending) return;
+        const teamHealthTitle = parsed.args[0];
+
+        // Áreas predefinidas del Spotify Health Check
+        const defaultAreas = [
+          { id: 'delivering-value', name: 'Delivering Value', votes: [] },
+          { id: 'fun', name: 'Fun', votes: [] },
+          { id: 'health-of-codebase', name: 'Health of Codebase', votes: [] },
+          { id: 'learning', name: 'Learning', votes: [] },
+          { id: 'mission', name: 'Mission', votes: [] },
+          { id: 'pawns-or-players', name: 'Pawns or Players', votes: [] },
+          { id: 'speed', name: 'Speed', votes: [] },
+          { id: 'support', name: 'Support', votes: [] },
+          { id: 'teamwork', name: 'Teamwork', votes: [] }
+        ];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/team-health ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'team-health',
+              commandData: {
+                title: teamHealthTitle,
+                areas: defaultAreas,
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const teamHealthMessage = await response.json();
+            setMessages((prev) => [...prev, teamHealthMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating team-health:', error);
+          alert('Error al crear team health');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'confidence-vote':
+        if (parsed.args.length < 1) {
+          alert('Uso: /confidence-vote "¿Pregunta?"');
+          return;
+        }
+        if (sending) return;
+        const confidenceQuestion = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/confidence-vote ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'confidence-vote',
+              commandData: {
+                question: confidenceQuestion,
+                votes: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const confidenceVoteMessage = await response.json();
+            setMessages((prev) => [...prev, confidenceVoteMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating confidence-vote:', error);
+          alert('Error al crear voto de confianza');
         } finally {
           setSending(false);
         }
@@ -2985,6 +3121,90 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar icebreaker"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'action-items' && message.commandData ? (
+                    /* Render Action Items Command */
+                    <div className="relative group">
+                      <ActionItemsCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Action Items */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar action items"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'team-health' && message.commandData ? (
+                    /* Render Team Health Command */
+                    <div className="relative group">
+                      <TeamHealthCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        areas={message.commandData.areas || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Team Health */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar team health"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'confidence-vote' && message.commandData ? (
+                    /* Render Confidence Vote Command */
+                    <div className="relative group">
+                      <ConfidenceVoteCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        question={message.commandData.question}
+                        votes={message.commandData.votes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Confidence Vote */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar voto de confianza"
                             >
                               <Trash2 size={14} />
                             </button>
