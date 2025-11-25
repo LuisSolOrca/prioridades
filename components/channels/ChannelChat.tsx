@@ -1264,6 +1264,144 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         setNewMessage('');
         break;
 
+      case 'mind-map':
+        if (parsed.args.length < 1) {
+          alert('Uso: /mind-map "Tema central"');
+          return;
+        }
+        if (sending) return;
+        const mindMapTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/mind-map ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'mind-map',
+              commandData: {
+                title: mindMapTitle,
+                sections: [
+                  { id: 'ideas', title: 'Ideas Principales', icon: '💡', color: '#3b82f6', items: [] },
+                  { id: 'connections', title: 'Conexiones', icon: '🔗', color: '#10b981', items: [] },
+                  { id: 'actions', title: 'Acciones', icon: '⚡', color: '#f59e0b', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const mindMapMessage = await response.json();
+            setMessages((prev) => [...prev, mindMapMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating mind-map:', error);
+          alert('Error al crear mapa mental');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'crazy-8s':
+        if (parsed.args.length < 1) {
+          alert('Uso: /crazy-8s "Problema o reto"');
+          return;
+        }
+        if (sending) return;
+        const crazy8sTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/crazy-8s ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'crazy-8s',
+              commandData: {
+                title: crazy8sTitle,
+                sections: [
+                  { id: 'idea1', title: 'Idea 1', icon: '1️⃣', color: '#ef4444', items: [] },
+                  { id: 'idea2', title: 'Idea 2', icon: '2️⃣', color: '#f59e0b', items: [] },
+                  { id: 'idea3', title: 'Idea 3', icon: '3️⃣', color: '#eab308', items: [] },
+                  { id: 'idea4', title: 'Idea 4', icon: '4️⃣', color: '#84cc16', items: [] },
+                  { id: 'idea5', title: 'Idea 5', icon: '5️⃣', color: '#10b981', items: [] },
+                  { id: 'idea6', title: 'Idea 6', icon: '6️⃣', color: '#06b6d4', items: [] },
+                  { id: 'idea7', title: 'Idea 7', icon: '7️⃣', color: '#3b82f6', items: [] },
+                  { id: 'idea8', title: 'Idea 8', icon: '8️⃣', color: '#8b5cf6', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const crazy8sMessage = await response.json();
+            setMessages((prev) => [...prev, crazy8sMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating crazy-8s:', error);
+          alert('Error al crear Crazy 8s');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'affinity-map':
+        if (parsed.args.length < 1) {
+          alert('Uso: /affinity-map "Tema"');
+          return;
+        }
+        if (sending) return;
+        const affinityTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/affinity-map ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'affinity-map',
+              commandData: {
+                title: affinityTitle,
+                sections: [
+                  { id: 'group-a', title: 'Grupo A', icon: '🅰️', color: '#3b82f6', items: [] },
+                  { id: 'group-b', title: 'Grupo B', icon: '🅱️', color: '#10b981', items: [] },
+                  { id: 'group-c', title: 'Grupo C', icon: '©️', color: '#f59e0b', items: [] },
+                  { id: 'ungrouped', title: 'Sin Agrupar', icon: '📝', color: '#6b7280', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const affinityMessage = await response.json();
+            setMessages((prev) => [...prev, affinityMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating affinity-map:', error);
+          alert('Error al crear mapa de afinidad');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
       case 'estimation-poker':
         if (parsed.args.length < 1) {
           alert('Uso: /estimation-poker "¿Tarea o historia?"');
@@ -2481,7 +2619,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     </div>
                   ) : (message.commandType === 'rose-bud-thorn' || message.commandType === 'sailboat' ||
                        message.commandType === 'start-stop-continue' || message.commandType === 'swot' ||
-                       message.commandType === 'six-hats') &&
+                       message.commandType === 'six-hats' || message.commandType === 'mind-map' ||
+                       message.commandType === 'crazy-8s' || message.commandType === 'affinity-map') &&
                        message.commandData ? (
                     /* Render Retro Command */
                     <div className="relative group">
@@ -2498,6 +2637,9 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'sailboat' ? <Ship className="text-white" size={20} /> :
                           message.commandType === 'start-stop-continue' ? <PlayCircle className="text-white" size={20} /> :
                           message.commandType === 'six-hats' ? <span className="text-white text-xl">🎩</span> :
+                          message.commandType === 'mind-map' ? <span className="text-white text-xl">🧠</span> :
+                          message.commandType === 'crazy-8s' ? <span className="text-white text-xl">🎨</span> :
+                          message.commandType === 'affinity-map' ? <span className="text-white text-xl">📌</span> :
                           <Target className="text-white" size={20} />
                         }
                         gradient={
@@ -2505,6 +2647,9 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'sailboat' ? 'from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'start-stop-continue' ? 'from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'six-hats' ? 'from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'mind-map' ? 'from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'crazy-8s' ? 'from-fuchsia-50 to-pink-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'affinity-map' ? 'from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900' :
                           'from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900'
                         }
                         border={
@@ -2512,6 +2657,9 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'sailboat' ? 'border-blue-400 dark:border-blue-600' :
                           message.commandType === 'start-stop-continue' ? 'border-green-400 dark:border-green-600' :
                           message.commandType === 'six-hats' ? 'border-slate-400 dark:border-slate-600' :
+                          message.commandType === 'mind-map' ? 'border-cyan-400 dark:border-cyan-600' :
+                          message.commandType === 'crazy-8s' ? 'border-fuchsia-400 dark:border-fuchsia-600' :
+                          message.commandType === 'affinity-map' ? 'border-amber-400 dark:border-amber-600' :
                           'border-purple-400 dark:border-purple-600'
                         }
                         onClose={() => {}}
