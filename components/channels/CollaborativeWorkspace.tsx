@@ -226,14 +226,16 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   const buildInitialCommandData = (type: string, title: string, userId: string, options?: string[]) => {
     const base = { title, createdBy: userId, closed: false };
 
-    // Format options for poll-type dynamics
+    // Format options for poll-type dynamics (with votes array)
     const formattedOptions = options?.map(text => ({ text, votes: [] })) || [];
+    // Format options for dot-voting (with dots array)
+    const dotVotingOptions = options?.map(text => ({ text, dots: [] })) || [];
 
     switch (type) {
       case 'poll':
         return { ...base, question: title, options: formattedOptions };
       case 'dot-voting':
-        return { ...base, question: title, options: formattedOptions, totalDotsPerUser: 5 };
+        return { ...base, question: title, options: dotVotingOptions, totalDotsPerUser: 5 };
       case 'blind-vote':
         return { ...base, question: title, options: formattedOptions, revealed: false };
       case 'brainstorm':
