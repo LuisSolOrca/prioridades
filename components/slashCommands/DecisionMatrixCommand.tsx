@@ -155,11 +155,11 @@ export default function DecisionMatrixCommand({
         <table className="w-full bg-white dark:bg-gray-700 rounded-lg overflow-hidden">
           <thead>
             <tr className="bg-violet-200 dark:bg-violet-900/50">
-              <th className="p-3 text-left font-semibold text-gray-900 dark:text-gray-100">
+              <th className="p-3 text-left font-semibold text-gray-900 dark:text-gray-100 min-w-[200px]">
                 Opción / Criterio
               </th>
               {criteria.map((criterion, idx) => (
-                <th key={idx} className="p-3 text-center font-semibold text-gray-900 dark:text-gray-100">
+                <th key={idx} className="p-3 text-center font-semibold text-gray-900 dark:text-gray-100 min-w-[150px]">
                   {criterion}
                 </th>
               ))}
@@ -171,7 +171,7 @@ export default function DecisionMatrixCommand({
           <tbody>
             {options.map((option, optIdx) => (
               <tr key={optIdx} className="border-t border-gray-200 dark:border-gray-600">
-                <td className="p-3 font-medium text-gray-800 dark:text-gray-100 bg-violet-50 dark:bg-violet-900/20">
+                <td className="p-3 font-medium text-gray-800 dark:text-gray-100 bg-violet-50 dark:bg-violet-900/20 min-w-[200px]">
                   {optIdx === winningOption && (
                     <Trophy className="inline mr-1 text-yellow-500" size={16} />
                   )}
@@ -182,7 +182,7 @@ export default function DecisionMatrixCommand({
                   const userScore = getUserScore(optIdx, critIdx);
 
                   return (
-                    <td key={critIdx} className="p-2 text-center">
+                    <td key={critIdx} className="p-2 text-center min-w-[150px]">
                       {!closed && (
                         <div className="flex justify-center gap-1 mb-1">
                           {[1, 2, 3, 4, 5].map(score => (

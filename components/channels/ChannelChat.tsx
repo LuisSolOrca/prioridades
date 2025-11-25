@@ -3335,7 +3335,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           onClick={() => setActiveCommand(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-4xl max-h-[85vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-7xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {activeCommand.type === 'status' && (

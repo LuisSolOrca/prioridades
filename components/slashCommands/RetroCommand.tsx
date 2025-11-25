@@ -151,7 +151,7 @@ export default function RetroCommand({
       </div>
 
       {/* Sections Grid */}
-      <div className={`grid gap-4 mb-4 ${sections.length === 4 ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+      <div className={`grid gap-4 mb-4 ${sections.length === 4 ? 'grid-cols-1 lg:grid-cols-2' : sections.length === 6 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : sections.length === 8 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 lg:grid-cols-2'}`}>
         {sections.map((section) => (
           <div
             key={section.id}
