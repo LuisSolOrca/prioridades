@@ -21,15 +21,16 @@ interface DynamicCardProps {
     _id: string;
     commandType: string;
     commandData: {
-      title: string;
-      closed: boolean;
+      title?: string;
+      question?: string;
+      closed?: boolean;
       createdBy?: string;
     };
-    userId: {
+    userId?: {
       _id: string;
       name: string;
     };
-    createdAt: string;
+    createdAt?: string;
   };
   participantCount?: number;
   onClick: () => void;
@@ -71,15 +72,34 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {
   const [deleting, setDeleting] = useState(false);
-  const iconConfig = DYNAMIC_ICONS[dynamic.commandType] || {
+
+  // Safety check - return null if dynamic is invalid
+  if (!dynamic || !dynamic._id) {
+    return null;
+  }
+
+  const iconConfig = DYNAMIC_ICONS[dynamic.commandType || ''] || {
     icon: Target,
     color: 'text-gray-600',
     bg: 'bg-gray-100 dark:bg-gray-900/30'
   };
   const Icon = iconConfig.icon;
   const isClosed = dynamic.commandData?.closed ?? false;
-  const title = dynamic.commandData?.title || 'Sin título';
+  const title = dynamic.commandData?.title || dynamic.commandData?.question || 'Sin título';
   const userName = dynamic.userId?.name || 'Usuario';
+
+  // Safe date formatting
+  let timeAgo = 'hace un momento';
+  try {
+    if (dynamic.createdAt) {
+      timeAgo = formatDistanceToNow(new Date(dynamic.createdAt), {
+        addSuffix: true,
+        locale: es
+      });
+    }
+  } catch {
+    timeAgo = 'hace un momento';
+  }
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -114,10 +134,7 @@ export default function DynamicCard({ dynamic, participantCount = 0, onClick, on
               )}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              por {userName} · {dynamic.createdAt ? formatDistanceToNow(new Date(dynamic.createdAt), {
-                addSuffix: true,
-                locale: es
-              }) : 'hace un momento'}
+              por {userName} · {timeAgo}
             </p>
             <div className="flex items-center gap-3 mt-2">
               <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
