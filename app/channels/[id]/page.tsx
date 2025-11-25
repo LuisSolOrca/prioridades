@@ -11,8 +11,9 @@ import ChannelMetrics from '@/components/channels/ChannelMetrics';
 import ChannelManagement from '@/components/ChannelManagement';
 import WebhookManagement from '@/components/WebhookManagement';
 import FilesTab from '@/components/FilesTab';
+import CollaborativeWorkspace from '@/components/channels/CollaborativeWorkspace';
 import ProjectFormModal, { ProjectFormData } from '@/components/ProjectFormModal';
-import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft, BarChart3, FileText, Folder, Webhook, Files } from 'lucide-react';
+import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft, BarChart3, FileText, Folder, Webhook, Files, Zap } from 'lucide-react';
 
 interface User {
   _id: string;
@@ -23,7 +24,7 @@ interface User {
 export default function ChannelPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics' | 'canales' | 'webhooks' | 'files'>('metrics');
+  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics' | 'canales' | 'webhooks' | 'files' | 'dynamics'>('metrics');
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -218,6 +219,17 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
                 <Files size={18} className="mr-2" />
                 Archivos
               </button>
+              <button
+                onClick={() => setActiveTab('dynamics')}
+                className={`flex items-center px-4 py-2 rounded-t-lg transition ${
+                  activeTab === 'dynamics'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Zap size={18} className="mr-2" />
+                Dinámicas
+              </button>
             </div>
           </div>
         </div>
@@ -232,6 +244,7 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
             {activeTab === 'canales' && <ChannelManagement key="canales" projectId={params.id} />}
             {activeTab === 'webhooks' && <WebhookManagement key="webhooks" projectId={params.id} />}
             {activeTab === 'files' && <FilesTab key="files" projectId={params.id} />}
+            {activeTab === 'dynamics' && <CollaborativeWorkspace key="dynamics" projectId={params.id} />}
           </div>
         </div>
       </div>
