@@ -32,8 +32,12 @@ export async function PUT(
       );
     }
 
-    // Buscar el mensaje
-    const message = await ChannelMessage.findById(params.messageId);
+    // Buscar el mensaje (verificar que pertenece al proyecto)
+    const message = await ChannelMessage.findOne({
+      _id: params.messageId,
+      projectId: params.id,
+      isDeleted: false
+    });
 
     if (!message) {
       return NextResponse.json(
@@ -61,13 +65,6 @@ export async function PUT(
       askedToId === sessionUserId?.toString() ||
       (session.user as any).role === 'ADMIN';
 
-    console.log('Permission check:', {
-      sessionUserId,
-      askedToId,
-      role: (session.user as any).role,
-      canAnswer
-    });
-
     if (!canAnswer) {
       return NextResponse.json(
         { error: 'No tienes permiso para responder esta pregunta' },
@@ -87,27 +84,31 @@ export async function PUT(
     message.markModified('commandData');
     await message.save();
 
-    // Poblar el mensaje actualizado
-    const updatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    const savedMessage = message.toObject();
+    const channelId = message.channelId;
 
-    // Emitir evento de Pusher para actualización en tiempo real
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        updatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    // Pusher en background (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(updatedMessage);
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error updating question answer:', error);
     return NextResponse.json(

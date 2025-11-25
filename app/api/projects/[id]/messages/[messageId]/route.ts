@@ -33,8 +33,12 @@ export async function PUT(
       );
     }
 
-    // Buscar el mensaje
-    const message = await ChannelMessage.findById(params.messageId);
+    // Buscar el mensaje (verificar que pertenece al proyecto)
+    const message = await ChannelMessage.findOne({
+      _id: params.messageId,
+      projectId: params.id,
+      isDeleted: false
+    });
 
     if (!message) {
       return NextResponse.json(
@@ -97,16 +101,31 @@ export async function PUT(
     message.isEdited = true;
     await message.save();
 
-    // Poblar y devolver
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    const savedMessage = message.toObject();
+    const channelId = message.channelId;
 
-    return NextResponse.json(populatedMessage);
+    // Pusher en background (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error updating message:', error);
     return NextResponse.json(
@@ -133,8 +152,11 @@ export async function DELETE(
 
     await connectDB();
 
-    // Buscar el mensaje
-    const message = await ChannelMessage.findById(params.messageId);
+    // Buscar el mensaje (verificar que pertenece al proyecto)
+    const message = await ChannelMessage.findOne({
+      _id: params.messageId,
+      projectId: params.id
+    });
 
     if (!message) {
       return NextResponse.json(
@@ -154,6 +176,8 @@ export async function DELETE(
     // Marcar como eliminado en lugar de eliminar físicamente
     message.isDeleted = true;
     message.content = '[Mensaje eliminado]';
+    const channelId = message.channelId;
+    const messageId = message._id;
     await message.save();
 
     // Si es una respuesta, decrementar contador en el mensaje padre
@@ -162,6 +186,23 @@ export async function DELETE(
         $inc: { replyCount: -1 }
       });
     }
+
+    // Notificar a otros usuarios que el mensaje fue eliminado
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(messageId)
+          .populate('userId', 'name email')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-deleted',
+          { messageId: messageId.toString(), message: populatedMessage }
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
 
     return NextResponse.json({ message: 'Mensaje eliminado correctamente' });
   } catch (error) {
@@ -200,8 +241,12 @@ export async function PATCH(
       );
     }
 
-    // Buscar el mensaje
-    const message = await ChannelMessage.findById(params.messageId);
+    // Buscar el mensaje (verificar que pertenece al proyecto)
+    const message = await ChannelMessage.findOne({
+      _id: params.messageId,
+      projectId: params.id,
+      isDeleted: false
+    });
 
     if (!message) {
       return NextResponse.json(
@@ -214,25 +259,28 @@ export async function PATCH(
     message.commandData = commandData;
     await message.save();
 
-    // Poblar el mensaje para enviarlo completo
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('priorityMentions', 'title status completionPercentage userId')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    const channelId = message.channelId;
 
-    // Emitir evento de Pusher para actualización en tiempo real
-    try {
-      await triggerPusherEvent(
-        `presence-channel-${message.channelId}`,
-        'message-updated',
-        populatedMessage
-      );
-    } catch (pusherError) {
-      console.error('Error triggering Pusher event:', pusherError);
-    }
+    // Pusher en background (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
 
     return NextResponse.json({ success: true, message: 'CommandData actualizado' });
   } catch (error) {

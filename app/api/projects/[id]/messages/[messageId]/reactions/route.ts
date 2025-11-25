@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { trackChannelUsage } from '@/lib/gamification';
+import { triggerPusherEvent } from '@/lib/pusher-server';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/reactions
@@ -32,8 +33,12 @@ export async function POST(
       );
     }
 
-    // Buscar el mensaje
-    const message = await ChannelMessage.findById(params.messageId);
+    // Buscar el mensaje (verificar que pertenece al proyecto)
+    const message = await ChannelMessage.findOne({
+      _id: params.messageId,
+      projectId: params.id,
+      isDeleted: false
+    });
 
     if (!message) {
       return NextResponse.json(
@@ -63,23 +68,38 @@ export async function POST(
 
     await message.save();
 
-    // Trackear reacción recibida para gamificación (del autor del mensaje, no quien reacciona)
-    try {
-      if (message.userId.toString() !== session.user.id) {
-        await trackChannelUsage(message.userId.toString(), 'reactionReceived');
+    const savedMessage = message.toObject();
+    const channelId = message.channelId;
+    const messageAuthorId = message.userId.toString();
+
+    // Gamificación y Pusher en background (no bloqueante)
+    (async () => {
+      try {
+        // Trackear reacción recibida para gamificación
+        if (messageAuthorId !== session.user.id) {
+          await trackChannelUsage(messageAuthorId, 'reactionReceived');
+        }
+      } catch (gamificationError) {
+        console.error('Error tracking reaction gamification:', gamificationError);
       }
-    } catch (gamificationError) {
-      console.error('Error tracking reaction gamification:', gamificationError);
-      // No fallar si la gamificación falla
-    }
 
-    // Poblar y devolver
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('reactions.userId', 'name')
-      .lean();
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('reactions.userId', 'name')
+          .lean();
 
-    return NextResponse.json(populatedMessage);
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error adding reaction:', error);
     return NextResponse.json(
@@ -116,8 +136,12 @@ export async function DELETE(
       );
     }
 
-    // Buscar el mensaje
-    const message = await ChannelMessage.findById(params.messageId);
+    // Buscar el mensaje (verificar que pertenece al proyecto)
+    const message = await ChannelMessage.findOne({
+      _id: params.messageId,
+      projectId: params.id,
+      isDeleted: false
+    });
 
     if (!message) {
       return NextResponse.json(
@@ -133,13 +157,28 @@ export async function DELETE(
 
     await message.save();
 
-    // Poblar y devolver
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('reactions.userId', 'name')
-      .lean();
+    const savedMessage = message.toObject();
+    const channelId = message.channelId;
 
-    return NextResponse.json(populatedMessage);
+    // Pusher en background (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('reactions.userId', 'name')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error removing reaction:', error);
     return NextResponse.json(

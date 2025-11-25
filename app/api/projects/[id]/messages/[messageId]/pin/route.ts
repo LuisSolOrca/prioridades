@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import Project from '@/models/Project';
+import { triggerPusherEvent } from '@/lib/pusher-server';
 
 /**
  * PUT /api/projects/[id]/messages/[messageId]/pin
@@ -65,15 +66,30 @@ export async function PUT(
     message.pinnedBy = session.user.id as any;
     await message.save();
 
-    // Poblar el mensaje actualizado
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('reactions.userId', 'name')
-      .populate('pinnedBy', 'name')
-      .lean();
+    const savedMessage = message.toObject();
+    const channelId = message.channelId;
 
-    return NextResponse.json(populatedMessage);
+    // Pusher en background (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-pinned',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error pinning message:', error);
     return NextResponse.json(
@@ -130,14 +146,29 @@ export async function DELETE(
     message.pinnedBy = null as any;
     await message.save();
 
-    // Poblar el mensaje actualizado
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('reactions.userId', 'name')
-      .lean();
+    const savedMessage = message.toObject();
+    const channelId = message.channelId;
 
-    return NextResponse.json(populatedMessage);
+    // Pusher en background (no bloqueante)
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('reactions.userId', 'name')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${channelId}`,
+          'message-unpinned',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error unpinning message:', error);
     return NextResponse.json(
