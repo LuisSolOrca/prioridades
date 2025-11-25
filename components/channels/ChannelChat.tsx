@@ -39,6 +39,7 @@ import BlindVoteCommand from '../slashCommands/BlindVoteCommand';
 import RetroCommand from '../slashCommands/RetroCommand';
 import NPSCommand from '../slashCommands/NPSCommand';
 import DecisionMatrixCommand from '../slashCommands/DecisionMatrixCommand';
+import MindMapCommand from '../slashCommands/MindMapCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 import BlockersCommand from '../slashCommands/BlockersCommand';
 import RisksCommand from '../slashCommands/RisksCommand';
@@ -1283,11 +1284,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               commandType: 'mind-map',
               commandData: {
                 title: mindMapTitle,
-                sections: [
-                  { id: 'ideas', title: 'Ideas Principales', icon: '💡', color: '#3b82f6', items: [] },
-                  { id: 'connections', title: 'Conexiones', icon: '🔗', color: '#10b981', items: [] },
-                  { id: 'actions', title: 'Acciones', icon: '⚡', color: '#f59e0b', items: [] }
-                ],
+                nodes: [],
                 createdBy: session?.user?.id,
                 closed: false
               }
@@ -2617,10 +2614,38 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         </div>
                       )}
                     </div>
+                  ) : message.commandType === 'mind-map' && message.commandData ? (
+                    /* Render Mind Map Command */
+                    <div className="relative group">
+                      <MindMapCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        title={message.commandData.title}
+                        nodes={message.commandData.nodes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={loadMessages}
+                      />
+                      {/* Actions Menu for Mind Map */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar mapa mental"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ) : (message.commandType === 'rose-bud-thorn' || message.commandType === 'sailboat' ||
                        message.commandType === 'start-stop-continue' || message.commandType === 'swot' ||
-                       message.commandType === 'six-hats' || message.commandType === 'mind-map' ||
-                       message.commandType === 'crazy-8s' || message.commandType === 'affinity-map') &&
+                       message.commandType === 'six-hats' || message.commandType === 'crazy-8s' ||
+                       message.commandType === 'affinity-map') &&
                        message.commandData ? (
                     /* Render Retro Command */
                     <div className="relative group">
@@ -2637,7 +2662,6 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'sailboat' ? <Ship className="text-white" size={20} /> :
                           message.commandType === 'start-stop-continue' ? <PlayCircle className="text-white" size={20} /> :
                           message.commandType === 'six-hats' ? <span className="text-white text-xl">🎩</span> :
-                          message.commandType === 'mind-map' ? <span className="text-white text-xl">🧠</span> :
                           message.commandType === 'crazy-8s' ? <span className="text-white text-xl">🎨</span> :
                           message.commandType === 'affinity-map' ? <span className="text-white text-xl">📌</span> :
                           <Target className="text-white" size={20} />
@@ -2647,7 +2671,6 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'sailboat' ? 'from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'start-stop-continue' ? 'from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'six-hats' ? 'from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900' :
-                          message.commandType === 'mind-map' ? 'from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'crazy-8s' ? 'from-fuchsia-50 to-pink-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'affinity-map' ? 'from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900' :
                           'from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900'
@@ -2657,7 +2680,6 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'sailboat' ? 'border-blue-400 dark:border-blue-600' :
                           message.commandType === 'start-stop-continue' ? 'border-green-400 dark:border-green-600' :
                           message.commandType === 'six-hats' ? 'border-slate-400 dark:border-slate-600' :
-                          message.commandType === 'mind-map' ? 'border-cyan-400 dark:border-cyan-600' :
                           message.commandType === 'crazy-8s' ? 'border-fuchsia-400 dark:border-fuchsia-600' :
                           message.commandType === 'affinity-map' ? 'border-amber-400 dark:border-amber-600' :
                           'border-purple-400 dark:border-purple-600'
