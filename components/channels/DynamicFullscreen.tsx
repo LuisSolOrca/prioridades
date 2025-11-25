@@ -209,8 +209,12 @@ export default function DynamicFullscreen({
       });
 
       if (response.ok) {
-        onUpdate();
+        // First close the fullscreen view, then update the list
         onClose();
+        // Small delay to ensure state is updated before reload
+        setTimeout(() => {
+          onUpdate();
+        }, 100);
       } else {
         alert('Error al cerrar la dinámica');
       }
@@ -557,7 +561,7 @@ export default function DynamicFullscreen({
               <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/30">
                 {/* Timer presets */}
                 {!timerRunning && timerMinutes === Math.floor(timerInitialSeconds / 60) && timerSeconds === 0 && (
-                  <div className="flex gap-1">
+                  <div className="flex items-center gap-1">
                     {[1, 2, 3, 5, 10].map(mins => (
                       <button
                         key={mins}
@@ -567,6 +571,28 @@ export default function DynamicFullscreen({
                         {mins}m
                       </button>
                     ))}
+                    <span className="text-purple-400 mx-1">|</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      placeholder="min"
+                      className="w-12 px-1.5 py-0.5 text-xs rounded bg-white dark:bg-gray-800 border border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-200 text-center focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const val = parseInt((e.target as HTMLInputElement).value);
+                          if (val > 0 && val <= 120) {
+                            startTimer(val);
+                          }
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (val > 0 && val <= 120) {
+                          startTimer(val);
+                        }
+                      }}
+                    />
                   </div>
                 )}
                 {/* Timer display */}

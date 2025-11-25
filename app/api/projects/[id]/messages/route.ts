@@ -36,6 +36,7 @@ export async function GET(
     const parentMessageId = searchParams.get('parentMessageId');
     const channelId = searchParams.get('channelId');
     const search = searchParams.get('search') || '';
+    const isDynamic = searchParams.get('isDynamic') === 'true';
 
     // Construir query
     const query: any = {
@@ -46,6 +47,12 @@ export async function GET(
     // Filtrar por canal si se proporciona
     if (channelId) {
       query.channelId = channelId;
+    }
+
+    // Filtrar solo dinámicas (mensajes con commandType y commandData)
+    if (isDynamic) {
+      query.commandType = { $ne: null };
+      query.commandData = { $ne: null };
     }
 
     // Si se especifica parentMessageId, obtener respuestas del hilo

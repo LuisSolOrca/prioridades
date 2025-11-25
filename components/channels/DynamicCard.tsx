@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -10,7 +11,9 @@ import {
   Heart,
   Users,
   Lock,
-  Play
+  Play,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 
 interface DynamicCardProps {
@@ -30,6 +33,8 @@ interface DynamicCardProps {
   };
   participantCount?: number;
   onClick: () => void;
+  onDelete?: (id: string) => void;
+  canDelete?: boolean;
 }
 
 const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: string }> = {
@@ -64,7 +69,8 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   'icebreaker': { icon: Heart, color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
 };
 
-export default function DynamicCard({ dynamic, participantCount = 0, onClick }: DynamicCardProps) {
+export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {
+  const [deleting, setDeleting] = useState(false);
   const iconConfig = DYNAMIC_ICONS[dynamic.commandType] || {
     icon: Target,
     color: 'text-gray-600',
@@ -75,58 +81,81 @@ export default function DynamicCard({ dynamic, participantCount = 0, onClick }: 
   const title = dynamic.commandData?.title || 'Sin título';
   const userName = dynamic.userId?.name || 'Usuario';
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onDelete || !confirm('¿Eliminar esta dinámica del historial?')) return;
+
+    setDeleting(true);
+    await onDelete(dynamic._id);
+    setDeleting(false);
+  };
+
   return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-        isClosed
-          ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-75'
-          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-lg ${iconConfig.bg}`}>
-          <Icon className={iconConfig.color} size={20} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-              {title}
-            </h4>
-            {isClosed && (
-              <Lock size={14} className="text-gray-400 flex-shrink-0" />
-            )}
+    <div className="relative group">
+      <button
+        onClick={onClick}
+        className={`w-full text-left p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
+          isClosed
+            ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-75'
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg ${iconConfig.bg}`}>
+            <Icon className={iconConfig.color} size={20} />
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            por {userName} · {dynamic.createdAt ? formatDistanceToNow(new Date(dynamic.createdAt), {
-              addSuffix: true,
-              locale: es
-            }) : 'hace un momento'}
-          </p>
-          <div className="flex items-center gap-3 mt-2">
-            <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
-              isClosed
-                ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-            }`}>
-              {isClosed ? 'Cerrada' : 'Activa'}
-            </span>
-            {participantCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                <Users size={12} />
-                {participantCount}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                {title}
+              </h4>
+              {isClosed && (
+                <Lock size={14} className="text-gray-400 flex-shrink-0" />
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              por {userName} · {dynamic.createdAt ? formatDistanceToNow(new Date(dynamic.createdAt), {
+                addSuffix: true,
+                locale: es
+              }) : 'hace un momento'}
+            </p>
+            <div className="flex items-center gap-3 mt-2">
+              <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+                isClosed
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+              }`}>
+                {isClosed ? 'Cerrada' : 'Activa'}
               </span>
-            )}
-          </div>
-        </div>
-        {!isClosed && (
-          <div className="flex-shrink-0">
-            <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-              <Play size={16} />
+              {participantCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                  <Users size={12} />
+                  {participantCount}
+                </span>
+              )}
             </div>
           </div>
-        )}
-      </div>
-    </button>
+          {!isClosed && (
+            <div className="flex-shrink-0">
+              <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                <Play size={16} />
+              </div>
+            </div>
+          )}
+        </div>
+      </button>
+
+      {/* Delete button - shows on hover for closed dynamics */}
+      {canDelete && onDelete && (
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-200 dark:hover:bg-red-900/50 transition-all disabled:opacity-50"
+          title="Eliminar dinámica"
+        >
+          {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+        </button>
+      )}
+    </div>
   );
 }

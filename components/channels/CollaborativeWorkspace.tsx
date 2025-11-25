@@ -301,13 +301,36 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   // Handle dynamic close
   const handleCloseDynamic = () => {
     setActiveDynamic(null);
-    loadDynamics(); // Reload to get updated state
+    // loadDynamics is now called by DynamicFullscreen after close
   };
 
-  // Separate active and closed dynamics (filter out any without commandData)
-  const validDynamics = dynamics.filter(d => d.commandData !== null && d.commandData !== undefined);
-  const activeDynamics = validDynamics.filter(d => !d.commandData.closed);
-  const closedDynamics = validDynamics.filter(d => d.commandData.closed);
+  // Handle dynamic delete
+  const handleDeleteDynamic = async (dynamicId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/messages/${dynamicId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setDynamics(prev => prev.filter(d => d._id !== dynamicId));
+      } else {
+        alert('Error al eliminar la dinámica');
+      }
+    } catch (error) {
+      console.error('Error deleting dynamic:', error);
+      alert('Error al eliminar la dinámica');
+    }
+  };
+
+  // Separate active and closed dynamics (filter out any without valid commandData)
+  const validDynamics = dynamics.filter(d =>
+    d &&
+    d.commandData !== null &&
+    d.commandData !== undefined &&
+    typeof d.commandData === 'object'
+  );
+  const activeDynamics = validDynamics.filter(d => d.commandData?.closed !== true);
+  const closedDynamics = validDynamics.filter(d => d.commandData?.closed === true);
 
   // Loading channels
   if (loadingChannels) {
@@ -409,6 +432,8 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
                     dynamic={dynamic}
                     participantCount={onlineUsers.length}
                     onClick={() => setActiveDynamic(dynamic)}
+                    onDelete={handleDeleteDynamic}
+                    canDelete={dynamic.commandData?.createdBy === session?.user?.id || dynamic.userId?._id === session?.user?.id}
                   />
                 ))}
               </div>
@@ -436,6 +461,8 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
                       key={dynamic._id}
                       dynamic={dynamic}
                       onClick={() => setActiveDynamic(dynamic)}
+                      onDelete={handleDeleteDynamic}
+                      canDelete={dynamic.commandData?.createdBy === session?.user?.id || dynamic.userId?._id === session?.user?.id}
                     />
                   ))}
                 </div>
