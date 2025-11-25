@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { GitBranch, Plus } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Task {
   name: string;
@@ -13,6 +14,7 @@ interface Task {
 interface DependencyMapCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   tasks: Task[];
   createdBy: string;
@@ -24,6 +26,7 @@ interface DependencyMapCommandProps {
 export default function DependencyMapCommand({
   projectId,
   messageId,
+  channelId,
   title,
   tasks: initialTasks,
   createdBy,
@@ -32,6 +35,7 @@ export default function DependencyMapCommand({
   onUpdate
 }: DependencyMapCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [tasks, setTasks] = useState(initialTasks);
   const [closed, setClosed] = useState(initialClosed);
   const [taskName, setTaskName] = useState('');
@@ -84,13 +88,25 @@ export default function DependencyMapCommand({
   const handleClose = async () => {
     if (session?.user?.id !== createdBy) return;
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'dependency-map',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/dependency-map`, { method: 'DELETE' });
       if (!response.ok) throw new Error();
       const data = await response.json();
       setClosed(data.commandData.closed);
       onUpdate?.();
     } catch (error) {
-      alert('Error');
+      alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -101,7 +117,7 @@ export default function DependencyMapCommand({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-slate-400 dark:border-slate-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-slate-400 dark:border-slate-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-gray-600 rounded-full flex items-center justify-center">

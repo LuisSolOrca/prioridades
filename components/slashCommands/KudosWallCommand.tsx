@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Heart, Sparkles } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Kudos {
   from: string;
@@ -16,6 +17,7 @@ interface Kudos {
 interface KudosWallCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   kudos: Kudos[];
   createdBy: string;
@@ -27,6 +29,7 @@ interface KudosWallCommandProps {
 export default function KudosWallCommand({
   projectId,
   messageId,
+  channelId,
   title,
   kudos: initialKudos,
   createdBy,
@@ -35,6 +38,7 @@ export default function KudosWallCommand({
   onUpdate
 }: KudosWallCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [kudos, setKudos] = useState(initialKudos);
   const [closed, setClosed] = useState(initialClosed);
   const [toUser, setToUser] = useState('');
@@ -78,6 +82,16 @@ export default function KudosWallCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'kudos-wall',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/kudos-wall`, {
         method: 'DELETE'
       });
@@ -94,11 +108,13 @@ export default function KudosWallCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-pink-400 dark:border-pink-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-pink-400 dark:border-pink-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center flex-shrink-0">

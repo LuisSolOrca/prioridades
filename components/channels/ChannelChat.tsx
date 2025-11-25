@@ -3308,6 +3308,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <ParkingLotCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         items={message.commandData.items || []}
                         createdBy={message.commandData.createdBy}
@@ -3336,6 +3337,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <KudosWallCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         kudos={message.commandData.kudos || []}
                         createdBy={message.commandData.createdBy}
@@ -3386,6 +3388,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <ActionItemsCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         items={message.commandData.items || []}
                         createdBy={message.commandData.createdBy}
@@ -3414,6 +3417,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <TeamHealthCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         areas={message.commandData.areas || []}
                         createdBy={message.commandData.createdBy}
@@ -3442,6 +3446,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <ConfidenceVoteCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         question={message.commandData.question}
                         votes={message.commandData.votes || []}
                         createdBy={message.commandData.createdBy}
@@ -3470,6 +3475,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <PomodoroCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         workMinutes={message.commandData.workMinutes}
                         breakMinutes={message.commandData.breakMinutes}
@@ -3504,6 +3510,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <AgendaCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         items={message.commandData.items || []}
                         createdBy={message.commandData.createdBy}
@@ -3532,6 +3539,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <CapacityCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         members={message.commandData.members || []}
                         createdBy={message.commandData.createdBy}
@@ -3560,6 +3568,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <DependencyMapCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         tasks={message.commandData.tasks || []}
                         createdBy={message.commandData.createdBy}
@@ -3588,6 +3597,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <OKRCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         objectives={message.commandData.objectives || []}
                         createdBy={message.commandData.createdBy}
@@ -3616,6 +3626,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       <RoadmapCommand
                         projectId={projectId}
                         messageId={message._id}
+                        channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         milestones={message.commandData.milestones || []}
                         createdBy={message.commandData.createdBy}

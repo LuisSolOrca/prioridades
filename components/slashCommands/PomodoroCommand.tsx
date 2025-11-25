@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Timer, Play, Pause, RotateCcw } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface PomodoroCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   workMinutes: number;
   breakMinutes: number;
@@ -24,6 +26,7 @@ interface PomodoroCommandProps {
 export default function PomodoroCommand({
   projectId,
   messageId,
+  channelId,
   title,
   workMinutes,
   breakMinutes,
@@ -38,6 +41,7 @@ export default function PomodoroCommand({
   onUpdate
 }: PomodoroCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [isRunning, setIsRunning] = useState(initialIsRunning);
   const [isPaused, setIsPaused] = useState(initialIsPaused);
   const [timeRemaining, setTimeRemaining] = useState(initialTimeRemaining);
@@ -159,6 +163,16 @@ export default function PomodoroCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'pomodoro',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/pomodoro`, {
         method: 'DELETE'
       });
@@ -175,6 +189,8 @@ export default function PomodoroCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -189,7 +205,7 @@ export default function PomodoroCommand({
     : ((workMinutes * 60 - timeRemaining) / (workMinutes * 60)) * 100;
 
   return (
-    <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-red-400 dark:border-red-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-red-400 dark:border-red-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">

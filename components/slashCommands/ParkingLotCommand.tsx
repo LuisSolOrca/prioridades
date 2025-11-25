@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Trash2, ParkingCircle } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface ParkingItem {
   text: string;
@@ -13,6 +14,7 @@ interface ParkingItem {
 interface ParkingLotCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   items: ParkingItem[];
   createdBy: string;
@@ -24,6 +26,7 @@ interface ParkingLotCommandProps {
 export default function ParkingLotCommand({
   projectId,
   messageId,
+  channelId,
   title,
   items: initialItems,
   createdBy,
@@ -32,6 +35,7 @@ export default function ParkingLotCommand({
   onUpdate
 }: ParkingLotCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState(initialItems);
   const [closed, setClosed] = useState(initialClosed);
   const [newItem, setNewItem] = useState('');
@@ -99,6 +103,16 @@ export default function ParkingLotCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'parking-lot',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/parking-lot`, {
         method: 'DELETE'
       });
@@ -115,11 +129,13 @@ export default function ParkingLotCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-orange-400 dark:border-orange-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-orange-400 dark:border-orange-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">

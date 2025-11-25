@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Map, Plus } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Milestone {
   title: string;
@@ -13,6 +14,7 @@ interface Milestone {
 interface RoadmapCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   milestones: Milestone[];
   createdBy: string;
@@ -24,6 +26,7 @@ interface RoadmapCommandProps {
 export default function RoadmapCommand({
   projectId,
   messageId,
+  channelId,
   title,
   milestones: initialMilestones,
   createdBy,
@@ -32,6 +35,7 @@ export default function RoadmapCommand({
   onUpdate
 }: RoadmapCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [milestones, setMilestones] = useState(initialMilestones);
   const [closed, setClosed] = useState(initialClosed);
   const [msTitle, setMsTitle] = useState('');
@@ -83,20 +87,32 @@ export default function RoadmapCommand({
   const handleClose = async () => {
     if (session?.user?.id !== createdBy) return;
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'roadmap',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/roadmap`, { method: 'DELETE' });
       if (!response.ok) throw new Error();
       const data = await response.json();
       setClosed(data.commandData.closed);
       onUpdate?.();
     } catch (error) {
-      alert('Error');
+      alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const sortedMilestones = [...milestones].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
-    <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-teal-400 dark:border-teal-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-teal-400 dark:border-teal-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center">

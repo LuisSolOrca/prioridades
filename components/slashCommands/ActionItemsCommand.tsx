@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { CheckSquare, Square, Trash2, Plus } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface ActionItem {
   description: string;
@@ -18,6 +19,7 @@ interface ActionItem {
 interface ActionItemsCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   items: ActionItem[];
   createdBy: string;
@@ -29,6 +31,7 @@ interface ActionItemsCommandProps {
 export default function ActionItemsCommand({
   projectId,
   messageId,
+  channelId,
   title,
   items: initialItems,
   createdBy,
@@ -37,6 +40,7 @@ export default function ActionItemsCommand({
   onUpdate
 }: ActionItemsCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState(initialItems);
   const [closed, setClosed] = useState(initialClosed);
   const [description, setDescription] = useState('');
@@ -139,6 +143,16 @@ export default function ActionItemsCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'action-items',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/action-items`, {
         method: 'DELETE'
       });
@@ -155,6 +169,8 @@ export default function ActionItemsCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -162,7 +178,7 @@ export default function ActionItemsCommand({
   const overdueCount = items.filter(item => !item.completed && new Date(item.dueDate) < new Date()).length;
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-green-400 dark:border-green-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-green-400 dark:border-green-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">

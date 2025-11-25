@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Clock, Plus, Trash2 } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface AgendaItem {
   topic: string;
@@ -14,6 +15,7 @@ interface AgendaItem {
 interface AgendaCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   items: AgendaItem[];
   createdBy: string;
@@ -25,6 +27,7 @@ interface AgendaCommandProps {
 export default function AgendaCommand({
   projectId,
   messageId,
+  channelId,
   title,
   items: initialItems,
   createdBy,
@@ -33,6 +36,7 @@ export default function AgendaCommand({
   onUpdate
 }: AgendaCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState(initialItems);
   const [closed, setClosed] = useState(initialClosed);
   const [topic, setTopic] = useState('');
@@ -88,6 +92,16 @@ export default function AgendaCommand({
   const handleClose = async () => {
     if (session?.user?.id !== createdBy) return;
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'agenda',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/agenda`, { method: 'DELETE' });
       if (!response.ok) throw new Error();
       const data = await response.json();
@@ -95,13 +109,15 @@ export default function AgendaCommand({
       onUpdate?.();
     } catch (error) {
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const totalTime = items.reduce((acc, item) => acc + item.timeMinutes, 0);
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-blue-400 dark:border-blue-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-blue-400 dark:border-blue-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-sky-600 rounded-full flex items-center justify-center">

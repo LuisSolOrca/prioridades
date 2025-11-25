@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Users } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Member {
   userName: string;
@@ -12,6 +13,7 @@ interface Member {
 interface CapacityCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   members: Member[];
   createdBy: string;
@@ -23,6 +25,7 @@ interface CapacityCommandProps {
 export default function CapacityCommand({
   projectId,
   messageId,
+  channelId,
   title,
   members: initialMembers,
   createdBy,
@@ -31,6 +34,7 @@ export default function CapacityCommand({
   onUpdate
 }: CapacityCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [members, setMembers] = useState(initialMembers);
   const [closed, setClosed] = useState(initialClosed);
   const [userName, setUserName] = useState('');
@@ -62,20 +66,32 @@ export default function CapacityCommand({
   const handleClose = async () => {
     if (session?.user?.id !== createdBy) return;
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'capacity',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/capacity`, { method: 'DELETE' });
       if (!response.ok) throw new Error();
       const data = await response.json();
       setClosed(data.commandData.closed);
       onUpdate?.();
     } catch (error) {
-      alert('Error');
+      alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const totalHours = members.reduce((acc, m) => acc + m.hoursPerDay, 0);
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-violet-400 dark:border-violet-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-violet-400 dark:border-violet-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center">

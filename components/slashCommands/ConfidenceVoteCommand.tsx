@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { TrendingUp } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Vote {
   userId: string;
@@ -14,6 +15,7 @@ interface Vote {
 interface ConfidenceVoteCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   question: string;
   votes: Vote[];
   createdBy: string;
@@ -33,6 +35,7 @@ const CONFIDENCE_LEVELS = [
 export default function ConfidenceVoteCommand({
   projectId,
   messageId,
+  channelId,
   question,
   votes: initialVotes,
   createdBy,
@@ -41,6 +44,7 @@ export default function ConfidenceVoteCommand({
   onUpdate
 }: ConfidenceVoteCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [votes, setVotes] = useState(initialVotes);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +81,16 @@ export default function ConfidenceVoteCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'confidence-vote',
+        title: question
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/confidence-vote`, {
         method: 'DELETE'
       });
@@ -93,6 +107,8 @@ export default function ConfidenceVoteCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -126,7 +142,7 @@ export default function ConfidenceVoteCommand({
   const averageLevel = getAverageLevel();
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-400 dark:border-indigo-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-indigo-400 dark:border-indigo-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">

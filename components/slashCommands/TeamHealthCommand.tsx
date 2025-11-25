@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Activity } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface Vote {
   userId: string;
@@ -19,6 +20,7 @@ interface Area {
 interface TeamHealthCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   areas: Area[];
   createdBy: string;
@@ -38,6 +40,7 @@ const RATINGS = [
 export default function TeamHealthCommand({
   projectId,
   messageId,
+  channelId,
   title,
   areas: initialAreas,
   createdBy,
@@ -46,6 +49,7 @@ export default function TeamHealthCommand({
   onUpdate
 }: TeamHealthCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [areas, setAreas] = useState(initialAreas);
   const [closed, setClosed] = useState(initialClosed);
   const [submitting, setSubmitting] = useState(false);
@@ -82,6 +86,16 @@ export default function TeamHealthCommand({
     if (!session?.user?.id || session.user.id !== createdBy) return;
 
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'team-health',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/team-health`, {
         method: 'DELETE'
       });
@@ -98,6 +112,8 @@ export default function TeamHealthCommand({
     } catch (error) {
       console.error('Error closing:', error);
       alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -121,7 +137,7 @@ export default function TeamHealthCommand({
   };
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-purple-400 dark:border-purple-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-purple-400 dark:border-purple-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">

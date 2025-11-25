@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Target, Plus } from 'lucide-react';
+import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
 
 interface KeyResult {
   description: string;
@@ -17,6 +18,7 @@ interface Objective {
 interface OKRCommandProps {
   projectId: string;
   messageId: string;
+  channelId: string;
   title: string;
   objectives: Objective[];
   createdBy: string;
@@ -28,6 +30,7 @@ interface OKRCommandProps {
 export default function OKRCommand({
   projectId,
   messageId,
+  channelId,
   title,
   objectives: initialObjectives,
   createdBy,
@@ -36,6 +39,7 @@ export default function OKRCommand({
   onUpdate
 }: OKRCommandProps) {
   const { data: session } = useSession();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [objectives, setObjectives] = useState(initialObjectives);
   const [closed, setClosed] = useState(initialClosed);
   const [objTitle, setObjTitle] = useState('');
@@ -107,18 +111,30 @@ export default function OKRCommand({
   const handleClose = async () => {
     if (session?.user?.id !== createdBy) return;
     try {
+      setSubmitting(true);
+
+      // Capturar screenshot antes de cerrar
+      await captureCardScreenshot(cardRef.current, {
+        projectId,
+        channelId,
+        commandType: 'okr',
+        title
+      });
+
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/okr`, { method: 'DELETE' });
       if (!response.ok) throw new Error();
       const data = await response.json();
       setClosed(data.commandData.closed);
       onUpdate?.();
     } catch (error) {
-      alert('Error');
+      alert('Error al cerrar');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-amber-400 dark:border-amber-600 p-6 my-2 shadow-lg">
+    <div ref={cardRef} className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-amber-400 dark:border-amber-600 p-6 my-2 shadow-lg">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-full flex items-center justify-center">
