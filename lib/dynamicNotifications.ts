@@ -444,7 +444,10 @@ export function extractParticipants(commandType: string, commandData: any): stri
 
   // Siempre incluir al creador
   if (commandData.createdBy) {
-    participants.add(commandData.createdBy);
+    const creatorId = typeof commandData.createdBy === 'string'
+      ? commandData.createdBy
+      : commandData.createdBy?.toString?.() || commandData.createdBy?._id?.toString?.();
+    if (creatorId) participants.add(creatorId);
   }
 
   // Extraer participantes según el tipo de dinámica
@@ -472,9 +475,24 @@ export function extractParticipants(commandType: string, commandData: any): stri
     });
   }
 
-  // Opciones con votos
+  // Opciones con votos (polls, dot-voting, etc)
   if (commandData.options) {
-    extractFromArray(commandData.options, ['votes', 'voters']);
+    commandData.options.forEach((opt: any) => {
+      // votes puede ser array de strings/ObjectIds
+      if (opt.votes && Array.isArray(opt.votes)) {
+        opt.votes.forEach((v: any) => {
+          const id = typeof v === 'string' ? v : v?.toString?.() || v?._id?.toString?.();
+          if (id) participants.add(id);
+        });
+      }
+      // voters puede ser array de objetos con oderId
+      if (opt.voters && Array.isArray(opt.voters)) {
+        opt.voters.forEach((v: any) => {
+          const id = typeof v === 'string' ? v : v?.oderId || v?.userId || v?.toString?.();
+          if (id) participants.add(id);
+        });
+      }
+    });
   }
 
   // Ideas (brainstorm)
@@ -555,12 +573,17 @@ export async function notifyDynamicClosed(params: NotifyDynamicClosedParams) {
 
     const { projectId, channelId, messageId, commandType, commandData, closedByUserId, closedByUserName } = params;
 
+    console.log(`[DYNAMIC_NOTIFICATION] Starting for ${commandType}, closedBy: ${closedByUserId}`);
+    console.log(`[DYNAMIC_NOTIFICATION] commandData keys:`, Object.keys(commandData || {}));
+
     // Generar resumen contextual
     const summary = generateDynamicSummary(commandType, commandData);
     const typeLabel = DYNAMIC_TYPE_LABELS[commandType] || commandType;
 
     // Obtener todos los participantes (incluyendo al que cerró)
     const participantIds = extractParticipants(commandType, commandData);
+
+    console.log(`[DYNAMIC_NOTIFICATION] Extracted ${participantIds.length} participants:`, participantIds);
 
     if (participantIds.length === 0) {
       console.log('[DYNAMIC_NOTIFICATION] No participants to notify');
