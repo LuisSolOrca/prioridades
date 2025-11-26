@@ -83,6 +83,27 @@ import CapacityCommand from '../slashCommands/CapacityCommand';
 import DependencyMapCommand from '../slashCommands/DependencyMapCommand';
 import OKRCommand from '../slashCommands/OKRCommand';
 import RoadmapCommand from '../slashCommands/RoadmapCommand';
+import RiskMatrixCommand from '../slashCommands/RiskMatrixCommand';
+import RICECommand from '../slashCommands/RICECommand';
+import LeanCanvasCommand from '../slashCommands/LeanCanvasCommand';
+import CustomerJourneyCommand from '../slashCommands/CustomerJourneyCommand';
+import LeanCoffeeCommand from '../slashCommands/LeanCoffeeCommand';
+import UserStoryMappingCommand from '../slashCommands/UserStoryMappingCommand';
+import FishboneCommand from '../slashCommands/FishboneCommand';
+import RACICommand from '../slashCommands/RACICommand';
+import WorkingAgreementsCommand from '../slashCommands/WorkingAgreementsCommand';
+import BrainwritingCommand from '../slashCommands/BrainwritingCommand';
+import PersonaCommand from '../slashCommands/PersonaCommand';
+import AssumptionMappingCommand from '../slashCommands/AssumptionMappingCommand';
+import TeamCanvasCommand from '../slashCommands/TeamCanvasCommand';
+import FiveWhysCommand from '../slashCommands/FiveWhysCommand';
+import ImpactEffortCommand from '../slashCommands/ImpactEffortCommand';
+import OpportunityTreeCommand from '../slashCommands/OpportunityTreeCommand';
+import LotusBlossomCommand from '../slashCommands/LotusBlossomCommand';
+import RomanVotingCommand from '../slashCommands/RomanVotingCommand';
+import InceptionDeckCommand from '../slashCommands/InceptionDeckCommand';
+import DelegationPokerCommand from '../slashCommands/DelegationPokerCommand';
+import MovingMotivatorsCommand from '../slashCommands/MovingMotivatorsCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
@@ -5591,6 +5612,326 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           )}
                         </div>
                       )}
+                    </div>
+                  ) : message.commandType === 'risk-matrix' && message.commandData ? (
+                    <div className="relative group">
+                      <RiskMatrixCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        risks={message.commandData.risks || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'rice' && message.commandData ? (
+                    <div className="relative group">
+                      <RICECommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'lean-canvas' && message.commandData ? (
+                    <div className="relative group">
+                      <LeanCanvasCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        blocks={message.commandData.blocks || {}}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'customer-journey' && message.commandData ? (
+                    <div className="relative group">
+                      <CustomerJourneyCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        persona={message.commandData.persona || ''}
+                        stages={message.commandData.stages || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'lean-coffee' && message.commandData ? (
+                    <div className="relative group">
+                      <LeanCoffeeCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        topics={message.commandData.topics || []}
+                        currentTopic={message.commandData.currentTopic}
+                        timePerTopic={message.commandData.timePerTopic || 5}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'user-story-mapping' && message.commandData ? (
+                    <div className="relative group">
+                      <UserStoryMappingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        activities={message.commandData.activities || []}
+                        releases={message.commandData.releases || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'fishbone' && message.commandData ? (
+                    <div className="relative group">
+                      <FishboneCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        problem={message.commandData.problem || ''}
+                        categories={message.commandData.categories || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'raci' && message.commandData ? (
+                    <div className="relative group">
+                      <RACICommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        roles={message.commandData.roles || []}
+                        tasks={message.commandData.tasks || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'roman-voting' && message.commandData ? (
+                    <div className="relative group">
+                      <RomanVotingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        question={message.commandData.question || message.commandData.title}
+                        votes={message.commandData.votes || []}
+                        revealed={message.commandData.revealed || false}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'working-agreements' && message.commandData ? (
+                    <div className="relative group">
+                      <WorkingAgreementsCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        categories={message.commandData.categories || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'brainwriting' && message.commandData ? (
+                    <div className="relative group">
+                      <BrainwritingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        rounds={message.commandData.rounds || []}
+                        currentRound={message.commandData.currentRound || 0}
+                        timePerRound={message.commandData.timePerRound || 5}
+                        ideasPerRound={message.commandData.ideasPerRound || 3}
+                        participants={message.commandData.participants || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'persona' && message.commandData ? (
+                    <div className="relative group">
+                      <PersonaCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        name={message.commandData.name || ''}
+                        photo={message.commandData.photo || ''}
+                        demographics={message.commandData.demographics || {}}
+                        goals={message.commandData.goals || []}
+                        frustrations={message.commandData.frustrations || []}
+                        motivations={message.commandData.motivations || []}
+                        behaviors={message.commandData.behaviors || []}
+                        quote={message.commandData.quote || ''}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'assumption-mapping' && message.commandData ? (
+                    <div className="relative group">
+                      <AssumptionMappingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        assumptions={message.commandData.assumptions || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'team-canvas' && message.commandData ? (
+                    <div className="relative group">
+                      <TeamCanvasCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        blocks={message.commandData.blocks || {}}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'five-whys' && message.commandData ? (
+                    <div className="relative group">
+                      <FiveWhysCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        problem={message.commandData.problem || ''}
+                        whys={message.commandData.whys || []}
+                        rootCause={message.commandData.rootCause || ''}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'impact-effort' && message.commandData ? (
+                    <div className="relative group">
+                      <ImpactEffortCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'opportunity-tree' && message.commandData ? (
+                    <div className="relative group">
+                      <OpportunityTreeCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        objective={message.commandData.objective || ''}
+                        opportunities={message.commandData.opportunities || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'lotus-blossom' && message.commandData ? (
+                    <div className="relative group">
+                      <LotusBlossomCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        centerIdea={message.commandData.centerIdea || ''}
+                        petals={message.commandData.petals || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'inception-deck' && message.commandData ? (
+                    <div className="relative group">
+                      <InceptionDeckCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        cards={message.commandData.cards || []}
+                        currentCardIndex={message.commandData.currentCardIndex || 0}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'delegation-poker' && message.commandData ? (
+                    <div className="relative group">
+                      <DelegationPokerCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        topics={message.commandData.topics || []}
+                        currentTopicIndex={message.commandData.currentTopicIndex || 0}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                    </div>
+                  ) : message.commandType === 'moving-motivators' && message.commandData ? (
+                    <div className="relative group">
+                      <MovingMotivatorsCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        context={message.commandData.context}
+                        rankings={message.commandData.rankings || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
                     </div>
                   ) : (
                     <div
