@@ -229,6 +229,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const isJumpingToMessage = useRef(false); // Flag to skip auto-scroll when navigating to specific message
 
   // Read marker state
   const [readMarker, setReadMarker] = useState<{
@@ -259,6 +260,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   // Scroll adicional después de la carga inicial de mensajes
   useEffect(() => {
+    // Skip auto-scroll if we're jumping to a specific message
+    if (isJumpingToMessage.current) {
+      return;
+    }
+
     if (initialLoad && messages.length > 0) {
       // Doble requestAnimationFrame para asegurar renderizado completo
       requestAnimationFrame(() => {
@@ -691,7 +697,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setHighlightedMessageId(messageId);
-        setTimeout(() => setHighlightedMessageId(null), 3000);
+        setTimeout(() => {
+          setHighlightedMessageId(null);
+          isJumpingToMessage.current = false; // Clear flag after highlight ends
+        }, 3000);
         return true;
       }
       return false;
@@ -704,7 +713,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
     // Message not in current view - load messages around it
     try {
+      // Set flag to prevent auto-scroll to bottom
+      isJumpingToMessage.current = true;
       setLoading(true);
+
       const response = await fetch(
         `/api/projects/${projectId}/messages?limit=50&channelId=${targetChannelId}&aroundMessageId=${messageId}`
       );
@@ -735,14 +747,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             setTimeout(tryScroll, 100);
           } else {
             console.warn('Could not find message element after loading:', messageId);
+            isJumpingToMessage.current = false; // Clear flag on failure too
           }
         };
 
         // Start trying after initial render
         setTimeout(tryScroll, 150);
+      } else {
+        isJumpingToMessage.current = false; // Clear flag on error
       }
     } catch (err) {
       console.error('Error loading messages around target:', err);
+      isJumpingToMessage.current = false; // Clear flag on error
     } finally {
       setLoading(false);
     }
