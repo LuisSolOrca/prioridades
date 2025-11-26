@@ -682,7 +682,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   };
 
   // Scroll to a specific message and highlight it
-  const scrollToMessage = async (messageId: string) => {
+  const scrollToMessage = async (messageId: string, channelId?: string) => {
+    const targetChannelId = channelId || selectedChannelId;
     const messageElement = document.getElementById(`message-${messageId}`);
     if (messageElement) {
       messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -694,7 +695,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       try {
         setLoading(true);
         const response = await fetch(
-          `/api/projects/${projectId}/messages?limit=50&channelId=${selectedChannelId}&aroundMessageId=${messageId}`
+          `/api/projects/${projectId}/messages?limit=50&channelId=${targetChannelId}&aroundMessageId=${messageId}`
         );
 
         if (response.ok) {
@@ -4650,8 +4651,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       setShowSemanticResults(false);
                       setSemanticSearchMode(false);
                       setSearchQuery('');
-                      // Scroll to the message in the chat
-                      scrollToMessage(result._id);
+                      // Check if we need to switch channels first
+                      if (result.channelId && result.channelId !== selectedChannelId) {
+                        // Switch channel, then scroll after channel loads
+                        setSelectedChannelId(result.channelId);
+                        // Use setTimeout to wait for channel to load, then scroll with the target channelId
+                        setTimeout(() => scrollToMessage(result._id, result.channelId), 500);
+                      } else {
+                        scrollToMessage(result._id);
+                      }
                     }}
                   >
                     <div className="flex items-start gap-2">
