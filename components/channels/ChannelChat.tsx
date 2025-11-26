@@ -23,7 +23,8 @@ import {
   Target,
   Sparkles,
   Brain,
-  Loader2
+  Loader2,
+  Mic
 } from 'lucide-react';
 import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
@@ -111,6 +112,8 @@ import MovingMotivatorsCommand from '../slashCommands/MovingMotivatorsCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
+import VoiceRecorder from './VoiceRecorder';
+import VoicePlayer from './VoicePlayer';
 
 interface Priority {
   _id: string;
@@ -135,6 +138,13 @@ interface Attachment {
     email: string;
   };
   uploadedAt: string;
+}
+
+interface VoiceMessage {
+  data: string;
+  duration: number;
+  mimeType: string;
+  waveform?: number[];
 }
 
 interface Message {
@@ -166,6 +176,7 @@ interface Message {
   isDeleted: boolean;
   createdAt: string;
   attachments?: Attachment[];
+  voiceMessage?: VoiceMessage;
 }
 
 interface ChannelChatProps {
@@ -208,6 +219,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Array<{ id: string; info: { name: string; email: string } }>>([]);
   const [showAttachments, setShowAttachments] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Infinite scroll states
@@ -746,6 +758,45 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     } catch (err: any) {
       console.error('Error sending message:', err);
       alert(err.message || 'Error al enviar mensaje');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendVoiceMessage = async (voiceData: {
+    data: string;
+    duration: number;
+    mimeType: string;
+    waveform: number[];
+  }) => {
+    if (!selectedChannelId || sending) return;
+
+    try {
+      setSending(true);
+
+      const response = await fetch(`/api/projects/${projectId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: '🎤 Mensaje de voz',
+          channelId: selectedChannelId,
+          mentions: [],
+          voiceMessage: voiceData
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al enviar mensaje de voz');
+      }
+
+      const message = await response.json();
+      setMessages((prev) => [...prev, message]);
+      setShowVoiceRecorder(false);
+      scrollToBottom();
+    } catch (err: any) {
+      console.error('Error sending voice message:', err);
+      alert(err.message || 'Error al enviar mensaje de voz');
     } finally {
       setSending(false);
     }
@@ -6525,6 +6576,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         />
                       </div>
 
+                      {/* Voice Message */}
+                      {message.voiceMessage && (
+                        <div className="mt-2">
+                          <VoicePlayer
+                            data={message.voiceMessage.data}
+                            duration={message.voiceMessage.duration}
+                            mimeType={message.voiceMessage.mimeType}
+                            waveform={message.voiceMessage.waveform}
+                          />
+                        </div>
+                      )}
+
                       {/* Attachments */}
                       {message.attachments && message.attachments.length > 0 && (
                         <div className="mt-2 space-y-2">
@@ -7004,45 +7067,62 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           </div>
         )}
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowAttachments(!showAttachments)}
-            disabled={!selectedChannelId}
-            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
-            title="Adjuntar archivo"
-          >
-            <Paperclip size={18} />
-          </button>
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => {
-              setNewMessage(e.target.value);
-              handleTyping();
-            }}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            onPaste={handlePaste}
-            placeholder="Escribe un mensaje... (@ para mencionar, / para comandos, Markdown soportado)"
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        {/* Voice Recorder */}
+        {showVoiceRecorder ? (
+          <VoiceRecorder
+            onSend={handleSendVoiceMessage}
+            onCancel={() => setShowVoiceRecorder(false)}
             disabled={sending}
           />
-          <MarkdownHelp />
-          <button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sending}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
-          >
-            <Send size={18} />
-            {sending ? 'Enviando...' : 'Enviar'}
-          </button>
-        </div>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowAttachments(!showAttachments)}
+              disabled={!selectedChannelId}
+              className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
+              title="Adjuntar archivo"
+            >
+              <Paperclip size={18} />
+            </button>
+            <button
+              onClick={() => setShowVoiceRecorder(true)}
+              disabled={!selectedChannelId || sending}
+              className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
+              title="Grabar mensaje de voz"
+            >
+              <Mic size={18} />
+            </button>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                handleTyping();
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              onPaste={handlePaste}
+              placeholder="Escribe un mensaje... (@ para mencionar, / para comandos, Markdown soportado)"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={sending}
+            />
+            <MarkdownHelp />
+            <button
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim() || sending}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
+            >
+              <Send size={18} />
+              {sending ? 'Enviando...' : 'Enviar'}
+            </button>
+          </div>
+        )}
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          <span className="font-medium">Enter</span> para enviar • <span className="font-medium">Shift+Enter</span> para nueva línea • <span className="font-medium">Ctrl+V</span> para pegar imágenes • Soporta <span className="font-medium">Markdown</span> (haz clic en ? para ayuda)
+          <span className="font-medium">Enter</span> para enviar • <span className="font-medium">Shift+Enter</span> para nueva línea • <span className="font-medium">Ctrl+V</span> para pegar imágenes • <span className="font-medium">🎤</span> para mensaje de voz
         </p>
       </div>
 

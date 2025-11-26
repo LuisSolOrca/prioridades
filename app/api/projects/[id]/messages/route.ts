@@ -218,7 +218,7 @@ export async function POST(
     await connectDB();
 
     const body = await request.json();
-    const { content, channelId, mentions = [], parentMessageId, commandType, commandData, attachments = [] } = body;
+    const { content, channelId, mentions = [], parentMessageId, commandType, commandData, attachments = [], voiceMessage } = body;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -302,6 +302,7 @@ export async function POST(
       commandType: commandType || null,
       commandData: commandData || null,
       attachments: attachments || [],
+      voiceMessage: voiceMessage || null,
       reactions: [],
       replyCount: 0,
       isPinned: false,
@@ -389,6 +390,7 @@ export async function POST(
       mentions: mentionsPopulated,
       priorityMentions: priorityMentionsPopulated,
       attachments: populatedAttachments,
+      voiceMessage: messageDoc.voiceMessage || null,
       createdAt: messageDoc.createdAt || new Date().toISOString(),
       reactions: messageDoc.reactions || [],
       replyCount: messageDoc.replyCount || 0,

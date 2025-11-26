@@ -6,12 +6,20 @@ export interface IReaction {
   createdAt: Date;
 }
 
+export interface IVoiceMessage {
+  data: string; // Base64 encoded audio
+  duration: number; // Duration in seconds
+  mimeType: string; // e.g., 'audio/webm', 'audio/mp4'
+  waveform?: number[]; // Optional waveform data for visualization
+}
+
 export interface IChannelMessage {
   _id: mongoose.Types.ObjectId;
   projectId: mongoose.Types.ObjectId;
   channelId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   content: string;
+  voiceMessage?: IVoiceMessage;
   mentions: mongoose.Types.ObjectId[]; // Array de userIds mencionados
   priorityMentions: mongoose.Types.ObjectId[]; // Array de priorityIds mencionados
   attachments: mongoose.Types.ObjectId[]; // Array de attachmentIds
@@ -123,6 +131,12 @@ const ChannelMessageSchema = new mongoose.Schema({
   commandData: {
     type: mongoose.Schema.Types.Mixed,
     default: null
+  },
+  voiceMessage: {
+    data: { type: String }, // Base64 encoded audio
+    duration: { type: Number }, // Duration in seconds
+    mimeType: { type: String }, // e.g., 'audio/webm', 'audio/mp4'
+    waveform: [{ type: Number }] // Optional waveform data for visualization
   },
   isEdited: {
     type: Boolean,
