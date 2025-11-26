@@ -45,6 +45,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'confidence-vote', name: 'Confianza', description: 'Medir nivel de confianza' },
       { type: 'nps', name: 'NPS', description: 'Net Promoter Score' },
       { type: 'roman-voting', name: 'Roman Voting', description: 'Pulgar arriba/abajo/lado - más rápido que Puño de Cinco' },
+      { type: 'odd-one-out', name: 'Disparejo', description: 'Juego tradicional para elegir a alguien - el que quede diferente es seleccionado' },
     ]
   },
   {

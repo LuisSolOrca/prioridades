@@ -26,7 +26,9 @@ const DYNAMIC_COMMAND_TYPES = [
   // Batch 5: Lean Canvas, Customer Journey, Risk Matrix, RICE, Working Agreements, Brainwriting
   'lean-canvas', 'customer-journey', 'risk-matrix', 'rice', 'working-agreements', 'brainwriting',
   // Batch 6: Hot Air Balloon, KALM, Persona, Assumption Mapping, Team Canvas
-  'hot-air-balloon', 'kalm', 'persona', 'assumption-mapping', 'team-canvas'
+  'hot-air-balloon', 'kalm', 'persona', 'assumption-mapping', 'team-canvas',
+  // Selección aleatoria
+  'odd-one-out'
 ];
 
 interface DynamicMessage {
@@ -723,6 +725,14 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
             weaknesses: { items: [] },
             needs: { items: [] }
           }
+        };
+      case 'odd-one-out':
+        return {
+          ...base,
+          purpose: title,
+          rounds: [{ roundNumber: 1, votes: [] }],
+          currentRound: 1,
+          winner: null
         };
       default:
         return base;

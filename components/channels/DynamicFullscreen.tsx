@@ -68,6 +68,7 @@ import BrainwritingCommand from '../slashCommands/BrainwritingCommand';
 import PersonaCommand from '../slashCommands/PersonaCommand';
 import AssumptionMappingCommand from '../slashCommands/AssumptionMappingCommand';
 import TeamCanvasCommand from '../slashCommands/TeamCanvasCommand';
+import OddOneOutCommand from '../slashCommands/OddOneOutCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -176,6 +177,8 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'persona': { icon: Users, color: 'text-rose-600' },
   'assumption-mapping': { icon: Target, color: 'text-orange-600' },
   'team-canvas': { icon: Users, color: 'text-violet-600' },
+  // Selección aleatoria
+  'odd-one-out': { icon: Users, color: 'text-amber-600' },
 };
 
 // Metodologías y guías de uso para cada tipo de dinámica
@@ -1219,6 +1222,23 @@ const METHODOLOGY_GUIDE: Record<string, { title: string; description: string; st
       'Todos deben participar en la creación',
       'Complementa con Working Agreements'
     ]
+  },
+  'odd-one-out': {
+    title: 'Disparejo (Odd One Out)',
+    description: 'Juego tradicional para seleccionar a una persona de forma divertida. Cada participante elige mostrar 1 o 2 dedos. El que quede diferente a los demás (el "disparejo") es el seleccionado.',
+    steps: [
+      '✊ Todos los participantes se preparan',
+      '☝️✌️ Cada uno elige 1 o 2 dedos simultáneamente',
+      '👀 Se revelan los resultados',
+      '🎯 Si solo UNA persona tiene diferente elección, es el disparejo',
+      '🔄 Si hay empate o todos iguales, se repite la ronda'
+    ],
+    tips: [
+      'Mínimo 3 participantes para que funcione',
+      'Ideal para elegir quién presenta, quién inicia, etc.',
+      'Divertido y justo - el azar decide',
+      'Puede requerir varias rondas hasta tener un ganador'
+    ]
   }
 };
 
@@ -2180,6 +2200,19 @@ export default function DynamicFullscreen({
             icon={<span className="text-white text-xl">🧘</span>}
             gradient="from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900"
             border="border-emerald-400 dark:border-emerald-600"
+          />
+        );
+      case 'odd-one-out':
+        return (
+          <OddOneOutCommand
+            {...commonProps}
+            title={getTitle()}
+            purpose={data.purpose || ''}
+            rounds={data.rounds || []}
+            currentRound={data.currentRound || 1}
+            winner={data.winner}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       default:
