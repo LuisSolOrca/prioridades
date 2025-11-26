@@ -96,7 +96,7 @@ export default function RiskMatrixCommand({
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/risk-matrix`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ riskId })
+        body: JSON.stringify({ riskId, action: 'delete' })
       });
 
       if (!response.ok) throw new Error();
