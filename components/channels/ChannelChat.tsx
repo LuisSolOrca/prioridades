@@ -141,10 +141,11 @@ interface Attachment {
 }
 
 interface VoiceMessage {
-  data: string;
+  r2Key: string;
   duration: number;
   mimeType: string;
   waveform?: number[];
+  transcription?: string;
 }
 
 interface Message {
@@ -764,7 +765,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   };
 
   const handleSendVoiceMessage = async (voiceData: {
-    data: string;
+    r2Key: string;
     duration: number;
     mimeType: string;
     waveform: number[];
@@ -6580,10 +6581,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       {message.voiceMessage && (
                         <div className="mt-2">
                           <VoicePlayer
-                            data={message.voiceMessage.data}
+                            projectId={projectId}
+                            r2Key={message.voiceMessage.r2Key}
                             duration={message.voiceMessage.duration}
                             mimeType={message.voiceMessage.mimeType}
                             waveform={message.voiceMessage.waveform}
+                            transcription={message.voiceMessage.transcription}
+                            messageId={message._id}
                           />
                         </div>
                       )}
@@ -7070,6 +7074,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         {/* Voice Recorder */}
         {showVoiceRecorder ? (
           <VoiceRecorder
+            projectId={projectId}
             onSend={handleSendVoiceMessage}
             onCancel={() => setShowVoiceRecorder(false)}
             disabled={sending}

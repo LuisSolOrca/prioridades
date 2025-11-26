@@ -7,10 +7,11 @@ export interface IReaction {
 }
 
 export interface IVoiceMessage {
-  data: string; // Base64 encoded audio
+  r2Key: string; // Key del archivo en R2
   duration: number; // Duration in seconds
   mimeType: string; // e.g., 'audio/webm', 'audio/mp4'
   waveform?: number[]; // Optional waveform data for visualization
+  transcription?: string; // Transcripción del audio (si se generó)
 }
 
 export interface IChannelMessage {
@@ -133,10 +134,11 @@ const ChannelMessageSchema = new mongoose.Schema({
     default: null
   },
   voiceMessage: {
-    data: { type: String }, // Base64 encoded audio
+    r2Key: { type: String }, // Key del archivo en R2
     duration: { type: Number }, // Duration in seconds
     mimeType: { type: String }, // e.g., 'audio/webm', 'audio/mp4'
-    waveform: [{ type: Number }] // Optional waveform data for visualization
+    waveform: [{ type: Number }], // Optional waveform data for visualization
+    transcription: { type: String } // Transcripción del audio
   },
   isEdited: {
     type: Boolean,

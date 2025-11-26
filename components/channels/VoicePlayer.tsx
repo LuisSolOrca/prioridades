@@ -4,28 +4,34 @@ import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, FileText, Loader2, Copy, Check } from 'lucide-react';
 
 interface VoicePlayerProps {
-  data: string; // Base64 encoded audio
+  projectId: string;
+  r2Key: string;
   duration: number;
   mimeType: string;
   waveform?: number[];
   compact?: boolean;
-  transcription?: string; // Pre-existing transcription
-  onTranscriptionComplete?: (text: string) => void; // Callback when transcription is done
+  transcription?: string;
+  messageId?: string;
+  onTranscriptionComplete?: (text: string) => void;
 }
 
 export default function VoicePlayer({
-  data,
+  projectId,
+  r2Key,
   duration,
   mimeType,
   waveform = [],
   compact = false,
   transcription: initialTranscription,
+  messageId,
   onTranscriptionComplete
 }: VoicePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [audioError, setAudioError] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [loadingAudio, setLoadingAudio] = useState(true);
   const [transcription, setTranscription] = useState(initialTranscription || '');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
@@ -34,25 +40,39 @@ export default function VoicePlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
-  // Initialize audio element
+  // Fetch signed URL from R2
   useEffect(() => {
-    const audio = new Audio();
+    const fetchAudioUrl = async () => {
+      try {
+        setLoadingAudio(true);
+        const response = await fetch(
+          `/api/projects/${projectId}/voice-upload?r2Key=${encodeURIComponent(r2Key)}`
+        );
 
-    // Create blob URL from base64
-    try {
-      const byteCharacters = atob(data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+        if (!response.ok) {
+          throw new Error('Error fetching audio URL');
+        }
+
+        const data = await response.json();
+        setAudioUrl(data.url);
+      } catch (err) {
+        console.error('Error fetching audio URL:', err);
+        setAudioError(true);
+      } finally {
+        setLoadingAudio(false);
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: mimeType });
-      audio.src = URL.createObjectURL(blob);
-    } catch (err) {
-      console.error('Error decoding audio:', err);
-      setAudioError(true);
-      return;
+    };
+
+    if (r2Key) {
+      fetchAudioUrl();
     }
+  }, [projectId, r2Key]);
+
+  // Initialize audio element when URL is available
+  useEffect(() => {
+    if (!audioUrl) return;
+
+    const audio = new Audio(audioUrl);
 
     audio.onended = () => {
       setIsPlaying(false);
@@ -68,18 +88,19 @@ export default function VoicePlayer({
       setAudioError(true);
     };
 
+    audio.oncanplaythrough = () => {
+      setLoadingAudio(false);
+    };
+
     audioRef.current = audio;
 
     return () => {
       audio.pause();
-      if (audio.src) {
-        URL.revokeObjectURL(audio.src);
-      }
     };
-  }, [data, mimeType]);
+  }, [audioUrl]);
 
   const togglePlay = () => {
-    if (!audioRef.current || audioError) return;
+    if (!audioRef.current || audioError || loadingAudio) return;
 
     if (isPlaying) {
       audioRef.current.pause();
@@ -118,8 +139,9 @@ export default function VoicePlayer({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          audioData: data,
-          mimeType: mimeType
+          r2Key,
+          projectId,
+          messageId
         })
       });
 
@@ -181,9 +203,16 @@ export default function VoicePlayer({
       <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
         <button
           onClick={togglePlay}
-          className="p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition"
+          disabled={loadingAudio}
+          className="p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 transition"
         >
-          {isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+          {loadingAudio ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : isPlaying ? (
+            <Pause size={14} />
+          ) : (
+            <Play size={14} className="ml-0.5" />
+          )}
         </button>
         <span className="text-xs text-gray-600 dark:text-gray-400 font-mono">
           {formatTime(currentTime)} / {formatTime(duration)}
@@ -199,9 +228,16 @@ export default function VoicePlayer({
         {/* Play/Pause button */}
         <button
           onClick={togglePlay}
-          className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex-shrink-0"
+          disabled={loadingAudio}
+          className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 transition-all shadow-md hover:shadow-lg flex-shrink-0"
         >
-          {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+          {loadingAudio ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : isPlaying ? (
+            <Pause size={18} />
+          ) : (
+            <Play size={18} className="ml-0.5" />
+          )}
         </button>
 
         {/* Waveform and progress */}

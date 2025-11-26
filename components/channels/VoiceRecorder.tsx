@@ -4,8 +4,9 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, Square, Send, X, Loader2 } from 'lucide-react';
 
 interface VoiceRecorderProps {
+  projectId: string;
   onSend: (voiceData: {
-    data: string;
+    r2Key: string;
     duration: number;
     mimeType: string;
     waveform: number[];
@@ -14,7 +15,7 @@ interface VoiceRecorderProps {
   disabled?: boolean;
 }
 
-export default function VoiceRecorder({ onSend, onCancel, disabled }: VoiceRecorderProps) {
+export default function VoiceRecorder({ projectId, onSend, onCancel, disabled }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -170,8 +171,27 @@ export default function VoiceRecorder({ onSend, onCancel, disabled }: VoiceRecor
       // Get mime type from blob
       const mimeType = audioBlob.type || 'audio/webm';
 
+      // Upload to R2
+      const uploadResponse = await fetch(`/api/projects/${projectId}/voice-upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audioData: base64Data,
+          mimeType,
+          duration,
+          waveform: waveformData
+        })
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al subir el audio');
+      }
+
+      const uploadResult = await uploadResponse.json();
+
       onSend({
-        data: base64Data,
+        r2Key: uploadResult.r2Key,
         duration,
         mimeType,
         waveform: waveformData
