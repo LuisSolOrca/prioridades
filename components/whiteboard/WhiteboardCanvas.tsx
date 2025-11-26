@@ -171,6 +171,22 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
     setSaveStatus('saving');
 
     try {
+      // Filtrar y serializar files de forma segura
+      const safeFiles: { [key: string]: any } = {};
+      if (files && typeof files === 'object') {
+        Object.keys(files).forEach(key => {
+          const file = files[key];
+          if (file && file.dataURL) {
+            safeFiles[key] = {
+              id: file.id,
+              mimeType: file.mimeType,
+              dataURL: file.dataURL,
+              created: file.created
+            };
+          }
+        });
+      }
+
       const response = await fetch(
         `/api/projects/${whiteboard.projectId}/whiteboards/${whiteboardId}/elements`,
         {
@@ -179,13 +195,13 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
           body: JSON.stringify({
             elements,
             appState: {
-              viewBackgroundColor: appState.viewBackgroundColor,
-              currentItemFontFamily: appState.currentItemFontFamily,
-              zoom: appState.zoom,
-              scrollX: appState.scrollX,
-              scrollY: appState.scrollY
+              viewBackgroundColor: appState?.viewBackgroundColor || '#ffffff',
+              currentItemFontFamily: appState?.currentItemFontFamily || 1,
+              zoom: appState?.zoom || { value: 1 },
+              scrollX: appState?.scrollX || 0,
+              scrollY: appState?.scrollY || 0
             },
-            files,
+            files: safeFiles,
             version: localVersion
           })
         }
@@ -209,17 +225,20 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
       }
 
       if (!response.ok) {
-        throw new Error('Error guardando');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Save error response:', response.status, errorData);
+        throw new Error(errorData.error || 'Error guardando');
       }
 
       const data = await response.json();
       setLocalVersion(data.version);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving whiteboard:', err);
       setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      // Mostrar el error más tiempo para que el usuario lo vea
+      setTimeout(() => setSaveStatus('idle'), 5000);
     }
   }, [whiteboard, whiteboardId, localVersion, isUpdatingFromRemote]);
 
