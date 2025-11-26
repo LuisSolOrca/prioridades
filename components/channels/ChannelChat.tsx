@@ -20,7 +20,10 @@ import {
   Flower2,
   Ship,
   PlayCircle,
-  Target
+  Target,
+  Sparkles,
+  Brain,
+  Loader2
 } from 'lucide-react';
 import ThreadView from './ThreadView';
 import MessageContent from './MessageContent';
@@ -186,6 +189,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [mentionSearch, setMentionSearch] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [semanticSearchMode, setSemanticSearchMode] = useState(false);
+  const [semanticResults, setSemanticResults] = useState<any[]>([]);
+  const [semanticSearching, setSemanticSearching] = useState(false);
+  const [showSemanticResults, setShowSemanticResults] = useState(false);
   const [activeCommand, setActiveCommand] = useState<{
     type: string;
     data?: any;
@@ -622,6 +629,40 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       }
     } catch (err) {
       console.error('Error marking as read:', err);
+    }
+  };
+
+  // Semantic search with Groq AI
+  const performSemanticSearch = async () => {
+    if (!searchQuery.trim() || searchQuery.length < 3) return;
+
+    setSemanticSearching(true);
+    setShowSemanticResults(true);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/messages/semantic-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: searchQuery,
+          channelId: selectedChannelId,
+          limit: 10
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSemanticResults(data.results || []);
+      } else {
+        const error = await response.json();
+        console.error('Semantic search error:', error);
+        setSemanticResults([]);
+      }
+    } catch (err) {
+      console.error('Error in semantic search:', err);
+      setSemanticResults([]);
+    } finally {
+      setSemanticSearching(false);
     }
   };
 
@@ -4377,27 +4418,138 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         </div>
 
         {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar mensajes... (contenido, usuario)"
-            className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            >
-              <X size={16} />
-            </button>
-          )}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSemanticResults(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.length >= 3) {
+                  performSemanticSearch();
+                }
+              }}
+              placeholder="Buscar mensajes... (contenido, usuario, o usa IA)"
+              className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSemanticResults(false);
+                  setSemanticResults([]);
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          {/* Semantic Search Button */}
+          <button
+            onClick={performSemanticSearch}
+            disabled={searchQuery.length < 3 || semanticSearching}
+            title="Búsqueda semántica con IA (busca por concepto, no solo palabras)"
+            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition ${
+              searchQuery.length >= 3
+                ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-md'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {semanticSearching ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Brain size={16} />
+            )}
+            <span className="hidden sm:inline">IA</span>
+          </button>
         </div>
-        {debouncedSearchQuery && (
+
+        {/* Regular search results count */}
+        {debouncedSearchQuery && !showSemanticResults && (
           <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             {messages.length} {messages.length === 1 ? 'mensaje' : 'mensajes'} encontrados
+          </div>
+        )}
+
+        {/* Semantic Search Results Panel */}
+        {showSemanticResults && (
+          <div className="mt-2 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-purple-500" />
+                <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                  Búsqueda Semántica con IA
+                </span>
+              </div>
+              <button
+                onClick={() => setShowSemanticResults(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {semanticSearching ? (
+              <div className="flex items-center gap-2 py-4 justify-center text-gray-500 dark:text-gray-400">
+                <Loader2 size={20} className="animate-spin" />
+                <span>Analizando contenido con IA...</span>
+              </div>
+            ) : semanticResults.length > 0 ? (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {semanticResults.map((result, idx) => (
+                  <div
+                    key={result._id}
+                    className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 transition cursor-pointer"
+                    onClick={() => {
+                      // Navigate to the message/dynamic
+                      setShowSemanticResults(false);
+                      // If it's a dynamic, we could open it in fullscreen
+                      // For now, just show an alert with the info
+                      if (result.fullMessage?.commandType && result.fullMessage?.commandData) {
+                        alert(`Encontrado: ${result.title}\nTipo: ${result.commandType}\nCreado por: ${result.createdBy}`);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                            {result.commandType}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {result.createdBy} · {new Date(result.createdAt).toLocaleDateString('es-MX')}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                          {result.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                          {result.preview}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                <Brain size={24} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No se encontraron resultados semánticamente relevantes</p>
+                <p className="text-xs mt-1">Intenta con otra consulta o términos diferentes</p>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+              Búsqueda por concepto usando Groq AI
+            </p>
           </div>
         )}
       </div>

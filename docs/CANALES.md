@@ -15,6 +15,7 @@
 10. [Threads (Hilos)](#threads-hilos)
 11. [Mensajes Anclados](#mensajes-anclados)
 12. [Búsqueda](#búsqueda)
+    - [Búsqueda Semántica con IA](#búsqueda-semántica-con-ia)
 13. [Slash Commands](#slash-commands)
 14. [Webhooks](#webhooks)
 15. [Archivos Adjuntos](#archivos-adjuntos)
@@ -66,6 +67,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🗂️ **Sistema de canales y subcanales** jerárquico (máx 2 niveles)
 - 🔒 **Canales privados** con control de acceso por miembros
 - 📖 **Marcadores de lectura** - línea "Mensajes nuevos" para equipos asíncronos
+- 🧠 **Búsqueda semántica con IA** - busca por concepto usando Groq (LLaMA 3.3)
 - 🔌 **Webhooks entrantes y salientes** para integración con sistemas externos
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
@@ -843,6 +845,58 @@ maria@empresa.com
 - **Contador de resultados**: Muestra cuántos mensajes encontrados
 - **Resaltado**: Los resultados se muestran en el chat principal
 - **Limpiar búsqueda**: Botón X para borrar y volver a todos los mensajes
+
+### Búsqueda Semántica con IA
+
+La búsqueda semántica utiliza **Groq AI** (LLaMA 3.3 70B) para encontrar contenido por **significado y concepto**, no solo por palabras clave.
+
+**Cómo usar:**
+1. Escribe tu consulta en la barra de búsqueda (mínimo 3 caracteres)
+2. Haz clic en el botón **"IA"** (icono de cerebro) o presiona **Enter**
+3. La IA analiza todo el contenido y devuelve los resultados más relevantes
+
+**Ejemplos de consultas:**
+```
+"ideas para reducir latencia en Q4"
+→ Encuentra brainstorms, five-whys y action-items relacionados con rendimiento
+
+"decisiones sobre la arquitectura del backend"
+→ Busca matrices de decisión, RICE scores y discusiones técnicas
+
+"problemas del equipo de desarrollo"
+→ Localiza retrospectivas, fishbones y team-health checks
+```
+
+**Características:**
+- 🧠 **Búsqueda por concepto**: Entiende sinónimos y conceptos relacionados
+- 📊 **Analiza dinámicas**: Busca en brainstorms, retros, matrices, RICE, five-whys, etc.
+- 💬 **Incluye mensajes**: También busca en mensajes regulares del chat
+- 🎯 **Ranking de relevancia**: Ordena resultados por relevancia semántica
+- ⚡ **Tiempo real**: Resultados en 2-3 segundos
+
+**Tipos de contenido indexado:**
+- Brainstorms y sus ideas
+- Five-Whys con causas raíz
+- Matrices de decisión (opciones y criterios)
+- RICE scoring (items y puntuaciones)
+- Retrospectivas (todas las secciones)
+- SWOT, SOAR, Six Hats
+- Risk Matrix con riesgos
+- Customer Journey con touchpoints
+- Lean Canvas con bloques
+- Standups con entradas
+- Action Items con asignaciones
+- Y 50+ tipos más de dinámicas
+
+**API Endpoint:**
+```
+POST /api/projects/[id]/messages/semantic-search
+Body: { query: "tu búsqueda", channelId?: "id", limit?: 10 }
+```
+
+**Requisitos:**
+- Variable de entorno `GROQ_API_KEY` configurada
+- Mínimo 3 caracteres en la búsqueda
 
 ---
 
@@ -3111,6 +3165,45 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v1.8.0 (Noviembre 2025) - Búsqueda Semántica con IA
+
+#### Búsqueda Semántica
+- ✅ **Búsqueda por concepto** usando Groq AI (LLaMA 3.3 70B Versatile)
+  - Busca por significado, no solo palabras clave
+  - Entiende sinónimos y conceptos relacionados
+  - Ejemplos: "ideas para reducir latencia" encuentra brainstorms sobre rendimiento
+
+#### Contenido Indexado
+- ✅ **60+ tipos de dinámicas** analizables semánticamente:
+  - Brainstorms con ideas
+  - Five-Whys con causas raíz
+  - Matrices de decisión
+  - RICE scoring
+  - Retrospectivas (SWOT, SOAR, etc.)
+  - Risk Matrix
+  - Customer Journey
+  - Lean Canvas
+  - Y muchos más
+
+#### UI
+- ✅ **Botón de búsqueda IA** junto a la barra de búsqueda
+  - Icono de cerebro con gradiente púrpura
+  - Se activa con clic o Enter
+  - Indicador de carga durante análisis
+
+- ✅ **Panel de resultados semánticos**
+  - Muestra hasta 10 resultados ordenados por relevancia
+  - Preview del contenido con tipo y autor
+  - Diseño visual distintivo (gradiente púrpura)
+
+#### API
+- ✅ **POST /api/projects/[id]/messages/semantic-search**
+  - Parámetros: `query`, `channelId?`, `limit?`
+  - Extrae contenido de 60+ tipos de comandos
+  - Retorna resultados con score de relevancia
+
+---
 
 ### v1.7.0 (Noviembre 2025) - Marcadores de Lectura
 
