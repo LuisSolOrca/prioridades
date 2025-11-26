@@ -4,10 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
+import Portal from '@/components/ui/Portal';
 
 interface Risk {
   id: string;
-  description: string;
+  title: string;
+  description?: string;
   probability: 1 | 2 | 3 | 4 | 5;
   impact: 1 | 2 | 3 | 4 | 5;
   mitigation: string;
@@ -53,7 +55,7 @@ export default function RiskMatrixCommand({
   const [risks, setRisks] = useState<Risk[]>(initialRisks || []);
   const [closed, setClosed] = useState(initialClosed);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newRisk, setNewRisk] = useState({ description: '', probability: 3 as 1|2|3|4|5, impact: 3 as 1|2|3|4|5, mitigation: '' });
+  const [newRisk, setNewRisk] = useState({ title: '', description: '', probability: 3 as 1|2|3|4|5, impact: 3 as 1|2|3|4|5, mitigation: '' });
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -63,7 +65,7 @@ export default function RiskMatrixCommand({
   }, [initialRisks, initialClosed]);
 
   const handleAddRisk = async () => {
-    if (!session?.user || !newRisk.description.trim() || submitting) return;
+    if (!session?.user || !newRisk.title.trim() || submitting) return;
 
     try {
       setSubmitting(true);
@@ -77,7 +79,7 @@ export default function RiskMatrixCommand({
       const data = await response.json();
       setRisks(data.commandData.risks || []);
       setShowAddModal(false);
-      setNewRisk({ description: '', probability: 3, impact: 3, mitigation: '' });
+      setNewRisk({ title: '', description: '', probability: 3, impact: 3, mitigation: '' });
       onUpdate?.();
     } catch (error) {
       console.error('Error:', error);
@@ -198,9 +200,9 @@ export default function RiskMatrixCommand({
                         <div
                           key={risk.id}
                           className="bg-white dark:bg-gray-600 rounded p-1 text-xs mb-1 shadow-sm cursor-pointer hover:shadow-md transition"
-                          title={`${risk.description}\nMitigación: ${risk.mitigation || 'Sin definir'}`}
+                          title={`${risk.title}${risk.description ? '\n' + risk.description : ''}\nMitigación: ${risk.mitigation || 'Sin definir'}`}
                         >
-                          <p className="truncate text-gray-800 dark:text-gray-100">{risk.description}</p>
+                          <p className="truncate text-gray-800 dark:text-gray-100">{risk.title}</p>
                           {!closed && risk.userId === session?.user?.id && (
                             <button
                               onClick={() => handleDeleteRisk(risk.id)}
@@ -250,7 +252,10 @@ export default function RiskMatrixCommand({
                     {risk.probability * risk.impact}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-800 dark:text-gray-100 font-medium">{risk.description}</p>
+                    <p className="text-sm text-gray-800 dark:text-gray-100 font-medium">{risk.title}</p>
+                    {risk.description && (
+                      <p className="text-xs text-gray-600 dark:text-gray-300">{risk.description}</p>
+                    )}
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       P: {PROBABILITY_LABELS[risk.probability]} • I: {IMPACT_LABELS[risk.impact]} • {riskLevel.level}
                     </p>
@@ -288,78 +293,90 @@ export default function RiskMatrixCommand({
 
       {/* Add Risk Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md mx-4">
-            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Agregar Riesgo</h4>
+        <Portal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md mx-4">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Agregar Riesgo</h4>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Descripción del riesgo</label>
-                <input
-                  type="text"
-                  value={newRisk.description}
-                  onChange={(e) => setNewRisk({ ...newRisk, description: e.target.value })}
-                  placeholder="¿Qué podría salir mal?"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  autoFocus
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Probabilidad</label>
-                  <select
-                    value={newRisk.probability}
-                    onChange={(e) => setNewRisk({ ...newRisk, probability: parseInt(e.target.value) as 1|2|3|4|5 })}
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Nombre del riesgo</label>
+                  <input
+                    type="text"
+                    value={newRisk.title}
+                    onChange={(e) => setNewRisk({ ...newRisk, title: e.target.value })}
+                    placeholder="Nombre corto del riesgo"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  >
-                    {[1, 2, 3, 4, 5].map(p => (
-                      <option key={p} value={p}>{PROBABILITY_LABELS[p]}</option>
-                    ))}
-                  </select>
+                    autoFocus
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Impacto</label>
-                  <select
-                    value={newRisk.impact}
-                    onChange={(e) => setNewRisk({ ...newRisk, impact: parseInt(e.target.value) as 1|2|3|4|5 })}
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Descripción (opcional)</label>
+                  <input
+                    type="text"
+                    value={newRisk.description}
+                    onChange={(e) => setNewRisk({ ...newRisk, description: e.target.value })}
+                    placeholder="¿Qué podría salir mal?"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  >
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <option key={i} value={i}>{IMPACT_LABELS[i]}</option>
-                    ))}
-                  </select>
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Probabilidad</label>
+                    <select
+                      value={newRisk.probability}
+                      onChange={(e) => setNewRisk({ ...newRisk, probability: parseInt(e.target.value) as 1|2|3|4|5 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                    >
+                      {[1, 2, 3, 4, 5].map(p => (
+                        <option key={p} value={p}>{PROBABILITY_LABELS[p]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Impacto</label>
+                    <select
+                      value={newRisk.impact}
+                      onChange={(e) => setNewRisk({ ...newRisk, impact: parseInt(e.target.value) as 1|2|3|4|5 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                    >
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <option key={i} value={i}>{IMPACT_LABELS[i]}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Plan de mitigación (opcional)</label>
+                  <input
+                    type="text"
+                    value={newRisk.mitigation}
+                    onChange={(e) => setNewRisk({ ...newRisk, mitigation: e.target.value })}
+                    placeholder="¿Cómo podemos reducir este riesgo?"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                  />
+                </div>
+
+                {/* Preview */}
+                <div className={`${getRiskLevel(newRisk.probability, newRisk.impact).bg} text-white p-2 rounded-lg text-center`}>
+                  <span className="font-bold">Score: {newRisk.probability * newRisk.impact}</span>
+                  <span className="ml-2">({getRiskLevel(newRisk.probability, newRisk.impact).level})</span>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Plan de mitigación (opcional)</label>
-                <input
-                  type="text"
-                  value={newRisk.mitigation}
-                  onChange={(e) => setNewRisk({ ...newRisk, mitigation: e.target.value })}
-                  placeholder="¿Cómo podemos reducir este riesgo?"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                />
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300">
+                  Cancelar
+                </button>
+                <button onClick={handleAddRisk} disabled={!newRisk.title.trim() || submitting} className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400">
+                  Agregar
+                </button>
               </div>
-
-              {/* Preview */}
-              <div className={`${getRiskLevel(newRisk.probability, newRisk.impact).bg} text-white p-2 rounded-lg text-center`}>
-                <span className="font-bold">Score: {newRisk.probability * newRisk.impact}</span>
-                <span className="ml-2">({getRiskLevel(newRisk.probability, newRisk.impact).level})</span>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300">
-                Cancelar
-              </button>
-              <button onClick={handleAddRisk} disabled={!newRisk.description.trim() || submitting} className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400">
-                Agregar
-              </button>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* Close Button */}

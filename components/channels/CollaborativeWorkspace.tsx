@@ -666,6 +666,57 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
           ideasPerRound: 3,
           participants: []
         };
+      case 'hot-air-balloon':
+        return {
+          ...base,
+          sections: [
+            { id: 'fire', title: 'Fuego (Impulsos)', icon: '🔥', color: '#f97316', items: [] },
+            { id: 'clouds', title: 'Nubes (Obstáculos)', icon: '☁️', color: '#6b7280', items: [] },
+            { id: 'sandbags', title: 'Sacos (Lastre)', icon: '🎒', color: '#78716c', items: [] },
+            { id: 'destination', title: 'Destino (Metas)', icon: '🎯', color: '#10b981', items: [] }
+          ]
+        };
+      case 'kalm':
+        return {
+          ...base,
+          sections: [
+            { id: 'keep', title: 'Keep (Mantener)', icon: '✅', color: '#10b981', items: [] },
+            { id: 'add', title: 'Add (Agregar)', icon: '➕', color: '#3b82f6', items: [] },
+            { id: 'less', title: 'Less (Menos)', icon: '➖', color: '#f59e0b', items: [] },
+            { id: 'more', title: 'More (Más)', icon: '⬆️', color: '#8b5cf6', items: [] }
+          ]
+        };
+      case 'persona':
+        return {
+          ...base,
+          name: '',
+          photo: '',
+          demographics: { age: '', occupation: '', location: '', education: '' },
+          goals: [],
+          frustrations: [],
+          motivations: [],
+          behaviors: [],
+          quote: ''
+        };
+      case 'assumption-mapping':
+        return {
+          ...base,
+          assumptions: []
+        };
+      case 'team-canvas':
+        return {
+          ...base,
+          blocks: {
+            people: { items: [] },
+            goals: { items: [] },
+            values: { items: [] },
+            rules: { items: [] },
+            activities: { items: [] },
+            strengths: { items: [] },
+            weaknesses: { items: [] },
+            needs: { items: [] }
+          }
+        };
       default:
         return base;
     }

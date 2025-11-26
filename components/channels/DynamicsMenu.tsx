@@ -89,6 +89,8 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'mad-sad-glad', name: 'Mad/Sad/Glad', description: 'Retro emocional rápida - ¿Qué te enojó/entristeció/alegró?' },
       { type: 'team-health', name: 'Team Health', description: 'Salud del equipo (Spotify)' },
       { type: 'mood', name: 'Check-in', description: 'Estado de ánimo del equipo' },
+      { type: 'hot-air-balloon', name: 'Hot Air Balloon', description: 'Retro visual: fuego (impulsos), nubes (obstáculos), sacos (lastre)' },
+      { type: 'kalm', name: 'KALM', description: 'Keep, Add, Less, More - retro simple y efectiva' },
     ]
   },
   {
@@ -111,6 +113,8 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'risk-matrix', name: 'Matriz de Riesgos', description: 'Probabilidad × Impacto - complementa Pre-mortem' },
       { type: 'rice', name: 'RICE', description: 'Reach × Impact × Confidence ÷ Effort - priorización robusta' },
       { type: 'customer-journey', name: 'Customer Journey Map', description: 'Mapear experiencia completa del cliente' },
+      { type: 'persona', name: 'Persona', description: 'Perfil de usuario ficticio - base para empatía y design thinking' },
+      { type: 'assumption-mapping', name: 'Assumption Mapping', description: 'Mapear supuestos por importancia y certeza - valida antes de construir' },
     ]
   },
   {
@@ -158,6 +162,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'moving-motivators', name: 'Moving Motivators', description: 'Descubrir motivaciones del equipo (Management 3.0)' },
       { type: 'lean-canvas', name: 'Lean Canvas', description: '9 bloques para validar modelo de negocio - startups y productos nuevos' },
       { type: 'working-agreements', name: 'Working Agreements', description: 'Acuerdos de trabajo del equipo - fundacional para equipos nuevos' },
+      { type: 'team-canvas', name: 'Team Canvas', description: 'Canvas para formar equipos - roles, metas, valores y reglas' },
     ]
   }
 ];

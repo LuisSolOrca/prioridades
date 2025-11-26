@@ -65,6 +65,9 @@ import RiskMatrixCommand from '../slashCommands/RiskMatrixCommand';
 import RICECommand from '../slashCommands/RICECommand';
 import WorkingAgreementsCommand from '../slashCommands/WorkingAgreementsCommand';
 import BrainwritingCommand from '../slashCommands/BrainwritingCommand';
+import PersonaCommand from '../slashCommands/PersonaCommand';
+import AssumptionMappingCommand from '../slashCommands/AssumptionMappingCommand';
+import TeamCanvasCommand from '../slashCommands/TeamCanvasCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -167,6 +170,12 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'rice': { icon: Target, color: 'text-blue-600' },
   'working-agreements': { icon: Users, color: 'text-indigo-600' },
   'brainwriting': { icon: Lightbulb, color: 'text-amber-600' },
+  // Nuevos widgets batch 5
+  'hot-air-balloon': { icon: RotateCcw, color: 'text-sky-600' },
+  'kalm': { icon: RotateCcw, color: 'text-emerald-600' },
+  'persona': { icon: Users, color: 'text-rose-600' },
+  'assumption-mapping': { icon: Target, color: 'text-orange-600' },
+  'team-canvas': { icon: Users, color: 'text-violet-600' },
 };
 
 // Metodologías y guías de uso para cada tipo de dinámica
@@ -1120,6 +1129,96 @@ const METHODOLOGY_GUIDE: Record<string, { title: string; description: string; st
       'El timer ayuda a mantener el ritmo',
       'Funciona mejor que brainstorm verbal para equipos diversos'
     ]
+  },
+  'hot-air-balloon': {
+    title: 'Hot Air Balloon Retro',
+    description: 'Retrospectiva visual usando la metáfora del globo aerostático. El fuego nos impulsa, las nubes nos obstaculizan, los sacos nos lastran, y el destino es nuestra meta.',
+    steps: [
+      '🔥 Fuego (Impulsos): ¿Qué nos da energía y nos impulsa hacia arriba?',
+      '☁️ Nubes (Obstáculos): ¿Qué nos bloquea o dificulta el progreso?',
+      '🎒 Sacos (Lastre): ¿Qué nos está frenando que podríamos soltar?',
+      '🎯 Destino (Metas): ¿Hacia dónde queremos ir?',
+      'Discutir las ideas más votadas',
+      'Definir acciones concretas'
+    ],
+    tips: [
+      'Muy visual y divertida para equipos',
+      'Funciona bien para retrospectivas de mitad de proyecto',
+      'El fuego siempre debe ser positivo',
+      'Los sacos son cosas que el equipo puede cambiar'
+    ]
+  },
+  'kalm': {
+    title: 'KALM Retrospective',
+    description: 'Retro simple y efectiva: Keep (mantener lo bueno), Add (agregar lo que falta), Less (reducir lo que sobra), More (incrementar lo que funciona).',
+    steps: [
+      '✅ Keep: ¿Qué deberíamos seguir haciendo?',
+      '➕ Add: ¿Qué deberíamos empezar a hacer?',
+      '➖ Less: ¿Qué deberíamos hacer menos?',
+      '⬆️ More: ¿Qué deberíamos hacer más?',
+      'Votar por las ideas más importantes',
+      'Convertir en acciones concretas'
+    ],
+    tips: [
+      'Más simple que Start-Stop-Continue',
+      'Less y More son más sutiles que Stop',
+      'Ideal para equipos que recién empiezan con retros',
+      'Se puede completar en 30 minutos'
+    ]
+  },
+  'persona': {
+    title: 'Persona / User Profile',
+    description: 'Perfil de usuario ficticio pero basado en datos reales. Base fundamental para empatía y Design Thinking. Ayuda al equipo a entender para quién están construyendo.',
+    steps: [
+      'Define nombre, foto y datos demográficos',
+      'Lista sus objetivos principales (qué quiere lograr)',
+      'Identifica sus frustraciones (qué problemas tiene)',
+      'Describe sus motivaciones (qué lo mueve)',
+      'Mapea sus comportamientos relevantes',
+      'Resume con una cita característica'
+    ],
+    tips: [
+      'Basa la persona en investigación real de usuarios',
+      'Una persona no representa a todos los usuarios',
+      'Crea 2-4 personas para diferentes segmentos',
+      'Usa la persona para validar decisiones de producto'
+    ]
+  },
+  'assumption-mapping': {
+    title: 'Assumption Mapping',
+    description: 'Técnica para identificar y priorizar los supuestos que estamos haciendo antes de construir. Mapea por importancia (para el éxito) y certeza (qué tan seguros estamos).',
+    steps: [
+      'Lista todos los supuestos del proyecto',
+      'Evalúa cada uno por Importancia (1-5)',
+      'Evalúa cada uno por Certeza (1-5)',
+      '🔴 Alta importancia + Baja certeza = Probar primero',
+      '🟡 Alta importancia + Alta certeza = Monitorear',
+      '🟢 Baja importancia = Menor prioridad'
+    ],
+    tips: [
+      'Valida antes de construir para reducir riesgo',
+      'Los supuestos rojos deben probarse con experimentos',
+      'Revisa el mapping cuando tengas nueva información',
+      'Combina con Lean Canvas para startups'
+    ]
+  },
+  'team-canvas': {
+    title: 'Team Canvas',
+    description: 'Framework visual para formar y alinear equipos nuevos. Define personas, metas, valores, reglas, actividades, fortalezas, debilidades y necesidades del equipo.',
+    steps: [
+      '👥 Personas: ¿Quiénes somos y qué roles tenemos?',
+      '🎯 Metas: ¿Qué queremos lograr como equipo?',
+      '❤️ Valores: ¿Qué es importante para nosotros?',
+      '📋 Reglas: ¿Cómo trabajamos juntos?',
+      '💪 Fortalezas/Debilidades: ¿En qué somos buenos/malos?',
+      '❓ Necesidades: ¿Qué necesitamos para tener éxito?'
+    ],
+    tips: [
+      'Ideal para equipos nuevos o reestructurados',
+      'Revisa el canvas cada 3-6 meses',
+      'Todos deben participar en la creación',
+      'Complementa con Working Agreements'
+    ]
   }
 };
 
@@ -2014,6 +2113,43 @@ export default function DynamicFullscreen({
             ideasPerRound={data.ideasPerRound || 3}
             participants={data.participants || []}
             ideas={data.ideas || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'persona':
+        return (
+          <PersonaCommand
+            {...commonProps}
+            title={getTitle()}
+            name={data.name || ''}
+            photo={data.photo || ''}
+            demographics={data.demographics || { age: '', occupation: '', location: '', education: '' }}
+            goals={data.goals || []}
+            frustrations={data.frustrations || []}
+            motivations={data.motivations || []}
+            behaviors={data.behaviors || []}
+            quote={data.quote || ''}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'assumption-mapping':
+        return (
+          <AssumptionMappingCommand
+            {...commonProps}
+            title={getTitle()}
+            assumptions={data.assumptions || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'team-canvas':
+        return (
+          <TeamCanvasCommand
+            {...commonProps}
+            title={getTitle()}
+            blocks={data.blocks || {}}
             createdBy={getCreatedBy()}
             closed={isClosed()}
           />

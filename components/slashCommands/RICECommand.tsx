@@ -4,10 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Trash2, Calculator, ArrowUpDown } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
+import Portal from '@/components/ui/Portal';
 
 interface RICEItem {
   id: string;
-  name: string;
+  title: string;
   reach: number;      // 1-10: personas alcanzadas
   impact: number;     // 0.25, 0.5, 1, 2, 3 (Mínimo, Bajo, Medio, Alto, Masivo)
   confidence: number; // 0.5, 0.8, 1 (Bajo, Medio, Alto)
@@ -63,7 +64,7 @@ export default function RICECommand({
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<RICEItem | null>(null);
   const [newItem, setNewItem] = useState({
-    name: '',
+    title: '',
     reach: 5,
     impact: 1,
     confidence: 0.8,
@@ -79,7 +80,7 @@ export default function RICECommand({
   }, [initialItems, initialClosed]);
 
   const handleAddItem = async () => {
-    if (!session?.user || !newItem.name.trim() || submitting) return;
+    if (!session?.user || !newItem.title.trim() || submitting) return;
 
     try {
       setSubmitting(true);
@@ -93,7 +94,7 @@ export default function RICECommand({
       const data = await response.json();
       setItems(data.commandData.items || []);
       setShowAddModal(false);
-      setNewItem({ name: '', reach: 5, impact: 1, confidence: 0.8, effort: 3 });
+      setNewItem({ title: '', reach: 5, impact: 1, confidence: 0.8, effort: 3 });
       onUpdate?.();
     } catch (error) {
       console.error('Error:', error);
@@ -178,7 +179,7 @@ export default function RICECommand({
     if (sortBy === 'score') {
       return calculateRICE(b) - calculateRICE(a);
     }
-    return a.name.localeCompare(b.name);
+    return a.title.localeCompare(b.title);
   });
 
   const getScoreColor = (score: number) => {
@@ -244,7 +245,7 @@ export default function RICECommand({
                 return (
                   <tr key={item.id} className={`border-t border-gray-200 dark:border-gray-600 ${index === 0 ? 'bg-green-50 dark:bg-green-900/20' : ''}`}>
                     <td className="p-2">
-                      <div className="font-medium text-gray-800 dark:text-gray-100">{item.name}</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-100">{item.title}</div>
                       <div className="text-xs text-gray-500">{item.userName}</div>
                     </td>
                     <td className="p-2 text-center text-gray-700 dark:text-gray-300">{item.reach}</td>
@@ -289,102 +290,104 @@ export default function RICECommand({
 
       {/* Add Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md mx-4">
-            <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Nueva Iniciativa</h4>
+        <Portal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-full max-w-md mx-4">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Nueva Iniciativa</h4>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Nombre de la iniciativa</label>
-                <input
-                  type="text"
-                  value={newItem.name}
-                  onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                  placeholder="¿Qué quieres priorizar?"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  autoFocus
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
-                    Reach (Alcance)
-                    <span className="text-xs text-gray-400 ml-1">personas/trimestre</span>
-                  </label>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Nombre de la iniciativa</label>
                   <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={newItem.reach}
-                    onChange={(e) => setNewItem({ ...newItem, reach: parseInt(e.target.value) || 1 })}
+                    type="text"
+                    value={newItem.title}
+                    onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
+                    placeholder="¿Qué quieres priorizar?"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                    autoFocus
                   />
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
-                    Impact (Impacto)
-                  </label>
-                  <select
-                    value={newItem.impact}
-                    onChange={(e) => setNewItem({ ...newItem, impact: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  >
-                    {IMPACT_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                      Reach (Alcance)
+                      <span className="text-xs text-gray-400 ml-1">personas/trimestre</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={newItem.reach}
+                      onChange={(e) => setNewItem({ ...newItem, reach: parseInt(e.target.value) || 1 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                      Impact (Impacto)
+                    </label>
+                    <select
+                      value={newItem.impact}
+                      onChange={(e) => setNewItem({ ...newItem, impact: parseFloat(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                    >
+                      {IMPACT_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                      Confidence (Confianza)
+                    </label>
+                    <select
+                      value={newItem.confidence}
+                      onChange={(e) => setNewItem({ ...newItem, confidence: parseFloat(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                    >
+                      {CONFIDENCE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                      Effort (Esfuerzo)
+                      <span className="text-xs text-gray-400 ml-1">persona-semanas</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0.5"
+                      max="50"
+                      step="0.5"
+                      value={newItem.effort}
+                      onChange={(e) => setNewItem({ ...newItem, effort: parseFloat(e.target.value) || 1 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
-                    Confidence (Confianza)
-                  </label>
-                  <select
-                    value={newItem.confidence}
-                    onChange={(e) => setNewItem({ ...newItem, confidence: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  >
-                    {CONFIDENCE_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
-                    Effort (Esfuerzo)
-                    <span className="text-xs text-gray-400 ml-1">persona-semanas</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="0.5"
-                    max="50"
-                    step="0.5"
-                    value={newItem.effort}
-                    onChange={(e) => setNewItem({ ...newItem, effort: parseFloat(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  />
+
+                {/* Preview Score */}
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500 mb-1">Score Preview</p>
+                  <span className={`${getScoreColor((newItem.reach * newItem.impact * newItem.confidence) / newItem.effort)} text-white px-4 py-2 rounded-lg font-bold text-xl`}>
+                    {((newItem.reach * newItem.impact * newItem.confidence) / newItem.effort).toFixed(1)}
+                  </span>
                 </div>
               </div>
 
-              {/* Preview Score */}
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500 mb-1">Score Preview</p>
-                <span className={`${getScoreColor((newItem.reach * newItem.impact * newItem.confidence) / newItem.effort)} text-white px-4 py-2 rounded-lg font-bold text-xl`}>
-                  {((newItem.reach * newItem.impact * newItem.confidence) / newItem.effort).toFixed(1)}
-                </span>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300">
+                  Cancelar
+                </button>
+                <button onClick={handleAddItem} disabled={!newItem.title.trim() || submitting} className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400">
+                  Agregar
+                </button>
               </div>
-            </div>
-
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300">
-                Cancelar
-              </button>
-              <button onClick={handleAddItem} disabled={!newItem.name.trim() || submitting} className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400">
-                Agregar
-              </button>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* Close Button */}
