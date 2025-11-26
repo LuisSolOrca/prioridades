@@ -559,9 +559,8 @@ export async function notifyDynamicClosed(params: NotifyDynamicClosedParams) {
     const summary = generateDynamicSummary(commandType, commandData);
     const typeLabel = DYNAMIC_TYPE_LABELS[commandType] || commandType;
 
-    // Obtener participantes (excluir al que cerró la dinámica)
-    const participantIds = extractParticipants(commandType, commandData)
-      .filter(id => id !== closedByUserId);
+    // Obtener todos los participantes (incluyendo al que cerró)
+    const participantIds = extractParticipants(commandType, commandData);
 
     if (participantIds.length === 0) {
       console.log('[DYNAMIC_NOTIFICATION] No participants to notify');
@@ -579,7 +578,7 @@ export async function notifyDynamicClosed(params: NotifyDynamicClosedParams) {
       message += `\n📋 ${summary.recommendations[0]}`;
     }
 
-    // Obtener usuarios con preferencias de email
+    // Obtener usuarios activos
     const users = await User.find({
       _id: { $in: participantIds },
       isActive: true
@@ -588,46 +587,56 @@ export async function notifyDynamicClosed(params: NotifyDynamicClosedParams) {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const channelUrl = `${baseUrl}/channels/${projectId}?message=${messageId}`;
 
-    // Crear notificaciones internas y enviar emails
+    // Crear notificaciones internas para cada usuario
     const notificationPromises = users.map(async (user: any) => {
       try {
-        // Crear notificación interna
         await Notification.create({
           userId: user._id,
-          type: 'CHANNEL_MENTION', // Reusar tipo existente por ahora
+          type: 'CHANNEL_MENTION',
           title,
           message,
           projectId,
           messageId,
           actionUrl: `/channels/${projectId}?message=${messageId}`
         });
-
-        // Enviar email por defecto, a menos que esté explícitamente deshabilitado
-        if (user.emailNotifications?.enabled !== false) {
-          const emailContent = emailTemplates.dynamicClosed({
-            userName: user.name || 'Usuario',
-            dynamicType: typeLabel,
-            dynamicTitle: summary.title,
-            closedBy: closedByUserName,
-            projectName,
-            summary: summary.summary,
-            recommendations: summary.recommendations,
-            stats: summary.stats,
-            channelUrl
-          });
-
-          await sendEmail({
-            to: user.email,
-            subject: emailContent.subject,
-            html: emailContent.html
-          });
-        }
       } catch (err) {
-        console.error(`[DYNAMIC_NOTIFICATION] Error notifying user ${user._id}:`, err);
+        console.error(`[DYNAMIC_NOTIFICATION] Error creating notification for user ${user._id}:`, err);
       }
     });
 
     await Promise.all(notificationPromises);
+
+    // Obtener emails de usuarios que no han deshabilitado notificaciones
+    const emailRecipients = users
+      .filter((user: any) => user.emailNotifications?.enabled !== false && user.email)
+      .map((user: any) => user.email);
+
+    // Enviar un solo email con BCC a todos los destinatarios
+    if (emailRecipients.length > 0) {
+      const emailContent = emailTemplates.dynamicClosed({
+        userName: 'Equipo', // Nombre genérico para email masivo
+        dynamicType: typeLabel,
+        dynamicTitle: summary.title,
+        closedBy: closedByUserName,
+        projectName,
+        summary: summary.summary,
+        recommendations: summary.recommendations,
+        stats: summary.stats,
+        channelUrl
+      });
+
+      try {
+        await sendEmail({
+          to: process.env.EMAIL_USERNAME || 'orcaevolution@orcagrc.com', // From address as To
+          bcc: emailRecipients, // Todos los destinatarios en BCC
+          subject: emailContent.subject,
+          html: emailContent.html
+        });
+        console.log(`[DYNAMIC_NOTIFICATION] Email sent to ${emailRecipients.length} recipients via BCC`);
+      } catch (emailErr) {
+        console.error('[DYNAMIC_NOTIFICATION] Error sending email:', emailErr);
+      }
+    }
 
     console.log(`[DYNAMIC_NOTIFICATION] Notified ${users.length} participants for ${commandType} "${summary.title}"`);
 

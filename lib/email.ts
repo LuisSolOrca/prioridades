@@ -35,17 +35,22 @@ interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  bcc?: string | string[];
 }
 
-export async function sendEmail({ to, subject, html, text }: EmailOptions) {
+export async function sendEmail({ to, subject, html, text, bcc }: EmailOptions) {
   try {
-    const mailOptions = {
+    const mailOptions: any = {
       from: `"Prioridades App" <${process.env.EMAIL_USERNAME || 'orcaevolution@orcagrc.com'}>`,
       to: Array.isArray(to) ? to.join(', ') : to,
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ''), // Fallback a texto plano si no se proporciona
     };
+
+    if (bcc) {
+      mailOptions.bcc = Array.isArray(bcc) ? bcc.join(', ') : bcc;
+    }
 
     const info = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully:', info.messageId);
