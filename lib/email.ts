@@ -739,6 +739,7 @@ export const emailTemplates = {
     recommendations: string[];
     stats: Record<string, any>;
     channelUrl: string;
+    detailedResultsHTML?: string;
   }) => {
     const recommendationsHTML = params.recommendations.length > 0
       ? params.recommendations.map(r => `
@@ -787,6 +788,12 @@ export const emailTemplates = {
             <p style="color: #4b5563; margin: 0;">${params.summary}</p>
             ${statsHTML}
           </div>
+
+          ${params.detailedResultsHTML ? `
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+              ${params.detailedResultsHTML}
+            </div>
+          ` : ''}
 
           ${recommendationsHTML ? `
             <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 15px; margin: 20px 0;">

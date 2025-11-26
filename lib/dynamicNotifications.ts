@@ -89,6 +89,25 @@ interface DynamicSummary {
   summary: string;
   recommendations: string[];
   stats: Record<string, any>;
+  detailedResultsHTML: string; // HTML con todos los resultados detallados
+}
+
+// Helper para generar barras de progreso en HTML
+function progressBar(percent: number, color: string = '#6366f1'): string {
+  return `<div style="background:#e5e7eb;border-radius:4px;height:8px;width:100%;margin-top:4px;">
+    <div style="background:${color};border-radius:4px;height:8px;width:${Math.min(percent, 100)}%;"></div>
+  </div>`;
+}
+
+// Helper para generar item de lista
+function listItem(text: string, subtext?: string, badge?: string): string {
+  return `<div style="padding:10px 12px;background:#f9fafb;border-radius:6px;margin:6px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:#1f2937;">${text}</span>
+      ${badge ? `<span style="background:#6366f1;color:white;padding:2px 8px;border-radius:4px;font-size:12px;">${badge}</span>` : ''}
+    </div>
+    ${subtext ? `<div style="color:#6b7280;font-size:12px;margin-top:4px;">${subtext}</div>` : ''}
+  </div>`;
 }
 
 /**
@@ -101,6 +120,7 @@ export function generateDynamicSummary(commandType: string, commandData: any): D
   let summary = '';
   let recommendations: string[] = [];
   let stats: Record<string, any> = {};
+  let detailedResultsHTML = '';
 
   switch (commandType) {
     // === VOTACIONES ===
@@ -115,6 +135,21 @@ export function generateDynamicSummary(commandType: string, commandData: any): D
       if (winner && totalVotes > 0) {
         recommendations.push(`Opción ganadora: "${winner.text}" con ${winner.votes?.length || 0} votos`);
       }
+      // Resultados detallados
+      const sortedOptions = [...options].sort((a, b) => (b.votes?.length || 0) - (a.votes?.length || 0));
+      detailedResultsHTML = `<h4 style="color:#1f2937;margin:0 0 12px 0;">📊 Resultados de la Votación</h4>
+        ${sortedOptions.map((opt: any, idx: number) => {
+          const votes = opt.votes?.length || 0;
+          const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+          const isWinner = idx === 0 && votes > 0;
+          return `<div style="padding:12px;background:${isWinner ? '#ecfdf5' : '#f9fafb'};border-radius:8px;margin:8px 0;${isWinner ? 'border:2px solid #10b981;' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:#1f2937;font-weight:${isWinner ? '600' : '400'};">${isWinner ? '🏆 ' : ''}${opt.text}</span>
+              <span style="color:#6366f1;font-weight:600;">${votes} votos (${percent}%)</span>
+            </div>
+            ${progressBar(percent, isWinner ? '#10b981' : '#6366f1')}
+          </div>`;
+        }).join('')}`;
       break;
 
     case 'dot-voting':
@@ -127,6 +162,20 @@ export function generateDynamicSummary(commandType: string, commandData: any): D
       if (dotWinner) {
         recommendations.push(`Mayor prioridad: "${dotWinner.text}" con ${dotWinner.points || 0} puntos`);
       }
+      const sortedDotOptions = [...dotOptions].sort((a, b) => (b.points || 0) - (a.points || 0));
+      detailedResultsHTML = `<h4 style="color:#1f2937;margin:0 0 12px 0;">🎯 Priorización por Puntos</h4>
+        ${sortedDotOptions.map((opt: any, idx: number) => {
+          const points = opt.points || 0;
+          const percent = totalPoints > 0 ? Math.round((points / totalPoints) * 100) : 0;
+          const isWinner = idx === 0 && points > 0;
+          return `<div style="padding:12px;background:${isWinner ? '#fef3c7' : '#f9fafb'};border-radius:8px;margin:8px 0;${isWinner ? 'border:2px solid #f59e0b;' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:#1f2937;font-weight:${isWinner ? '600' : '400'};">${isWinner ? '⭐ ' : ''}${opt.text}</span>
+              <span style="color:#f59e0b;font-weight:600;">${points} pts (${percent}%)</span>
+            </div>
+            ${progressBar(percent, isWinner ? '#f59e0b' : '#6366f1')}
+          </div>`;
+        }).join('')}`;
       break;
 
     case 'blind-vote':
@@ -185,13 +234,28 @@ export function generateDynamicSummary(commandType: string, commandData: any): D
       const ideas = commandData.ideas || [];
       const totalIdeas = ideas.length;
       const totalIdeaVotes = ideas.reduce((sum: number, i: any) => sum + (i.votes?.length || 0), 0);
-      const topIdeas = [...ideas].sort((a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)).slice(0, 3);
+      const sortedIdeas = [...ideas].sort((a, b) => (b.votes?.length || 0) - (a.votes?.length || 0));
+      const topIdeas = sortedIdeas.slice(0, 3);
       stats = { totalIdeas, totalVotes: totalIdeaVotes, topIdeas: topIdeas.map((i: any) => i.text) };
       summary = `${totalIdeas} ideas generadas, ${totalIdeaVotes} votos totales.`;
       if (topIdeas.length > 0) {
         recommendations.push(`Top ideas: ${topIdeas.map((i: any) => `"${i.text?.substring(0, 30)}..."`).join(', ')}`);
         recommendations.push('Considera crear prioridades con /quick-priority para las mejores ideas');
       }
+      detailedResultsHTML = `<h4 style="color:#1f2937;margin:0 0 12px 0;">💡 Ideas Generadas (${totalIdeas})</h4>
+        ${sortedIdeas.map((idea: any, idx: number) => {
+          const votes = idea.votes?.length || 0;
+          const isTop = idx < 3 && votes > 0;
+          return `<div style="padding:12px;background:${isTop ? '#eff6ff' : '#f9fafb'};border-radius:8px;margin:8px 0;${isTop ? 'border-left:4px solid #3b82f6;' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div style="flex:1;">
+                <span style="color:#1f2937;">${isTop ? `<strong>#${idx + 1}</strong> ` : ''}${idea.text}</span>
+                ${idea.author?.name ? `<div style="color:#6b7280;font-size:12px;margin-top:4px;">por ${idea.author.name}</div>` : ''}
+              </div>
+              <span style="color:#3b82f6;font-weight:600;margin-left:12px;">👍 ${votes}</span>
+            </div>
+          </div>`;
+        }).join('')}`;
       break;
 
     case 'mind-map':
@@ -239,6 +303,23 @@ export function generateDynamicSummary(commandType: string, commandData: any): D
         recommendations.push(`Sección más activa: "${topSection[0]}" con ${topSection[1]} items`);
       }
       recommendations.push('Crear acciones concretas con /action-items basado en los insights');
+      // Resultados detallados por sección
+      const sectionColors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
+      detailedResultsHTML = sections.map((section: any, sIdx: number) => {
+        const color = sectionColors[sIdx % sectionColors.length];
+        const items = section.items || [];
+        return `<div style="margin-bottom:20px;">
+          <h4 style="color:${color};margin:0 0 10px 0;padding:8px 12px;background:${color}15;border-left:4px solid ${color};border-radius:0 6px 6px 0;">
+            ${section.title || section.id} (${items.length})
+          </h4>
+          ${items.length > 0 ? items.map((item: any) => `
+            <div style="padding:10px 12px;background:#f9fafb;border-radius:6px;margin:6px 0 6px 16px;">
+              <span style="color:#1f2937;">${item.text || item.content}</span>
+              ${item.userName ? `<div style="color:#6b7280;font-size:11px;margin-top:4px;">— ${item.userName}</div>` : ''}
+            </div>
+          `).join('') : '<p style="color:#9ca3af;font-style:italic;margin-left:16px;">Sin items</p>'}
+        </div>`;
+      }).join('');
       break;
 
     // === ANÁLISIS ===
@@ -433,7 +514,7 @@ export function generateDynamicSummary(commandType: string, commandData: any): D
       summary = `${typeLabel} completada.`;
   }
 
-  return { title, summary, recommendations, stats };
+  return { title, summary, recommendations, stats, detailedResultsHTML };
 }
 
 /**
@@ -645,7 +726,8 @@ export async function notifyDynamicClosed(params: NotifyDynamicClosedParams) {
         summary: summary.summary,
         recommendations: summary.recommendations,
         stats: summary.stats,
-        channelUrl
+        channelUrl,
+        detailedResultsHTML: summary.detailedResultsHTML
       });
 
       try {
