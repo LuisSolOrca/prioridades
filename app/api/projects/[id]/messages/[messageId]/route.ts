@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import Priority from '@/models/Priority';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { deleteFileFromR2 } from '@/lib/r2-client';
 
 /**
  * PUT /api/projects/[id]/messages/[messageId]
@@ -173,9 +174,20 @@ export async function DELETE(
       );
     }
 
+    // Si tiene mensaje de voz, eliminar el archivo de R2
+    if (message.voiceMessage?.r2Key) {
+      try {
+        await deleteFileFromR2(message.voiceMessage.r2Key);
+      } catch (r2Error) {
+        console.error('Error deleting voice message from R2:', r2Error);
+        // Continue with deletion even if R2 delete fails
+      }
+    }
+
     // Marcar como eliminado en lugar de eliminar físicamente
     message.isDeleted = true;
     message.content = '[Mensaje eliminado]';
+    message.voiceMessage = undefined; // Clear voice message data
     const channelId = message.channelId;
     const messageId = message._id;
     await message.save();
