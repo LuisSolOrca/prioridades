@@ -12,13 +12,16 @@ import {
   Reply,
   ChevronDown,
   ChevronRight,
-  Mic
+  Mic,
+  Paperclip
 } from 'lucide-react';
 import MessageContent from './MessageContent';
 import EmojiPicker from './EmojiPicker';
 import MarkdownHelp from './MarkdownHelp';
 import VoiceRecorder from './VoiceRecorder';
 import VoicePlayer from './VoicePlayer';
+import FileUpload from '../FileUpload';
+import AttachmentCard from '../AttachmentCard';
 
 interface Priority {
   _id: string;
@@ -39,6 +42,20 @@ interface VoiceMessage {
   transcription?: string;
 }
 
+interface Attachment {
+  _id: string;
+  fileName: string;
+  originalName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  uploadedAt: string;
+}
+
 interface Message {
   _id: string;
   userId: {
@@ -55,6 +72,7 @@ interface Message {
     createdAt: string;
   }>;
   voiceMessage?: VoiceMessage;
+  attachments?: Attachment[];
   parentMessageId?: string;
   rootMessageId?: string;
   threadDepth?: number;
@@ -85,6 +103,7 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [collapsedMessages, setCollapsedMessages] = useState<Set<string>>(new Set());
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const repliesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -484,6 +503,21 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
                     </div>
                   )}
 
+                  {/* Attachments */}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {message.attachments.map((attachment) => (
+                        <AttachmentCard
+                          key={attachment._id}
+                          attachment={attachment}
+                          projectId={projectId}
+                          compact={true}
+                          showPreview={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   {/* Actions */}
                   <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition flex gap-1">
                     {/* Reply button - always visible on hover */}
@@ -653,6 +687,62 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
           </div>
         )}
 
+        {/* File Upload Area */}
+        {showAttachments && (
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Adjuntar archivo
+              </h3>
+              <button
+                onClick={() => setShowAttachments(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <FileUpload
+              projectId={projectId}
+              channelId={channelId}
+              onUploadSuccess={async (attachment) => {
+                setShowAttachments(false);
+
+                // Determine which message to reply to
+                const targetParentId = replyingTo?._id || parentMessage._id;
+
+                // Create message with attachment in thread
+                try {
+                  const response = await fetch(`/api/projects/${projectId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      content: `📎 Subió el archivo: **${attachment.originalName}**`,
+                      channelId: channelId,
+                      parentMessageId: targetParentId,
+                      attachments: [attachment._id]
+                    })
+                  });
+
+                  if (response.ok) {
+                    const message = await response.json();
+                    setAllMessages((prev) => [...prev, message]);
+                    setReplyingTo(null);
+                    scrollToBottom();
+                  } else {
+                    loadThreadMessages();
+                  }
+                } catch (error) {
+                  console.error('Error creating message with attachment:', error);
+                  loadThreadMessages();
+                }
+              }}
+              onUploadError={(error) => {
+                console.error('Error uploading file:', error);
+              }}
+            />
+          </div>
+        )}
+
         {/* Input */}
         <div className="border-t border-gray-200 dark:border-gray-700 p-4">
           {showVoiceRecorder ? (
@@ -665,6 +755,14 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
           ) : (
             <>
               <div className="flex gap-2">
+                <button
+                  onClick={() => setShowAttachments(!showAttachments)}
+                  disabled={sending}
+                  className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition flex items-center"
+                  title="Adjuntar archivo"
+                >
+                  <Paperclip size={18} />
+                </button>
                 <button
                   onClick={() => setShowVoiceRecorder(true)}
                   disabled={sending}
