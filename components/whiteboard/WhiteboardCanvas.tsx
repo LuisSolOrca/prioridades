@@ -75,6 +75,74 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [isUpdatingFromRemote, setIsUpdatingFromRemote] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [pendingLibraryUrl, setPendingLibraryUrl] = useState<string | null>(null);
+
+  // Manejar importación de librería desde URL hash (#addLibrary=...)
+  useEffect(() => {
+    const handleLibraryFromHash = () => {
+      if (typeof window === 'undefined') return;
+
+      const hash = window.location.hash;
+      if (!hash.includes('addLibrary=')) return;
+
+      const params = new URLSearchParams(hash.slice(1));
+      const libraryUrl = params.get('addLibrary');
+
+      if (libraryUrl) {
+        console.log('Library URL detected:', libraryUrl);
+        setPendingLibraryUrl(decodeURIComponent(libraryUrl));
+        // Limpiar el hash para evitar re-importaciones
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    };
+
+    handleLibraryFromHash();
+    window.addEventListener('hashchange', handleLibraryFromHash);
+    return () => window.removeEventListener('hashchange', handleLibraryFromHash);
+  }, []);
+
+  // Importar librería pendiente cuando Excalidraw esté listo
+  useEffect(() => {
+    const importLibrary = async () => {
+      if (!pendingLibraryUrl || !excalidrawAPIRef.current) return;
+
+      try {
+        console.log('Fetching library from:', pendingLibraryUrl);
+        const response = await fetch(pendingLibraryUrl);
+        if (!response.ok) throw new Error('Failed to fetch library');
+
+        const libraryData = await response.json();
+        console.log('Library data:', libraryData);
+
+        // Extraer los items de la librería
+        const libraryItems = libraryData.libraryItems || libraryData.library || [];
+
+        if (libraryItems.length > 0) {
+          // Obtener librería actual y agregar los nuevos items
+          const currentLibrary = excalidrawAPIRef.current.getAppState()?.libraryItems || [];
+          const newLibrary = [...currentLibrary, ...libraryItems];
+
+          excalidrawAPIRef.current.updateScene({
+            libraryItems: newLibrary
+          });
+
+          // Guardar en el servidor
+          handleLibraryChange(newLibrary);
+
+          alert(`Librería importada: ${libraryItems.length} elementos agregados`);
+        }
+      } catch (err) {
+        console.error('Error importing library:', err);
+        alert('Error al importar la librería. Intenta de nuevo.');
+      } finally {
+        setPendingLibraryUrl(null);
+      }
+    };
+
+    // Esperar a que Excalidraw esté completamente cargado
+    const timer = setTimeout(importLibrary, 1000);
+    return () => clearTimeout(timer);
+  }, [pendingLibraryUrl, whiteboard]);
 
   // Detectar tema
   useEffect(() => {
