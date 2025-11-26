@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Hash, Folder, Plus, Edit2, Trash2, ChevronDown, ChevronRight, Save, X, Lock, Users, Search, Check } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
@@ -33,11 +34,15 @@ interface ChannelManagementProps {
 }
 
 export default function ChannelManagement({ projectId }: ChannelManagementProps) {
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as any)?.id;
+  const currentUserRole = (session?.user as any)?.role;
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedChannels, setExpandedChannels] = useState<Set<string>>(new Set());
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingChannel, setEditingChannel] = useState<string | null>(null);
+  const [editingChannelCreatorId, setEditingChannelCreatorId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -136,10 +141,16 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
 
   const handleUpdateChannel = async (channelId: string) => {
     try {
+      // Solo enviar isPrivate y members si el usuario es el creador o admin
+      const canEditMembers = editingChannelCreatorId === currentUserId || currentUserRole === 'ADMIN';
+      const payload = canEditMembers
+        ? { ...formData, members: selectedUsers.map(u => u._id) }
+        : { name: formData.name, description: formData.description, icon: formData.icon, parentId: formData.parentId };
+
       const response = await fetch(`/api/projects/${projectId}/channels/${channelId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -178,6 +189,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
 
   const startEdit = (channel: Channel) => {
     setEditingChannel(channel._id);
+    setEditingChannelCreatorId(channel.createdBy?._id || null);
     setFormData({
       name: channel.name,
       description: channel.description || '',
@@ -206,6 +218,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
     setSelectedUsers([]);
     setUserSearch('');
     setSearchResults([]);
+    setEditingChannelCreatorId(null);
   };
 
   const addUser = (user: User) => {
@@ -367,6 +380,95 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
             )}
           </div>
         </div>
+
+        {/* Edit Private Channel Members - Solo visible para el creador o admin */}
+        {isEditing && channel.isPrivate && (editingChannelCreatorId === currentUserId || currentUserRole === 'ADMIN') && (
+          <div className={`${level > 0 ? 'ml-8' : ''} mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700`}>
+            <label className="block text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+              <Users size={14} className="inline mr-1" />
+              Miembros del canal
+            </label>
+
+            {/* Selected Users */}
+            {selectedUsers.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedUsers.map(user => (
+                  <span
+                    key={user._id}
+                    className="flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-full text-sm"
+                  >
+                    {user.name}
+                    <button
+                      type="button"
+                      onClick={() => removeUser(user._id)}
+                      className="hover:text-amber-600 dark:hover:text-amber-400"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* User Search */}
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Buscar usuarios para agregar..."
+                className="w-full pl-9 pr-3 py-2 text-sm border border-amber-300 dark:border-amber-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+              />
+            </div>
+
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg max-h-32 overflow-y-auto">
+                {searchResults.map(user => (
+                  <button
+                    key={user._id}
+                    type="button"
+                    onClick={() => addUser(user)}
+                    className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-between text-sm"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-800 dark:text-gray-100">{user.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                    </div>
+                    <Check size={14} className="text-green-500" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {searchingUsers && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Buscando...</p>
+            )}
+          </div>
+        )}
+
+        {/* Read-only view for non-creators viewing private channels */}
+        {isEditing && channel.isPrivate && editingChannelCreatorId !== currentUserId && currentUserRole !== 'ADMIN' && (
+          <div className={`${level > 0 ? 'ml-8' : ''} mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700`}>
+            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+              <Lock size={14} />
+              Solo el creador del canal puede modificar los miembros
+            </p>
+            {channel.members && channel.members.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {channel.members.map(user => (
+                  <span
+                    key={user._id}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs"
+                  >
+                    {user.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Children */}
         {hasChildren && isExpanded && (
@@ -594,6 +696,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
           <li>• No se pueden eliminar canales con subcanales</li>
           <li>• <Lock size={12} className="inline" /> Los canales privados solo son visibles para sus miembros</li>
           <li>• El creador del canal privado siempre es miembro automáticamente</li>
+          <li>• Solo el creador del canal puede modificar los miembros</li>
         </ul>
       </div>
     </div>

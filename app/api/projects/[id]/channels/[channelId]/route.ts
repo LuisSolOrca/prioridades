@@ -32,7 +32,11 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, description, icon, parentId } = body;
+    const { name, description, icon, parentId, isPrivate, members } = body;
+    const userId = (session.user as any).id;
+    const userRole = (session.user as any).role;
+    const isCreator = channel.createdBy?.toString() === userId;
+    const isAdmin = userRole === 'ADMIN';
 
     // Validar que no es el canal General
     if (channel.name === 'General' && channel.parentId === null) {
@@ -71,6 +75,16 @@ export async function PUT(
       }
     }
 
+    // Solo el creador o admin puede cambiar isPrivate o members
+    if (isPrivate !== undefined || members !== undefined) {
+      if (!isCreator && !isAdmin) {
+        return NextResponse.json(
+          { error: 'Solo el creador del canal puede modificar la privacidad y los miembros' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Actualizar canal
     if (name !== undefined) channel.name = name.trim();
     if (description !== undefined) channel.description = description.trim();
@@ -79,10 +93,30 @@ export async function PUT(
       channel.parentId = parentId || null;
     }
 
+    // Actualizar privacidad y miembros (solo si es creador o admin)
+    if (isPrivate !== undefined && (isCreator || isAdmin)) {
+      channel.isPrivate = isPrivate;
+      // Si se hace público, limpiar lista de miembros
+      if (!isPrivate) {
+        channel.members = [];
+      }
+    }
+
+    if (members !== undefined && (isCreator || isAdmin) && channel.isPrivate) {
+      // Asegurar que el creador siempre esté incluido
+      const membersList = Array.isArray(members) ? [...members] : [];
+      const creatorId = channel.createdBy?.toString();
+      if (creatorId && !membersList.includes(creatorId)) {
+        membersList.push(creatorId);
+      }
+      channel.members = membersList;
+    }
+
     await channel.save();
 
     const updatedChannel = await Channel.findById(params.channelId)
       .populate('createdBy', 'name email')
+      .populate('members', 'name email')
       .lean();
 
     return NextResponse.json(updatedChannel);
