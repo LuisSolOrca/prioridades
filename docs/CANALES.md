@@ -3079,6 +3079,33 @@ Para problemas o sugerencias:
 
 ## Changelog
 
+### v1.6.0 (Noviembre 2025) - Canales Privados
+
+#### Canales Privados
+- ✅ **Soporte para canales privados** con control de acceso por miembros
+  - Toggle para marcar canal como privado al crear
+  - Búsqueda y selección de miembros con acceso
+  - El creador se agrega automáticamente como miembro
+  - Icono de candado y badge "Privado" para identificación visual
+  - Contador de miembros en la lista de canales
+
+#### Control de Acceso
+- ✅ **Filtrado automático** de canales según permisos del usuario
+  - Canales públicos visibles para todos
+  - Canales privados solo para miembros, creador o admins
+  - Admins pueden ver todos los canales del proyecto
+
+#### Modelo de Datos
+- ✅ **Nuevos campos** en modelo Channel:
+  - `isPrivate: boolean` - indica si el canal es privado
+  - `members: ObjectId[]` - lista de usuarios con acceso
+
+#### API
+- ✅ **GET /api/projects/[id]/channels** - Filtra por permisos automáticamente
+- ✅ **POST /api/projects/[id]/channels** - Acepta `isPrivate` y `members[]`
+
+---
+
 ### v1.5.0 (Noviembre 2025) - Pestaña de Dinámicas y 35+ Nuevos Widgets
 
 #### Pestaña de Dinámicas
