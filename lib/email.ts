@@ -813,4 +813,69 @@ export const emailTemplates = {
       }),
     };
   },
+
+  standupCreated: (params: {
+    userName: string;
+    projectName: string;
+    yesterday: string;
+    today: string;
+    blockers?: string;
+    risks?: string;
+    standupUrl: string;
+    date: string;
+  }) => {
+    const formatText = (text: string) => text.split('\n').map(line =>
+      `<div style="padding:6px 0;border-bottom:1px solid #f3f4f6;">${line}</div>`
+    ).join('');
+
+    return {
+      subject: `📋 Standup de ${params.userName} - ${params.date} | ${params.projectName}`,
+      html: generateEmailHTML({
+        headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+        headerTitle: `📋 Standup Diario`,
+        content: `
+          <p style="font-size: 16px; color: #1f2937;">
+            <strong>${params.userName}</strong> ha registrado su standup en <strong>${params.projectName}</strong>
+          </p>
+          <p style="color: #6b7280; font-size: 14px;">📅 ${params.date}</p>
+
+          <div style="background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 0 8px 8px 0; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #15803d; margin: 0 0 10px 0;">✅ Ayer hice:</h4>
+            <div style="color: #166534; font-size: 14px;">
+              ${formatText(params.yesterday)}
+            </div>
+          </div>
+
+          <div style="background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #1d4ed8; margin: 0 0 10px 0;">🎯 Hoy haré:</h4>
+            <div style="color: #1e40af; font-size: 14px;">
+              ${formatText(params.today)}
+            </div>
+          </div>
+
+          ${params.blockers ? `
+            <div style="background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 15px; margin: 20px 0;">
+              <h4 style="color: #b91c1c; margin: 0 0 10px 0;">🚧 Bloqueos:</h4>
+              <div style="color: #991b1b; font-size: 14px;">
+                ${formatText(params.blockers)}
+              </div>
+            </div>
+          ` : ''}
+
+          ${params.risks ? `
+            <div style="background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 15px; margin: 20px 0;">
+              <h4 style="color: #b45309; margin: 0 0 10px 0;">⚠️ Riesgos:</h4>
+              <div style="color: #92400e; font-size: 14px;">
+                ${formatText(params.risks)}
+              </div>
+            </div>
+          ` : ''}
+
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="${params.standupUrl}" class="button" style="background: #8b5cf6;">Ver Standups del Proyecto</a>
+          </div>
+        `
+      }),
+    };
+  },
 };
