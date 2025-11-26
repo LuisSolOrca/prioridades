@@ -553,6 +553,61 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
             { id: 'release-1', title: 'Release 1', color: '#3b82f6' }
           ]
         };
+      // Nuevos widgets batch 3
+      case 'starfish':
+        return {
+          ...base,
+          sections: [
+            { id: 'keep', title: 'Keep Doing', icon: '✅', color: '#10b981', items: [] },
+            { id: 'less', title: 'Less Of', icon: '📉', color: '#f59e0b', items: [] },
+            { id: 'more', title: 'More Of', icon: '📈', color: '#3b82f6', items: [] },
+            { id: 'stop', title: 'Stop Doing', icon: '🛑', color: '#ef4444', items: [] },
+            { id: 'start', title: 'Start Doing', icon: '🚀', color: '#8b5cf6', items: [] }
+          ]
+        };
+      case 'mad-sad-glad':
+        return {
+          ...base,
+          sections: [
+            { id: 'mad', title: 'Mad', icon: '😠', color: '#ef4444', items: [] },
+            { id: 'sad', title: 'Sad', icon: '😢', color: '#3b82f6', items: [] },
+            { id: 'glad', title: 'Glad', icon: '😊', color: '#10b981', items: [] }
+          ]
+        };
+      case 'how-might-we':
+        return {
+          ...base,
+          sections: [
+            { id: 'problems', title: 'Problemas', icon: '❓', color: '#ef4444', items: [] },
+            { id: 'hmw', title: 'How Might We...', icon: '💡', color: '#f59e0b', items: [] },
+            { id: 'ideas', title: 'Ideas', icon: '✨', color: '#10b981', items: [] }
+          ]
+        };
+      case 'fishbone':
+        return {
+          ...base,
+          problem: title,
+          categories: [
+            { id: 'people', title: 'Personas', icon: '👥', causes: [] },
+            { id: 'process', title: 'Procesos', icon: '⚙️', causes: [] },
+            { id: 'technology', title: 'Tecnología', icon: '💻', causes: [] },
+            { id: 'materials', title: 'Materiales', icon: '📦', causes: [] },
+            { id: 'environment', title: 'Entorno', icon: '🌍', causes: [] },
+            { id: 'measurement', title: 'Medición', icon: '📊', causes: [] }
+          ]
+        };
+      case 'raci':
+        return {
+          ...base,
+          roles: [],
+          tasks: []
+        };
+      case 'roman-voting':
+        return {
+          ...base,
+          question: title,
+          votes: []
+        };
       default:
         return base;
     }

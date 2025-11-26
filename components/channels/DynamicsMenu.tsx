@@ -44,6 +44,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'fist-of-five', name: 'Puño de Cinco', description: 'Consenso rápido (0-5)' },
       { type: 'confidence-vote', name: 'Confianza', description: 'Medir nivel de confianza' },
       { type: 'nps', name: 'NPS', description: 'Net Promoter Score' },
+      { type: 'roman-voting', name: 'Roman Voting', description: 'Pulgar arriba/abajo/lado - más rápido que Puño de Cinco' },
     ]
   },
   {
@@ -67,6 +68,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'reverse-brainstorm', name: 'Brainstorm Inverso', description: '¿Cómo causar el problema? → invertir soluciones' },
       { type: 'worst-idea', name: 'Peores Ideas', description: 'Generar las peores ideas → transformarlas' },
       { type: 'lotus-blossom', name: 'Lotus Blossom', description: 'Idea central con 8 pétalos de sub-ideas' },
+      { type: 'how-might-we', name: 'How Might We', description: 'Puente entre problema e ideación - "¿Cómo podríamos...?"' },
     ]
   },
   {
@@ -82,6 +84,8 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'sailboat', name: 'Velero', description: 'Viento, ancla, rocas, isla' },
       { type: 'start-stop-continue', name: 'Start-Stop-Continue', description: 'Qué empezar, parar, continuar' },
       { type: '4ls', name: '4Ls', description: 'Liked, Learned, Lacked, Longed for' },
+      { type: 'starfish', name: 'Starfish', description: 'Keep, Less, More, Stop, Start - más completa que Start-Stop-Continue' },
+      { type: 'mad-sad-glad', name: 'Mad/Sad/Glad', description: 'Retro emocional rápida - ¿Qué te enojó/entristeció/alegró?' },
       { type: 'team-health', name: 'Team Health', description: 'Salud del equipo (Spotify)' },
       { type: 'mood', name: 'Check-in', description: 'Estado de ánimo del equipo' },
     ]
@@ -102,6 +106,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'empathy-map', name: 'Mapa de Empatía', description: 'Dice, Piensa, Hace, Siente - Design Thinking' },
       { type: 'moscow', name: 'MoSCoW', description: 'Must, Should, Could, Won\'t - Priorización clásica' },
       { type: 'pre-mortem', name: 'Pre-mortem', description: 'Imaginar el fracaso para prevenir riesgos' },
+      { type: 'fishbone', name: 'Fishbone / Ishikawa', description: 'Diagrama de causa-efecto visual en forma de espina de pescado' },
     ]
   },
   {
@@ -121,6 +126,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'estimation-poker', name: 'Planning Poker', description: 'Estimar esfuerzo en equipo' },
       { type: 'lean-coffee', name: 'Lean Coffee', description: 'Reunión estructurada con votación de temas' },
       { type: 'user-story-mapping', name: 'User Story Mapping', description: 'Mapear historias de usuario por actividades' },
+      { type: 'raci', name: 'RACI', description: 'Matriz de responsabilidades - Responsable, Aprobador, Consultado, Informado' },
     ]
   },
   {

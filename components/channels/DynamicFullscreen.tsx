@@ -56,6 +56,9 @@ import LotusBlossomCommand from '../slashCommands/LotusBlossomCommand';
 import OpportunityTreeCommand from '../slashCommands/OpportunityTreeCommand';
 import LeanCoffeeCommand from '../slashCommands/LeanCoffeeCommand';
 import UserStoryMappingCommand from '../slashCommands/UserStoryMappingCommand';
+import FishboneCommand from '../slashCommands/FishboneCommand';
+import RACICommand from '../slashCommands/RACICommand';
+import RomanVotingCommand from '../slashCommands/RomanVotingCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -144,6 +147,13 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'pre-mortem': { icon: Target, color: 'text-red-600' },
   'lean-coffee': { icon: Users, color: 'text-amber-600' },
   'user-story-mapping': { icon: Layers, color: 'text-teal-600' },
+  // Nuevos widgets batch 3
+  'starfish': { icon: RotateCcw, color: 'text-orange-600' },
+  'mad-sad-glad': { icon: Heart, color: 'text-pink-600' },
+  'how-might-we': { icon: Lightbulb, color: 'text-yellow-600' },
+  'fishbone': { icon: Target, color: 'text-cyan-600' },
+  'raci': { icon: Users, color: 'text-indigo-600' },
+  'roman-voting': { icon: Vote, color: 'text-purple-600' },
 };
 
 // Metodologías y guías de uso para cada tipo de dinámica
@@ -873,6 +883,115 @@ const METHODOLOGY_GUIDE: Record<string, { title: string; description: string; st
       'Lee de arriba a abajo = prioridad',
       'Involucra a todo el equipo en el mapeo',
       'Actualiza el mapa conforme avanza el producto'
+    ]
+  },
+  // Nuevos widgets batch 3
+  'starfish': {
+    title: 'Starfish Retrospective',
+    description: 'Retrospectiva en forma de estrella con 5 dimensiones: Keep Doing, Less Of, More Of, Stop Doing y Start Doing. Más completa que Start-Stop-Continue.',
+    steps: [
+      '✅ Keep Doing: ¿Qué está funcionando y debe continuar?',
+      '📉 Less Of: ¿Qué deberíamos hacer menos?',
+      '📈 More Of: ¿Qué deberíamos hacer más?',
+      '🛑 Stop Doing: ¿Qué debemos dejar de hacer completamente?',
+      '🚀 Start Doing: ¿Qué deberíamos empezar a hacer?'
+    ],
+    tips: [
+      'Más matizada que Start-Stop-Continue',
+      '"Less Of" y "More Of" permiten ajustes graduales',
+      'Ideal para equipos maduros que buscan mejora continua',
+      'Prioriza las acciones más impactantes'
+    ]
+  },
+  'mad-sad-glad': {
+    title: 'Mad Sad Glad',
+    description: 'Retrospectiva emocional rápida que captura cómo se sintió el equipo. Ideal para verificar el pulso emocional.',
+    steps: [
+      '😠 Mad: ¿Qué te enojó o frustró?',
+      '😢 Sad: ¿Qué te entristeció o decepcionó?',
+      '😊 Glad: ¿Qué te alegró o satisfizo?',
+      'Agrupa temas similares y discute',
+      'Define acciones para mejorar el ánimo'
+    ],
+    tips: [
+      'Muy rápida - ideal para equipos con poco tiempo',
+      'Crea espacio seguro para expresar emociones',
+      'No juzgar las emociones de otros',
+      'Útil para detectar problemas de moral del equipo'
+    ]
+  },
+  'how-might-we': {
+    title: 'How Might We (¿Cómo podríamos...?)',
+    description: 'Técnica de Design Thinking que transforma problemas en oportunidades de innovación mediante preguntas "¿Cómo podríamos...?"',
+    steps: [
+      '❓ Identifica los problemas o desafíos',
+      '💡 Reformula cada problema como "¿Cómo podríamos...?"',
+      '✨ Genera ideas y soluciones para cada HMW',
+      'Prioriza las preguntas más prometedoras',
+      'Desarrolla las mejores ideas'
+    ],
+    tips: [
+      'Ni muy amplio (poco enfocado) ni muy estrecho (limita creatividad)',
+      'Ejemplo: "Los usuarios olvidan sus contraseñas" → "¿Cómo podríamos hacer el login más memorable?"',
+      'Puente perfecto entre investigación e ideación',
+      'Genera múltiples HMW por cada problema'
+    ]
+  },
+  'fishbone': {
+    title: 'Diagrama de Ishikawa / Fishbone',
+    description: 'Diagrama de causa-efecto en forma de espina de pescado para análisis de causa raíz. Clasifica las causas en 6 categorías.',
+    steps: [
+      'Define el problema (cabeza del pescado)',
+      'Identifica causas en 6 categorías:',
+      '👥 Personas: Factor humano, habilidades, capacitación',
+      '⚙️ Procesos: Procedimientos, metodologías, flujos',
+      '💻 Tecnología: Herramientas, sistemas, infraestructura',
+      '📦 Materiales: Recursos, insumos, datos',
+      '🌍 Entorno: Ambiente, cultura, factores externos',
+      '📊 Medición: Métricas, KPIs, feedback'
+    ],
+    tips: [
+      'También conocido como diagrama de Ishikawa o 6M',
+      'Pregunta "¿Por qué?" para cada causa para profundizar',
+      'Involucra a personas de diferentes áreas',
+      'Ideal para problemas complejos con múltiples causas'
+    ]
+  },
+  'raci': {
+    title: 'Matriz RACI',
+    description: 'Matriz de asignación de responsabilidades que clarifica quién hace qué en cada tarea del proyecto.',
+    steps: [
+      'Lista las tareas o entregables del proyecto',
+      'Identifica los roles o personas involucradas',
+      'Para cada combinación tarea-rol, asigna:',
+      'R - Responsible: Ejecuta la tarea',
+      'A - Accountable: Aprueba y responde (solo 1 por tarea)',
+      'C - Consulted: Se consulta antes (comunicación bidireccional)',
+      'I - Informed: Se informa después (comunicación unidireccional)'
+    ],
+    tips: [
+      'Cada tarea debe tener exactamente 1 "A" (Accountable)',
+      'Puede haber múltiples R, C, I',
+      'Evita confusiones de "¿Quién decide esto?"',
+      'Revisa cuando el equipo o alcance cambie'
+    ]
+  },
+  'roman-voting': {
+    title: 'Roman Voting (Votación Romana)',
+    description: 'Técnica de consenso rápido con tres opciones: pulgar arriba (a favor), pulgar de lado (neutral), pulgar abajo (en contra). Más rápida que Puño de Cinco.',
+    steps: [
+      'El facilitador presenta la propuesta o pregunta',
+      'Todos votan simultáneamente (oculto hasta revelar)',
+      '👍 Pulgar arriba: A favor, apruebo',
+      '👎 Pulgar abajo: En contra, tengo objeciones',
+      '✊ Pulgar de lado: Neutral, me da igual',
+      'Discute los votos en contra si los hay'
+    ],
+    tips: [
+      'Más rápido que Puño de Cinco (3 vs 6 opciones)',
+      'Ideal para decisiones binarias rápidas',
+      'Los votos en contra deben explicarse',
+      'Útil para validar consenso antes de continuar'
     ]
   }
 };
@@ -1625,6 +1744,83 @@ export default function DynamicFullscreen({
             title={getTitle()}
             activities={data.activities || []}
             releases={data.releases || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      // Nuevos widgets batch 3
+      case 'starfish':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="starfish"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">⭐</span>}
+            gradient="from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-orange-400 dark:border-orange-600"
+          />
+        );
+      case 'mad-sad-glad':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="mad-sad-glad"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">😊</span>}
+            gradient="from-pink-50 to-rose-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-pink-400 dark:border-pink-600"
+          />
+        );
+      case 'how-might-we':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="how-might-we"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">💡</span>}
+            gradient="from-yellow-50 to-amber-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-yellow-400 dark:border-yellow-600"
+          />
+        );
+      case 'fishbone':
+        return (
+          <FishboneCommand
+            {...commonProps}
+            title={getTitle()}
+            problem={data.problem || getTitle()}
+            categories={data.categories || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'raci':
+        return (
+          <RACICommand
+            {...commonProps}
+            title={getTitle()}
+            roles={data.roles || []}
+            tasks={data.tasks || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'roman-voting':
+        return (
+          <RomanVotingCommand
+            {...commonProps}
+            title={getTitle()}
+            question={data.question || getTitle()}
+            votes={data.votes || []}
+            revealed={data.revealed || false}
             createdBy={getCreatedBy()}
             closed={isClosed()}
           />

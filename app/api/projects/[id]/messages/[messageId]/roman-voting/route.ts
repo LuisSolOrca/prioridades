@@ -5,11 +5,9 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 
-const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot', 'soar', 'six-hats', 'mind-map', 'crazy-8s', 'affinity-map', 'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea', 'empathy-map', 'moscow', '4ls', 'pre-mortem', 'starfish', 'mad-sad-glad', 'how-might-we'];
-
 /**
- * POST /api/projects/[id]/messages/[messageId]/retro
- * Agregar item a una sección
+ * POST /api/projects/[id]/messages/[messageId]/roman-voting
+ * Emitir voto
  */
 export async function POST(
   request: Request,
@@ -23,11 +21,11 @@ export async function POST(
 
     await connectDB();
 
-    const { sectionId, text } = await request.json();
+    const { vote } = await request.json();
 
-    if (!sectionId || !text?.trim()) {
+    if (!vote || !['up', 'down', 'sideways'].includes(vote)) {
       return NextResponse.json(
-        { error: 'Datos inválidos' },
+        { error: 'Voto inválido' },
         { status: 400 }
       );
     }
@@ -37,28 +35,33 @@ export async function POST(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'roman-voting') {
+      return NextResponse.json({ error: 'No es una votación romana' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Votación cerrada' }, { status: 400 });
     }
 
-    const userId = (session.user as any).id;
-    const userName = (session.user as any).name || 'Usuario';
+    const oderId = (session.user as any).id;
+    const odeName = (session.user as any).name || 'Usuario';
 
-    // Encontrar sección y agregar item
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
+    // Buscar si ya votó
+    const existingVoteIndex = message.commandData.votes.findIndex(
+      (v: any) => v.oderId === oderId
+    );
+
+    if (existingVoteIndex !== -1) {
+      // Actualizar voto existente
+      message.commandData.votes[existingVoteIndex].vote = vote;
+    } else {
+      // Agregar nuevo voto
+      message.commandData.votes.push({
+        oderId,
+        odeName,
+        vote
+      });
     }
-
-    section.items.push({
-      text: text.trim(),
-      userId,
-      userName
-    });
 
     message.markModified('commandData');
     await message.save();
@@ -87,14 +90,14 @@ export async function POST(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro add:', error);
-    return NextResponse.json({ error: 'Error al agregar' }, { status: 500 });
+    console.error('Error in roman-voting vote:', error);
+    return NextResponse.json({ error: 'Error al votar' }, { status: 500 });
   }
 }
 
 /**
- * PATCH /api/projects/[id]/messages/[messageId]/retro
- * Eliminar item de una sección
+ * PATCH /api/projects/[id]/messages/[messageId]/roman-voting
+ * Revelar votos
  */
 export async function PATCH(
   request: Request,
@@ -108,38 +111,34 @@ export async function PATCH(
 
     await connectDB();
 
-    const { sectionId, itemIndex } = await request.json();
+    const { action } = await request.json();
 
     const message = await ChannelMessage.findById(params.messageId);
     if (!message) {
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'roman-voting') {
+      return NextResponse.json({ error: 'No es una votación romana' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Votación cerrada' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
+
+    if (action === 'reveal') {
+      // Solo el creador puede revelar
+      if (message.commandData.createdBy !== userId && (session.user as any).role !== 'ADMIN') {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      }
+
+      message.commandData.revealed = true;
+    } else {
+      return NextResponse.json({ error: 'Acción inválida' }, { status: 400 });
     }
 
-    const item = section.items[itemIndex];
-    if (!item) {
-      return NextResponse.json({ error: 'Item no encontrado' }, { status: 400 });
-    }
-
-    // Solo el creador o admin puede eliminar
-    if (item.userId !== userId && (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
-
-    section.items.splice(itemIndex, 1);
     message.markModified('commandData');
     await message.save();
 
@@ -167,14 +166,14 @@ export async function PATCH(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro delete:', error);
-    return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
+    console.error('Error in roman-voting reveal:', error);
+    return NextResponse.json({ error: 'Error al revelar' }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/projects/[id]/messages/[messageId]/retro
- * Cerrar retrospectiva (solo creador)
+ * DELETE /api/projects/[id]/messages/[messageId]/roman-voting
+ * Cerrar votación (solo creador)
  */
 export async function DELETE(
   request: Request,
@@ -193,8 +192,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'roman-voting') {
+      return NextResponse.json({ error: 'No es una votación romana' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
@@ -203,6 +202,7 @@ export async function DELETE(
     }
 
     message.commandData.closed = true;
+    message.commandData.revealed = true; // Al cerrar, revelar automáticamente
     message.markModified('commandData');
     await message.save();
 
@@ -230,7 +230,7 @@ export async function DELETE(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error closing retro:', error);
+    console.error('Error closing roman-voting:', error);
     return NextResponse.json({ error: 'Error al cerrar' }, { status: 500 });
   }
 }
