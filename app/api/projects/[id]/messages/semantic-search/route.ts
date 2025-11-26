@@ -305,16 +305,25 @@ export async function POST(
       .map(extractCommandContent)
       .filter((c): c is ExtractedContent => c !== null);
 
-    // Format regular messages
-    const formattedRegularMessages = regularMessages.map((m: any) => ({
-      id: m._id.toString(),
-      type: 'message',
-      title: 'Mensaje',
-      content: m.content,
-      createdBy: m.userId?.name || 'Usuario',
-      createdAt: m.createdAt,
-      channelId: m.channelId?.toString() || ''
-    }));
+    // Format regular messages (including voice message transcriptions)
+    const formattedRegularMessages = regularMessages.map((m: any) => {
+      let content = m.content || '';
+
+      // Include voice message transcription if available
+      if (m.voiceMessage?.transcription) {
+        content += ` [Transcripción de voz: ${m.voiceMessage.transcription}]`;
+      }
+
+      return {
+        id: m._id.toString(),
+        type: m.voiceMessage ? 'voice-message' : 'message',
+        title: m.voiceMessage ? 'Mensaje de Voz' : 'Mensaje',
+        content,
+        createdBy: m.userId?.name || 'Usuario',
+        createdAt: m.createdAt,
+        channelId: m.channelId?.toString() || ''
+      };
+    });
 
     // Combine all content
     const allContent = [...extractedDynamics, ...formattedRegularMessages];
