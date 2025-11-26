@@ -16,11 +16,12 @@
 13. [Slash Commands](#slash-commands)
 14. [Webhooks](#webhooks)
 15. [Archivos Adjuntos](#archivos-adjuntos)
-16. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
-17. [Notificaciones](#notificaciones)
-18. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
-19. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-20. [Roadmap Futuro](#roadmap-futuro)
+16. [Pestaña de Dinámicas](#pestaña-de-dinámicas)
+17. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
+18. [Notificaciones](#notificaciones)
+19. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+20. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+21. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -65,6 +66,9 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
 - 📎 **Archivos adjuntos** con Cloudflare R2 - subir/descargar archivos en mensajes y pestaña dedicada
+- 🎯 **Pestaña de Dinámicas** - visualiza todas las dinámicas colaborativas del canal (encuestas, retrospectivas, etc.)
+- 📄 **Generación de documentos con IA** - crea documentos DOCX profesionales a partir de dinámicas seleccionadas
+- 🎨 **60+ Widgets colaborativos** - votaciones, retrospectivas, análisis, ideación, frameworks ágiles
 
 ---
 
@@ -801,46 +805,122 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 
 #### 🤝 Colaboración (Collaboration)
 
+##### 📊 Votaciones y Encuestas
+
 | Comando | Descripción | Uso |
 |---------|-------------|-----|
-| `/celebrate` | Celebra logros del equipo | `/celebrate @usuario "logro"` |
-| `/poll` | Crea una encuesta | `/poll "¿Pregunta?" "Op1" "Op2"` |
-| `/brainstorm` | Sesión de brainstorming colaborativa | `/brainstorm "¿Tema o pregunta?"` |
+| `/poll` | Crea una encuesta básica | `/poll "¿Pregunta?" "Op1" "Op2"` |
 | `/dot-voting` | Votación con N puntos para distribuir | `/dot-voting "¿Pregunta?" 5 "Op1" "Op2"` |
 | `/blind-vote` | Votos ocultos hasta que todos voten | `/blind-vote "¿Pregunta?" "Op1" "Op2"` |
-| `/decision-matrix` | Matriz criterios vs opciones con puntajes | `/decision-matrix "Decisión" "Crit1" "Crit2"` |
 | `/nps` | Net Promoter Score rápido (0-10) | `/nps "¿Recomendarías X?"` |
+| `/confidence-vote` | ¿Qué tan seguros estamos? (1-5) | `/confidence-vote "¿Pregunta?"` |
+| `/fist-of-five` | Votación rápida con 5 niveles | `/fist-of-five "¿Pregunta?"` |
+| `/roman-voting` | Votación romana (👍/👎/✊) | `/roman-voting "¿Propuesta?"` |
+| `/ranking` | Ranking colaborativo drag & drop | `/ranking "¿Pregunta?" "Op1" "Op2"` |
+| `/wheel` | Ruleta de decisión aleatoria | `/wheel "Título" "Op1" "Op2" "Op3"` |
+
+##### 🔄 Retrospectivas
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/retrospective` | Retrospectiva ágil con 3 columnas | `/retrospective "Sprint N"` |
 | `/rose-bud-thorn` | 🌹 Positivo, 🌱 Potencial, 🌵 Problemas | `/rose-bud-thorn "Sprint N"` |
 | `/sailboat` | ⛵ Viento, ancla, rocas, isla | `/sailboat "Retrospectiva Q4"` |
 | `/start-stop-continue` | Qué empezar, parar, continuar | `/start-stop-continue "Sprint N"` |
-| `/swot` | Análisis SWOT colaborativo | `/swot "Producto X"` |
-| `/soar` | Análisis SOAR orientado al futuro | `/soar "Plan estratégico"` |
-| `/six-hats` | Análisis con los 6 sombreros de Bono | `/six-hats "Decisión"` |
+| `/4ls` | Liked, Learned, Lacked, Longed For | `/4ls "Sprint N"` |
+| `/starfish` | Más, Menos, Mantener, Empezar, Dejar | `/starfish "Sprint N"` |
+| `/mad-sad-glad` | Emociones del equipo (😠😢😊) | `/mad-sad-glad "Sprint N"` |
+| `/hot-air-balloon` | 🎈 Fuego, arena, tormenta, sol | `/hot-air-balloon "Sprint N"` |
+| `/kalm` | Keep, Add, Less, More | `/kalm "Sprint N"` |
+| `/pre-mortem` | Análisis preventivo de riesgos | `/pre-mortem "Proyecto X"` |
+
+##### 💡 Ideación y Creatividad
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/brainstorm` | Sesión de brainstorming colaborativa | `/brainstorm "¿Tema o pregunta?"` |
 | `/mind-map` | Mapa mental colaborativo gráfico | `/mind-map "Tema central"` |
 | `/crazy-8s` | 8 ideas en 8 minutos (Design Sprint) | `/crazy-8s "Problema o reto"` |
 | `/affinity-map` | Agrupar ideas por categorías | `/affinity-map "Sesión brainstorm"` |
-| `/estimation-poker` | Planning Poker para estimación de tareas | `/estimation-poker "¿Tarea?"` |
-| `/retrospective` | Retrospectiva ágil con 3 columnas | `/retrospective "Sprint N"` |
-| `/vote-points` | Votación por distribución de puntos | `/vote "¿Pregunta?" 10 "Op1" "Op2"` |
-| `/checklist` | Lista de tareas colaborativa | `/checklist "Título" "Item1" "Item2"` |
-| `/timer` | Temporizador compartido | `/timer "Título" 25` |
-| `/wheel` | Ruleta de decisión aleatoria | `/wheel "Título" "Op1" "Op2" "Op3"` |
-| `/mood` | Check-in de estado del equipo | `/mood "¿Cómo están?"` |
+| `/brainwriting` | Brainwriting 6-3-5 colaborativo | `/brainwriting "Tema"` |
+| `/lotus-blossom` | Expansión de ideas en pétalos | `/lotus-blossom "Idea central"` |
+| `/scamper` | Técnica SCAMPER para innovación | `/scamper "Producto/Servicio"` |
+| `/starbursting` | Generar preguntas (Qué, Quién, Cuándo...) | `/starbursting "Tema"` |
+| `/reverse-brainstorm` | Ideas inversas (¿cómo empeorar?) | `/reverse-brainstorm "Problema"` |
+| `/worst-idea` | Comenzar con las peores ideas | `/worst-idea "Reto"` |
+| `/how-might-we` | Preguntas "¿Cómo podríamos...?" | `/how-might-we "Desafío"` |
+
+##### 📊 Análisis y Estrategia
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/swot` | Análisis SWOT colaborativo | `/swot "Producto X"` |
+| `/soar` | Análisis SOAR orientado al futuro | `/soar "Plan estratégico"` |
+| `/six-hats` | Análisis con los 6 sombreros de Bono | `/six-hats "Decisión"` |
+| `/decision-matrix` | Matriz criterios vs opciones con puntajes | `/decision-matrix "Decisión" "Crit1" "Crit2"` |
 | `/pros-cons` | Tabla de pros y contras | `/pros-cons "Título"` |
-| `/ranking` | Ranking colaborativo drag & drop | `/ranking "¿Pregunta?" "Op1" "Op2"` |
-| `/parking-lot` | Temas para discutir después | `/parking-lot "Título"` |
+| `/five-whys` | Análisis de causa raíz (5 porqués) | `/five-whys "Problema"` |
+| `/fishbone` | Diagrama Ishikawa (causa-efecto) | `/fishbone "Problema"` |
+| `/impact-effort` | Matriz de impacto vs esfuerzo | `/impact-effort "Decisiones"` |
+| `/risk-matrix` | Matriz de riesgos (probabilidad x impacto) | `/risk-matrix "Proyecto"` |
+| `/assumption-mapping` | Mapeo de supuestos con certeza/riesgo | `/assumption-mapping "Proyecto"` |
+
+##### 🎯 Priorización
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/rice` | RICE Scoring (Reach, Impact, Confidence, Effort) | `/rice "Backlog"` |
+| `/moscow` | MoSCoW (Must, Should, Could, Won't) | `/moscow "Features"` |
+| `/estimation-poker` | Planning Poker para estimación de tareas | `/estimation-poker "¿Tarea?"` |
+| `/opportunity-tree` | Árbol de oportunidades con soluciones | `/opportunity-tree "Objetivo"` |
+
+##### 👥 Equipos y Personas
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/team-health` | Health check del equipo (Spotify model) | `/team-health "Título"` |
+| `/mood` | Check-in de estado del equipo | `/mood "¿Cómo están?"` |
+| `/persona` | Crear persona de usuario | `/persona "Nombre"` |
+| `/empathy-map` | Mapa de empatía del usuario | `/empathy-map "Usuario"` |
+| `/team-canvas` | Canvas de equipo colaborativo | `/team-canvas "Equipo"` |
+| `/raci` | Matriz RACI de responsabilidades | `/raci "Proyecto"` |
+| `/delegation-poker` | Niveles de delegación por decisiones | `/delegation-poker "Decisiones"` |
+| `/moving-motivators` | Motivadores del equipo (Management 3.0) | `/moving-motivators "Equipo"` |
 | `/kudos-wall` | Muro de reconocimientos acumulados | `/kudos-wall "Título"` |
 | `/icebreaker` | Pregunta aleatoria para romper el hielo | `/icebreaker` |
-| `/action-items` | Lista de acciones con responsable y fecha | `/action-items "Título"` |
-| `/team-health` | Health check del equipo (Spotify model) | `/team-health "Título"` |
-| `/confidence-vote` | ¿Qué tan seguros estamos? (1-5) | `/confidence-vote "¿Pregunta?"` |
-| `/pomodoro` | Temporizador pomodoro compartido (25/5 min) | `/pomodoro "Título"` |
-| `/agenda` | Agenda de reunión con tiempos por tema | `/agenda "Título de la reunión"` |
-| `/capacity` | Capacidad disponible del equipo | `/capacity "Título"` |
-| `/dependency-map` | Visualizar dependencias entre tareas | `/dependency-map "Título"` |
-| `/okr` | Definir y trackear OKRs | `/okr "Título"` |
-| `/roadmap` | Timeline visual con milestones | `/roadmap "Título"` |
+| `/celebrate` | Celebra logros del equipo | `/celebrate @usuario "logro"` |
+
+##### 📋 Gestión de Reuniones
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
 | `/standup` | Daily standup virtual | `/standup` |
+| `/agenda` | Agenda de reunión con tiempos por tema | `/agenda "Título de la reunión"` |
+| `/lean-coffee` | Formato Lean Coffee para discusiones | `/lean-coffee "Sesión"` |
+| `/parking-lot` | Temas para discutir después | `/parking-lot "Título"` |
+| `/timer` | Temporizador compartido | `/timer "Título" 25` |
+| `/pomodoro` | Temporizador pomodoro compartido (25/5 min) | `/pomodoro "Título"` |
+| `/working-agreements` | Acuerdos de trabajo del equipo | `/working-agreements "Equipo"` |
+
+##### 🗺️ Planificación y Frameworks
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/lean-canvas` | Lean Canvas para modelo de negocio | `/lean-canvas "Producto"` |
+| `/customer-journey` | Mapa del viaje del cliente | `/customer-journey "Proceso"` |
+| `/user-story-mapping` | Mapeo de historias de usuario | `/user-story-mapping "Epic"` |
+| `/inception-deck` | Inception Deck (10 preguntas del proyecto) | `/inception-deck "Proyecto"` |
+| `/roadmap` | Timeline visual con milestones | `/roadmap "Título"` |
+| `/okr` | Definir y trackear OKRs | `/okr "Título"` |
+| `/dependency-map` | Visualizar dependencias entre tareas | `/dependency-map "Título"` |
+| `/capacity` | Capacidad disponible del equipo | `/capacity "Título"` |
+
+##### ✅ Tareas y Seguimiento
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/checklist` | Lista de tareas colaborativa | `/checklist "Título" "Item1" "Item2"` |
+| `/action-items` | Lista de acciones con responsable y fecha | `/action-items "Título"` |
 | `/question` | Pregunta a un stakeholder | `/question @usuario "¿pregunta?"` |
 
 #### ⚙️ Gestión (Management)
@@ -2420,6 +2500,195 @@ Ver `docs/R2_SETUP.md` para guía paso a paso.
 
 ---
 
+## Pestaña de Dinámicas
+
+La **pestaña de Dinámicas** centraliza todas las actividades colaborativas (encuestas, retrospectivas, brainstormings, etc.) del canal seleccionado, facilitando el seguimiento y la generación de documentos.
+
+### Acceder a la Pestaña
+
+1. Ve a tu proyecto → Canales
+2. Selecciona un canal
+3. Haz clic en la pestaña **"Dinámicas"** (junto a "Chat" y "Archivos")
+
+### Vista de Dinámicas
+
+La pestaña muestra todas las dinámicas del canal con:
+
+**Información mostrada por cada dinámica:**
+- 🎯 **Tipo**: Icono y nombre del tipo de dinámica (Encuesta, Retrospectiva, etc.)
+- 📝 **Título/Pregunta**: El título o pregunta principal
+- 👤 **Creador**: Quién inició la dinámica
+- 📅 **Fecha**: Cuándo se creó
+- 🔓/🔒 **Estado**: Abierta o Cerrada
+
+**Acciones disponibles:**
+- 👁️ **Ver en chat**: Navega directamente al mensaje en el chat
+- ⬇️ **Exportar individual**: Genera un documento de la dinámica seleccionada
+
+### Tipos de Dinámicas Soportados
+
+La pestaña reconoce y muestra correctamente más de **60 tipos de dinámicas**:
+
+#### 📊 Votaciones
+- Encuesta (`/poll`)
+- Dot Voting (`/dot-voting`)
+- Votación Ciega (`/blind-vote`)
+- NPS (`/nps`)
+- Voto de Confianza (`/confidence-vote`)
+- Puño de Cinco (`/fist-of-five`)
+- Votación Romana (`/roman-voting`)
+- Ranking (`/ranking`)
+
+#### 🔄 Retrospectivas
+- Retrospectiva (`/retrospective`)
+- Rosa-Brote-Espina (`/rose-bud-thorn`)
+- Sailboat (`/sailboat`)
+- Start-Stop-Continue (`/start-stop-continue`)
+- 4Ls (`/4ls`)
+- Starfish (`/starfish`)
+- Mad Sad Glad (`/mad-sad-glad`)
+- Hot Air Balloon (`/hot-air-balloon`)
+- KALM (`/kalm`)
+- Pre-Mortem (`/pre-mortem`)
+
+#### 💡 Ideación
+- Lluvia de Ideas (`/brainstorm`)
+- Mapa Mental (`/mind-map`)
+- Crazy 8s (`/crazy-8s`)
+- Mapa de Afinidad (`/affinity-map`)
+- Brainwriting (`/brainwriting`)
+- Lotus Blossom (`/lotus-blossom`)
+- SCAMPER (`/scamper`)
+- Starbursting (`/starbursting`)
+- Brainstorm Inverso (`/reverse-brainstorm`)
+- Peor Idea (`/worst-idea`)
+- How Might We (`/how-might-we`)
+
+#### 📊 Análisis
+- SWOT (`/swot`)
+- SOAR (`/soar`)
+- Sombreros de Bono (`/six-hats`)
+- Matriz de Decisión (`/decision-matrix`)
+- Pros y Contras (`/pros-cons`)
+- 5 Porqués (`/five-whys`)
+- Diagrama Ishikawa (`/fishbone`)
+- Impacto vs Esfuerzo (`/impact-effort`)
+- Matriz de Riesgos (`/risk-matrix`)
+- Assumption Mapping (`/assumption-mapping`)
+
+#### 🎯 Priorización
+- RICE Scoring (`/rice`)
+- MoSCoW (`/moscow`)
+- Planning Poker (`/estimation-poker`)
+- Opportunity Tree (`/opportunity-tree`)
+
+#### 👥 Equipos
+- Salud del Equipo (`/team-health`)
+- Estado de Ánimo (`/mood`)
+- Persona (`/persona`)
+- Mapa de Empatía (`/empathy-map`)
+- Team Canvas (`/team-canvas`)
+- Matriz RACI (`/raci`)
+- Delegation Poker (`/delegation-poker`)
+- Moving Motivators (`/moving-motivators`)
+
+#### 🗺️ Frameworks
+- Lean Canvas (`/lean-canvas`)
+- Customer Journey (`/customer-journey`)
+- User Story Mapping (`/user-story-mapping`)
+- Inception Deck (`/inception-deck`)
+- Lean Coffee (`/lean-coffee`)
+- Working Agreements (`/working-agreements`)
+
+#### 📋 Gestión
+- Acciones (`/action-items`)
+- Checklist (`/checklist`)
+- Agenda (`/agenda`)
+- Parking Lot (`/parking-lot`)
+- Standup (`/standup`)
+- Muro de Kudos (`/kudos-wall`)
+
+### Generación de Documentos con IA
+
+Una de las funcionalidades más potentes es la **generación de documentos DOCX** a partir de las dinámicas seleccionadas.
+
+#### Cómo Generar un Documento
+
+1. Haz clic en el botón **"✨ Generar Documento"** en la pestaña de Dinámicas
+2. Se abre un modal con las siguientes opciones:
+
+**Configuración del documento:**
+- 📝 **Título del documento** (opcional): Nombre para el documento generado
+- ✅ **Selección de dinámicas**: Marca las dinámicas que quieres incluir
+- 🔘 **Seleccionar todo/Deseleccionar todo**: Selección rápida
+- 💬 **Contexto adicional** (opcional): Instrucciones para la IA sobre cómo generar el documento
+
+3. Haz clic en **"Generar DOCX"**
+4. La IA procesa las dinámicas seleccionadas y genera un documento Word profesional
+5. El archivo se descarga automáticamente
+
+#### Características del Documento Generado
+
+**Estructura automática:**
+- 📄 Portada con título y fecha
+- 📑 Índice de contenidos
+- 📊 Secciones por cada dinámica incluida
+- 📈 Análisis de resultados
+- 💡 Insights y conclusiones
+- ✅ Acciones recomendadas
+
+**Contenido inteligente:**
+- La IA analiza los datos de cada dinámica
+- Identifica patrones y tendencias
+- Genera resúmenes ejecutivos
+- Propone próximos pasos basados en los resultados
+
+**Formato profesional:**
+- Diseño limpio y corporativo
+- Tablas formateadas
+- Listas estructuradas
+- Compatible con Microsoft Word y Google Docs
+
+#### Casos de Uso
+
+**Documentación de retrospectivas:**
+```
+1. Ejecuta /sailboat "Sprint 15" durante la retro
+2. El equipo agrega items a cada sección
+3. Al finalizar, ve a Dinámicas
+4. Genera documento con contexto: "Retrospectiva del equipo Backend, sprint 15, enfocarse en acciones de mejora"
+5. Obtén un reporte profesional listo para compartir
+```
+
+**Resumen de sesión de ideación:**
+```
+1. Ejecuta /brainstorm "Nuevas features Q1"
+2. El equipo contribuye ideas y vota
+3. Genera documento con las mejores ideas y plan de acción
+```
+
+**Análisis estratégico:**
+```
+1. Ejecuta /swot "Producto 2025" y /rice "Backlog"
+2. Selecciona ambas dinámicas
+3. Genera un documento con análisis SWOT + priorización RICE
+```
+
+### Mejores Prácticas
+
+**Para facilitadores:**
+- 📋 Cierra las dinámicas antes de generar documentos para resultados completos
+- 📝 Usa títulos descriptivos en tus dinámicas para mejor organización
+- 💬 Proporciona contexto adicional para documentos más relevantes
+- 🔍 Revisa el documento generado y ajusta si es necesario
+
+**Para el equipo:**
+- 👥 Participen activamente en las dinámicas para datos más ricos
+- ✅ Completen todas las secciones de retrospectivas
+- 🗳️ Voten en todas las opciones para resultados representativos
+
+---
+
 ## Integración con Microsoft Teams
 
 Conecta Microsoft Teams con tus canales para recibir mensajes automáticamente sin servicios externos de pago.
@@ -2754,13 +3023,99 @@ Para problemas o sugerencias:
 ## Créditos
 
 **Desarrollado por:** Tu Empresa
-**Versión:** 1.4.1
+**Versión:** 1.5.0
 **Última actualización:** Noviembre 2025
 **Licencia:** Propietaria
 
 ---
 
 ## Changelog
+
+### v1.5.0 (Noviembre 2025) - Pestaña de Dinámicas y 35+ Nuevos Widgets
+
+#### Pestaña de Dinámicas
+- ✅ **Nueva pestaña "Dinámicas"** en la vista de canales
+  - Centraliza todas las actividades colaborativas del canal
+  - Muestra tipo, título, creador, fecha y estado de cada dinámica
+  - Acceso rápido para ver la dinámica en el chat
+  - Soporte para 60+ tipos de dinámicas
+
+#### Generación de Documentos con IA
+- ✅ **Generador de documentos DOCX** desde dinámicas seleccionadas
+  - Modal para seleccionar múltiples dinámicas
+  - Campo para título personalizado del documento
+  - Campo para contexto adicional para la IA
+  - Generación automática de documento Word profesional
+  - Estructura: portada, índice, secciones, análisis, conclusiones
+
+#### 35+ Nuevos Slash Commands
+
+**Votaciones:**
+- `/fist-of-five` - Votación rápida con 5 niveles (puño a mano abierta)
+- `/roman-voting` - Votación romana con 👍, 👎 o ✊
+
+**Retrospectivas:**
+- `/4ls` - Liked, Learned, Lacked, Longed For
+- `/starfish` - Más, Menos, Mantener, Empezar, Dejar
+- `/mad-sad-glad` - Emociones del equipo
+- `/hot-air-balloon` - 🎈 Fuego (impulso), arena (lastres), tormenta (riesgos), sol (visión)
+- `/kalm` - Keep, Add, Less, More
+- `/pre-mortem` - Análisis preventivo de riesgos futuros
+
+**Ideación:**
+- `/brainwriting` - Brainwriting 6-3-5 colaborativo con rondas
+- `/lotus-blossom` - Expansión de ideas en pétalos desde idea central
+- `/scamper` - Técnica SCAMPER (Sustituir, Combinar, Adaptar, Modificar, Poner otros usos, Eliminar, Reorganizar)
+- `/starbursting` - Generar preguntas sistemáticas (Qué, Quién, Cuándo, Dónde, Por qué, Cómo)
+- `/reverse-brainstorm` - Ideas inversas para resolver problemas
+- `/worst-idea` - Comenzar con las peores ideas para desbloquear creatividad
+- `/how-might-we` - Preguntas "¿Cómo podríamos...?" para design thinking
+
+**Análisis:**
+- `/five-whys` - Análisis de causa raíz con 5 niveles de por qué
+- `/fishbone` - Diagrama Ishikawa (causa-efecto) con categorías
+- `/impact-effort` - Matriz 2x2 de impacto vs esfuerzo
+- `/risk-matrix` - Matriz de riesgos con probabilidad x impacto
+- `/assumption-mapping` - Mapeo de supuestos con certeza y riesgo
+
+**Priorización:**
+- `/rice` - RICE Scoring (Reach, Impact, Confidence, Effort)
+- `/moscow` - MoSCoW (Must, Should, Could, Won't)
+- `/opportunity-tree` - Árbol de oportunidades con objetivo y soluciones
+
+**Equipos y Personas:**
+- `/persona` - Crear persona de usuario completa con demografía, metas, frustraciones
+- `/empathy-map` - Mapa de empatía (Dice, Piensa, Hace, Siente)
+- `/team-canvas` - Canvas de equipo colaborativo
+- `/raci` - Matriz RACI de responsabilidades
+- `/delegation-poker` - Niveles de delegación (Management 3.0)
+- `/moving-motivators` - Ranking de motivadores del equipo
+
+**Frameworks:**
+- `/lean-canvas` - Lean Canvas completo para modelo de negocio
+- `/customer-journey` - Mapa del viaje del cliente por etapas
+- `/user-story-mapping` - Mapeo de historias de usuario
+- `/inception-deck` - 10 preguntas del Inception Deck
+- `/lean-coffee` - Formato Lean Coffee con votación y tiempo
+- `/working-agreements` - Acuerdos de trabajo del equipo
+
+#### Mejoras en Widgets Existentes
+- ✅ **Botón de eliminar** en todos los widgets del chat (aparece al hacer hover)
+- ✅ **Props corregidas** en RomanVotingCommand, InceptionDeckCommand, DelegationPokerCommand, MovingMotivatorsCommand
+- ✅ **Renderizado corregido** para 21 widgets complejos que no se mostraban
+
+#### Documentación
+- ✅ **Sección de Slash Commands reorganizada** por categorías:
+  - Votaciones y Encuestas
+  - Retrospectivas
+  - Ideación y Creatividad
+  - Análisis y Estrategia
+  - Priorización
+  - Equipos y Personas
+  - Gestión de Reuniones
+  - Planificación y Frameworks
+  - Tareas y Seguimiento
+- ✅ **Nueva sección "Pestaña de Dinámicas"** con documentación completa
 
 ### v1.4.4 (Noviembre 2025) - Fase 3: Comandos de Productividad Avanzada
 - ✅ **6 nuevos slash commands de complejidad media-alta** - herramientas avanzadas para planificación y tracking
