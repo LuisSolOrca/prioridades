@@ -142,17 +142,26 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
             openLibraryMenu: true // Abrir el menú de librería
           });
 
-          // Guardar en la base de datos para persistencia
+          // Guardar en la base de datos para persistencia (merge con existentes)
           if (whiteboard) {
             console.log('Saving library to database...');
             try {
+              // Obtener librerías existentes y combinar con las nuevas
+              const existingLibrary = whiteboard.libraryItems || [];
+              const mergedLibrary = [...existingLibrary, ...libraryItems];
+
+              // Eliminar duplicados por id
+              const uniqueLibrary = mergedLibrary.filter((item, index, self) =>
+                index === self.findIndex((t) => t.id === item.id)
+              );
+
               const saveResponse = await fetch(
                 `/api/projects/${whiteboard.projectId}/whiteboards/${whiteboardId}/elements`,
                 {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    libraryItems: libraryItems,
+                    libraryItems: uniqueLibrary,
                     version: localVersion
                   })
                 }
@@ -160,7 +169,9 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
               if (saveResponse.ok) {
                 const data = await saveResponse.json();
                 setLocalVersion(data.version);
-                console.log('Library saved to database successfully');
+                // Actualizar whiteboard local para futuras importaciones
+                setWhiteboard(prev => prev ? { ...prev, libraryItems: uniqueLibrary } : prev);
+                console.log('Library saved to database successfully, total items:', uniqueLibrary.length);
               }
             } catch (saveErr) {
               console.error('Error saving library to database:', saveErr);
@@ -513,7 +524,9 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
       if (response.ok) {
         const data = await response.json();
         setLocalVersion(data.version);
-        console.log('Library saved successfully');
+        // Actualizar estado local para mantener sincronizado
+        setWhiteboard(prev => prev ? { ...prev, libraryItems } : prev);
+        console.log('Library saved successfully, items:', libraryItems.length);
       }
     } catch (err) {
       console.error('Error saving library:', err);
