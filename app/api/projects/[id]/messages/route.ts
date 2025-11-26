@@ -8,7 +8,7 @@ import Project from '@/models/Project';
 import Priority from '@/models/Priority';
 import UserGroup from '@/models/UserGroup';
 import Attachment from '@/models/Attachment'; // Necesario para populate
-import { notifyChannelMention, notifyChannelReply } from '@/lib/notifications';
+import { notifyChannelMention, notifyChannelReply, notifyGroupMention } from '@/lib/notifications';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 import { trackChannelUsage } from '@/lib/gamification';
 import { triggerOutgoingWebhooks } from '@/lib/webhooks';
@@ -416,18 +416,21 @@ export async function POST(
             }).populate('members', '_id name email isActive').lean() as any;
 
             if (group && group.members && group.members.length > 0) {
-              // Es un grupo, notificar a todos los miembros
-              for (const member of group.members) {
-                if (member.isActive && member._id.toString() !== author._id.toString()) {
-                  await notifyChannelMention(
-                    member._id.toString(),
-                    author.name,
-                    params.id,
-                    project.name,
-                    content,
-                    message._id.toString()
-                  );
-                }
+              // Es un grupo, notificar a todos los miembros con BCC
+              const memberIds = group.members
+                .filter((m: any) => m.isActive && m._id.toString() !== author._id.toString())
+                .map((m: any) => m._id.toString());
+
+              if (memberIds.length > 0) {
+                await notifyGroupMention(
+                  memberIds,
+                  author.name,
+                  group.tag,
+                  params.id,
+                  project.name,
+                  content,
+                  message._id.toString()
+                );
               }
             } else {
               // No es un grupo, buscar usuario
