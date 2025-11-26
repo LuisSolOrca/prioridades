@@ -72,6 +72,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [showDynamicsMenu, setShowDynamicsMenu] = useState(false); // Colapsado por defecto
 
   // Flatten hierarchical channels into a flat list
   const flattenChannels = (channels: any[]): Channel[] => {
@@ -899,8 +900,30 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
             </div>
           )}
 
-          {/* Dynamics Menu */}
-          <DynamicsMenu onSelectDynamic={handleCreateDynamic} />
+          {/* Dynamics Menu Toggle */}
+          <div>
+            <button
+              onClick={() => setShowDynamicsMenu(!showDynamicsMenu)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                showDynamicsMenu
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Zap size={18} />
+              <span>{showDynamicsMenu ? 'Ocultar' : 'Nueva'} Dinámica</span>
+              <ChevronRight
+                size={18}
+                className={`transition-transform ${showDynamicsMenu ? 'rotate-90' : ''}`}
+              />
+            </button>
+
+            {showDynamicsMenu && (
+              <div className="mt-4">
+                <DynamicsMenu onSelectDynamic={handleCreateDynamic} />
+              </div>
+            )}
+          </div>
 
           {/* History Toggle */}
           {closedDynamics.length > 0 && (
