@@ -413,7 +413,8 @@ Devuelve los índices de los ${limit} elementos más relevantes semánticamente 
       .map(idx => {
         const item = allContent[idx];
         // Find the original message for full data
-        const originalMsg = item.type === 'message'
+        // Regular messages and voice messages are in regularMessages, dynamics are in messages
+        const originalMsg = (item.type === 'message' || item.type === 'voice-message')
           ? regularMessages.find((m: any) => m._id.toString() === item.id)
           : messages.find((m: any) => m._id.toString() === item.id);
 
