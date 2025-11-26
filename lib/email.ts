@@ -723,4 +723,82 @@ export const emailTemplates = {
       }),
     };
   },
+
+  dynamicClosed: (params: {
+    userName: string;
+    dynamicType: string;
+    dynamicTitle: string;
+    closedBy: string;
+    projectName: string;
+    summary: string;
+    recommendations: string[];
+    stats: Record<string, any>;
+    channelUrl: string;
+  }) => {
+    const recommendationsHTML = params.recommendations.length > 0
+      ? params.recommendations.map(r => `
+          <div style="display: flex; align-items: flex-start; margin: 8px 0;">
+            <span style="color: #10b981; margin-right: 8px;">→</span>
+            <span style="color: #374151;">${r}</span>
+          </div>
+        `).join('')
+      : '';
+
+    const statsHTML = Object.entries(params.stats).length > 0
+      ? `
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+          ${Object.entries(params.stats)
+            .filter(([key]) => !['topIdeas', 'topItems', 'sections'].includes(key))
+            .slice(0, 4)
+            .map(([key, value]) => `
+              <div style="background: #f3f4f6; padding: 8px 12px; border-radius: 6px; text-align: center; min-width: 80px;">
+                <div style="font-size: 18px; font-weight: 700; color: #6366f1;">${typeof value === 'number' ? value : value}</div>
+                <div style="font-size: 11px; color: #6b7280; text-transform: capitalize;">${key.replace(/([A-Z])/g, ' $1').trim()}</div>
+              </div>
+            `).join('')}
+        </div>
+      `
+      : '';
+
+    return {
+      subject: `✅ ${params.dynamicType} "${params.dynamicTitle}" se ha cerrado - #${params.projectName}`,
+      html: generateEmailHTML({
+        headerGradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        headerTitle: `✅ ${params.dynamicType} Cerrada`,
+        content: `
+          <p style="font-size: 16px; color: #1f2937;">Hola <strong>${params.userName}</strong>,</p>
+          <p style="color: #6b7280;">La dinámica en la que participaste ha sido cerrada por <strong>${params.closedBy}</strong>.</p>
+
+          <div class="info-box" style="border-color: #10b981; margin-top: 20px;">
+            <h3 style="color: #059669; margin: 0 0 10px 0; font-size: 18px;">${params.dynamicTitle}</h3>
+            <p style="color: #6b7280; font-size: 13px; margin: 0;">
+              <span style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${params.dynamicType}</span>
+              en <strong>#${params.projectName}</strong>
+            </p>
+          </div>
+
+          <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h4 style="color: #1f2937; margin: 0 0 10px 0;">📊 Resumen</h4>
+            <p style="color: #4b5563; margin: 0;">${params.summary}</p>
+            ${statsHTML}
+          </div>
+
+          ${recommendationsHTML ? `
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 15px; margin: 20px 0;">
+              <h4 style="color: #92400e; margin: 0 0 10px 0;">💡 Acciones Recomendadas</h4>
+              ${recommendationsHTML}
+            </div>
+          ` : ''}
+
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="${params.channelUrl}" class="button" style="background: #10b981;">Ver Resultados Completos</a>
+          </div>
+
+          <p style="color: #9ca3af; font-size: 13px; margin-top: 25px; text-align: center;">
+            Puedes generar un documento con los resultados usando la pestaña "Dinámicas" del canal.
+          </p>
+        `
+      }),
+    };
+  },
 };

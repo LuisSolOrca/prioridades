@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { notifyDynamicClosed } from '@/lib/dynamicNotifications';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/blind-vote
@@ -184,6 +185,17 @@ export async function DELETE(
     await message.save();
 
     const savedMessage = message.toObject();
+
+    // Notificar a participantes en segundo plano
+    notifyDynamicClosed({
+      projectId: params.id,
+      channelId: message.channelId,
+      messageId: params.messageId,
+      commandType: 'blind-vote',
+      commandData: message.commandData,
+      closedByUserId: userId,
+      closedByUserName: (session.user as any).name || 'Usuario'
+    }).catch(err => console.error('Error notifying dynamic closed:', err));
 
     (async () => {
       try {

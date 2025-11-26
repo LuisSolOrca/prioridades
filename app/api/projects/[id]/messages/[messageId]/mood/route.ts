@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { notifyDynamicClosed } from '@/lib/dynamicNotifications';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/mood
@@ -108,6 +109,17 @@ export async function POST(
         }
 
         message.commandData.closed = true;
+
+        // Notificar a participantes en segundo plano
+        notifyDynamicClosed({
+          projectId: params.id,
+          channelId: message.channelId,
+          messageId: params.messageId,
+          commandType: 'mood',
+          commandData: message.commandData,
+          closedByUserId: session.user.id,
+          closedByUserName: session.user.name || 'Usuario'
+        }).catch(err => console.error('Error notifying dynamic closed:', err));
         break;
 
       default:

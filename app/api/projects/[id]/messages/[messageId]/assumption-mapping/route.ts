@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { notifyDynamicClosed } from '@/lib/dynamicNotifications';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/assumption-mapping
@@ -224,6 +225,17 @@ export async function DELETE(
     await message.save();
 
     const savedMessage = message.toObject();
+
+    // Notificar a participantes en segundo plano
+    notifyDynamicClosed({
+      projectId: params.id,
+      channelId: message.channelId,
+      messageId: params.messageId,
+      commandType: 'assumption-mapping',
+      commandData: message.commandData,
+      closedByUserId: userId,
+      closedByUserName: (session.user as any).name || 'Usuario'
+    }).catch(err => console.error('Error notifying dynamic closed:', err));
 
     (async () => {
       try {

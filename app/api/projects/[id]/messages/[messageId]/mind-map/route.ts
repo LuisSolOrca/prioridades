@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { notifyDynamicClosed } from '@/lib/dynamicNotifications';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/mind-map
@@ -226,6 +227,17 @@ export async function PATCH(
 
     // Retornar éxito inmediatamente después de guardar
     const savedMessage = message.toObject();
+
+    // Notificar a participantes en segundo plano
+    notifyDynamicClosed({
+      projectId: params.id,
+      channelId: message.channelId,
+      messageId: params.messageId,
+      commandType: 'mind-map',
+      commandData: message.commandData,
+      closedByUserId: userId,
+      closedByUserName: (session.user as any).name || 'Usuario'
+    }).catch(err => console.error('Error notifying dynamic closed:', err));
 
     // Trigger Pusher en segundo plano (no bloqueante)
     (async () => {

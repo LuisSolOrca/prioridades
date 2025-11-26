@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { notifyDynamicClosed } from '@/lib/dynamicNotifications';
 
 export async function POST(request: Request, { params }: { params: { id: string; messageId: string } }) {
   try {
@@ -58,6 +59,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     message.markModified('commandData');
     await message.save();
     const saved = message.toObject();
+    notifyDynamicClosed({ projectId: params.id, channelId: message.channelId, messageId: params.messageId, commandType: 'agenda', commandData: message.commandData, closedByUserId: (session.user as any).id, closedByUserName: (session.user as any).name || 'Usuario' }).catch(err => console.error('Error notifying dynamic closed:', err));
     (async () => { try { const populated = await ChannelMessage.findById(message._id).populate('userId', 'name email').populate('mentions', 'name email').populate('priorityMentions', 'title status completionPercentage userId').populate('reactions.userId', 'name').populate('pinnedBy', 'name').lean(); await triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populated); } catch (e) { console.error(e); } })();
     return NextResponse.json(saved);
   } catch (error) {

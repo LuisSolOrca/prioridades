@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+import { notifyDynamicClosed } from '@/lib/dynamicNotifications';
 
 const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot', 'soar', 'six-hats', 'mind-map', 'crazy-8s', 'affinity-map', 'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea', 'empathy-map', 'moscow', '4ls', 'pre-mortem', 'starfish', 'mad-sad-glad', 'how-might-we', 'hot-air-balloon', 'kalm'];
 
@@ -207,6 +208,17 @@ export async function DELETE(
     await message.save();
 
     const savedMessage = message.toObject();
+
+    // Notificar a participantes en segundo plano
+    notifyDynamicClosed({
+      projectId: params.id,
+      channelId: message.channelId,
+      messageId: params.messageId,
+      commandType: message.commandType,
+      commandData: message.commandData,
+      closedByUserId: userId,
+      closedByUserName: (session.user as any).name || 'Usuario'
+    }).catch(err => console.error('Error notifying dynamic closed:', err));
 
     (async () => {
       try {
