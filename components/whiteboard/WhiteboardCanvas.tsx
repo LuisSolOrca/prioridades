@@ -60,6 +60,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const excalidrawAPIRef = useRef<ExcalidrawAPI | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isReadyToSaveRef = useRef(false);
+  const lastSavedElementsRef = useRef<string>('');
 
   const [whiteboard, setWhiteboard] = useState<WhiteboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,11 +115,28 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
         const data = await response.json();
         setWhiteboard(data.whiteboard);
         setLocalVersion(data.whiteboard.version);
+
+        // Inicializar el hash de elementos para evitar guardados innecesarios
+        const initialElements = data.whiteboard.elements || [];
+        lastSavedElementsRef.current = JSON.stringify(
+          initialElements.map((el: any) => ({
+            id: el.id,
+            type: el.type,
+            x: Math.round(el.x),
+            y: Math.round(el.y),
+            width: el.width ? Math.round(el.width) : undefined,
+            height: el.height ? Math.round(el.height) : undefined,
+            points: el.points,
+            text: el.text,
+            isDeleted: el.isDeleted
+          }))
+        );
+
         // Marcar como listo para guardar después de un delay
         // para evitar guardados durante la inicialización de Excalidraw
         setTimeout(() => {
           isReadyToSaveRef.current = true;
-        }, 1000);
+        }, 1500);
       } catch (err: any) {
         console.error('Error loading whiteboard:', err);
         setError(err.message || 'Error cargando pizarra');
@@ -272,15 +290,37 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const handleChange = useCallback((elements: readonly any[], appState: any, files: any) => {
     if (isUpdatingFromRemote) return;
 
+    // Crear hash simple de los elementos para comparar
+    // Solo consideramos id, type, x, y, width, height, points y texto para detectar cambios reales
+    const elementsHash = JSON.stringify(
+      elements.map(el => ({
+        id: el.id,
+        type: el.type,
+        x: Math.round(el.x),
+        y: Math.round(el.y),
+        width: el.width ? Math.round(el.width) : undefined,
+        height: el.height ? Math.round(el.height) : undefined,
+        points: el.points,
+        text: el.text,
+        isDeleted: el.isDeleted
+      }))
+    );
+
+    // Solo guardar si los elementos realmente cambiaron
+    if (elementsHash === lastSavedElementsRef.current) {
+      return;
+    }
+
     // Clear previous timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Debounce save (500ms)
+    // Debounce save (1 segundo para reducir guardados frecuentes)
     saveTimeoutRef.current = setTimeout(() => {
+      lastSavedElementsRef.current = elementsHash;
       saveElements([...elements], appState, files);
-    }, 500);
+    }, 1000);
   }, [saveElements, isUpdatingFromRemote]);
 
   // Cleanup timeout on unmount
