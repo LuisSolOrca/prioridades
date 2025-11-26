@@ -19,3 +19,11 @@ body {
   background: rgb(var(--background-start-rgb));
   transition: background-color 0.3s ease;
 }
+
+/* Ocultar botón de ayuda de Excalidraw para evitar overlap con el botón de ayuda de la app */
+.excalidraw .HelpButton,
+.excalidraw .help-icon,
+.excalidraw [aria-label="Help"],
+.excalidraw button[title="Help"] {
+  display: none !important;
+}
