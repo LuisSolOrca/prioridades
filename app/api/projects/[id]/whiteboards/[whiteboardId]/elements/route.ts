@@ -6,6 +6,9 @@ import Whiteboard from '@/models/Whiteboard';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 import mongoose from 'mongoose';
 
+// Aumentar el límite del body para soportar pizarras con imágenes
+export const maxDuration = 30;
+
 /**
  * PUT /api/projects/[id]/whiteboards/[whiteboardId]/elements
  * Actualiza los elementos de la pizarra con control de versión
@@ -23,7 +26,13 @@ export async function PUT(
 
     await connectDB();
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return NextResponse.json({ error: 'Error en formato de datos' }, { status: 400 });
+    }
     const { elements, appState, files, version } = body;
 
     const userId = (session.user as any).id;
@@ -120,7 +129,12 @@ export async function PUT(
       appState: whiteboard.appState
     });
   } catch (error: any) {
-    console.error('Error updating whiteboard elements:', error);
+    console.error('Error updating whiteboard elements:', {
+      message: error.message,
+      stack: error.stack,
+      projectId: params.id,
+      whiteboardId: params.whiteboardId
+    });
     return NextResponse.json(
       { error: error.message || 'Error actualizando elementos' },
       { status: 500 }

@@ -56,6 +56,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const router = useRouter();
   const excalidrawAPIRef = useRef<ExcalidrawAPI | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isReadyToSaveRef = useRef(false);
 
   const [whiteboard, setWhiteboard] = useState<WhiteboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,6 +95,11 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
         const data = await response.json();
         setWhiteboard(data.whiteboard);
         setLocalVersion(data.whiteboard.version);
+        // Marcar como listo para guardar después de un delay
+        // para evitar guardados durante la inicialización de Excalidraw
+        setTimeout(() => {
+          isReadyToSaveRef.current = true;
+        }, 1000);
       } catch (err: any) {
         console.error('Error loading whiteboard:', err);
         setError(err.message || 'Error cargando pizarra');
@@ -166,7 +172,8 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
 
   // Save elements to server with debounce
   const saveElements = useCallback(async (elements: any[], appState: any, files: any) => {
-    if (!whiteboard || isUpdatingFromRemote) return;
+    // No guardar si no está listo o hay actualización remota en progreso
+    if (!whiteboard || !isReadyToSaveRef.current || isUpdatingFromRemote) return;
 
     setSaveStatus('saving');
 
