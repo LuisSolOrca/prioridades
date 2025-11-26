@@ -104,21 +104,35 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
 
   // Importar librería pendiente cuando Excalidraw esté listo
   useEffect(() => {
-    const importLibrary = async () => {
-      if (!pendingLibraryUrl || !excalidrawReady || !excalidrawAPIRef.current) return;
+    console.log('Import effect - pendingLibraryUrl:', pendingLibraryUrl, 'excalidrawReady:', excalidrawReady, 'apiRef:', !!excalidrawAPIRef.current);
 
+    if (!pendingLibraryUrl) {
+      console.log('No pending library URL, skipping');
+      return;
+    }
+
+    if (!excalidrawReady || !excalidrawAPIRef.current) {
+      console.log('Excalidraw not ready yet, waiting...');
+      return;
+    }
+
+    const importLibrary = async () => {
       try {
         console.log('Fetching library from:', pendingLibraryUrl);
         const response = await fetch(pendingLibraryUrl);
-        if (!response.ok) throw new Error('Failed to fetch library');
+        console.log('Fetch response status:', response.status);
+
+        if (!response.ok) throw new Error(`Failed to fetch library: ${response.status}`);
 
         const libraryData = await response.json();
-        console.log('Library data:', libraryData);
+        console.log('Library data received:', JSON.stringify(libraryData).substring(0, 200));
 
         // Extraer los items de la librería
         const libraryItems = libraryData.libraryItems || libraryData.library || [];
+        console.log('Library items count:', libraryItems.length);
 
         if (libraryItems.length > 0) {
+          console.log('Calling updateLibrary...');
           // Usar updateLibrary para agregar items a la librería
           await excalidrawAPIRef.current.updateLibrary({
             libraryItems: libraryItems,
@@ -130,10 +144,11 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
           alert(`Librería importada: ${libraryItems.length} elementos agregados`);
         } else {
           console.log('No library items found in response');
+          alert('No se encontraron elementos en la librería');
         }
       } catch (err) {
         console.error('Error importing library:', err);
-        alert('Error al importar la librería. Intenta de nuevo.');
+        alert('Error al importar la librería: ' + (err as Error).message);
       } finally {
         setPendingLibraryUrl(null);
       }
