@@ -75,7 +75,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
 - 📎 **Archivos adjuntos** con Cloudflare R2 - subir/descargar archivos en mensajes y pestaña dedicada
-- 🎤 **Mensajes de voz** - graba y envía mensajes de audio con visualización de waveform
+- 🎤 **Mensajes de voz** - graba y envía mensajes de audio con visualización de waveform y transcripción con IA
 - 🎯 **Pestaña de Dinámicas** - visualiza todas las dinámicas colaborativas del canal (encuestas, retrospectivas, etc.)
 - 📄 **Generación de documentos con IA** - crea documentos DOCX profesionales a partir de dinámicas seleccionadas
 - 🎨 **60+ Widgets colaborativos** - votaciones, retrospectivas, análisis, ideación, frameworks ágiles
@@ -2712,6 +2712,29 @@ Los mensajes de voz se muestran con un reproductor personalizado:
 - 🔊 **Control de mute** - silencia/activa el audio
 - ⏱️ **Tiempo** - muestra tiempo actual y duración total
 - 🖱️ **Barra clickeable** - salta a cualquier posición del audio
+- 📄 **Transcripción con IA** - convierte el audio a texto
+
+### Transcripción con IA
+
+Los mensajes de voz pueden ser transcritos automáticamente usando **Groq Whisper**:
+
+**Cómo transcribir:**
+1. En cualquier mensaje de voz, haz clic en el botón **📄 (documento)** junto al control de volumen
+2. Espera mientras se procesa (aparece un spinner)
+3. La transcripción aparecerá debajo del reproductor
+
+**Características:**
+- 🤖 **Modelo**: Whisper large-v3 de Groq
+- 🌎 **Idioma**: Español por defecto (detecta automáticamente)
+- ⚡ **Velocidad**: Transcripción rápida gracias a Groq
+- 📋 **Copiar**: Botón para copiar la transcripción al portapapeles
+- 💾 **Persistencia**: La transcripción se muestra cada vez que se ve el mensaje
+
+**Casos de uso:**
+- 📝 Documentar decisiones discutidas en audio
+- 🔍 Hacer búsquedas en el contenido de mensajes de voz
+- ♿ Accesibilidad para usuarios con dificultades auditivas
+- 📱 Leer mensajes cuando no puedes escuchar audio
 
 ### Permisos del Navegador
 
@@ -3818,6 +3841,8 @@ Para problemas o sugerencias:
   - Soporte para WebM (Opus) y MP4
   - Cancelación de eco, supresión de ruido y ganancia automática
   - Almacenamiento en base64 con datos de waveform
+  - **Transcripción con IA** usando Groq Whisper large-v3
+  - Botón para copiar transcripción al portapapeles
 - ✅ **Archivos adjuntos con Cloudflare R2** - sistema completo de gestión de archivos
   - Subir archivos desde el chat (botón 📎 Paperclip)
   - Pestaña dedicada "Archivos" por proyecto
