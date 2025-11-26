@@ -15,7 +15,8 @@ import {
   AlertCircle,
   Users,
   ArrowLeft,
-  ExternalLink
+  ExternalLink,
+  X
 } from 'lucide-react';
 // Type will be inferred from the API callback
 type ExcalidrawAPI = any;
@@ -378,11 +379,19 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              // Si la pestaña fue abierta desde otra página, cerrarla
+              // Si no, navegar hacia atrás
+              if (window.opener || window.history.length <= 1) {
+                window.close();
+              } else {
+                router.back();
+              }
+            }}
             className="p-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-            title="Volver"
+            title="Cerrar"
           >
-            <ArrowLeft size={20} />
+            <X size={20} />
           </button>
           <div>
             <h1 className="font-semibold text-gray-800 dark:text-gray-100">
