@@ -343,6 +343,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   // Cuando cambia la búsqueda debounced o el canal seleccionado, recargar mensajes
   useEffect(() => {
+    // Skip reload if we're jumping to a specific message
+    if (isJumpingToMessage.current) {
+      return;
+    }
+
     if (selectedChannelId) {
       // Resetear estados de paginación
       setHasMore(true);
