@@ -208,6 +208,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
+  // Read marker state
+  const [readMarker, setReadMarker] = useState<{
+    lastReadMessageId: string | null;
+    lastReadAt: string | null;
+  }>({ lastReadMessageId: null, lastReadAt: null });
+  const [unreadCount, setUnreadCount] = useState(0);
+
   useEffect(() => {
     loadUsers();
     loadUserGroups();
@@ -244,7 +251,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   }, [messages, initialLoad]);
 
-  // Listener de scroll para infinite scroll
+  // Listener de scroll para infinite scroll y read markers
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -254,11 +261,18 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       if (container.scrollTop < 100 && hasMore && !loadingMore) {
         loadMoreMessages();
       }
+
+      // Si el usuario llega al fondo, marcar como leído
+      const threshold = 100;
+      const position = container.scrollHeight - container.scrollTop - container.clientHeight;
+      if (position < threshold && unreadCount > 0) {
+        markAsRead();
+      }
     };
 
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [hasMore, loadingMore, nextCursor]);
+  }, [hasMore, loadingMore, nextCursor, unreadCount]);
 
   useEffect(() => {
     // Detectar comandos slash
@@ -309,6 +323,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
       loadMessages();
       loadPinnedMessages();
+      loadReadMarker();
     }
   }, [debouncedSearchQuery, selectedChannelId]);
 
@@ -419,6 +434,10 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const scrollToBottomIfNearBottom = () => {
     if (isNearBottom()) {
       scrollToBottom();
+      // Mark as read when scrolling to bottom and there are unread messages
+      if (unreadCount > 0) {
+        markAsRead();
+      }
     }
   };
 
@@ -556,6 +575,53 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       }
     } catch (err) {
       console.error('Error loading pinned messages:', err);
+    }
+  };
+
+  // Load read marker for current channel
+  const loadReadMarker = async () => {
+    if (!selectedChannelId) return;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/channels/${selectedChannelId}/read-marker`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.marker) {
+          setReadMarker({
+            lastReadMessageId: data.marker.lastReadMessageId,
+            lastReadAt: data.marker.lastReadAt
+          });
+          setUnreadCount(data.unreadCount || 0);
+        } else {
+          setReadMarker({ lastReadMessageId: null, lastReadAt: null });
+          setUnreadCount(0);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading read marker:', err);
+    }
+  };
+
+  // Update read marker (mark all as read)
+  const markAsRead = async () => {
+    if (!selectedChannelId || messages.length === 0) return;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/channels/${selectedChannelId}/read-marker`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.marker) {
+          setReadMarker({
+            lastReadMessageId: data.marker.lastReadMessageId,
+            lastReadAt: data.marker.lastReadAt
+          });
+          setUnreadCount(0);
+        }
+      }
+    } catch (err) {
+      console.error('Error marking as read:', err);
     }
   };
 
@@ -4436,15 +4502,29 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             </p>
           </div>
         ) : (
-          messages.map((message) => {
+          messages.map((message, index) => {
             const isOwn = message.userId._id === session?.user.id && message.userId._id !== 'deleted';
             const reactionSummary = getReactionSummary(message.reactions);
 
+            // Check if this is the first unread message (show "New Messages" divider)
+            const isFirstUnread = readMarker.lastReadAt &&
+              new Date(message.createdAt) > new Date(readMarker.lastReadAt) &&
+              (index === 0 || new Date(messages[index - 1].createdAt) <= new Date(readMarker.lastReadAt));
+
             return (
-              <div
-                key={message._id}
-                className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
-              >
+              <div key={message._id}>
+                {/* New Messages Divider */}
+                {isFirstUnread && unreadCount > 0 && (
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-red-400 dark:bg-red-500"></div>
+                    <span className="text-xs font-medium text-red-500 dark:text-red-400 px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded-full">
+                      {unreadCount} mensaje{unreadCount !== 1 ? 's' : ''} nuevo{unreadCount !== 1 ? 's' : ''}
+                    </span>
+                    <div className="flex-1 h-px bg-red-400 dark:bg-red-500"></div>
+                  </div>
+                )}
+
+                <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
                 {/* Avatar */}
                 <div className="flex-shrink-0">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
@@ -6353,6 +6433,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     </button>
                   )}
                 </div>
+              </div>
               </div>
             );
           })

@@ -4,6 +4,7 @@
 1. [Introducción](#introducción)
 2. [Características Principales](#características-principales)
 3. [Mensajería](#mensajería)
+   - [Marcadores de Lectura](#marcadores-de-lectura)
 4. [Tiempo Real y Presencia](#tiempo-real-y-presencia)
 5. [Canales y Subcanales](#canales-y-subcanales)
    - [Canales Privados](#canales-privados)
@@ -64,6 +65,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 👻 **Soporte para usuarios eliminados**
 - 🗂️ **Sistema de canales y subcanales** jerárquico (máx 2 niveles)
 - 🔒 **Canales privados** con control de acceso por miembros
+- 📖 **Marcadores de lectura** - línea "Mensajes nuevos" para equipos asíncronos
 - 🔌 **Webhooks entrantes y salientes** para integración con sistemas externos
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
@@ -125,6 +127,37 @@ El chat implementa **scroll infinito con cursor-based pagination** para carga ef
 **Permisos:**
 - Usuarios pueden eliminar sus propios mensajes
 - Administradores pueden eliminar cualquier mensaje
+
+### Marcadores de Lectura
+
+El sistema implementa **marcadores de lectura** (read markers) para ayudar a los equipos asíncronos a identificar rápidamente los mensajes nuevos desde su última visita.
+
+**Cómo funciona:**
+- 📖 **Línea visual "Mensajes nuevos"**: Una línea roja divide los mensajes leídos de los nuevos
+- 🔢 **Contador de no leídos**: Muestra cuántos mensajes nuevos hay (ej: "3 mensajes nuevos")
+- ⚡ **Actualización automática**: Al hacer scroll hasta el final, se marca todo como leído
+- 💾 **Persistencia por usuario**: Cada usuario tiene su propio marcador por canal
+
+**Experiencia de usuario:**
+1. Al entrar a un canal, se carga el marcador de lectura guardado
+2. Los mensajes posteriores a tu última lectura aparecen debajo de la línea roja
+3. Al llegar al fondo del chat, automáticamente se actualiza el marcador
+4. La próxima vez que entres, solo verás como "nuevos" los mensajes recibidos después
+
+**Modelo de datos:**
+```typescript
+interface ChannelReadMarker {
+  channelId: ObjectId;    // Canal
+  userId: ObjectId;       // Usuario
+  lastReadMessageId: ObjectId;  // Último mensaje leído
+  lastReadAt: Date;       // Timestamp del mensaje
+}
+```
+
+**API Endpoints:**
+- `GET /api/projects/[id]/channels/[channelId]/read-marker` - Obtiene marcador actual
+- `PUT /api/projects/[id]/channels/[channelId]/read-marker` - Actualiza con mensaje específico
+- `POST /api/projects/[id]/channels/[channelId]/read-marker` - Marca todo como leído
 
 ---
 
@@ -3078,6 +3111,35 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v1.7.0 (Noviembre 2025) - Marcadores de Lectura
+
+#### Marcadores de Lectura (Read Markers)
+- ✅ **Línea visual "Mensajes nuevos"** para identificar contenido no leído
+  - Línea roja con contador de mensajes nuevos
+  - Se muestra antes del primer mensaje no leído
+  - Diseño responsive para modo claro y oscuro
+
+#### Actualización Automática
+- ✅ **Marca como leído al scrollear** al fondo del chat
+  - Detecta cuando el usuario llega al final
+  - Actualiza el marcador automáticamente
+  - Sin necesidad de acciones manuales
+
+#### Modelo de Datos
+- ✅ **Nuevo modelo** `ChannelReadMarker`:
+  - `channelId` - Canal asociado
+  - `userId` - Usuario
+  - `lastReadMessageId` - Último mensaje leído
+  - `lastReadAt` - Timestamp para comparación eficiente
+  - Índice único compuesto (channelId + userId)
+
+#### API
+- ✅ **GET /api/projects/[id]/channels/[channelId]/read-marker** - Obtiene marcador y cuenta de no leídos
+- ✅ **PUT /api/projects/[id]/channels/[channelId]/read-marker** - Actualiza con mensaje específico
+- ✅ **POST /api/projects/[id]/channels/[channelId]/read-marker** - Marca todo como leído
+
+---
 
 ### v1.6.0 (Noviembre 2025) - Canales Privados
 
