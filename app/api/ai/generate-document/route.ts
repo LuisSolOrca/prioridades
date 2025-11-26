@@ -21,53 +21,125 @@ function formatDynamicForAI(dynamic: DynamicData): string {
   let content = `\n### ${commandType.toUpperCase()}: ${title}\n`;
 
   switch (commandType) {
+    // === VOTACIONES SIMPLES ===
     case 'poll':
     case 'blind-vote':
-    case 'dot-voting':
-      if (commandData.options) {
+      if (commandData.options && commandData.options.length > 0) {
         content += 'Opciones y votos:\n';
+        const totalVotes = commandData.options.reduce((sum: number, opt: any) => sum + (opt.votes?.length || 0), 0);
         commandData.options.forEach((opt: any) => {
-          const voteCount = opt.votes?.length || opt.dots?.length || 0;
-          content += `- ${opt.text}: ${voteCount} votos\n`;
+          const voteCount = opt.votes?.length || 0;
+          const percentage = totalVotes > 0 ? ((voteCount / totalVotes) * 100).toFixed(1) : '0';
+          content += `- ${opt.text}: ${voteCount} votos (${percentage}%)\n`;
         });
+        content += `Total de votantes: ${totalVotes}\n`;
       }
       break;
 
+    case 'dot-voting':
+      if (commandData.options && commandData.options.length > 0) {
+        content += `Puntos por usuario: ${commandData.totalDotsPerUser || 5}\n`;
+        content += 'Opciones y puntos:\n';
+        let totalDots = 0;
+        const optionScores = commandData.options.map((opt: any) => {
+          const dots = opt.dots?.reduce((sum: number, d: any) => sum + (d.count || 0), 0) || 0;
+          totalDots += dots;
+          return { text: opt.text, dots };
+        }).sort((a: any, b: any) => b.dots - a.dots);
+
+        optionScores.forEach((opt: any, idx: number) => {
+          const medal = idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : '';
+          content += `${medal}${opt.text}: ${opt.dots} puntos\n`;
+        });
+        content += `Total de puntos asignados: ${totalDots}\n`;
+      }
+      break;
+
+    // === BRAINSTORM E IDEAS ===
     case 'brainstorm':
-      if (commandData.ideas) {
-        content += 'Ideas generadas:\n';
-        commandData.ideas.forEach((idea: any) => {
-          content += `- ${idea.text} (por ${idea.userName})\n`;
+      if (commandData.ideas && commandData.ideas.length > 0) {
+        content += `Ideas generadas (${commandData.ideas.length}):\n`;
+        const sortedIdeas = [...commandData.ideas].sort((a: any, b: any) =>
+          (b.votes?.length || 0) - (a.votes?.length || 0)
+        );
+        sortedIdeas.forEach((idea: any) => {
+          const authorName = idea.author?.name || idea.userName || 'Anónimo';
+          const votes = idea.votes?.length || 0;
+          content += `- ${idea.text} (por ${authorName}${votes > 0 ? `, ${votes} votos` : ''})\n`;
         });
+      } else {
+        content += 'No se generaron ideas.\n';
       }
       break;
 
+    case 'mind-map':
+      if (commandData.nodes && commandData.nodes.length > 0) {
+        content += `Nodos del mapa mental (${commandData.nodes.length}):\n`;
+        // Build tree structure
+        const rootNodes = commandData.nodes.filter((n: any) => !n.parentId);
+        const childNodes = commandData.nodes.filter((n: any) => n.parentId);
+
+        rootNodes.forEach((node: any) => {
+          content += `- ${node.label} (${node.userName || 'Anónimo'})\n`;
+          const children = childNodes.filter((c: any) => c.parentId === node.id);
+          children.forEach((child: any) => {
+            content += `  └─ ${child.label} (${child.userName || 'Anónimo'})\n`;
+          });
+        });
+      } else {
+        content += 'Mapa mental vacío.\n';
+      }
+      break;
+
+    // === PROS Y CONTRAS ===
     case 'pros-cons':
-      if (commandData.pros) {
-        content += 'Pros:\n';
+      const prosCount = commandData.pros?.length || 0;
+      const consCount = commandData.cons?.length || 0;
+      content += `Resumen: ${prosCount} pros, ${consCount} contras\n`;
+      if (prosCount > 0) {
+        content += '\n👍 Pros:\n';
         commandData.pros.forEach((item: any) => {
-          content += `- ${item.text}\n`;
+          const authorName = item.author?.name || 'Anónimo';
+          content += `- ${item.text} (${authorName})\n`;
         });
       }
-      if (commandData.cons) {
-        content += 'Contras:\n';
+      if (consCount > 0) {
+        content += '\n👎 Contras:\n';
         commandData.cons.forEach((item: any) => {
-          content += `- ${item.text}\n`;
+          const authorName = item.author?.name || 'Anónimo';
+          content += `- ${item.text} (${authorName})\n`;
         });
       }
       break;
 
+    // === MATRIZ DE DECISIÓN ===
     case 'decision-matrix':
-      content += `Opciones: ${commandData.options?.join(', ') || 'N/A'}\n`;
+      content += `Opciones evaluadas: ${commandData.options?.join(', ') || 'N/A'}\n`;
       content += `Criterios: ${commandData.criteria?.join(', ') || 'N/A'}\n`;
-      if (commandData.cells) {
-        content += 'Evaluaciones:\n';
+      if (commandData.cells && commandData.cells.length > 0) {
+        // Calculate scores per option
+        const optionScores: Record<string, number> = {};
+        commandData.cells.forEach((cell: any) => {
+          if (!optionScores[cell.option]) optionScores[cell.option] = 0;
+          optionScores[cell.option] += cell.score || 0;
+        });
+
+        content += '\nPuntuaciones totales por opción:\n';
+        Object.entries(optionScores)
+          .sort(([,a], [,b]) => (b as number) - (a as number))
+          .forEach(([option, score], idx) => {
+            const medal = idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : '';
+            content += `${medal}${option}: ${score} puntos\n`;
+          });
+
+        content += '\nDetalle por criterio:\n';
         commandData.cells.forEach((cell: any) => {
           content += `- ${cell.option} / ${cell.criterion}: ${cell.score || 0}\n`;
         });
       }
       break;
 
+    // === RANKING ===
     case 'ranking':
       if (commandData.options && commandData.options.length > 0) {
         content += `Opciones a rankear: ${commandData.options.join(', ')}\n`;
@@ -80,49 +152,148 @@ function formatDynamicForAI(dynamic: DynamicData): string {
         });
 
         // Calculate consensus ranking
-        if (commandData.rankings.length > 0) {
-          const positionSums: Record<string, { sum: number; count: number }> = {};
-          commandData.rankings.forEach((r: any) => {
-            const ranking = r.ranking || r.order || [];
-            ranking.forEach((option: string, index: number) => {
-              if (!positionSums[option]) {
-                positionSums[option] = { sum: 0, count: 0 };
-              }
-              positionSums[option].sum += index + 1;
-              positionSums[option].count += 1;
-            });
+        const positionSums: Record<string, { sum: number; count: number }> = {};
+        commandData.rankings.forEach((r: any) => {
+          const ranking = r.ranking || r.order || [];
+          ranking.forEach((option: string, index: number) => {
+            if (!positionSums[option]) {
+              positionSums[option] = { sum: 0, count: 0 };
+            }
+            positionSums[option].sum += index + 1;
+            positionSums[option].count += 1;
           });
+        });
 
-          const consensusRanking = Object.entries(positionSums)
-            .map(([option, data]) => ({
-              option,
-              avgPosition: data.sum / data.count
-            }))
-            .sort((a, b) => a.avgPosition - b.avgPosition);
+        const consensusRanking = Object.entries(positionSums)
+          .map(([option, data]) => ({
+            option,
+            avgPosition: data.sum / data.count
+          }))
+          .sort((a, b) => a.avgPosition - b.avgPosition);
 
-          if (consensusRanking.length > 0) {
-            content += '\nRanking consensuado (por posición promedio):\n';
-            consensusRanking.forEach((item, index) => {
-              const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-              content += `${medal} ${item.option} (pos. promedio: ${item.avgPosition.toFixed(1)})\n`;
-            });
-          }
+        if (consensusRanking.length > 0) {
+          content += '\nRanking consensuado (por posición promedio):\n';
+          consensusRanking.forEach((item, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+            content += `${medal} ${item.option} (pos. promedio: ${item.avgPosition.toFixed(1)})\n`;
+          });
         }
       } else {
         content += 'No se han registrado rankings aún.\n';
       }
       break;
 
+    // === ACCIONES Y TAREAS ===
     case 'action-items':
-      if (commandData.items) {
+      if (commandData.items && commandData.items.length > 0) {
+        const completed = commandData.items.filter((i: any) => i.completed).length;
+        content += `Progreso: ${completed}/${commandData.items.length} completadas\n\n`;
         content += 'Acciones:\n';
         commandData.items.forEach((item: any) => {
-          const status = item.completed ? '✓' : '○';
-          content += `${status} ${item.text} (${item.assignee || 'Sin asignar'})\n`;
+          const status = item.completed ? '✅' : '⬜';
+          const desc = item.description || item.text || 'Sin descripción';
+          const assignee = item.assignedToName || item.assignee || 'Sin asignar';
+          const dueDate = item.dueDate ? ` (vence: ${item.dueDate})` : '';
+          content += `${status} ${desc} - Asignado a: ${assignee}${dueDate}\n`;
         });
+      } else {
+        content += 'No hay acciones registradas.\n';
       }
       break;
 
+    case 'checklist':
+      if (commandData.items && commandData.items.length > 0) {
+        const checked = commandData.items.filter((i: any) => i.checked).length;
+        content += `Progreso: ${checked}/${commandData.items.length} completados\n\n`;
+        commandData.items.forEach((item: any) => {
+          const status = item.checked ? '✅' : '⬜';
+          const checkedBy = item.checked && item.checkedBy?.name ? ` (por ${item.checkedBy.name})` : '';
+          content += `${status} ${item.text}${checkedBy}\n`;
+        });
+      } else {
+        content += 'Checklist vacío.\n';
+      }
+      break;
+
+    // === AGENDA Y PARKING LOT ===
+    case 'agenda':
+      if (commandData.items && commandData.items.length > 0) {
+        const totalMinutes = commandData.items.reduce((sum: number, i: any) => sum + (i.timeMinutes || 0), 0);
+        content += `Duración total estimada: ${totalMinutes} minutos\n\n`;
+        commandData.items.forEach((item: any, idx: number) => {
+          const status = item.completed ? '✅' : '⬜';
+          content += `${status} ${idx + 1}. ${item.topic} (${item.timeMinutes || 0} min)`;
+          if (item.speaker) content += ` - ${item.speaker}`;
+          content += '\n';
+        });
+      } else {
+        content += 'Agenda vacía.\n';
+      }
+      break;
+
+    case 'parking-lot':
+      if (commandData.items && commandData.items.length > 0) {
+        content += `Temas pendientes (${commandData.items.length}):\n`;
+        commandData.items.forEach((item: any) => {
+          content += `- ${item.text} (agregado por ${item.userName || 'Anónimo'})\n`;
+        });
+      } else {
+        content += 'No hay temas en el parking lot.\n';
+      }
+      break;
+
+    // === ESTIMACIÓN ===
+    case 'estimation-poker':
+      content += `Tema a estimar: ${commandData.topic || title}\n`;
+      if (commandData.estimates && commandData.estimates.length > 0) {
+        content += `\nEstimaciones (${commandData.estimates.length} participantes):\n`;
+        commandData.estimates.forEach((est: any) => {
+          content += `- ${est.name || est.userName}: ${est.value}\n`;
+        });
+
+        // Calculate average (excluding ? and ∞)
+        const numericEstimates = commandData.estimates
+          .map((e: any) => parseInt(e.value))
+          .filter((v: number) => !isNaN(v));
+
+        if (numericEstimates.length > 0) {
+          const avg = numericEstimates.reduce((a: number, b: number) => a + b, 0) / numericEstimates.length;
+          content += `\nPromedio: ${avg.toFixed(1)}\n`;
+        }
+
+        if (commandData.finalEstimate) {
+          content += `Estimación final acordada: ${commandData.finalEstimate}\n`;
+        }
+      } else {
+        content += 'No hay estimaciones registradas.\n';
+      }
+      break;
+
+    // === KUDOS Y RECONOCIMIENTOS ===
+    case 'kudos-wall':
+      if (commandData.kudos && commandData.kudos.length > 0) {
+        content += `Reconocimientos (${commandData.kudos.length}):\n`;
+        commandData.kudos.forEach((k: any) => {
+          content += `- ${k.fromName || 'Alguien'} → ${k.toName || 'Alguien'}: "${k.message}"\n`;
+        });
+      } else {
+        content += 'No hay kudos registrados.\n';
+      }
+      break;
+
+    // === ICEBREAKER ===
+    case 'icebreaker':
+      if (commandData.responses && commandData.responses.length > 0) {
+        content += `Respuestas (${commandData.responses.length}):\n`;
+        commandData.responses.forEach((r: any) => {
+          content += `- ${r.userName || 'Anónimo'}: "${r.text}"\n`;
+        });
+      } else {
+        content += 'No hay respuestas registradas.\n';
+      }
+      break;
+
+    // === RETROSPECTIVAS Y FRAMEWORKS ===
     case 'swot':
     case 'soar':
     case 'six-hats':
@@ -131,51 +302,154 @@ function formatDynamicForAI(dynamic: DynamicData): string {
     case 'rose-bud-thorn':
     case 'sailboat':
     case 'start-stop-continue':
-      if (commandData.sections) {
+    case 'retro':
+    case 'retrospective':
+      if (commandData.sections && commandData.sections.length > 0) {
+        const totalItems = commandData.sections.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0);
+        content += `Total de aportes: ${totalItems}\n`;
+
         commandData.sections.forEach((section: any) => {
-          content += `\n${section.icon || ''} ${section.title}:\n`;
-          section.items?.forEach((item: any) => {
-            content += `- ${item.text} (${item.userName})\n`;
-          });
+          const itemCount = section.items?.length || 0;
+          content += `\n${section.icon || ''} ${section.title} (${itemCount}):\n`;
+          if (section.items && section.items.length > 0) {
+            section.items.forEach((item: any) => {
+              content += `- ${item.text} (${item.userName || 'Anónimo'})\n`;
+            });
+          } else {
+            content += '  (vacío)\n';
+          }
         });
       }
       break;
 
+    // === STANDUP ===
     case 'standup':
-      if (commandData.entries) {
-        content += 'Entradas del standup:\n';
+      if (commandData.entries && commandData.entries.length > 0) {
+        content += `Participantes: ${commandData.entries.length}\n\n`;
         commandData.entries.forEach((entry: any) => {
-          content += `\n${entry.userName}:\n`;
-          content += `  Ayer: ${entry.yesterday || 'N/A'}\n`;
-          content += `  Hoy: ${entry.today || 'N/A'}\n`;
-          content += `  Bloqueos: ${entry.blockers || 'Ninguno'}\n`;
+          content += `📋 ${entry.userName || entry.name || 'Participante'}:\n`;
+          content += `  • Ayer: ${entry.yesterday || 'N/A'}\n`;
+          content += `  • Hoy: ${entry.today || 'N/A'}\n`;
+          content += `  • Bloqueos: ${entry.blockers || 'Ninguno'}\n\n`;
         });
+      } else {
+        content += 'No hay entradas de standup.\n';
       }
       break;
 
+    // === MOOD / ESTADO DE ÁNIMO ===
     case 'mood':
+      if (commandData.moods && commandData.moods.length > 0) {
+        content += `Participantes: ${commandData.moods.length}\n`;
+        const moodCounts: Record<string, number> = {};
+        commandData.moods.forEach((m: any) => {
+          const mood = m.mood || 'Sin especificar';
+          moodCounts[mood] = (moodCounts[mood] || 0) + 1;
+          content += `- ${m.name || m.userName || 'Anónimo'}: ${mood}\n`;
+        });
+
+        content += '\nResumen de estados:\n';
+        Object.entries(moodCounts)
+          .sort(([,a], [,b]) => b - a)
+          .forEach(([mood, count]) => {
+            content += `  ${mood}: ${count} persona${count > 1 ? 's' : ''}\n`;
+          });
+      } else {
+        content += 'No hay estados de ánimo registrados.\n';
+      }
+      break;
+
+    // === TEAM HEALTH ===
     case 'team-health':
-      if (commandData.moods) {
+      if (commandData.areas && commandData.areas.length > 0) {
+        content += 'Áreas evaluadas:\n';
+        commandData.areas.forEach((area: any) => {
+          const votes = area.votes || [];
+          if (votes.length > 0) {
+            const avgRating = votes.reduce((sum: number, v: any) => sum + (v.rating || 0), 0) / votes.length;
+            const ratingEmoji = avgRating >= 4 ? '😀' : avgRating >= 3 ? '😐' : '😟';
+            content += `\n${ratingEmoji} ${area.name} (promedio: ${avgRating.toFixed(1)}/5):\n`;
+            votes.forEach((v: any) => {
+              content += `  - ${v.userName || 'Anónimo'}: ${v.rating}/5\n`;
+            });
+          } else {
+            content += `\n⬜ ${area.name}: Sin votos\n`;
+          }
+        });
+      } else if (commandData.moods) {
+        // Fallback for old format
         content += 'Estados de ánimo:\n';
         commandData.moods.forEach((mood: any) => {
-          content += `- ${mood.userName}: ${mood.mood} (${mood.comment || 'Sin comentario'})\n`;
+          content += `- ${mood.name || mood.userName || 'Anónimo'}: ${mood.mood}\n`;
         });
       }
       break;
 
+    // === VOTACIONES NUMÉRICAS ===
     case 'fist-of-five':
-    case 'confidence-vote':
-    case 'nps':
-      if (commandData.votes) {
-        content += 'Votos:\n';
+      if (commandData.votes && commandData.votes.length > 0) {
+        const avg = commandData.votes.reduce((sum: number, v: any) => sum + (v.value || 0), 0) / commandData.votes.length;
+        content += `Promedio: ${avg.toFixed(1)}/5\n`;
+        content += `Votantes: ${commandData.votes.length}\n\n`;
+        content += 'Votos individuales:\n';
         commandData.votes.forEach((vote: any) => {
-          content += `- ${vote.userName}: ${vote.value}\n`;
+          const emoji = vote.value >= 4 ? '✋' : vote.value >= 2 ? '✌️' : '✊';
+          content += `- ${vote.name || vote.userName || 'Anónimo'}: ${emoji} ${vote.value}/5\n`;
         });
+      } else {
+        content += 'No hay votos registrados.\n';
+      }
+      break;
+
+    case 'confidence-vote':
+      if (commandData.votes && commandData.votes.length > 0) {
+        const avg = commandData.votes.reduce((sum: number, v: any) => sum + (v.confidence || v.value || 0), 0) / commandData.votes.length;
+        content += `Nivel de confianza promedio: ${avg.toFixed(1)}/5\n`;
+        content += `Votantes: ${commandData.votes.length}\n\n`;
+        content += 'Votos individuales:\n';
+        commandData.votes.forEach((vote: any) => {
+          const value = vote.confidence || vote.value || 0;
+          const emoji = value >= 4 ? '😄' : value >= 3 ? '😐' : '😟';
+          content += `- ${vote.userName || vote.name || 'Anónimo'}: ${emoji} ${value}/5\n`;
+        });
+      } else {
+        content += 'No hay votos registrados.\n';
+      }
+      break;
+
+    case 'nps':
+      if (commandData.votes && commandData.votes.length > 0) {
+        const scores = commandData.votes.map((v: any) => v.score ?? v.value ?? 0);
+        const avg = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
+
+        // Calculate NPS
+        const promoters = scores.filter((s: number) => s >= 9).length;
+        const detractors = scores.filter((s: number) => s <= 6).length;
+        const nps = Math.round(((promoters - detractors) / scores.length) * 100);
+
+        content += `NPS Score: ${nps}\n`;
+        content += `Promedio: ${avg.toFixed(1)}/10\n`;
+        content += `Promotores (9-10): ${promoters}, Pasivos (7-8): ${scores.length - promoters - detractors}, Detractores (0-6): ${detractors}\n\n`;
+        content += 'Votos individuales:\n';
+        commandData.votes.forEach((vote: any) => {
+          const score = vote.score ?? vote.value ?? 0;
+          const type = score >= 9 ? '👍' : score >= 7 ? '😐' : '👎';
+          content += `- ${vote.userName || vote.name || 'Anónimo'}: ${type} ${score}/10\n`;
+        });
+      } else {
+        content += 'No hay votos registrados.\n';
       }
       break;
 
     default:
+      // Para tipos no reconocidos, mostrar JSON formateado
+      content += 'Datos de la dinámica:\n';
       content += JSON.stringify(commandData, null, 2);
+  }
+
+  // Add closed status
+  if (commandData.closed) {
+    content += '\n[Estado: Cerrada]\n';
   }
 
   return content;
