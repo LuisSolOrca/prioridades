@@ -2728,7 +2728,7 @@ Los mensajes de voz pueden ser transcritos automáticamente usando **Groq Whispe
 - 🌎 **Idioma**: Español por defecto (detecta automáticamente)
 - ⚡ **Velocidad**: Transcripción rápida gracias a Groq
 - 📋 **Copiar**: Botón para copiar la transcripción al portapapeles
-- 💾 **Persistencia**: La transcripción se muestra cada vez que se ve el mensaje
+- 💾 **Persistencia**: La transcripción se guarda en MongoDB y se muestra automáticamente en futuras visitas
 
 **Casos de uso:**
 - 📝 Documentar decisiones discutidas en audio
@@ -2751,10 +2751,38 @@ Para grabar mensajes de voz, el navegador necesita acceso al micrófono:
 
 ### Almacenamiento
 
-Los mensajes de voz se almacenan como:
-- **Base64** en el campo `voiceMessage` del mensaje
-- **Datos incluidos**: audio codificado, duración, tipo MIME, datos de waveform
-- **Persistencia**: Se guardan en MongoDB junto con el mensaje
+Los mensajes de voz se almacenan en **Cloudflare R2**:
+
+**Arquitectura:**
+- 🗄️ **Archivos de audio**: Almacenados en Cloudflare R2 (object storage)
+- 📋 **Metadatos**: Guardados en MongoDB (`r2Key`, duración, tipo MIME, waveform)
+- 📝 **Transcripciones**: Guardadas en MongoDB junto con los metadatos
+
+**Flujo de subida:**
+1. Usuario graba audio → Se convierte a base64
+2. Se sube a R2 via `/api/projects/{id}/voice-upload`
+3. Se obtiene `r2Key` único (ej: `voice/{projectId}/{timestamp}-{uuid}.webm`)
+4. Mensaje se guarda con `r2Key` en lugar de datos binarios
+
+**Flujo de reproducción:**
+1. VoicePlayer solicita URL firmada con `r2Key`
+2. API genera URL temporal (válida 1 hora)
+3. Audio se reproduce directamente desde R2
+
+**Flujo de transcripción:**
+1. API descarga audio desde R2
+2. Envía a Groq Whisper para transcribir
+3. Transcripción se guarda en MongoDB para persistencia
+
+**Beneficios:**
+- ⚡ **Mejor rendimiento**: MongoDB no almacena datos binarios grandes
+- 📈 **Escalabilidad**: R2 optimizado para archivos multimedia
+- 🔒 **Seguridad**: URLs firmadas con expiración automática
+- 🗑️ **Limpieza automática**: Al eliminar mensaje, se borra archivo de R2
+
+**Límites:**
+- 📦 **Tamaño máximo**: 10MB por archivo de audio
+- ⏰ **URLs firmadas**: Válidas por 1 hora
 
 ### Compatibilidad
 
@@ -3498,6 +3526,27 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v2.0.1 (Noviembre 2025) - Almacenamiento R2 para Mensajes de Voz
+
+#### Migración a Cloudflare R2
+- ✅ **Almacenamiento en R2** - Los archivos de audio ahora se guardan en Cloudflare R2 en lugar de MongoDB
+  - Mejor rendimiento al no almacenar datos binarios grandes en MongoDB
+  - URLs firmadas con expiración automática (1 hora)
+  - Escalabilidad mejorada para archivos multimedia
+
+- ✅ **Nueva API de voice-upload**
+  - `POST /api/projects/{id}/voice-upload` - Sube audio a R2
+  - `GET /api/projects/{id}/voice-upload?r2Key=xxx` - Obtiene URL firmada
+
+- ✅ **Transcripciones persistentes**
+  - Las transcripciones se guardan en MongoDB
+  - Se muestran automáticamente en futuras visitas
+  - API de transcripción ahora descarga de R2
+
+- ✅ **Limpieza automática**
+  - Al eliminar un mensaje de voz, se borra el archivo de R2
+  - Se limpian los metadatos de MongoDB
 
 ### v2.0.0 (Noviembre 2025) - Pizarra Colaborativa
 
