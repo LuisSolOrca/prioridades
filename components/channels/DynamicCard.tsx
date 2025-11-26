@@ -133,8 +133,14 @@ export default function DynamicCard({ dynamic, participantCount = 0, onClick, on
     if (!onDelete || !confirm('¿Eliminar esta dinámica del historial?')) return;
 
     setDeleting(true);
-    await onDelete(dynamic._id);
-    setDeleting(false);
+    try {
+      await onDelete(dynamic._id);
+      // En éxito el componente se desmonta, no necesitamos resetear
+    } catch (error) {
+      console.error('Error deleting dynamic:', error);
+      alert('Error al eliminar la dinámica');
+      setDeleting(false);
+    }
   };
 
   return (

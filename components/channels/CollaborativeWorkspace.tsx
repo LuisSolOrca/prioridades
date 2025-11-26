@@ -520,20 +520,19 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
 
   // Handle dynamic delete
   const handleDeleteDynamic = async (dynamicId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/messages/${dynamicId}`, {
-        method: 'DELETE'
-      });
+    const response = await fetch(`/api/projects/${projectId}/messages/${dynamicId}`, {
+      method: 'DELETE'
+    });
 
-      if (response.ok) {
-        setDynamics(prev => prev.filter(d => d._id !== dynamicId));
-      } else {
-        alert('Error al eliminar la dinámica');
-      }
-    } catch (error) {
-      console.error('Error deleting dynamic:', error);
-      alert('Error al eliminar la dinámica');
+    if (!response.ok) {
+      throw new Error('Error al eliminar la dinámica');
     }
+
+    // Si la dinámica eliminada es la activa, cerrar el fullscreen
+    if (activeDynamic?._id === dynamicId) {
+      setActiveDynamic(null);
+    }
+    setDynamics(prev => prev.filter(d => d._id !== dynamicId));
   };
 
   // Separate active and closed dynamics (filter out any without valid commandData)
