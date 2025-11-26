@@ -11,11 +11,14 @@ import {
   MessageSquare,
   Reply,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Mic
 } from 'lucide-react';
 import MessageContent from './MessageContent';
 import EmojiPicker from './EmojiPicker';
 import MarkdownHelp from './MarkdownHelp';
+import VoiceRecorder from './VoiceRecorder';
+import VoicePlayer from './VoicePlayer';
 
 interface Priority {
   _id: string;
@@ -26,6 +29,14 @@ interface Priority {
     _id: string;
     name: string;
   };
+}
+
+interface VoiceMessage {
+  r2Key: string;
+  duration: number;
+  mimeType: string;
+  waveform?: number[];
+  transcription?: string;
 }
 
 interface Message {
@@ -43,6 +54,7 @@ interface Message {
     emoji: string;
     createdAt: string;
   }>;
+  voiceMessage?: VoiceMessage;
   parentMessageId?: string;
   rootMessageId?: string;
   threadDepth?: number;
@@ -72,6 +84,7 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
   const [editContent, setEditContent] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [collapsedMessages, setCollapsedMessages] = useState<Set<string>>(new Set());
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const repliesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -166,6 +179,46 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
     } catch (err) {
       console.error('Error sending reply:', err);
       alert('Error al enviar respuesta');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendVoiceMessage = async (voiceData: {
+    r2Key: string;
+    duration: number;
+    mimeType: string;
+    waveform: number[];
+  }) => {
+    try {
+      setSending(true);
+
+      // Determine which message to reply to
+      const targetParentId = replyingTo?._id || parentMessage._id;
+
+      const response = await fetch(`/api/projects/${projectId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: '🎤 Mensaje de voz',
+          channelId: channelId,
+          mentions: [],
+          parentMessageId: targetParentId,
+          voiceMessage: voiceData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al enviar mensaje de voz');
+      }
+
+      const reply = await response.json();
+      setAllMessages((prev) => [...prev, reply]);
+      setShowVoiceRecorder(false);
+      setReplyingTo(null);
+    } catch (err) {
+      console.error('Error sending voice message:', err);
+      alert('Error al enviar mensaje de voz');
     } finally {
       setSending(false);
     }
@@ -416,6 +469,21 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
                     />
                   </div>
 
+                  {/* Voice Message */}
+                  {message.voiceMessage && (
+                    <div className="mt-2">
+                      <VoicePlayer
+                        projectId={projectId}
+                        r2Key={message.voiceMessage.r2Key}
+                        duration={message.voiceMessage.duration}
+                        mimeType={message.voiceMessage.mimeType}
+                        waveform={message.voiceMessage.waveform}
+                        transcription={message.voiceMessage.transcription}
+                        messageId={message._id}
+                      />
+                    </div>
+                  )}
+
                   {/* Actions */}
                   <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition flex gap-1">
                     {/* Reply button - always visible on hover */}
@@ -587,39 +655,58 @@ export default function ThreadView({ projectId, parentMessage, channelId, onClos
 
         {/* Input */}
         <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={newReply}
-              onChange={(e) => setNewReply(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendReply();
-                }
-              }}
-              placeholder={replyingTo
-                ? `Respondiendo a ${replyingTo.userId.name}...`
-                : "Escribe una respuesta... (@ para mencionar, Markdown soportado)"
-              }
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {showVoiceRecorder ? (
+            <VoiceRecorder
+              projectId={projectId}
+              onSend={handleSendVoiceMessage}
+              onCancel={() => setShowVoiceRecorder(false)}
               disabled={sending}
             />
-            <MarkdownHelp />
-            <button
-              onClick={handleSendReply}
-              disabled={!newReply.trim() || sending}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
-            >
-              <Send size={18} />
-              {sending ? 'Enviando...' : 'Enviar'}
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            <span className="font-medium">Enter</span> para enviar •
-            <span className="font-medium ml-1">Hover</span> sobre un mensaje y click en <Reply size={10} className="inline" /> para responder directamente
-          </p>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowVoiceRecorder(true)}
+                  disabled={sending}
+                  className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition flex items-center"
+                  title="Grabar mensaje de voz"
+                >
+                  <Mic size={18} />
+                </button>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={newReply}
+                  onChange={(e) => setNewReply(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendReply();
+                    }
+                  }}
+                  placeholder={replyingTo
+                    ? `Respondiendo a ${replyingTo.userId.name}...`
+                    : "Escribe una respuesta... (@ para mencionar, Markdown soportado)"
+                  }
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={sending}
+                />
+                <MarkdownHelp />
+                <button
+                  onClick={handleSendReply}
+                  disabled={!newReply.trim() || sending}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
+                >
+                  <Send size={18} />
+                  {sending ? 'Enviando...' : 'Enviar'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <span className="font-medium">Enter</span> para enviar •
+                <span className="font-medium ml-1">Hover</span> sobre un mensaje y click en <Reply size={10} className="inline" /> para responder directamente
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
