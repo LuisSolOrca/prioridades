@@ -57,7 +57,24 @@ export async function GET(
     }
 
     // Si se especifica rootMessageId, obtener TODO el árbol de hilos (para hilos anidados)
-    if (rootMessageId) {
+    // Si hay búsqueda, buscar en TODOS los mensajes (incluyendo hilos)
+    if (search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+
+      // Buscar usuarios que coincidan
+      const matchingUsers = await User.find({
+        name: searchRegex,
+        isActive: true
+      }).select('_id').lean();
+
+      const userIds = matchingUsers.map(u => u._id);
+
+      // Buscar en contenido o por usuario (sin filtrar por parentMessageId)
+      query.$or = [
+        { content: searchRegex },
+        ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : [])
+      ];
+    } else if (rootMessageId) {
       // Obtener todos los mensajes que pertenecen a este hilo (incluyendo anidados)
       query.$or = [
         { _id: rootMessageId }, // El mensaje raíz mismo
@@ -74,25 +91,6 @@ export async function GET(
     // Cursor-based pagination: obtener mensajes más antiguos que el cursor
     if (cursor) {
       query._id = { $lt: cursor };
-    }
-
-    // Si hay búsqueda, agregar condiciones
-    if (search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
-
-      // Buscar usuarios que coincidan
-      const matchingUsers = await User.find({
-        name: searchRegex,
-        isActive: true
-      }).select('_id').lean();
-
-      const userIds = matchingUsers.map(u => u._id);
-
-      // Buscar en contenido o por usuario
-      query.$or = [
-        { content: searchRegex },
-        ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : [])
-      ];
     }
 
     // Obtener mensajes (ordenar por _id descendente que es equivalente a createdAt)
