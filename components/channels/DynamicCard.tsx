@@ -109,6 +109,13 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   'fishbone': { icon: Target, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
   'raci': { icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
   'roman-voting': { icon: Vote, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  // Nuevos widgets batch 4
+  'lean-canvas': { icon: Layers, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+  'customer-journey': { icon: Users, color: 'text-teal-600', bg: 'bg-teal-100 dark:bg-teal-900/30' },
+  'risk-matrix': { icon: Target, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
+  'rice': { icon: Target, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  'working-agreements': { icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+  'brainwriting': { icon: Lightbulb, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
 };
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {

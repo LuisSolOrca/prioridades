@@ -69,6 +69,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'worst-idea', name: 'Peores Ideas', description: 'Generar las peores ideas → transformarlas' },
       { type: 'lotus-blossom', name: 'Lotus Blossom', description: 'Idea central con 8 pétalos de sub-ideas' },
       { type: 'how-might-we', name: 'How Might We', description: 'Puente entre problema e ideación - "¿Cómo podríamos...?"' },
+      { type: 'brainwriting', name: 'Brainwriting 6-3-5', description: '6 personas, 3 ideas, 5 minutos - mejor que brainstorm para introvertidos' },
     ]
   },
   {
@@ -107,6 +108,9 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'moscow', name: 'MoSCoW', description: 'Must, Should, Could, Won\'t - Priorización clásica' },
       { type: 'pre-mortem', name: 'Pre-mortem', description: 'Imaginar el fracaso para prevenir riesgos' },
       { type: 'fishbone', name: 'Fishbone / Ishikawa', description: 'Diagrama de causa-efecto visual en forma de espina de pescado' },
+      { type: 'risk-matrix', name: 'Matriz de Riesgos', description: 'Probabilidad × Impacto - complementa Pre-mortem' },
+      { type: 'rice', name: 'RICE', description: 'Reach × Impact × Confidence ÷ Effort - priorización robusta' },
+      { type: 'customer-journey', name: 'Customer Journey Map', description: 'Mapear experiencia completa del cliente' },
     ]
   },
   {
@@ -152,6 +156,8 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'inception-deck', name: 'Incepción Ágil', description: 'Mazo de 10 cartas para alinear al equipo' },
       { type: 'delegation-poker', name: 'Delegation Poker', description: 'Definir niveles de delegación (Management 3.0)' },
       { type: 'moving-motivators', name: 'Moving Motivators', description: 'Descubrir motivaciones del equipo (Management 3.0)' },
+      { type: 'lean-canvas', name: 'Lean Canvas', description: '9 bloques para validar modelo de negocio - startups y productos nuevos' },
+      { type: 'working-agreements', name: 'Working Agreements', description: 'Acuerdos de trabajo del equipo - fundacional para equipos nuevos' },
     ]
   }
 ];

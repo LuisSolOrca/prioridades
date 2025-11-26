@@ -59,6 +59,12 @@ import UserStoryMappingCommand from '../slashCommands/UserStoryMappingCommand';
 import FishboneCommand from '../slashCommands/FishboneCommand';
 import RACICommand from '../slashCommands/RACICommand';
 import RomanVotingCommand from '../slashCommands/RomanVotingCommand';
+import LeanCanvasCommand from '../slashCommands/LeanCanvasCommand';
+import CustomerJourneyCommand from '../slashCommands/CustomerJourneyCommand';
+import RiskMatrixCommand from '../slashCommands/RiskMatrixCommand';
+import RICECommand from '../slashCommands/RICECommand';
+import WorkingAgreementsCommand from '../slashCommands/WorkingAgreementsCommand';
+import BrainwritingCommand from '../slashCommands/BrainwritingCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -154,6 +160,13 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'fishbone': { icon: Target, color: 'text-cyan-600' },
   'raci': { icon: Users, color: 'text-indigo-600' },
   'roman-voting': { icon: Vote, color: 'text-purple-600' },
+  // Nuevos widgets batch 4
+  'lean-canvas': { icon: Layers, color: 'text-indigo-600' },
+  'customer-journey': { icon: Users, color: 'text-teal-600' },
+  'risk-matrix': { icon: Target, color: 'text-red-600' },
+  'rice': { icon: Target, color: 'text-blue-600' },
+  'working-agreements': { icon: Users, color: 'text-indigo-600' },
+  'brainwriting': { icon: Lightbulb, color: 'text-amber-600' },
 };
 
 // Metodologías y guías de uso para cada tipo de dinámica
@@ -993,6 +1006,120 @@ const METHODOLOGY_GUIDE: Record<string, { title: string; description: string; st
       'Los votos en contra deben explicarse',
       'Útil para validar consenso antes de continuar'
     ]
+  },
+  'lean-canvas': {
+    title: 'Lean Canvas',
+    description: 'Framework de 9 bloques para validar y comunicar modelos de negocio. Basado en Business Model Canvas, optimizado para startups y productos nuevos.',
+    steps: [
+      'Identifica los segmentos de clientes objetivo',
+      'Define el problema que resuelves (top 3)',
+      'Articula tu propuesta de valor única',
+      'Describe la solución (features principales)',
+      'Lista canales para llegar a clientes',
+      'Define métricas clave de éxito',
+      'Identifica estructura de costos',
+      'Define flujos de ingresos',
+      'Describe tu ventaja competitiva injusta'
+    ],
+    tips: [
+      'Empieza por Problema y Segmento de Clientes',
+      'La propuesta de valor debe ser clara y diferenciadora',
+      'La ventaja injusta es algo difícil de copiar o comprar',
+      'Itera el canvas a medida que aprendes del mercado'
+    ]
+  },
+  'customer-journey': {
+    title: 'Customer Journey Map',
+    description: 'Visualización de la experiencia completa del cliente a través de todas las etapas de interacción con el producto o servicio.',
+    steps: [
+      'Define la persona/cliente objetivo',
+      'Mapea las 5 etapas: Descubrimiento, Consideración, Compra, Retención, Recomendación',
+      'Identifica touchpoints en cada etapa',
+      'Registra emociones del cliente (positivas, neutrales, negativas)',
+      'Documenta pain points y frustraciones',
+      'Descubre oportunidades de mejora'
+    ],
+    tips: [
+      'Basa el journey en datos reales, no suposiciones',
+      'Incluye touchpoints digitales y físicos',
+      'Los pain points son oro para encontrar oportunidades',
+      'Usa el mapa para alinear al equipo en la experiencia'
+    ]
+  },
+  'risk-matrix': {
+    title: 'Matriz de Riesgos',
+    description: 'Herramienta para identificar, evaluar y priorizar riesgos basándose en su probabilidad de ocurrencia e impacto potencial.',
+    steps: [
+      'Identifica posibles riesgos del proyecto',
+      'Evalúa la probabilidad (1-5) de cada riesgo',
+      'Evalúa el impacto (1-5) si ocurre',
+      'El score = Probabilidad × Impacto',
+      'Prioriza mitigación de riesgos con mayor score',
+      'Define estrategias de mitigación'
+    ],
+    tips: [
+      'Complementa bien con Pre-mortem',
+      'Score 15-25: Riesgo crítico, actuar inmediato',
+      'Score 8-14: Riesgo medio, monitorear',
+      'Score 1-7: Riesgo bajo, aceptable',
+      'Revisa la matriz periódicamente'
+    ]
+  },
+  'rice': {
+    title: 'RICE Scoring',
+    description: 'Framework de priorización que evalúa iniciativas basándose en Reach (Alcance), Impact (Impacto), Confidence (Confianza) y Effort (Esfuerzo).',
+    steps: [
+      'Lista las iniciativas o features a priorizar',
+      'Reach: ¿Cuántos usuarios impacta en un período?',
+      'Impact: ¿Cuánto mejora la métrica clave? (0.25-3)',
+      'Confidence: ¿Qué tan seguro estás? (0-100%)',
+      'Effort: ¿Cuánto esfuerzo requiere? (persona-semanas)',
+      'Score = (Reach × Impact × Confidence) ÷ Effort',
+      'Prioriza las iniciativas con mayor score'
+    ],
+    tips: [
+      'Impact: 3=masivo, 2=alto, 1=medio, 0.5=bajo, 0.25=mínimo',
+      'Confidence: 100%=datos sólidos, 80%=evidencia, 50%=intuición',
+      'Más robusto que Impacto/Esfuerzo simple',
+      'Ideal para roadmap de producto'
+    ]
+  },
+  'working-agreements': {
+    title: 'Working Agreements',
+    description: 'Acuerdos de trabajo del equipo que definen cómo colaboran, se comunican y operan juntos. Fundacional para equipos nuevos.',
+    steps: [
+      'Cada categoría representa un área de trabajo',
+      'Comunicación: cómo nos comunicamos',
+      'Reuniones: reglas de reuniones',
+      'Código: estándares de desarrollo',
+      'Colaboración: cómo trabajamos juntos',
+      'Feedback: cómo damos y recibimos feedback',
+      'Los miembros aprueban los acuerdos con los que están de acuerdo'
+    ],
+    tips: [
+      'Revisa los acuerdos cada sprint o mes',
+      'Los acuerdos deben ser accionables',
+      'Menos es más: 3-5 acuerdos por categoría',
+      'Todos deben tener voz en los acuerdos'
+    ]
+  },
+  'brainwriting': {
+    title: 'Brainwriting 6-3-5',
+    description: 'Técnica de ideación donde 6 personas escriben 3 ideas en 5 minutos, luego pasan su "hoja" para construir sobre las ideas de otros. Mejor que brainstorm para introvertidos.',
+    steps: [
+      '6 participantes se unen a la sesión',
+      'Ronda 1: Cada uno escribe 3 ideas en 5 minutos',
+      'Ronda 2: Reciben ideas de otro y construyen sobre ellas',
+      'Repetir hasta 6 rondas',
+      'Resultado: Hasta 108 ideas (6×3×6)',
+      'Revisar y agrupar las mejores ideas'
+    ],
+    tips: [
+      'Sin críticas durante la generación',
+      'Construir sobre ideas existentes es clave',
+      'El timer ayuda a mantener el ritmo',
+      'Funciona mejor que brainstorm verbal para equipos diversos'
+    ]
   }
 };
 
@@ -1821,6 +1948,72 @@ export default function DynamicFullscreen({
             question={data.question || getTitle()}
             votes={data.votes || []}
             revealed={data.revealed || false}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'lean-canvas':
+        return (
+          <LeanCanvasCommand
+            {...commonProps}
+            title={getTitle()}
+            blocks={data.blocks || {}}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'customer-journey':
+        return (
+          <CustomerJourneyCommand
+            {...commonProps}
+            title={getTitle()}
+            persona={data.persona || ''}
+            stages={data.stages || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'risk-matrix':
+        return (
+          <RiskMatrixCommand
+            {...commonProps}
+            title={getTitle()}
+            risks={data.risks || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'rice':
+        return (
+          <RICECommand
+            {...commonProps}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'working-agreements':
+        return (
+          <WorkingAgreementsCommand
+            {...commonProps}
+            title={getTitle()}
+            categories={data.categories || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'brainwriting':
+        return (
+          <BrainwritingCommand
+            {...commonProps}
+            title={getTitle()}
+            rounds={data.rounds || []}
+            currentRound={data.currentRound || 0}
+            timePerRound={data.timePerRound || 5}
+            ideasPerRound={data.ideasPerRound || 3}
+            participants={data.participants || []}
+            ideas={data.ideas || []}
             createdBy={getCreatedBy()}
             closed={isClosed()}
           />

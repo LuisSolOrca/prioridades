@@ -608,6 +608,64 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
           question: title,
           votes: []
         };
+      // Batch 4 - nuevas dinámicas
+      case 'lean-canvas':
+        return {
+          ...base,
+          blocks: {
+            problem: { items: [] },
+            customerSegments: { items: [] },
+            uniqueValue: { items: [] },
+            solution: { items: [] },
+            channels: { items: [] },
+            revenueStreams: { items: [] },
+            costStructure: { items: [] },
+            keyMetrics: { items: [] },
+            unfairAdvantage: { items: [] }
+          }
+        };
+      case 'customer-journey':
+        return {
+          ...base,
+          persona: '',
+          stages: [
+            { id: 'awareness', name: 'Descubrimiento', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+            { id: 'consideration', name: 'Consideración', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+            { id: 'purchase', name: 'Compra', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+            { id: 'retention', name: 'Retención', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+            { id: 'advocacy', name: 'Recomendación', touchpoints: [], emotions: [], painPoints: [], opportunities: [] }
+          ]
+        };
+      case 'risk-matrix':
+        return {
+          ...base,
+          risks: []
+        };
+      case 'rice':
+        return {
+          ...base,
+          items: []
+        };
+      case 'working-agreements':
+        return {
+          ...base,
+          categories: [
+            { id: 'communication', title: 'Comunicación', icon: '💬', agreements: [] },
+            { id: 'meetings', title: 'Reuniones', icon: '📅', agreements: [] },
+            { id: 'code', title: 'Código', icon: '💻', agreements: [] },
+            { id: 'collaboration', title: 'Colaboración', icon: '🤝', agreements: [] },
+            { id: 'feedback', title: 'Feedback', icon: '📣', agreements: [] }
+          ]
+        };
+      case 'brainwriting':
+        return {
+          ...base,
+          rounds: [],
+          currentRound: 0,
+          timePerRound: 5,
+          ideasPerRound: 3,
+          participants: []
+        };
       default:
         return base;
     }
