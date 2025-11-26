@@ -9,6 +9,8 @@ export interface IChannel extends Document {
   order: number;
   icon?: string; // Nombre del icono de Lucide React
   isActive: boolean;
+  isPrivate: boolean; // Si es true, solo los miembros pueden ver/acceder
+  members: mongoose.Types.ObjectId[]; // Lista de usuarios con acceso (solo aplica si isPrivate es true)
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +53,14 @@ const ChannelSchema = new Schema<IChannel>(
       type: Boolean,
       default: true
     },
+    isPrivate: {
+      type: Boolean,
+      default: false
+    },
+    members: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }],
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',

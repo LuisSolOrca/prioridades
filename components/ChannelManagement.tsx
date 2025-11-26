@@ -1,8 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Hash, Folder, Plus, Edit2, Trash2, ChevronDown, ChevronRight, Save, X } from 'lucide-react';
+import { Hash, Folder, Plus, Edit2, Trash2, ChevronDown, ChevronRight, Save, X, Lock, Users, Search, Check } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+}
 
 interface Channel {
   _id: string;
@@ -12,8 +18,11 @@ interface Channel {
   order: number;
   icon?: string;
   isActive: boolean;
+  isPrivate?: boolean;
+  members?: User[];
   children?: Channel[];
   createdBy?: {
+    _id: string;
     name: string;
     email: string;
   };
@@ -33,12 +42,48 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
     name: '',
     description: '',
     parentId: null as string | null,
-    icon: 'Hash'
+    icon: 'Hash',
+    isPrivate: false,
+    members: [] as string[]
   });
+  const [userSearch, setUserSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
 
   useEffect(() => {
     loadChannels();
   }, [projectId]);
+
+  // Search users when typing
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (userSearch.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      setSearchingUsers(true);
+      try {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(userSearch)}&limit=10`);
+        if (response.ok) {
+          const data = await response.json();
+          // Filter out already selected users
+          const filtered = (data.users || []).filter(
+            (u: User) => !selectedUsers.some(su => su._id === u._id)
+          );
+          setSearchResults(filtered);
+        }
+      } catch (error) {
+        console.error('Error searching users:', error);
+      } finally {
+        setSearchingUsers(false);
+      }
+    };
+
+    const debounce = setTimeout(searchUsers, 300);
+    return () => clearTimeout(debounce);
+  }, [userSearch, selectedUsers]);
 
   const loadChannels = async () => {
     try {
@@ -64,10 +109,15 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
 
   const handleCreateChannel = async () => {
     try {
+      const payload = {
+        ...formData,
+        members: selectedUsers.map(u => u._id)
+      };
+
       const response = await fetch(`/api/projects/${projectId}/channels`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -132,8 +182,16 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
       name: channel.name,
       description: channel.description || '',
       parentId: channel.parentId || null,
-      icon: channel.icon || 'Hash'
+      icon: channel.icon || 'Hash',
+      isPrivate: channel.isPrivate || false,
+      members: channel.members?.map(m => m._id) || []
     });
+    // If channel is private, load selected users
+    if (channel.isPrivate && channel.members) {
+      setSelectedUsers(channel.members);
+    } else {
+      setSelectedUsers([]);
+    }
   };
 
   const resetForm = () => {
@@ -141,8 +199,23 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
       name: '',
       description: '',
       parentId: null,
-      icon: 'Hash'
+      icon: 'Hash',
+      isPrivate: false,
+      members: []
     });
+    setSelectedUsers([]);
+    setUserSearch('');
+    setSearchResults([]);
+  };
+
+  const addUser = (user: User) => {
+    setSelectedUsers([...selectedUsers, user]);
+    setSearchResults(searchResults.filter(u => u._id !== user._id));
+    setUserSearch('');
+  };
+
+  const removeUser = (userId: string) => {
+    setSelectedUsers(selectedUsers.filter(u => u._id !== userId));
   };
 
   const toggleExpand = (channelId: string) => {
@@ -214,6 +287,12 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
                 <span className="font-medium text-gray-800 dark:text-gray-100">
                   {channel.name}
                 </span>
+                {channel.isPrivate && (
+                  <span className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
+                    <Lock size={10} />
+                    Privado
+                  </span>
+                )}
                 {level > 0 && (
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     (subcanal)
@@ -222,6 +301,12 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
               </div>
               {channel.description && (
                 <p className="text-xs text-gray-500 dark:text-gray-400">{channel.description}</p>
+              )}
+              {channel.isPrivate && channel.members && channel.members.length > 0 && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-0.5">
+                  <Users size={10} />
+                  {channel.members.length} miembro{channel.members.length !== 1 ? 's' : ''}
+                </p>
               )}
             </div>
           )}
@@ -327,9 +412,10 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
 
       {/* Create Form */}
       {showCreateForm && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg p-4">
-          <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">
-            {formData.parentId ? 'Crear Subcanal' : 'Crear Canal'}
+        <div className={`${formData.isPrivate ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'} border-2 rounded-lg p-4`}>
+          <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            {formData.isPrivate ? <Lock size={18} className="text-amber-600" /> : <Hash size={18} className="text-blue-600" />}
+            {formData.parentId ? 'Crear Subcanal' : 'Crear Canal'} {formData.isPrivate ? 'Privado' : ''}
           </h3>
           <div className="space-y-3">
             <input
@@ -352,6 +438,7 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
             >
               <option value="Hash">Hash (#)</option>
+              <option value="Lock">Candado</option>
               <option value="Folder">Carpeta</option>
               <option value="Code">Código</option>
               <option value="Database">Base de datos</option>
@@ -359,12 +446,116 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
               <option value="Paintbrush">Pincel</option>
               <option value="FileText">Documento</option>
             </select>
+
+            {/* Private Channel Toggle */}
+            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center gap-2">
+                <Lock size={18} className={formData.isPrivate ? 'text-amber-600' : 'text-gray-400'} />
+                <div>
+                  <p className="font-medium text-gray-800 dark:text-gray-100">Canal Privado</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Solo los miembros seleccionados pueden ver y participar</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, isPrivate: !formData.isPrivate, icon: !formData.isPrivate ? 'Lock' : 'Hash' })}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  formData.isPrivate ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.isPrivate ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Member Selection (only for private channels) */}
+            {formData.isPrivate && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Users size={14} className="inline mr-1" />
+                  Seleccionar Miembros
+                </label>
+
+                {/* Selected Users */}
+                {selectedUsers.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedUsers.map(user => (
+                      <span
+                        key={user._id}
+                        className="flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-full text-sm"
+                      >
+                        {user.name}
+                        <button
+                          type="button"
+                          onClick={() => removeUser(user._id)}
+                          className="hover:text-amber-600 dark:hover:text-amber-400"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* User Search */}
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Buscar usuarios..."
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                  />
+                </div>
+
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <div className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg max-h-40 overflow-y-auto">
+                    {searchResults.map(user => (
+                      <button
+                        key={user._id}
+                        type="button"
+                        onClick={() => addUser(user)}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{user.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                        </div>
+                        <Check size={16} className="text-green-500" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {searchingUsers && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Buscando...</p>
+                )}
+
+                {userSearch.length >= 2 && searchResults.length === 0 && !searchingUsers && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">No se encontraron usuarios</p>
+                )}
+
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Tú serás agregado automáticamente como miembro
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-2">
               <button
                 onClick={handleCreateChannel}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className={`flex-1 px-4 py-2 text-white rounded-lg ${
+                  formData.isPrivate
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                Crear
+                Crear {formData.isPrivate ? 'Canal Privado' : 'Canal'}
               </button>
               <button
                 onClick={() => {
@@ -401,6 +592,8 @@ export default function ChannelManagement({ projectId }: ChannelManagementProps)
           <li>• Máximo 2 niveles de jerarquía (Canal → Subcanal)</li>
           <li>• Al eliminar un canal, sus mensajes se mueven a "General"</li>
           <li>• No se pueden eliminar canales con subcanales</li>
+          <li>• <Lock size={12} className="inline" /> Los canales privados solo son visibles para sus miembros</li>
+          <li>• El creador del canal privado siempre es miembro automáticamente</li>
         </ul>
       </div>
     </div>

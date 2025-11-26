@@ -29,13 +29,24 @@ export async function GET(
       return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
     }
 
+    const userId = (session.user as any).id;
+    const userRole = (session.user as any).role;
+
     // Obtener todos los canales del proyecto
+    // Filtrar: canales públicos O canales privados donde el usuario es miembro o creador
     const channels = await Channel.find({
       projectId: params.id,
-      isActive: true
+      isActive: true,
+      $or: [
+        { isPrivate: { $ne: true } }, // Canales públicos (isPrivate false o undefined)
+        { isPrivate: true, members: userId }, // Canales privados donde es miembro
+        { isPrivate: true, createdBy: userId }, // Canales privados que creó
+        ...(userRole === 'ADMIN' ? [{ isPrivate: true }] : []) // Admins ven todos
+      ]
     })
       .sort({ order: 1 })
       .populate('createdBy', 'name email')
+      .populate('members', 'name email')
       .lean();
 
     // Organizar en estructura jerárquica
@@ -104,7 +115,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { name, description, parentId, icon } = body;
+    const { name, description, parentId, icon, isPrivate, members } = body;
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
@@ -139,6 +150,16 @@ export async function POST(
 
     const order = maxOrderChannel ? maxOrderChannel.order + 1 : 0;
 
+    // Preparar lista de miembros (el creador siempre es miembro si es privado)
+    let channelMembers: string[] = [];
+    if (isPrivate) {
+      channelMembers = members && Array.isArray(members) ? [...members] : [];
+      // Asegurar que el creador esté incluido
+      if (!channelMembers.includes(session.user.id)) {
+        channelMembers.push(session.user.id);
+      }
+    }
+
     // Crear canal
     const channel = await Channel.create({
       projectId: params.id,
@@ -146,13 +167,16 @@ export async function POST(
       description: description?.trim() || '',
       parentId: parentId || null,
       order,
-      icon: icon || 'Hash',
+      icon: icon || (isPrivate ? 'Lock' : 'Hash'),
       isActive: true,
+      isPrivate: isPrivate || false,
+      members: channelMembers,
       createdBy: session.user.id
     });
 
     const populatedChannel = await Channel.findById(channel._id)
       .populate('createdBy', 'name email')
+      .populate('members', 'name email')
       .lean();
 
     // Trackear creación de canal para gamificación
