@@ -531,7 +531,8 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
       };
 
       await sendEmail({
-        to: nonWinnerEmails,
+        to: process.env.EMAIL_USERNAME || 'orcaevolution@orcagrc.com',
+        bcc: nonWinnerEmails,
         subject: notificationEmail.subject,
         html: notificationEmail.html
       });
