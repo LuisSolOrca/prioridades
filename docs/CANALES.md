@@ -20,13 +20,14 @@
 13. [Slash Commands](#slash-commands)
 14. [Webhooks](#webhooks)
 15. [Archivos Adjuntos](#archivos-adjuntos)
-16. [Pestaña de Dinámicas](#pestaña-de-dinámicas)
-17. [Pizarra Colaborativa](#pizarra-colaborativa)
-18. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
-19. [Notificaciones](#notificaciones)
-20. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
-21. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-22. [Roadmap Futuro](#roadmap-futuro)
+16. [Mensajes de Voz](#mensajes-de-voz)
+17. [Pestaña de Dinámicas](#pestaña-de-dinámicas)
+18. [Pizarra Colaborativa](#pizarra-colaborativa)
+19. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
+20. [Notificaciones](#notificaciones)
+21. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+22. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+23. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -74,6 +75,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
 - 📎 **Archivos adjuntos** con Cloudflare R2 - subir/descargar archivos en mensajes y pestaña dedicada
+- 🎤 **Mensajes de voz** - graba y envía mensajes de audio con visualización de waveform
 - 🎯 **Pestaña de Dinámicas** - visualiza todas las dinámicas colaborativas del canal (encuestas, retrospectivas, etc.)
 - 📄 **Generación de documentos con IA** - crea documentos DOCX profesionales a partir de dinámicas seleccionadas
 - 🎨 **60+ Widgets colaborativos** - votaciones, retrospectivas, análisis, ideación, frameworks ágiles
@@ -2671,6 +2673,81 @@ Ver `docs/R2_SETUP.md` para guía paso a paso.
 - 🔒 Revisa periódicamente los permisos de R2 API tokens
 - 💾 Haz backup de archivos críticos fuera de R2
 - ⚙️ Configura alertas en Cloudflare para cuotas
+
+---
+
+## Mensajes de Voz
+
+El sistema de **mensajes de voz** permite a los usuarios grabar y enviar mensajes de audio directamente en el chat, ideal para comunicación rápida o cuando escribir no es conveniente.
+
+### Grabar un Mensaje de Voz
+
+1. Haz clic en el botón **🎤 (micrófono)** junto al campo de mensaje
+2. Aparecerá el grabador con un indicador de grabación
+3. Haz clic en el **botón rojo** para detener la grabación
+4. Haz clic en el **botón verde** para enviar o **X** para cancelar
+
+### Componente de Grabación
+
+**Características del grabador:**
+- 🔴 **Indicador de grabación** - punto rojo parpadeante mientras graba
+- ⏱️ **Contador de tiempo** - muestra duración actual (formato mm:ss)
+- 📊 **Visualización de waveform** - barras animadas que muestran la intensidad del audio
+- ⏹️ **Botón detener** - finaliza la grabación
+- ✅ **Botón enviar** - envía el mensaje de voz
+- ❌ **Botón cancelar** - descarta la grabación
+
+**Límites:**
+- ⏰ **Duración máxima**: 5 minutos por mensaje
+- 🎵 **Formatos**: WebM (Opus) o MP4 según el navegador
+- 🔊 **Configuración de audio**: Cancelación de eco, supresión de ruido, control automático de ganancia
+
+### Reproductor de Audio
+
+Los mensajes de voz se muestran con un reproductor personalizado:
+
+**Características del reproductor:**
+- ▶️ **Play/Pause** - controla la reproducción
+- 📊 **Waveform visual** - muestra el progreso sobre la forma de onda
+- 🔊 **Control de mute** - silencia/activa el audio
+- ⏱️ **Tiempo** - muestra tiempo actual y duración total
+- 🖱️ **Barra clickeable** - salta a cualquier posición del audio
+
+### Permisos del Navegador
+
+Para grabar mensajes de voz, el navegador necesita acceso al micrófono:
+
+1. La primera vez que uses la función, el navegador pedirá permiso
+2. Haz clic en **"Permitir"** para habilitar el micrófono
+3. El permiso se guarda para futuras sesiones
+
+**Si el permiso fue denegado:**
+- En Chrome: Configuración → Privacidad → Configuración del sitio → Micrófono
+- En Firefox: Configuración → Privacidad → Permisos → Micrófono
+- En Safari: Preferencias → Sitios web → Micrófono
+
+### Almacenamiento
+
+Los mensajes de voz se almacenan como:
+- **Base64** en el campo `voiceMessage` del mensaje
+- **Datos incluidos**: audio codificado, duración, tipo MIME, datos de waveform
+- **Persistencia**: Se guardan en MongoDB junto con el mensaje
+
+### Compatibilidad
+
+**Navegadores soportados:**
+- ✅ Chrome/Edge (WebM con Opus)
+- ✅ Firefox (WebM)
+- ✅ Safari (MP4)
+- ✅ Navegadores móviles modernos
+
+### Buenas Prácticas
+
+- 🎙️ Usa un micrófono de buena calidad para mejor claridad
+- 🔇 Graba en un ambiente silencioso
+- ⏱️ Mantén los mensajes breves y concisos
+- 📝 Complementa con texto para contexto si es necesario
+- 🔊 Verifica el volumen antes de grabar
 
 ---
 
