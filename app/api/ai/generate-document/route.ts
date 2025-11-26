@@ -293,7 +293,7 @@ function formatDynamicForAI(dynamic: DynamicData): string {
       }
       break;
 
-    // === RETROSPECTIVAS Y FRAMEWORKS ===
+    // === RETROSPECTIVAS Y FRAMEWORKS CON SECCIONES ===
     case 'swot':
     case 'soar':
     case 'six-hats':
@@ -308,6 +308,15 @@ function formatDynamicForAI(dynamic: DynamicData): string {
     case 'starbursting':
     case 'reverse-brainstorm':
     case 'worst-idea':
+    case 'empathy-map':
+    case 'moscow':
+    case '4ls':
+    case 'pre-mortem':
+    case 'starfish':
+    case 'mad-sad-glad':
+    case 'how-might-we':
+    case 'hot-air-balloon':
+    case 'kalm':
       if (commandData.sections && commandData.sections.length > 0) {
         const totalItems = commandData.sections.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0);
         content += `Total de aportes: ${totalItems}\n`;
@@ -540,6 +549,331 @@ function formatDynamicForAI(dynamic: DynamicData): string {
         });
       } else {
         content += 'No hay oportunidades registradas.\n';
+      }
+      break;
+
+    // === LEAN COFFEE ===
+    case 'lean-coffee':
+      if (commandData.topics && commandData.topics.length > 0) {
+        content += `Temas discutidos: ${commandData.topics.length}\n`;
+        content += `Tiempo por tema: ${commandData.timePerTopic || 5} minutos\n\n`;
+        commandData.topics.forEach((topic: any, idx: number) => {
+          const status = topic.status === 'discussed' ? '✅' : topic.status === 'current' ? '🔄' : '⬜';
+          content += `${status} ${idx + 1}. ${topic.text} (${topic.userName || 'Anónimo'})\n`;
+          if (topic.votes?.length > 0) {
+            content += `   Votos: ${topic.votes.length}\n`;
+          }
+        });
+      }
+      break;
+
+    // === USER STORY MAPPING ===
+    case 'user-story-mapping':
+      if (commandData.activities && commandData.activities.length > 0) {
+        content += `Actividades de usuario: ${commandData.activities.length}\n\n`;
+        commandData.activities.forEach((activity: any) => {
+          content += `\n📋 ${activity.title} (${activity.userName || 'Anónimo'})\n`;
+          if (activity.tasks && activity.tasks.length > 0) {
+            activity.tasks.forEach((task: any) => {
+              content += `  └─ ${task.title} (${task.userName || 'Anónimo'})\n`;
+              if (task.stories && task.stories.length > 0) {
+                task.stories.forEach((story: any) => {
+                  const priority = story.priority === 'must' ? '🔴' : story.priority === 'should' ? '🟡' : '🟢';
+                  content += `      ${priority} ${story.title}\n`;
+                });
+              }
+            });
+          }
+        });
+      }
+      break;
+
+    // === FISHBONE (ISHIKAWA) ===
+    case 'fishbone':
+      content += `Problema: ${commandData.problem || title}\n`;
+      if (commandData.categories && commandData.categories.length > 0) {
+        const totalCauses = commandData.categories.reduce((sum: number, c: any) => sum + (c.causes?.length || 0), 0);
+        content += `Categorías: ${commandData.categories.length}, Causas: ${totalCauses}\n\n`;
+        commandData.categories.forEach((cat: any) => {
+          content += `\n🔷 ${cat.name}:\n`;
+          if (cat.causes && cat.causes.length > 0) {
+            cat.causes.forEach((cause: any) => {
+              content += `  - ${cause.text} (${cause.userName || 'Anónimo'})\n`;
+            });
+          }
+        });
+      }
+      break;
+
+    // === RACI MATRIX ===
+    case 'raci':
+      if (commandData.tasks && commandData.tasks.length > 0) {
+        content += `Tareas: ${commandData.tasks.length}\n`;
+        content += `Roles: ${commandData.roles?.join(', ') || 'N/A'}\n\n`;
+        commandData.tasks.forEach((task: any) => {
+          content += `\n📋 ${task.name}:\n`;
+          if (task.assignments) {
+            Object.entries(task.assignments).forEach(([role, type]) => {
+              const label = type === 'R' ? 'Responsable' : type === 'A' ? 'Aprobador' : type === 'C' ? 'Consultado' : 'Informado';
+              content += `  - ${role}: ${label}\n`;
+            });
+          }
+        });
+      }
+      break;
+
+    // === ROMAN VOTING ===
+    case 'roman-voting':
+      if (commandData.votes && commandData.votes.length > 0) {
+        const thumbsUp = commandData.votes.filter((v: any) => v.value === 'up').length;
+        const thumbsDown = commandData.votes.filter((v: any) => v.value === 'down').length;
+        const thumbsSide = commandData.votes.filter((v: any) => v.value === 'side').length;
+        content += `Resultados:\n`;
+        content += `👍 A favor: ${thumbsUp}\n`;
+        content += `👎 En contra: ${thumbsDown}\n`;
+        content += `👉 Neutral: ${thumbsSide}\n\n`;
+        content += 'Votos individuales:\n';
+        commandData.votes.forEach((vote: any) => {
+          const emoji = vote.value === 'up' ? '👍' : vote.value === 'down' ? '👎' : '👉';
+          content += `- ${vote.userName || 'Anónimo'}: ${emoji}\n`;
+        });
+      }
+      break;
+
+    // === LEAN CANVAS ===
+    case 'lean-canvas':
+      const canvasBlocks = ['problem', 'solution', 'keyMetrics', 'uniqueValue', 'unfairAdvantage',
+                           'channels', 'customerSegments', 'costStructure', 'revenueStreams'];
+      const blockLabels: Record<string, string> = {
+        problem: 'Problema', solution: 'Solución', keyMetrics: 'Métricas Clave',
+        uniqueValue: 'Propuesta de Valor Única', unfairAdvantage: 'Ventaja Competitiva',
+        channels: 'Canales', customerSegments: 'Segmentos de Cliente',
+        costStructure: 'Estructura de Costos', revenueStreams: 'Fuentes de Ingresos'
+      };
+      canvasBlocks.forEach(block => {
+        const items = commandData[block] || [];
+        content += `\n📦 ${blockLabels[block]} (${items.length}):\n`;
+        if (items.length > 0) {
+          items.forEach((item: any) => {
+            content += `  - ${item.text} (${item.userName || 'Anónimo'})\n`;
+          });
+        }
+      });
+      break;
+
+    // === CUSTOMER JOURNEY MAP ===
+    case 'customer-journey':
+      if (commandData.stages && commandData.stages.length > 0) {
+        content += `Etapas del journey: ${commandData.stages.length}\n\n`;
+        commandData.stages.forEach((stage: any) => {
+          content += `\n🔹 ${stage.name}:\n`;
+          if (stage.touchpoints?.length > 0) {
+            content += `  Touchpoints:\n`;
+            stage.touchpoints.forEach((tp: any) => {
+              content += `    - ${tp.text} (${tp.userName || 'Anónimo'})\n`;
+            });
+          }
+          if (stage.emotions?.length > 0) {
+            content += `  Emociones:\n`;
+            stage.emotions.forEach((em: any) => {
+              content += `    - ${em.text} (${em.userName || 'Anónimo'})\n`;
+            });
+          }
+          if (stage.painPoints?.length > 0) {
+            content += `  Pain Points:\n`;
+            stage.painPoints.forEach((pp: any) => {
+              content += `    - ${pp.text} (${pp.userName || 'Anónimo'})\n`;
+            });
+          }
+        });
+      }
+      break;
+
+    // === RISK MATRIX ===
+    case 'risk-matrix':
+      if (commandData.risks && commandData.risks.length > 0) {
+        const sortedRisks = [...commandData.risks].sort((a: any, b: any) =>
+          (b.probability * b.impact) - (a.probability * a.impact)
+        );
+        content += `Riesgos identificados: ${sortedRisks.length}\n\n`;
+        sortedRisks.forEach((risk: any) => {
+          const score = risk.probability * risk.impact;
+          const level = score >= 16 ? '🔴 Crítico' : score >= 9 ? '🟠 Alto' : score >= 4 ? '🟡 Medio' : '🟢 Bajo';
+          content += `${level} ${risk.title || risk.description} (Score: ${score})\n`;
+          content += `  Probabilidad: ${risk.probability}/5, Impacto: ${risk.impact}/5\n`;
+          if (risk.mitigation) {
+            content += `  Mitigación: ${risk.mitigation}\n`;
+          }
+          content += `  (${risk.userName || 'Anónimo'})\n\n`;
+        });
+      }
+      break;
+
+    // === RICE SCORING ===
+    case 'rice':
+      if (commandData.items && commandData.items.length > 0) {
+        const sortedItems = [...commandData.items].sort((a: any, b: any) => {
+          const scoreA = (a.reach * a.impact * a.confidence) / a.effort;
+          const scoreB = (b.reach * b.impact * b.confidence) / b.effort;
+          return scoreB - scoreA;
+        });
+        content += `Iniciativas priorizadas: ${sortedItems.length}\n\n`;
+        content += 'Fórmula: RICE = (Reach × Impact × Confidence) ÷ Effort\n\n';
+        sortedItems.forEach((item: any, idx: number) => {
+          const score = (item.reach * item.impact * item.confidence) / item.effort;
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+          content += `${medal} ${item.title || item.name} (Score: ${score.toFixed(1)})\n`;
+          content += `  R: ${item.reach}, I: ${item.impact}, C: ${item.confidence}, E: ${item.effort}\n`;
+          content += `  (${item.userName || 'Anónimo'})\n\n`;
+        });
+      }
+      break;
+
+    // === WORKING AGREEMENTS ===
+    case 'working-agreements':
+      if (commandData.agreements && commandData.agreements.length > 0) {
+        content += `Acuerdos del equipo: ${commandData.agreements.length}\n\n`;
+        commandData.agreements.forEach((agreement: any, idx: number) => {
+          content += `${idx + 1}. ${agreement.text} (${agreement.userName || 'Anónimo'})\n`;
+        });
+      }
+      break;
+
+    // === BRAINWRITING 6-3-5 ===
+    case 'brainwriting':
+      if (commandData.rounds && commandData.rounds.length > 0) {
+        const totalIdeas = commandData.rounds.reduce((sum: number, r: any) =>
+          sum + (r.ideas?.length || 0), 0
+        );
+        content += `Rondas completadas: ${commandData.rounds.length}\n`;
+        content += `Ideas generadas: ${totalIdeas}\n\n`;
+        commandData.rounds.forEach((round: any, idx: number) => {
+          content += `\n📝 Ronda ${idx + 1} (${round.userName || 'Anónimo'}):\n`;
+          if (round.ideas && round.ideas.length > 0) {
+            round.ideas.forEach((idea: any) => {
+              content += `  - ${idea.text}\n`;
+            });
+          }
+        });
+      } else if (commandData.ideas && commandData.ideas.length > 0) {
+        content += `Ideas generadas: ${commandData.ideas.length}\n\n`;
+        commandData.ideas.forEach((idea: any) => {
+          content += `- ${idea.text} (${idea.userName || 'Anónimo'})\n`;
+        });
+      }
+      break;
+
+    // === PERSONA ===
+    case 'persona':
+      content += `Nombre: ${commandData.name || 'Sin nombre'}\n`;
+      if (commandData.demographics) {
+        const demo = commandData.demographics;
+        content += `Demografía: ${demo.age || 'N/A'} años, ${demo.occupation || 'N/A'}, ${demo.location || 'N/A'}\n`;
+      }
+      if (commandData.quote) {
+        content += `Cita: "${commandData.quote}"\n`;
+      }
+      if (commandData.goals?.length > 0) {
+        content += `\n🎯 Objetivos:\n`;
+        commandData.goals.forEach((g: any) => content += `  - ${g.text}\n`);
+      }
+      if (commandData.frustrations?.length > 0) {
+        content += `\n😤 Frustraciones:\n`;
+        commandData.frustrations.forEach((f: any) => content += `  - ${f.text}\n`);
+      }
+      if (commandData.motivations?.length > 0) {
+        content += `\n💪 Motivaciones:\n`;
+        commandData.motivations.forEach((m: any) => content += `  - ${m.text}\n`);
+      }
+      if (commandData.behaviors?.length > 0) {
+        content += `\n🔄 Comportamientos:\n`;
+        commandData.behaviors.forEach((b: any) => content += `  - ${b.text}\n`);
+      }
+      break;
+
+    // === ASSUMPTION MAPPING ===
+    case 'assumption-mapping':
+      if (commandData.assumptions && commandData.assumptions.length > 0) {
+        const sorted = [...commandData.assumptions].sort((a: any, b: any) => {
+          const priorityA = a.importance * (6 - a.certainty);
+          const priorityB = b.importance * (6 - b.certainty);
+          return priorityB - priorityA;
+        });
+        content += `Supuestos mapeados: ${sorted.length}\n\n`;
+        sorted.forEach((assumption: any) => {
+          const priority = assumption.importance >= 4 && assumption.certainty <= 2 ? '🔴 Testear primero' :
+                          assumption.importance >= 4 ? '🟡 Monitorear' :
+                          assumption.certainty <= 2 ? '🟢 Investigar después' : '⚪ Seguro';
+          content += `${priority} ${assumption.text}\n`;
+          content += `  Importancia: ${assumption.importance}/5, Certeza: ${assumption.certainty}/5\n`;
+          content += `  (${assumption.userName || 'Anónimo'})\n\n`;
+        });
+      }
+      break;
+
+    // === TEAM CANVAS ===
+    case 'team-canvas':
+      const teamBlocks = ['people', 'goals', 'values', 'rules', 'activities', 'strengths', 'weaknesses', 'needs'];
+      const teamLabels: Record<string, string> = {
+        people: 'Personas y Roles', goals: 'Metas del Equipo', values: 'Valores',
+        rules: 'Reglas', activities: 'Actividades', strengths: 'Fortalezas',
+        weaknesses: 'Debilidades', needs: 'Necesidades'
+      };
+      if (commandData.blocks) {
+        teamBlocks.forEach(block => {
+          const items = commandData.blocks[block]?.items || [];
+          content += `\n📌 ${teamLabels[block]} (${items.length}):\n`;
+          if (items.length > 0) {
+            items.forEach((item: any) => {
+              content += `  - ${item.text} (${item.userName || 'Anónimo'})\n`;
+            });
+          }
+        });
+      }
+      break;
+
+    // === INCEPTION DECK ===
+    case 'inception-deck':
+      if (commandData.cards && commandData.cards.length > 0) {
+        content += `Cartas completadas: ${commandData.cards.length}\n\n`;
+        commandData.cards.forEach((card: any) => {
+          content += `\n🃏 ${card.title}:\n`;
+          content += `  ${card.content || 'Sin contenido'}\n`;
+        });
+      }
+      break;
+
+    // === DELEGATION POKER ===
+    case 'delegation-poker':
+      if (commandData.decisions && commandData.decisions.length > 0) {
+        content += `Decisiones evaluadas: ${commandData.decisions.length}\n\n`;
+        const levelLabels = ['', 'Decir', 'Vender', 'Consultar', 'Acordar', 'Aconsejar', 'Preguntar', 'Delegar'];
+        commandData.decisions.forEach((decision: any) => {
+          content += `📋 ${decision.title}:\n`;
+          if (decision.votes && decision.votes.length > 0) {
+            const avgLevel = decision.votes.reduce((s: number, v: any) => s + v.level, 0) / decision.votes.length;
+            content += `  Nivel promedio: ${avgLevel.toFixed(1)} (${levelLabels[Math.round(avgLevel)]})\n`;
+          }
+          if (decision.finalLevel) {
+            content += `  Nivel acordado: ${decision.finalLevel} (${levelLabels[decision.finalLevel]})\n`;
+          }
+        });
+      }
+      break;
+
+    // === MOVING MOTIVATORS ===
+    case 'moving-motivators':
+      if (commandData.rankings && commandData.rankings.length > 0) {
+        content += `Participantes: ${commandData.rankings.length}\n\n`;
+        const motivators = ['Curiosidad', 'Honor', 'Aceptación', 'Maestría', 'Poder', 'Libertad', 'Relación', 'Orden', 'Meta', 'Estado'];
+        commandData.rankings.forEach((ranking: any) => {
+          content += `\n👤 ${ranking.userName || 'Anónimo'}:\n`;
+          if (ranking.order && ranking.order.length > 0) {
+            ranking.order.forEach((idx: number, pos: number) => {
+              content += `  ${pos + 1}. ${motivators[idx] || `Motivador ${idx}`}\n`;
+            });
+          }
+        });
       }
       break;
 
