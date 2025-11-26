@@ -230,12 +230,13 @@ export default function MindMapCommand({
     try {
       setSubmitting(true);
 
-      // Capturar screenshot antes de cerrar
+      // Capturar screenshot antes de cerrar (delay para que ReactFlow renderice las líneas)
       await captureCardScreenshot(cardRef.current, {
         projectId,
         channelId,
         commandType: 'mind-map',
-        title
+        title,
+        delay: 500 // Esperar 500ms para que ReactFlow renderice completamente
       });
 
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/mind-map`, {

@@ -5,12 +5,13 @@ interface CaptureOptions {
   channelId: string;
   commandType: string;
   title: string;
+  delay?: number; // Delay en ms antes de capturar (útil para ReactFlow, animaciones, etc.)
 }
 
 /**
  * Captura un screenshot del card interactivo y lo guarda como attachment
  * @param elementRef - Ref del elemento a capturar
- * @param options - Opciones de captura (projectId, channelId, commandType, title)
+ * @param options - Opciones de captura (projectId, channelId, commandType, title, delay)
  * @returns Promise con el ID del attachment creado
  */
 export async function captureCardScreenshot(
@@ -23,13 +24,22 @@ export async function captureCardScreenshot(
   }
 
   try {
+    // Esperar el delay si se especifica (para dar tiempo a que se rendericen elementos como ReactFlow)
+    if (options.delay && options.delay > 0) {
+      await new Promise(resolve => setTimeout(resolve, options.delay));
+    }
+
     // Capturar el elemento como canvas
     const canvas = await html2canvas(elementRef, {
       backgroundColor: '#ffffff',
       scale: 2, // Mayor calidad
       logging: false,
       useCORS: true,
-      allowTaint: true
+      allowTaint: true,
+      onclone: (clonedDoc) => {
+        // Dar tiempo adicional para que SVGs se rendericen en el clon
+        return new Promise(resolve => setTimeout(resolve, 100));
+      }
     });
 
     // Convertir canvas a blob
