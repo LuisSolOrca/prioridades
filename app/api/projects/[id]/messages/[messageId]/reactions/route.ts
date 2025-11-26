@@ -68,9 +68,17 @@ export async function POST(
 
     await message.save();
 
-    const savedMessage = message.toObject();
     const channelId = message.channelId;
     const messageAuthorId = message.userId.toString();
+
+    // Obtener mensaje populado para devolver al cliente
+    const populatedMessage = await ChannelMessage.findById(message._id)
+      .populate('userId', 'name email')
+      .populate('mentions', 'name email')
+      .populate('priorityMentions', 'title status completionPercentage userId')
+      .populate('reactions.userId', 'name')
+      .populate('pinnedBy', 'name')
+      .lean();
 
     // Gamificación y Pusher en background (no bloqueante)
     (async () => {
@@ -84,11 +92,6 @@ export async function POST(
       }
 
       try {
-        const populatedMessage = await ChannelMessage.findById(message._id)
-          .populate('userId', 'name email')
-          .populate('reactions.userId', 'name')
-          .lean();
-
         await triggerPusherEvent(
           `presence-channel-${channelId}`,
           'message-updated',
@@ -99,7 +102,7 @@ export async function POST(
       }
     })();
 
-    return NextResponse.json(savedMessage);
+    return NextResponse.json(populatedMessage);
   } catch (error) {
     console.error('Error adding reaction:', error);
     return NextResponse.json(
@@ -157,17 +160,20 @@ export async function DELETE(
 
     await message.save();
 
-    const savedMessage = message.toObject();
     const channelId = message.channelId;
+
+    // Obtener mensaje populado para devolver al cliente
+    const populatedMessage = await ChannelMessage.findById(message._id)
+      .populate('userId', 'name email')
+      .populate('mentions', 'name email')
+      .populate('priorityMentions', 'title status completionPercentage userId')
+      .populate('reactions.userId', 'name')
+      .populate('pinnedBy', 'name')
+      .lean();
 
     // Pusher en background (no bloqueante)
     (async () => {
       try {
-        const populatedMessage = await ChannelMessage.findById(message._id)
-          .populate('userId', 'name email')
-          .populate('reactions.userId', 'name')
-          .lean();
-
         await triggerPusherEvent(
           `presence-channel-${channelId}`,
           'message-updated',
@@ -178,7 +184,7 @@ export async function DELETE(
       }
     })();
 
-    return NextResponse.json(savedMessage);
+    return NextResponse.json(populatedMessage);
   } catch (error) {
     console.error('Error removing reaction:', error);
     return NextResponse.json(
