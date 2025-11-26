@@ -75,51 +75,50 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [isUpdatingFromRemote, setIsUpdatingFromRemote] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [pendingLibraryUrl, setPendingLibraryUrl] = useState<string | null>(null);
   const [excalidrawReady, setExcalidrawReady] = useState(false);
+  const pendingLibraryUrlRef = useRef<string | null>(null);
 
   // Manejar importación de librería desde URL hash (#addLibrary=...)
   useEffect(() => {
-    const handleLibraryFromHash = () => {
-      if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
-      const hash = window.location.hash;
-      if (!hash.includes('addLibrary=')) return;
+    const hash = window.location.hash;
+    if (!hash.includes('addLibrary=')) return;
 
-      const params = new URLSearchParams(hash.slice(1));
-      const libraryUrl = params.get('addLibrary');
+    const params = new URLSearchParams(hash.slice(1));
+    const libraryUrl = params.get('addLibrary');
 
-      if (libraryUrl) {
-        console.log('Library URL detected:', libraryUrl);
-        setPendingLibraryUrl(decodeURIComponent(libraryUrl));
-        // Limpiar el hash para evitar re-importaciones
-        window.history.replaceState(null, '', window.location.pathname);
-      }
-    };
-
-    handleLibraryFromHash();
-    window.addEventListener('hashchange', handleLibraryFromHash);
-    return () => window.removeEventListener('hashchange', handleLibraryFromHash);
+    if (libraryUrl) {
+      const decodedUrl = decodeURIComponent(libraryUrl);
+      console.log('Library URL detected and stored:', decodedUrl);
+      pendingLibraryUrlRef.current = decodedUrl;
+      // Limpiar el hash para evitar re-importaciones
+      window.history.replaceState(null, '', window.location.pathname);
+    }
   }, []);
 
   // Importar librería pendiente cuando Excalidraw esté listo
   useEffect(() => {
-    console.log('Import effect - pendingLibraryUrl:', pendingLibraryUrl, 'excalidrawReady:', excalidrawReady, 'apiRef:', !!excalidrawAPIRef.current);
-
-    if (!pendingLibraryUrl) {
-      console.log('No pending library URL, skipping');
-      return;
-    }
+    console.log('Import effect - excalidrawReady:', excalidrawReady, 'pendingUrl:', pendingLibraryUrlRef.current);
 
     if (!excalidrawReady || !excalidrawAPIRef.current) {
       console.log('Excalidraw not ready yet, waiting...');
       return;
     }
 
+    const libraryUrl = pendingLibraryUrlRef.current;
+    if (!libraryUrl) {
+      console.log('No pending library URL');
+      return;
+    }
+
+    // Limpiar ref inmediatamente para evitar re-imports
+    pendingLibraryUrlRef.current = null;
+
     const importLibrary = async () => {
       try {
-        console.log('Fetching library from:', pendingLibraryUrl);
-        const response = await fetch(pendingLibraryUrl);
+        console.log('Fetching library from:', libraryUrl);
+        const response = await fetch(libraryUrl);
         console.log('Fetch response status:', response.status);
 
         if (!response.ok) throw new Error(`Failed to fetch library: ${response.status}`);
@@ -149,13 +148,11 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
       } catch (err) {
         console.error('Error importing library:', err);
         alert('Error al importar la librería: ' + (err as Error).message);
-      } finally {
-        setPendingLibraryUrl(null);
       }
     };
 
     importLibrary();
-  }, [pendingLibraryUrl, excalidrawReady]);
+  }, [excalidrawReady]);
 
   // Cargar librería guardada después de que Excalidraw esté listo
   useEffect(() => {
