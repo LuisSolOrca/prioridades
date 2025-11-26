@@ -76,7 +76,9 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const [isUpdatingFromRemote, setIsUpdatingFromRemote] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [excalidrawReady, setExcalidrawReady] = useState(false);
-  const pendingLibraryUrlRef = useRef<string | null>(null);
+
+  // Constante para sessionStorage key
+  const LIBRARY_URL_KEY = 'pending_library_url';
 
   // Manejar importación de librería desde URL hash (#addLibrary=...)
   useEffect(() => {
@@ -90,8 +92,9 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
 
     if (libraryUrl) {
       const decodedUrl = decodeURIComponent(libraryUrl);
-      console.log('Library URL detected and stored:', decodedUrl);
-      pendingLibraryUrlRef.current = decodedUrl;
+      console.log('Library URL detected, storing in sessionStorage:', decodedUrl);
+      // Usar sessionStorage para sobrevivir re-mounts del componente
+      sessionStorage.setItem(LIBRARY_URL_KEY, decodedUrl);
       // Limpiar el hash para evitar re-importaciones
       window.history.replaceState(null, '', window.location.pathname);
     }
@@ -99,21 +102,21 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
 
   // Importar librería pendiente cuando Excalidraw esté listo
   useEffect(() => {
-    console.log('Import effect - excalidrawReady:', excalidrawReady, 'pendingUrl:', pendingLibraryUrlRef.current);
-
     if (!excalidrawReady || !excalidrawAPIRef.current) {
-      console.log('Excalidraw not ready yet, waiting...');
+      console.log('Import effect - waiting for Excalidraw...');
       return;
     }
 
-    const libraryUrl = pendingLibraryUrlRef.current;
+    const libraryUrl = sessionStorage.getItem(LIBRARY_URL_KEY);
+    console.log('Import effect - excalidrawReady: true, pendingUrl:', libraryUrl);
+
     if (!libraryUrl) {
-      console.log('No pending library URL');
+      console.log('No pending library URL in sessionStorage');
       return;
     }
 
-    // Limpiar ref inmediatamente para evitar re-imports
-    pendingLibraryUrlRef.current = null;
+    // Limpiar sessionStorage inmediatamente para evitar re-imports
+    sessionStorage.removeItem(LIBRARY_URL_KEY);
 
     const importLibrary = async () => {
       try {
