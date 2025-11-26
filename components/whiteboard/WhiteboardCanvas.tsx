@@ -142,6 +142,31 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
             openLibraryMenu: true // Abrir el menú de librería
           });
 
+          // Guardar en la base de datos para persistencia
+          if (whiteboard) {
+            console.log('Saving library to database...');
+            try {
+              const saveResponse = await fetch(
+                `/api/projects/${whiteboard.projectId}/whiteboards/${whiteboardId}/elements`,
+                {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    libraryItems: libraryItems,
+                    version: localVersion
+                  })
+                }
+              );
+              if (saveResponse.ok) {
+                const data = await saveResponse.json();
+                setLocalVersion(data.version);
+                console.log('Library saved to database successfully');
+              }
+            } catch (saveErr) {
+              console.error('Error saving library to database:', saveErr);
+            }
+          }
+
           console.log('Library updated successfully with', libraryItems.length, 'items');
           alert(`Librería importada: ${libraryItems.length} elementos agregados`);
         } else {
