@@ -13,7 +13,8 @@ import WebhookManagement from '@/components/WebhookManagement';
 import FilesTab from '@/components/FilesTab';
 import CollaborativeWorkspace from '@/components/channels/CollaborativeWorkspace';
 import ProjectFormModal, { ProjectFormData } from '@/components/ProjectFormModal';
-import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft, BarChart3, FileText, Folder, Webhook, Files, Zap } from 'lucide-react';
+import { Hash, Activity, MessageSquare, Link as LinkIcon, ArrowLeft, BarChart3, FileText, Folder, Webhook, Files, Zap, PenTool } from 'lucide-react';
+import WhiteboardManager from '@/components/whiteboard/WhiteboardManager';
 
 interface User {
   _id: string;
@@ -24,7 +25,7 @@ interface User {
 export default function ChannelPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics' | 'canales' | 'webhooks' | 'files' | 'dynamics'>('metrics');
+  const [activeTab, setActiveTab] = useState<'feed' | 'chat' | 'links' | 'metrics' | 'canales' | 'webhooks' | 'files' | 'dynamics' | 'whiteboards'>('metrics');
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -230,6 +231,17 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
                 <Zap size={18} className="mr-2" />
                 Dinámicas
               </button>
+              <button
+                onClick={() => setActiveTab('whiteboards')}
+                className={`flex items-center px-4 py-2 rounded-t-lg transition ${
+                  activeTab === 'whiteboards'
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <PenTool size={18} className="mr-2" />
+                Pizarras
+              </button>
             </div>
           </div>
         </div>
@@ -245,6 +257,7 @@ export default function ChannelPage({ params }: { params: { id: string } }) {
             {activeTab === 'webhooks' && <WebhookManagement key="webhooks" projectId={params.id} />}
             {activeTab === 'files' && <FilesTab key="files" projectId={params.id} />}
             {activeTab === 'dynamics' && <CollaborativeWorkspace key="dynamics" projectId={params.id} />}
+            {activeTab === 'whiteboards' && <WhiteboardManager key="whiteboards" projectId={params.id} />}
           </div>
         </div>
       </div>

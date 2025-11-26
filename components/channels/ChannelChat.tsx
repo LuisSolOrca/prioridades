@@ -43,6 +43,7 @@ import RetroCommand from '../slashCommands/RetroCommand';
 import NPSCommand from '../slashCommands/NPSCommand';
 import DecisionMatrixCommand from '../slashCommands/DecisionMatrixCommand';
 import MindMapCommand from '../slashCommands/MindMapCommand';
+import WhiteboardCommand from '../whiteboard/WhiteboardCommand';
 import QuickPriorityCommand from '../slashCommands/QuickPriorityCommand';
 import BlockersCommand from '../slashCommands/BlockersCommand';
 import RisksCommand from '../slashCommands/RisksCommand';
@@ -2021,6 +2022,45 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         } catch (error) {
           console.error('Error creating mind-map:', error);
           alert('Error al crear mapa mental');
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'whiteboard':
+        if (parsed.args.length < 1) {
+          alert('Uso: /whiteboard "Título de la pizarra"');
+          return;
+        }
+        if (sending) return;
+        const whiteboardTitle = parsed.args[0];
+
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/whiteboard ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'whiteboard',
+              commandData: {
+                title: whiteboardTitle,
+                createdBy: session?.user?.id,
+                createdByName: session?.user?.name || 'Usuario'
+              }
+            })
+          });
+
+          if (response.ok) {
+            const whiteboardMessage = await response.json();
+            setMessages((prev) => [...prev, whiteboardMessage]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating whiteboard:', error);
+          alert('Error al crear pizarra');
         } finally {
           setSending(false);
         }
@@ -4874,6 +4914,34 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar mapa mental"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'whiteboard' && message.commandData ? (
+                    /* Render Whiteboard Command */
+                    <div className="relative group">
+                      <WhiteboardCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title || 'Pizarra'}
+                        whiteboardId={message.commandData.whiteboardId}
+                        createdBy={message.commandData.createdBy || message.userId._id}
+                        createdByName={message.commandData.createdByName || message.userId.name}
+                        onUpdate={() => {}}
+                      />
+                      {/* Actions Menu for Whiteboard */}
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar pizarra"
                             >
                               <Trash2 size={14} />
                             </button>

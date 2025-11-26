@@ -257,6 +257,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     category: 'collaboration'
   },
   {
+    name: 'whiteboard',
+    description: 'Pizarra colaborativa - Dibujo y diagramas en tiempo real',
+    usage: '/whiteboard "Título de la pizarra"',
+    category: 'collaboration'
+  },
+  {
     name: 'crazy-8s',
     description: '8 ideas en 8 minutos - Design sprint',
     usage: '/crazy-8s "Problema o reto"',
