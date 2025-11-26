@@ -5,8 +5,9 @@ import connectDB from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import Priority from '@/models/Priority';
 import User from '@/models/User';
+import UserGroup from '@/models/UserGroup';
 import Attachment from '@/models/Attachment'; // Necesario para populate
-import { notifyComment, notifyMention } from '@/lib/notifications';
+import { notifyComment, notifyMention, notifyGroupMentionInPriority } from '@/lib/notifications';
 import { trackCommentBadges } from '@/lib/gamification';
 import { sendPriorityNotificationToSlack } from '@/lib/slack';
 import { logCommentAdded } from '@/lib/projectActivity';
@@ -221,60 +222,102 @@ export async function POST(request: NextRequest) {
 
           let mentionedSomeone = false;
 
-          // Buscar usuarios mencionados por nombre (case-insensitive, coincidencia exacta o parcial)
+          // Buscar usuarios o grupos mencionados
           for (const username of usernames) {
             try {
               // Escapar caracteres especiales de regex
               const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-              // Primero intentar coincidencia exacta
-              let mentionedUser = await User.findOne({
-                name: { $regex: new RegExp(`^${escapedUsername}$`, 'i') },
+              // Primero buscar si es un grupo
+              const group = await UserGroup.findOne({
+                tag: username.toLowerCase(),
                 isActive: true
-              }).lean();
+              }).populate('members', '_id name email isActive').lean() as any;
 
-              // Si no encuentra, buscar por nombre que contenga el texto
-              if (!mentionedUser) {
-                mentionedUser = await User.findOne({
-                  name: { $regex: new RegExp(escapedUsername, 'i') },
+              if (group && group.members && group.members.length > 0) {
+                // Es un grupo, notificar a todos los miembros con BCC
+                const memberIds = group.members
+                  .filter((m: any) => m.isActive && m._id.toString() !== commentAuthor._id.toString())
+                  .map((m: any) => m._id.toString());
+
+                if (memberIds.length > 0) {
+                  const mentionText = text ? text.trim() : '📎 Adjuntó archivos';
+                  await notifyGroupMentionInPriority(
+                    memberIds,
+                    commentAuthor.name,
+                    group.tag,
+                    priority.title,
+                    mentionText,
+                    priorityId,
+                    comment._id.toString()
+                  ).catch(err => console.error('[NOTIFICATION] Error creating group mention notification:', err));
+
+                  // Notificar a Slack si el proyecto tiene canal configurado
+                  if (priority.projectId) {
+                    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+                    const slackMentionMessage = mentionText.length > 100 ? mentionText.substring(0, 100) + '...' : mentionText;
+                    await sendPriorityNotificationToSlack({
+                      projectId: priority.projectId,
+                      userId: priority.userId,
+                      eventType: 'mention',
+                      priorityTitle: priority.title,
+                      message: `${commentAuthor.name} mencionó a @${group.tag}: "${slackMentionMessage}"`,
+                      priorityUrl: `${baseUrl}/dashboard?priority=${priorityId}`,
+                    }).catch(err => console.error('[SLACK] Error sending group mention notification to Slack:', err));
+                  }
+
+                  mentionedSomeone = true;
+                }
+              } else {
+                // No es un grupo, buscar usuario individual
+                let mentionedUser = await User.findOne({
+                  name: { $regex: new RegExp(`^${escapedUsername}$`, 'i') },
                   isActive: true
                 }).lean();
-              }
 
-              if (mentionedUser && mentionedUser._id.toString() !== commentAuthor._id.toString()) {
-                console.log(`[NOTIFICATION] Creating mention notification for user: ${mentionedUser.name}`);
-                const mentionText = text ? text.trim() : '📎 Adjuntó archivos';
-                await notifyMention(
-                  mentionedUser._id.toString(),
-                  commentAuthor.name,
-                  priority.title,
-                  mentionText,
-                  priorityId,
-                  comment._id.toString()
-                ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
-
-                // Notificar a Slack si el proyecto tiene canal configurado
-                if (priority.projectId) {
-                  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-                  const slackMentionMessage = mentionText.length > 100 ? mentionText.substring(0, 100) + '...' : mentionText;
-                  await sendPriorityNotificationToSlack({
-                    projectId: priority.projectId,
-                    userId: priority.userId,
-                    eventType: 'mention',
-                    priorityTitle: priority.title,
-                    message: `${commentAuthor.name} mencionó a ${mentionedUser.name}: "${slackMentionMessage}"`,
-                    priorityUrl: `${baseUrl}/dashboard?priority=${priorityId}`,
-                  }).catch(err => console.error('[SLACK] Error sending mention notification to Slack:', err));
+                // Si no encuentra, buscar por nombre que contenga el texto
+                if (!mentionedUser) {
+                  mentionedUser = await User.findOne({
+                    name: { $regex: new RegExp(escapedUsername, 'i') },
+                    isActive: true
+                  }).lean();
                 }
 
-                mentionedSomeone = true;
-              } else if (!mentionedUser) {
-                console.log(`[NOTIFICATION] User not found for mention: @${username}`);
-              } else {
-                console.log(`[NOTIFICATION] Skipping self-mention for: ${mentionedUser.name}`);
+                if (mentionedUser && mentionedUser._id.toString() !== commentAuthor._id.toString()) {
+                  console.log(`[NOTIFICATION] Creating mention notification for user: ${mentionedUser.name}`);
+                  const mentionText = text ? text.trim() : '📎 Adjuntó archivos';
+                  await notifyMention(
+                    mentionedUser._id.toString(),
+                    commentAuthor.name,
+                    priority.title,
+                    mentionText,
+                    priorityId,
+                    comment._id.toString()
+                  ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
+
+                  // Notificar a Slack si el proyecto tiene canal configurado
+                  if (priority.projectId) {
+                    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+                    const slackMentionMessage = mentionText.length > 100 ? mentionText.substring(0, 100) + '...' : mentionText;
+                    await sendPriorityNotificationToSlack({
+                      projectId: priority.projectId,
+                      userId: priority.userId,
+                      eventType: 'mention',
+                      priorityTitle: priority.title,
+                      message: `${commentAuthor.name} mencionó a ${mentionedUser.name}: "${slackMentionMessage}"`,
+                      priorityUrl: `${baseUrl}/dashboard?priority=${priorityId}`,
+                    }).catch(err => console.error('[SLACK] Error sending mention notification to Slack:', err));
+                  }
+
+                  mentionedSomeone = true;
+                } else if (!mentionedUser) {
+                  console.log(`[NOTIFICATION] User not found for mention: @${username}`);
+                } else {
+                  console.log(`[NOTIFICATION] Skipping self-mention for: ${mentionedUser.name}`);
+                }
               }
             } catch (err) {
-              console.error(`[NOTIFICATION] Error finding user ${username}:`, err);
+              console.error(`[NOTIFICATION] Error finding user/group ${username}:`, err);
             }
           }
 

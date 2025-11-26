@@ -453,6 +453,77 @@ export async function notifyChannelMention(
   });
 }
 
+// Notificación: Mención de grupo en prioridad (optimizado con BCC)
+export async function notifyGroupMentionInPriority(
+  userIds: string[],
+  mentionerName: string,
+  groupName: string,
+  priorityTitle: string,
+  commentText: string,
+  priorityId: string,
+  commentId: string
+) {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const priorityUrl = `${baseUrl}/priorities?id=${priorityId}`;
+    const title = `${mentionerName} mencionó a @${groupName} en "${priorityTitle}"`;
+    const message = commentText.substring(0, 100) + (commentText.length > 100 ? '...' : '');
+
+    // Obtener usuarios activos
+    const users = await User.find({
+      _id: { $in: userIds },
+      isActive: true
+    }).select('_id email name emailNotifications').lean();
+
+    // Crear notificaciones internas para cada usuario
+    const notificationPromises = users.map(async (user: any) => {
+      try {
+        await Notification.create({
+          userId: user._id,
+          type: 'MENTION',
+          title,
+          message,
+          priorityId,
+          commentId,
+          actionUrl: `/priorities`
+        });
+      } catch (err) {
+        console.error(`Error creating group mention notification for user ${user._id}:`, err);
+      }
+    });
+
+    await Promise.all(notificationPromises);
+
+    // Obtener emails de usuarios que no han deshabilitado notificaciones
+    const emailRecipients = users
+      .filter((user: any) => user.emailNotifications?.enabled !== false && user.email)
+      .map((user: any) => user.email);
+
+    // Enviar un solo email con BCC
+    if (emailRecipients.length > 0) {
+      const emailContent = emailTemplates.mention({
+        mentionerName,
+        priorityTitle,
+        commentText,
+        priorityUrl
+      });
+
+      await sendEmail({
+        to: process.env.EMAIL_USERNAME || 'orcaevolution@orcagrc.com',
+        bcc: emailRecipients,
+        subject: emailContent.subject,
+        html: emailContent.html
+      });
+
+      console.log(`[GROUP_MENTION_PRIORITY] Email sent to ${emailRecipients.length} members of @${groupName}`);
+    }
+
+    console.log(`[GROUP_MENTION_PRIORITY] Notified ${users.length} members of @${groupName} in priority "${priorityTitle}"`);
+  } catch (error) {
+    console.error('[GROUP_MENTION_PRIORITY] Error:', error);
+  }
+}
+
 // Notificación: Mención de grupo en canal (optimizado con BCC)
 export async function notifyGroupMention(
   userIds: string[],
