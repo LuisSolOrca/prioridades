@@ -467,7 +467,7 @@ export function extractParticipants(commandType: string, commandData: any): stri
   // Votaciones
   if (commandData.votes) {
     commandData.votes.forEach((v: any) => {
-      if (v.oderId) participants.add(v.oderId);
+      if (v.voterId) participants.add(v.voterId);
       if (v.userId) participants.add(v.userId);
     });
   }
@@ -529,7 +529,7 @@ export function extractParticipants(commandType: string, commandData: any): stri
     commandData.participants.forEach((p: any) => {
       if (typeof p === 'string') participants.add(p);
       else if (p.id) participants.add(p.id);
-      else if (p.oderId) participants.add(p.oderId);
+      else if (p.userId) participants.add(p.userId);
     });
   }
 
@@ -602,8 +602,8 @@ export async function notifyDynamicClosed(params: NotifyDynamicClosedParams) {
           actionUrl: `/channels/${projectId}?message=${messageId}`
         });
 
-        // Enviar email si está habilitado
-        if (user.emailNotifications?.enabled && user.emailNotifications?.newComments !== false) {
+        // Enviar email por defecto, a menos que esté explícitamente deshabilitado
+        if (user.emailNotifications?.enabled !== false) {
           const emailContent = emailTemplates.dynamicClosed({
             userName: user.name || 'Usuario',
             dynamicType: typeLabel,
