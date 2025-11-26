@@ -23,6 +23,7 @@ interface Whiteboard {
   projectId: string;
   channelId: string;
   channelName?: string;
+  thumbnail?: string;
   createdBy: { _id: string; name: string; email: string };
   lastModifiedBy?: { _id: string; name: string; email: string };
   collaborators: any[];
@@ -280,15 +281,33 @@ export default function WhiteboardManager({ projectId, channelId }: WhiteboardMa
           {filteredWhiteboards.map((wb) => (
             <div
               key={wb._id}
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg transition-shadow group"
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow group"
             >
-              {/* Card header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 rounded-lg flex items-center justify-center">
-                    <PenTool className="text-indigo-600 dark:text-indigo-400" size={18} />
+              {/* Thumbnail Preview */}
+              <Link href={`/whiteboard/${wb._id}`} target="_blank" className="block">
+                <div className="h-32 bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+                  {wb.thumbnail ? (
+                    <img
+                      src={wb.thumbnail}
+                      alt={`Preview de ${wb.title}`}
+                      className="w-full h-full object-contain bg-white"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <PenTool className="text-gray-300 dark:text-gray-600" size={40} />
+                    </div>
+                  )}
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors flex items-center justify-center">
+                    <ExternalLink className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" size={24} />
                   </div>
-                  <div className="min-w-0">
+                </div>
+              </Link>
+
+              <div className="p-4">
+                {/* Card header */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-gray-800 dark:text-gray-100 truncate">
                       {wb.title}
                     </h3>
@@ -297,43 +316,33 @@ export default function WhiteboardManager({ projectId, channelId }: WhiteboardMa
                       {wb.createdBy?.name || 'Usuario'}
                     </p>
                   </div>
+
+                  {/* Delete button */}
+                  {canDelete(wb) && (
+                    <button
+                      onClick={() => handleDelete(wb._id)}
+                      disabled={deleting === wb._id}
+                      className="p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      title="Eliminar"
+                    >
+                      {deleting === wb._id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
+                    </button>
+                  )}
                 </div>
 
-                {/* Delete button */}
-                {canDelete(wb) && (
-                  <button
-                    onClick={() => handleDelete(wb._id)}
-                    disabled={deleting === wb._id}
-                    className="p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                    title="Eliminar"
-                  >
-                    {deleting === wb._id ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Trash2 size={16} />
-                    )}
-                  </button>
-                )}
+                {/* Stats */}
+                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Calendar size={12} />
+                    {formatDate(wb.updatedAt)}
+                  </span>
+                  <span>v{wb.version}</span>
+                </div>
               </div>
-
-              {/* Stats */}
-              <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
-                <span className="flex items-center gap-1">
-                  <Calendar size={12} />
-                  {formatDate(wb.updatedAt)}
-                </span>
-                <span>v{wb.version}</span>
-              </div>
-
-              {/* Open button */}
-              <Link
-                href={`/whiteboard/${wb._id}`}
-                target="_blank"
-                className="flex items-center justify-center gap-2 w-full py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg font-medium transition"
-              >
-                <ExternalLink size={16} />
-                Abrir
-              </Link>
             </div>
           ))}
         </div>

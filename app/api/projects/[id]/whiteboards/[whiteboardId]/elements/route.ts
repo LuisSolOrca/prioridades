@@ -33,7 +33,7 @@ export async function PUT(
       console.error('Error parsing request body:', parseError);
       return NextResponse.json({ error: 'Error en formato de datos' }, { status: 400 });
     }
-    const { elements, appState, files, libraryItems, version } = body;
+    const { elements, appState, files, libraryItems, thumbnail, version } = body;
 
     const userId = (session.user as any).id;
     const userName = (session.user as any).name || 'Usuario';
@@ -89,6 +89,11 @@ export async function PUT(
     // Actualizar libraryItems
     if (libraryItems !== undefined) {
       whiteboard.libraryItems = libraryItems;
+    }
+
+    // Actualizar thumbnail
+    if (thumbnail !== undefined) {
+      whiteboard.thumbnail = thumbnail;
     }
 
     // Incrementar versión

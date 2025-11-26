@@ -10,6 +10,7 @@ export interface IWhiteboard extends Document {
   appState: any;
   files: { [key: string]: any };
   libraryItems: any[];
+  thumbnail?: string; // Base64 SVG or data URL for preview
   createdBy: mongoose.Types.ObjectId;
   lastModifiedBy?: mongoose.Types.ObjectId;
   collaborators: mongoose.Types.ObjectId[];
@@ -61,6 +62,10 @@ const WhiteboardSchema = new Schema<IWhiteboard>(
     libraryItems: {
       type: Schema.Types.Mixed,
       default: []
+    },
+    thumbnail: {
+      type: String,
+      default: null
     },
     createdBy: {
       type: Schema.Types.ObjectId,

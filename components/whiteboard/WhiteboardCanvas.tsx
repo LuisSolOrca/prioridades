@@ -37,6 +37,36 @@ const Excalidraw = dynamic(
   }
 );
 
+// Función para generar thumbnail SVG
+const generateThumbnail = async (elements: any[], appState: any, files: any): Promise<string | null> => {
+  if (!elements || elements.length === 0) return null;
+
+  try {
+    const { exportToSvg } = await import('@excalidraw/excalidraw');
+    const svg = await exportToSvg({
+      elements: elements.filter((el: any) => !el.isDeleted),
+      appState: {
+        ...appState,
+        exportWithDarkMode: false,
+        exportBackground: true,
+        viewBackgroundColor: appState?.viewBackgroundColor || '#ffffff'
+      },
+      files: files || {}
+    });
+
+    // Convertir SVG a string y optimizar tamaño
+    const svgString = new XMLSerializer().serializeToString(svg);
+    // Limitar tamaño del thumbnail
+    if (svgString.length > 50000) {
+      return null; // SVG muy grande, no guardar
+    }
+    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
+  } catch (err) {
+    console.error('Error generating thumbnail:', err);
+    return null;
+  }
+};
+
 interface WhiteboardCanvasProps {
   whiteboardId: string;
   projectId?: string;
@@ -430,6 +460,9 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
         });
       }
 
+      // Generar thumbnail para preview
+      const thumbnail = await generateThumbnail(elements, appState, safeFiles);
+
       const response = await fetch(
         `/api/projects/${whiteboard.projectId}/whiteboards/${whiteboardId}/elements`,
         {
@@ -445,6 +478,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
               scrollY: appState?.scrollY || 0
             },
             files: safeFiles,
+            thumbnail,
             version: localVersion
           })
         }
