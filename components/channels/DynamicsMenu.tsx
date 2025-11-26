@@ -81,6 +81,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'rose-bud-thorn', name: 'Rose-Bud-Thorn', description: 'Rosas, brotes y espinas' },
       { type: 'sailboat', name: 'Velero', description: 'Viento, ancla, rocas, isla' },
       { type: 'start-stop-continue', name: 'Start-Stop-Continue', description: 'Qué empezar, parar, continuar' },
+      { type: '4ls', name: '4Ls', description: 'Liked, Learned, Lacked, Longed for' },
       { type: 'team-health', name: 'Team Health', description: 'Salud del equipo (Spotify)' },
       { type: 'mood', name: 'Check-in', description: 'Estado de ánimo del equipo' },
     ]
@@ -98,6 +99,9 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'five-whys', name: '5 Porqués', description: 'Análisis de causa raíz preguntando "¿Por qué?" 5 veces' },
       { type: 'impact-effort', name: 'Impacto/Esfuerzo', description: 'Matriz de priorización 2x2' },
       { type: 'opportunity-tree', name: 'Árbol de Oportunidades', description: 'Objetivo → Oportunidades → Soluciones' },
+      { type: 'empathy-map', name: 'Mapa de Empatía', description: 'Dice, Piensa, Hace, Siente - Design Thinking' },
+      { type: 'moscow', name: 'MoSCoW', description: 'Must, Should, Could, Won\'t - Priorización clásica' },
+      { type: 'pre-mortem', name: 'Pre-mortem', description: 'Imaginar el fracaso para prevenir riesgos' },
     ]
   },
   {
@@ -115,6 +119,8 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'parking-lot', name: 'Parking Lot', description: 'Temas para discutir después' },
       { type: 'pomodoro', name: 'Pomodoro', description: 'Timer compartido 25/5 min' },
       { type: 'estimation-poker', name: 'Planning Poker', description: 'Estimar esfuerzo en equipo' },
+      { type: 'lean-coffee', name: 'Lean Coffee', description: 'Reunión estructurada con votación de temas' },
+      { type: 'user-story-mapping', name: 'User Story Mapping', description: 'Mapear historias de usuario por actividades' },
     ]
   },
   {

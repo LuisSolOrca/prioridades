@@ -498,6 +498,61 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
           objective: title,
           opportunities: []
         };
+      // Nuevos widgets batch 2
+      case 'empathy-map':
+        return {
+          ...base,
+          sections: [
+            { id: 'says', title: 'Dice', icon: '💬', color: '#3b82f6', items: [] },
+            { id: 'thinks', title: 'Piensa', icon: '💭', color: '#8b5cf6', items: [] },
+            { id: 'does', title: 'Hace', icon: '🏃', color: '#10b981', items: [] },
+            { id: 'feels', title: 'Siente', icon: '❤️', color: '#ef4444', items: [] }
+          ]
+        };
+      case 'moscow':
+        return {
+          ...base,
+          sections: [
+            { id: 'must', title: 'Must Have', icon: '🔴', color: '#ef4444', items: [] },
+            { id: 'should', title: 'Should Have', icon: '🟠', color: '#f59e0b', items: [] },
+            { id: 'could', title: 'Could Have', icon: '🟡', color: '#eab308', items: [] },
+            { id: 'wont', title: "Won't Have", icon: '⚪', color: '#6b7280', items: [] }
+          ]
+        };
+      case '4ls':
+        return {
+          ...base,
+          sections: [
+            { id: 'liked', title: 'Liked', icon: '👍', color: '#10b981', items: [] },
+            { id: 'learned', title: 'Learned', icon: '📚', color: '#3b82f6', items: [] },
+            { id: 'lacked', title: 'Lacked', icon: '❌', color: '#ef4444', items: [] },
+            { id: 'longed', title: 'Longed For', icon: '✨', color: '#8b5cf6', items: [] }
+          ]
+        };
+      case 'pre-mortem':
+        return {
+          ...base,
+          sections: [
+            { id: 'failures', title: 'Posibles Fracasos', icon: '💥', color: '#ef4444', items: [] },
+            { id: 'causes', title: 'Causas', icon: '🔍', color: '#f59e0b', items: [] },
+            { id: 'mitigations', title: 'Mitigaciones', icon: '🛡️', color: '#10b981', items: [] }
+          ]
+        };
+      case 'lean-coffee':
+        return {
+          ...base,
+          topics: [],
+          currentTopic: null,
+          timePerTopic: 5 // minutos
+        };
+      case 'user-story-mapping':
+        return {
+          ...base,
+          activities: [],
+          releases: [
+            { id: 'release-1', title: 'Release 1', color: '#3b82f6' }
+          ]
+        };
       default:
         return base;
     }

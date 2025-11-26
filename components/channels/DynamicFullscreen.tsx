@@ -54,6 +54,8 @@ import FiveWhysCommand from '../slashCommands/FiveWhysCommand';
 import ImpactEffortCommand from '../slashCommands/ImpactEffortCommand';
 import LotusBlossomCommand from '../slashCommands/LotusBlossomCommand';
 import OpportunityTreeCommand from '../slashCommands/OpportunityTreeCommand';
+import LeanCoffeeCommand from '../slashCommands/LeanCoffeeCommand';
+import UserStoryMappingCommand from '../slashCommands/UserStoryMappingCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -135,6 +137,13 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'five-whys': { icon: Target, color: 'text-purple-600' },
   'impact-effort': { icon: Target, color: 'text-indigo-600' },
   'opportunity-tree': { icon: Target, color: 'text-emerald-600' },
+  // Nuevos widgets batch 2
+  'empathy-map': { icon: Heart, color: 'text-rose-600' },
+  'moscow': { icon: Target, color: 'text-blue-600' },
+  '4ls': { icon: RotateCcw, color: 'text-violet-600' },
+  'pre-mortem': { icon: Target, color: 'text-red-600' },
+  'lean-coffee': { icon: Users, color: 'text-amber-600' },
+  'user-story-mapping': { icon: Layers, color: 'text-teal-600' },
 };
 
 // Metodologías y guías de uso para cada tipo de dinámica
@@ -761,6 +770,109 @@ const METHODOLOGY_GUIDE: Record<string, { title: string; description: string; st
       'Los 10: Curiosidad, Honor, Aceptación, Maestría, Poder, Libertad, Relación, Orden, Meta, Estatus',
       'No hay respuestas correctas o incorrectas',
       'Útil para entender qué motiva al equipo'
+    ]
+  },
+  // Nuevos widgets batch 2
+  'lean-coffee': {
+    title: 'Lean Coffee',
+    description: 'Formato de reunión estructurada donde los participantes proponen, votan y discuten temas en timeboxes.',
+    steps: [
+      'Cada participante propone temas para discutir',
+      'Todos votan los temas que les interesan',
+      'Se discuten en orden de votos',
+      'Cada tema tiene un tiempo límite (5 min)',
+      'Al finalizar, se puede extender o pasar al siguiente'
+    ],
+    tips: [
+      'Ideal para reuniones sin agenda predefinida',
+      'Respetar el timebox mantiene el enfoque',
+      'Los temas con más votos reflejan el interés real del grupo',
+      'Puedes mover temas no discutidos a la próxima sesión'
+    ]
+  },
+  'empathy-map': {
+    title: 'Mapa de Empatía',
+    description: 'Herramienta de Design Thinking para entender profundamente a usuarios o clientes desde 4 perspectivas.',
+    steps: [
+      'Define la persona/usuario a analizar',
+      'Completa Dice: ¿Qué dice el usuario literalmente?',
+      'Completa Piensa: ¿Qué pensamientos tiene?',
+      'Completa Hace: ¿Qué acciones realiza?',
+      'Completa Siente: ¿Qué emociones experimenta?'
+    ],
+    tips: [
+      'Basarse en observaciones e investigación real',
+      'Identificar contradicciones entre dice y piensa',
+      'Usar para generar insights de necesidades',
+      'Complementar con entrevistas y observación'
+    ]
+  },
+  'moscow': {
+    title: 'MoSCoW',
+    description: 'Técnica clásica de priorización que categoriza requisitos en Must, Should, Could y Won\'t have.',
+    steps: [
+      'Lista todos los requisitos o features',
+      'Must Have: Crítico, sin esto no funciona',
+      'Should Have: Importante pero no crítico',
+      'Could Have: Deseable si hay tiempo/recursos',
+      'Won\'t Have: Fuera de alcance (por ahora)'
+    ],
+    tips: [
+      'Must no debe ser más del 60% del esfuerzo',
+      'Won\'t no significa nunca, sino no ahora',
+      'Involucrar stakeholders en la priorización',
+      'Revisar cuando cambie el contexto'
+    ]
+  },
+  '4ls': {
+    title: '4Ls Retrospective',
+    description: 'Retrospectiva que explora 4 dimensiones: Liked, Learned, Lacked y Longed for.',
+    steps: [
+      'Liked: ¿Qué te gustó del sprint/período?',
+      'Learned: ¿Qué aprendiste?',
+      'Lacked: ¿Qué faltó o te hizo falta?',
+      'Longed for: ¿Qué desearías tener/hacer?',
+      'Discute patrones y define acciones'
+    ],
+    tips: [
+      'Formato positivo y orientado al futuro',
+      'Lacked y Longed for revelan oportunidades',
+      'Bueno para equipos que necesitan variedad en retros',
+      'Conectar Longed con acciones concretas'
+    ]
+  },
+  'pre-mortem': {
+    title: 'Pre-mortem',
+    description: 'Técnica de gestión de riesgos: imaginar que el proyecto fracasó y analizar por qué.',
+    steps: [
+      'Imagina que el proyecto ya fracasó',
+      'Lista todas las razones posibles del fracaso',
+      'Identifica las causas raíz de cada fallo',
+      'Define acciones preventivas (mitigaciones)',
+      'Prioriza las mitigaciones más críticas'
+    ],
+    tips: [
+      'Más efectivo que solo listar riesgos',
+      'Libera el "pesimismo productivo"',
+      'Hacer al inicio del proyecto',
+      'Revisar periódicamente las mitigaciones'
+    ]
+  },
+  'user-story-mapping': {
+    title: 'User Story Mapping',
+    description: 'Técnica para planificar releases visualizando el flujo de usuario y priorizando historias.',
+    steps: [
+      'Identifica las actividades principales del usuario (backbone)',
+      'Debajo de cada actividad, agrega historias de usuario',
+      'Organiza las historias verticalmente por prioridad',
+      'Dibuja líneas horizontales para definir releases',
+      'El primer release = MVP (walking skeleton)'
+    ],
+    tips: [
+      'Lee de izquierda a derecha = flujo del usuario',
+      'Lee de arriba a abajo = prioridad',
+      'Involucra a todo el equipo en el mapeo',
+      'Actualiza el mapa conforme avanza el producto'
     ]
   }
 };
@@ -1433,6 +1545,86 @@ export default function DynamicFullscreen({
             title={getTitle()}
             objective={data.objective || getTitle()}
             opportunities={data.opportunities || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      // Nuevos widgets batch 2
+      case 'empathy-map':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="empathy-map"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">❤️</span>}
+            gradient="from-rose-50 to-pink-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-rose-400 dark:border-rose-600"
+          />
+        );
+      case 'moscow':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="moscow"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">🎯</span>}
+            gradient="from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-blue-400 dark:border-blue-600"
+          />
+        );
+      case '4ls':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="4ls"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">4️⃣</span>}
+            gradient="from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-violet-400 dark:border-violet-600"
+          />
+        );
+      case 'pre-mortem':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="pre-mortem"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">💀</span>}
+            gradient="from-red-50 to-orange-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-red-400 dark:border-red-600"
+          />
+        );
+      case 'lean-coffee':
+        return (
+          <LeanCoffeeCommand
+            {...commonProps}
+            title={getTitle()}
+            topics={data.topics || []}
+            currentTopic={data.currentTopic}
+            timePerTopic={data.timePerTopic || 5}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'user-story-mapping':
+        return (
+          <UserStoryMappingCommand
+            {...commonProps}
+            title={getTitle()}
+            activities={data.activities || []}
+            releases={data.releases || []}
             createdBy={getCreatedBy()}
             closed={isClosed()}
           />

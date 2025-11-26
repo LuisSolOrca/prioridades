@@ -95,6 +95,13 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   'five-whys': { icon: Target, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' },
   'impact-effort': { icon: Target, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
   'opportunity-tree': { icon: Target, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  // Nuevos widgets batch 2
+  'empathy-map': { icon: Heart, color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-900/30' },
+  'moscow': { icon: Target, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  '4ls': { icon: RotateCcw, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30' },
+  'pre-mortem': { icon: Target, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
+  'lean-coffee': { icon: Users, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+  'user-story-mapping': { icon: Layers, color: 'text-teal-600', bg: 'bg-teal-100 dark:bg-teal-900/30' },
 };
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {

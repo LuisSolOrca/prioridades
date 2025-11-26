@@ -5,11 +5,9 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 
-const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot', 'soar', 'six-hats', 'mind-map', 'crazy-8s', 'affinity-map', 'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea', 'empathy-map', 'moscow', '4ls', 'pre-mortem'];
-
 /**
- * POST /api/projects/[id]/messages/[messageId]/retro
- * Agregar item a una sección
+ * POST /api/projects/[id]/messages/[messageId]/lean-coffee
+ * Agregar tema, votar o eliminar
  */
 export async function POST(
   request: Request,
@@ -23,42 +21,63 @@ export async function POST(
 
     await connectDB();
 
-    const { sectionId, text } = await request.json();
-
-    if (!sectionId || !text?.trim()) {
-      return NextResponse.json(
-        { error: 'Datos inválidos' },
-        { status: 400 }
-      );
-    }
+    const { action, text, topicId } = await request.json();
 
     const message = await ChannelMessage.findById(params.messageId);
     if (!message) {
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'lean-coffee') {
+      return NextResponse.json({ error: 'No es un Lean Coffee' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Lean Coffee cerrado' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
     const userName = (session.user as any).name || 'Usuario';
 
-    // Encontrar sección y agregar item
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
-    }
+    if (action === 'add') {
+      if (!text?.trim()) {
+        return NextResponse.json({ error: 'Texto requerido' }, { status: 400 });
+      }
 
-    section.items.push({
-      text: text.trim(),
-      userId,
-      userName
-    });
+      const newTopic = {
+        id: Date.now().toString(),
+        text: text.trim(),
+        userId,
+        userName,
+        votes: [],
+        status: 'pending'
+      };
+      message.commandData.topics.push(newTopic);
+    } else if (action === 'vote') {
+      const topic = message.commandData.topics.find((t: any) => t.id === topicId);
+      if (!topic) {
+        return NextResponse.json({ error: 'Tema no encontrado' }, { status: 400 });
+      }
+
+      const voteIndex = topic.votes.indexOf(userId);
+      if (voteIndex === -1) {
+        topic.votes.push(userId);
+      } else {
+        topic.votes.splice(voteIndex, 1);
+      }
+    } else if (action === 'delete') {
+      const topicIndex = message.commandData.topics.findIndex((t: any) => t.id === topicId);
+      if (topicIndex === -1) {
+        return NextResponse.json({ error: 'Tema no encontrado' }, { status: 400 });
+      }
+
+      const topic = message.commandData.topics[topicIndex];
+      if (topic.userId !== userId && (session.user as any).role !== 'ADMIN') {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      }
+
+      message.commandData.topics.splice(topicIndex, 1);
+    }
 
     message.markModified('commandData');
     await message.save();
@@ -69,10 +88,6 @@ export async function POST(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -87,14 +102,14 @@ export async function POST(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro add:', error);
-    return NextResponse.json({ error: 'Error al agregar' }, { status: 500 });
+    console.error('Error in lean-coffee POST:', error);
+    return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
 }
 
 /**
- * PATCH /api/projects/[id]/messages/[messageId]/retro
- * Eliminar item de una sección
+ * PATCH /api/projects/[id]/messages/[messageId]/lean-coffee
+ * Iniciar o finalizar discusión de tema
  */
 export async function PATCH(
   request: Request,
@@ -108,38 +123,40 @@ export async function PATCH(
 
     await connectDB();
 
-    const { sectionId, itemIndex } = await request.json();
+    const { action, topicId } = await request.json();
 
     const message = await ChannelMessage.findById(params.messageId);
     if (!message) {
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'lean-coffee') {
+      return NextResponse.json({ error: 'No es un Lean Coffee' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Lean Coffee cerrado' }, { status: 400 });
     }
 
-    const userId = (session.user as any).id;
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
+    const topic = message.commandData.topics.find((t: any) => t.id === topicId);
+    if (!topic) {
+      return NextResponse.json({ error: 'Tema no encontrado' }, { status: 400 });
     }
 
-    const item = section.items[itemIndex];
-    if (!item) {
-      return NextResponse.json({ error: 'Item no encontrado' }, { status: 400 });
+    if (action === 'start') {
+      // Finalizar cualquier tema en discusión
+      message.commandData.topics.forEach((t: any) => {
+        if (t.status === 'discussing') {
+          t.status = 'discussed';
+        }
+      });
+      topic.status = 'discussing';
+      message.commandData.currentTopic = topicId;
+    } else if (action === 'finish') {
+      topic.status = 'discussed';
+      message.commandData.currentTopic = null;
     }
 
-    // Solo el creador o admin puede eliminar
-    if (item.userId !== userId && (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
-
-    section.items.splice(itemIndex, 1);
     message.markModified('commandData');
     await message.save();
 
@@ -149,10 +166,6 @@ export async function PATCH(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -167,14 +180,14 @@ export async function PATCH(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro delete:', error);
-    return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
+    console.error('Error in lean-coffee PATCH:', error);
+    return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/projects/[id]/messages/[messageId]/retro
- * Cerrar retrospectiva (solo creador)
+ * DELETE /api/projects/[id]/messages/[messageId]/lean-coffee
+ * Cerrar (solo creador)
  */
 export async function DELETE(
   request: Request,
@@ -193,8 +206,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'lean-coffee') {
+      return NextResponse.json({ error: 'No es un Lean Coffee' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
@@ -203,6 +216,7 @@ export async function DELETE(
     }
 
     message.commandData.closed = true;
+    message.commandData.currentTopic = null;
     message.markModified('commandData');
     await message.save();
 
@@ -212,10 +226,6 @@ export async function DELETE(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -230,7 +240,7 @@ export async function DELETE(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error closing retro:', error);
+    console.error('Error closing lean-coffee:', error);
     return NextResponse.json({ error: 'Error al cerrar' }, { status: 500 });
   }
 }
