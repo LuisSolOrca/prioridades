@@ -148,12 +148,30 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
             try {
               // Obtener librerías existentes y combinar con las nuevas
               const existingLibrary = whiteboard.libraryItems || [];
+              console.log('Existing library items:', existingLibrary.length);
+              console.log('New library items:', libraryItems.length);
+
               const mergedLibrary = [...existingLibrary, ...libraryItems];
 
-              // Eliminar duplicados por id
-              const uniqueLibrary = mergedLibrary.filter((item, index, self) =>
-                index === self.findIndex((t) => t.id === item.id)
-              );
+              // Eliminar duplicados - usar id si existe, sino crear hash de elementos
+              const getItemKey = (item: any) => {
+                if (item.id) return item.id;
+                // Fallback: crear key basado en los elementos
+                if (item.elements && Array.isArray(item.elements)) {
+                  return JSON.stringify(item.elements.map((e: any) => e.id || e.type).sort());
+                }
+                return JSON.stringify(item);
+              };
+
+              const seen = new Set();
+              const uniqueLibrary = mergedLibrary.filter((item) => {
+                const key = getItemKey(item);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+
+              console.log('Merged unique library items:', uniqueLibrary.length);
 
               const saveResponse = await fetch(
                 `/api/projects/${whiteboard.projectId}/whiteboards/${whiteboardId}/elements`,

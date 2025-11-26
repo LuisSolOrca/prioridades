@@ -108,6 +108,7 @@ export async function PUT(
     await whiteboard.save();
 
     // Broadcast via Pusher para sync en tiempo real
+    // Nota: No incluimos libraryItems para evitar exceder límite de 10KB de Pusher
     try {
       await triggerPusherEvent(
         `presence-whiteboard-${params.whiteboardId}`,
@@ -117,7 +118,6 @@ export async function PUT(
           elements: whiteboard.elements,
           appState: whiteboard.appState,
           files: whiteboard.files,
-          libraryItems: whiteboard.libraryItems,
           version: whiteboard.version,
           updatedBy: userId,
           updatedByName: userName,
