@@ -13,6 +13,7 @@
 8. [Menciones](#menciones)
 9. [Reacciones](#reacciones)
 10. [Threads (Hilos)](#threads-hilos)
+    - [Hilos Anidados](#hilos-anidados-threads-of-threads-)
 11. [Mensajes Anclados](#mensajes-anclados)
 12. [Búsqueda](#búsqueda)
     - [Búsqueda Semántica con IA](#búsqueda-semántica-con-ia)
@@ -57,7 +58,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 📝 **Formato Markdown** - negrita, cursiva, código, listas, y más
 - 🔗 **Link Previews** - previews automáticas de URLs con metadata
 - 🎨 **Syntax highlighting** - código con colores por lenguaje
-- 🧵 **Threads/hilos** para conversaciones organizadas
+- 🧵 **Threads/hilos** para conversaciones organizadas (soporta hilos anidados)
 - 📍 **Mensajes anclados** (máximo 5)
 - 🔍 **Búsqueda avanzada** por contenido y usuario
 - ⚡ **30+ Slash commands** para acciones rápidas
@@ -759,7 +760,7 @@ Pasa el mouse sobre una reacción para ver:
 
 ## Threads (Hilos)
 
-Los **threads** permiten crear conversaciones organizadas sin saturar el canal principal.
+Los **threads** permiten crear conversaciones organizadas sin saturar el canal principal. Soportan **hilos anidados (threads of threads)** para discusiones complejas donde un subtema requiere su propia conversación.
 
 ### Crear un Thread
 
@@ -768,11 +769,41 @@ Los **threads** permiten crear conversaciones organizadas sin saturar el canal p
 3. Se abre un modal con el mensaje original
 4. Escribe tu respuesta
 
+### Hilos Anidados (Threads of Threads) 🧵
+
+A partir de v1.9.0, los hilos soportan **anidamiento profundo**, permitiendo responder a respuestas:
+
+**Cómo funciona:**
+1. Abre cualquier hilo existente
+2. Pasa el mouse sobre cualquier mensaje en el hilo
+3. Haz clic en el ícono **↩️ Responder** que aparece
+4. Tu respuesta se anida debajo del mensaje seleccionado
+
+**Características de hilos anidados:**
+- **Indentación visual**: Cada nivel de anidamiento se indenta con líneas de color diferente
+- **Máximo visual**: 4 niveles de indentación visual (los hilos pueden ser más profundos pero la indentación se mantiene en 4)
+- **Colores por nivel**: Azul → Verde → Púrpura → Naranja → Rosa (ciclo)
+- **Indicador de nivel**: Badge "Nivel N" en mensajes anidados
+- **Colapsar/Expandir**: Botón ▼/▶ para colapsar ramas del hilo
+- **Badge "Hilo anidado"**: El header muestra cuando hay mensajes con profundidad > 1
+- **Contador de respuestas colapsadas**: Al colapsar, muestra "N respuestas"
+
+**Indicador de respuesta:**
+- Al hacer clic en responder, aparece una barra azul indicando:
+  - "Respondiendo a [Nombre]"
+  - Preview del mensaje al que respondes
+  - Botón X para cancelar
+
+**Arquitectura técnica:**
+- `threadDepth`: Nivel de anidamiento (0 = mensaje principal, 1 = respuesta directa, 2+ = respuesta anidada)
+- `rootMessageId`: ID del mensaje raíz del hilo (para agrupar todo el árbol)
+- `parentMessageId`: ID del mensaje padre directo
+
 ### Características
 
 - **Indicador visual**: Mensajes con respuestas muestran un borde azul
 - **Contador de respuestas**: Badge que muestra cuántas respuestas hay
-- **Vista modal**: Thread completo en ventana separada
+- **Vista modal**: Thread completo en ventana separada (max-w-4xl para hilos anidados)
 - **Reacciones en threads**: Puedes reaccionar a mensajes dentro del thread
 - **Edición/eliminación**: Mismas reglas que mensajes principales
 - **Notificaciones**: El autor del mensaje original recibe notificación de respuestas
@@ -3131,7 +3162,7 @@ El sistema maneja elegantemente los usuarios eliminados:
 - [x] ✅ Indicadores de "escribiendo..."
 - [x] ✅ Estado en línea/fuera de línea
 - [x] ✅ Mención de equipos/grupos de usuarios
-- [ ] Hilos anidados (threads de threads)
+- [x] ✅ Hilos anidados (threads de threads)
 - [ ] Reacciones personalizadas
 - [ ] Temas y personalización
 - [ ] Notificaciones push en navegador
@@ -3158,7 +3189,7 @@ Para problemas o sugerencias:
 ## Créditos
 
 **Desarrollado por:** Tu Empresa
-**Versión:** 1.5.0
+**Versión:** 1.9.0
 **Última actualización:** Noviembre 2025
 **Licencia:** Propietaria
 

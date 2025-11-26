@@ -34,6 +34,7 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50');
     const cursor = searchParams.get('cursor'); // Cursor-based pagination
     const parentMessageId = searchParams.get('parentMessageId');
+    const rootMessageId = searchParams.get('rootMessageId'); // Para cargar todo el árbol de hilos
     const channelId = searchParams.get('channelId');
     const search = searchParams.get('search') || '';
     const isDynamic = searchParams.get('isDynamic') === 'true';
@@ -55,8 +56,15 @@ export async function GET(
       query.commandData = { $ne: null };
     }
 
-    // Si se especifica parentMessageId, obtener respuestas del hilo
-    if (parentMessageId) {
+    // Si se especifica rootMessageId, obtener TODO el árbol de hilos (para hilos anidados)
+    if (rootMessageId) {
+      // Obtener todos los mensajes que pertenecen a este hilo (incluyendo anidados)
+      query.$or = [
+        { _id: rootMessageId }, // El mensaje raíz mismo
+        { rootMessageId: rootMessageId } // Todos los mensajes del árbol
+      ];
+    } else if (parentMessageId) {
+      // Si se especifica parentMessageId, obtener respuestas directas del hilo
       query.parentMessageId = parentMessageId;
     } else {
       // Solo mensajes principales (no respuestas)
@@ -267,6 +275,19 @@ export async function POST(
       console.error('Error detecting priority mentions:', err);
     }
 
+    // Calcular threadDepth y rootMessageId para hilos anidados
+    let threadDepth = 0;
+    let rootMessageId = null;
+
+    if (parentMessageId) {
+      const parentMsg = await ChannelMessage.findById(parentMessageId).lean() as any;
+      if (parentMsg) {
+        threadDepth = (parentMsg.threadDepth || 0) + 1;
+        // El rootMessageId es el del padre, o si el padre es el root (threadDepth=0), es el padre mismo
+        rootMessageId = parentMsg.rootMessageId || parentMsg._id;
+      }
+    }
+
     // Crear mensaje
     const message = await ChannelMessage.create({
       projectId: params.id,
@@ -276,6 +297,8 @@ export async function POST(
       mentions,
       priorityMentions: priorityMentionsIds,
       parentMessageId: parentMessageId || null,
+      rootMessageId: rootMessageId,
+      threadDepth: threadDepth,
       commandType: commandType || null,
       commandData: commandData || null,
       attachments: attachments || [],

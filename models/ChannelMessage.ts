@@ -17,7 +17,9 @@ export interface IChannelMessage {
   attachments: mongoose.Types.ObjectId[]; // Array de attachmentIds
   reactions: IReaction[];
   parentMessageId?: mongoose.Types.ObjectId; // Para hilos/respuestas
-  replyCount: number; // Contador de respuestas en el hilo
+  rootMessageId?: mongoose.Types.ObjectId; // Mensaje raíz del hilo (para hilos anidados)
+  threadDepth: number; // Nivel de anidamiento (0 = mensaje principal, 1 = respuesta, 2+ = respuesta anidada)
+  replyCount: number; // Contador de respuestas directas en el hilo
   isPinned: boolean; // Si el mensaje está anclado
   pinnedAt?: Date; // Cuándo fue anclado
   pinnedBy?: mongoose.Types.ObjectId; // Quién lo ancló
@@ -86,6 +88,16 @@ const ChannelMessageSchema = new mongoose.Schema({
     default: null,
     index: true
   },
+  rootMessageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ChannelMessage',
+    default: null,
+    index: true
+  },
+  threadDepth: {
+    type: Number,
+    default: 0
+  },
   replyCount: {
     type: Number,
     default: 0
@@ -136,6 +148,7 @@ const ChannelMessageSchema = new mongoose.Schema({
 // Índice compuesto para búsquedas eficientes
 ChannelMessageSchema.index({ projectId: 1, channelId: 1, createdAt: -1 });
 ChannelMessageSchema.index({ projectId: 1, channelId: 1, parentMessageId: 1, createdAt: -1 });
+ChannelMessageSchema.index({ projectId: 1, channelId: 1, rootMessageId: 1, createdAt: -1 }); // Para hilos anidados
 ChannelMessageSchema.index({ projectId: 1, channelId: 1, isPinned: 1, pinnedAt: -1 }); // Para mensajes anclados
 
 export default mongoose.models.ChannelMessage ||
