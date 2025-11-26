@@ -62,6 +62,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isReadyToSaveRef = useRef(false);
   const lastSavedElementsRef = useRef<string>('');
+  const localVersionRef = useRef(0);
 
   const [whiteboard, setWhiteboard] = useState<WhiteboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -151,21 +152,36 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
     }
   }, [whiteboardId, projectId, status]);
 
+  // Mantener ref sincronizada con el estado
+  useEffect(() => {
+    localVersionRef.current = localVersion;
+  }, [localVersion]);
+
   // Subscribe to Pusher for real-time updates
   useEffect(() => {
     if (!whiteboard || !session) return;
 
     const pusher = getPusherClient();
-    const channel = pusher.subscribe(`presence-whiteboard-${whiteboardId}`);
+    const channelName = `presence-whiteboard-${whiteboardId}`;
+    console.log('Subscribing to Pusher channel:', channelName);
+    const channel = pusher.subscribe(channelName);
+
+    channel.bind('pusher:subscription_error', (error: any) => {
+      console.error('Pusher subscription error:', error);
+    });
 
     // Handle elements update from other users
     channel.bind('elements-updated', (data: any) => {
+      console.log('Received Pusher update:', data.updatedBy, 'version:', data.version);
+
       if (data.updatedBy === (session.user as any).id) {
         // Ignore our own updates
         return;
       }
 
-      if (data.version > localVersion) {
+      // Usar la ref para tener el valor actual
+      if (data.version > localVersionRef.current) {
+        console.log('Applying remote update, version:', data.version);
         setIsUpdatingFromRemote(true);
         setLocalVersion(data.version);
 
@@ -175,6 +191,21 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
             elements: data.elements,
             appState: data.appState
           });
+
+          // Actualizar el hash de elementos para evitar re-guardado
+          lastSavedElementsRef.current = JSON.stringify(
+            data.elements.map((el: any) => ({
+              id: el.id,
+              type: el.type,
+              x: Math.round(el.x),
+              y: Math.round(el.y),
+              width: el.width ? Math.round(el.width) : undefined,
+              height: el.height ? Math.round(el.height) : undefined,
+              points: el.points,
+              text: el.text,
+              isDeleted: el.isDeleted
+            }))
+          );
         }
 
         setTimeout(() => setIsUpdatingFromRemote(false), 100);
@@ -183,6 +214,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
 
     // Handle presence
     channel.bind('pusher:subscription_succeeded', (members: any) => {
+      console.log('Successfully subscribed to:', channelName, 'Members:', members.count);
       const userNames: string[] = [];
       members.each((member: any) => {
         if (member.id !== (session.user as any).id) {
@@ -203,10 +235,11 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
     });
 
     return () => {
+      console.log('Unsubscribing from Pusher channel:', channelName);
       channel.unbind_all();
-      pusher.unsubscribe(`presence-whiteboard-${whiteboardId}`);
+      pusher.unsubscribe(channelName);
     };
-  }, [whiteboard, whiteboardId, session, localVersion]);
+  }, [whiteboard, whiteboardId, session]); // Removido localVersion - usamos ref
 
   // Save elements to server with debounce
   const saveElements = useCallback(async (elements: any[], appState: any, files: any) => {
