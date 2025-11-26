@@ -5,11 +5,9 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 
-const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot', 'soar', 'six-hats', 'mind-map', 'crazy-8s', 'affinity-map', 'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea'];
-
 /**
- * POST /api/projects/[id]/messages/[messageId]/retro
- * Agregar item a una sección
+ * POST /api/projects/[id]/messages/[messageId]/five-whys
+ * Agregar un why o respuesta
  */
 export async function POST(
   request: Request,
@@ -23,9 +21,9 @@ export async function POST(
 
     await connectDB();
 
-    const { sectionId, text } = await request.json();
+    const { type, text, whyId } = await request.json();
 
-    if (!sectionId || !text?.trim()) {
+    if (!type || !text?.trim()) {
       return NextResponse.json(
         { error: 'Datos inválidos' },
         { status: 400 }
@@ -37,28 +35,42 @@ export async function POST(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'five-whys') {
+      return NextResponse.json({ error: 'No es un 5 Whys' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: '5 Whys cerrado' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
     const userName = (session.user as any).name || 'Usuario';
 
-    // Encontrar sección y agregar item
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
+    if (type === 'why') {
+      // Agregar nuevo why
+      const newWhy = {
+        id: Date.now().toString(),
+        question: text.trim(),
+        answer: '',
+        userId,
+        userName
+      };
+      message.commandData.whys.push(newWhy);
+    } else if (type === 'answer' && whyId) {
+      // Agregar respuesta a un why
+      const why = message.commandData.whys.find((w: any) => w.id === whyId);
+      if (!why) {
+        return NextResponse.json({ error: 'Why no encontrado' }, { status: 400 });
+      }
+      why.answer = text.trim();
+      why.answeredBy = userId;
+      why.answeredByName = userName;
+    } else if (type === 'root-cause') {
+      // Establecer causa raíz
+      message.commandData.rootCause = text.trim();
+      message.commandData.rootCauseBy = userId;
+      message.commandData.rootCauseByName = userName;
     }
-
-    section.items.push({
-      text: text.trim(),
-      userId,
-      userName
-    });
 
     message.markModified('commandData');
     await message.save();
@@ -69,10 +81,6 @@ export async function POST(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -87,14 +95,14 @@ export async function POST(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro add:', error);
+    console.error('Error in five-whys add:', error);
     return NextResponse.json({ error: 'Error al agregar' }, { status: 500 });
   }
 }
 
 /**
- * PATCH /api/projects/[id]/messages/[messageId]/retro
- * Eliminar item de una sección
+ * PATCH /api/projects/[id]/messages/[messageId]/five-whys
+ * Eliminar un why
  */
 export async function PATCH(
   request: Request,
@@ -108,38 +116,36 @@ export async function PATCH(
 
     await connectDB();
 
-    const { sectionId, itemIndex } = await request.json();
+    const { whyId } = await request.json();
 
     const message = await ChannelMessage.findById(params.messageId);
     if (!message) {
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'five-whys') {
+      return NextResponse.json({ error: 'No es un 5 Whys' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: '5 Whys cerrado' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
+    const whyIndex = message.commandData.whys.findIndex((w: any) => w.id === whyId);
+
+    if (whyIndex === -1) {
+      return NextResponse.json({ error: 'Why no encontrado' }, { status: 400 });
     }
 
-    const item = section.items[itemIndex];
-    if (!item) {
-      return NextResponse.json({ error: 'Item no encontrado' }, { status: 400 });
-    }
+    const why = message.commandData.whys[whyIndex];
 
     // Solo el creador o admin puede eliminar
-    if (item.userId !== userId && (session.user as any).role !== 'ADMIN') {
+    if (why.userId !== userId && (session.user as any).role !== 'ADMIN') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    section.items.splice(itemIndex, 1);
+    message.commandData.whys.splice(whyIndex, 1);
     message.markModified('commandData');
     await message.save();
 
@@ -149,10 +155,6 @@ export async function PATCH(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -167,14 +169,14 @@ export async function PATCH(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro delete:', error);
+    console.error('Error in five-whys delete:', error);
     return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/projects/[id]/messages/[messageId]/retro
- * Cerrar retrospectiva (solo creador)
+ * DELETE /api/projects/[id]/messages/[messageId]/five-whys
+ * Cerrar (solo creador)
  */
 export async function DELETE(
   request: Request,
@@ -193,8 +195,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'five-whys') {
+      return NextResponse.json({ error: 'No es un 5 Whys' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
@@ -212,10 +214,6 @@ export async function DELETE(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -230,7 +228,7 @@ export async function DELETE(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error closing retro:', error);
+    console.error('Error closing five-whys:', error);
     return NextResponse.json({ error: 'Error al cerrar' }, { status: 500 });
   }
 }

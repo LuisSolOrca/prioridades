@@ -48,6 +48,10 @@ import InceptionDeckCommand from '../slashCommands/InceptionDeckCommand';
 import DelegationPokerCommand from '../slashCommands/DelegationPokerCommand';
 import MovingMotivatorsCommand from '../slashCommands/MovingMotivatorsCommand';
 import StandupCommand from '../slashCommands/StandupCommand';
+import FiveWhysCommand from '../slashCommands/FiveWhysCommand';
+import ImpactEffortCommand from '../slashCommands/ImpactEffortCommand';
+import LotusBlossomCommand from '../slashCommands/LotusBlossomCommand';
+import OpportunityTreeCommand from '../slashCommands/OpportunityTreeCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -119,6 +123,16 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'start-stop-continue': { icon: RotateCcw, color: 'text-green-600' },
   // Standup
   'standup': { icon: Users, color: 'text-orange-600' },
+  // Nuevos widgets de ideación
+  'scamper': { icon: Lightbulb, color: 'text-amber-600' },
+  'starbursting': { icon: Lightbulb, color: 'text-cyan-600' },
+  'reverse-brainstorm': { icon: Lightbulb, color: 'text-red-600' },
+  'worst-idea': { icon: Lightbulb, color: 'text-orange-600' },
+  'lotus-blossom': { icon: Lightbulb, color: 'text-pink-600' },
+  // Nuevos widgets de análisis
+  'five-whys': { icon: Target, color: 'text-purple-600' },
+  'impact-effort': { icon: Target, color: 'text-indigo-600' },
+  'opportunity-tree': { icon: Target, color: 'text-emerald-600' },
 };
 
 export default function DynamicFullscreen({
@@ -688,6 +702,108 @@ export default function DynamicFullscreen({
           <StandupCommand
             projectId={projectId}
             onClose={onClose}
+          />
+        );
+      // Nuevos widgets de ideación basados en secciones
+      case 'scamper':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="scamper"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">🔧</span>}
+            gradient="from-amber-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-amber-400 dark:border-amber-600"
+          />
+        );
+      case 'starbursting':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="starbursting"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">⭐</span>}
+            gradient="from-cyan-50 to-sky-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-cyan-400 dark:border-cyan-600"
+          />
+        );
+      case 'reverse-brainstorm':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="reverse-brainstorm"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">🔄</span>}
+            gradient="from-red-50 to-rose-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-red-400 dark:border-red-600"
+          />
+        );
+      case 'worst-idea':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="worst-idea"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">💡</span>}
+            gradient="from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-orange-400 dark:border-orange-600"
+          />
+        );
+      case 'lotus-blossom':
+        return (
+          <LotusBlossomCommand
+            {...commonProps}
+            title={getTitle()}
+            centerIdea={data.centerIdea || getTitle()}
+            petals={data.petals || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      // Nuevos widgets de análisis
+      case 'five-whys':
+        return (
+          <FiveWhysCommand
+            {...commonProps}
+            title={getTitle()}
+            problem={data.problem || ''}
+            whys={data.whys || []}
+            rootCause={data.rootCause || ''}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'impact-effort':
+        return (
+          <ImpactEffortCommand
+            {...commonProps}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'opportunity-tree':
+        return (
+          <OpportunityTreeCommand
+            {...commonProps}
+            title={getTitle()}
+            objective={data.objective || getTitle()}
+            opportunities={data.opportunities || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
           />
         );
       default:

@@ -5,11 +5,9 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 
-const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot', 'soar', 'six-hats', 'mind-map', 'crazy-8s', 'affinity-map', 'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea'];
-
 /**
- * POST /api/projects/[id]/messages/[messageId]/retro
- * Agregar item a una sección
+ * POST /api/projects/[id]/messages/[messageId]/impact-effort
+ * Agregar item a un cuadrante
  */
 export async function POST(
   request: Request,
@@ -23,13 +21,18 @@ export async function POST(
 
     await connectDB();
 
-    const { sectionId, text } = await request.json();
+    const { text, quadrant } = await request.json();
 
-    if (!sectionId || !text?.trim()) {
+    if (!text?.trim() || !quadrant) {
       return NextResponse.json(
         { error: 'Datos inválidos' },
         { status: 400 }
       );
+    }
+
+    const validQuadrants = ['quick-wins', 'big-bets', 'fill-ins', 'time-sinks'];
+    if (!validQuadrants.includes(quadrant)) {
+      return NextResponse.json({ error: 'Cuadrante inválido' }, { status: 400 });
     }
 
     const message = await ChannelMessage.findById(params.messageId);
@@ -37,29 +40,26 @@ export async function POST(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'impact-effort') {
+      return NextResponse.json({ error: 'No es una matriz Impact/Effort' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Matriz cerrada' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
     const userName = (session.user as any).name || 'Usuario';
 
-    // Encontrar sección y agregar item
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
-    }
-
-    section.items.push({
+    const newItem = {
+      id: Date.now().toString(),
       text: text.trim(),
+      quadrant,
       userId,
       userName
-    });
+    };
 
+    message.commandData.items.push(newItem);
     message.markModified('commandData');
     await message.save();
 
@@ -69,10 +69,6 @@ export async function POST(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -87,14 +83,14 @@ export async function POST(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro add:', error);
+    console.error('Error in impact-effort add:', error);
     return NextResponse.json({ error: 'Error al agregar' }, { status: 500 });
   }
 }
 
 /**
- * PATCH /api/projects/[id]/messages/[messageId]/retro
- * Eliminar item de una sección
+ * PATCH /api/projects/[id]/messages/[messageId]/impact-effort
+ * Eliminar item
  */
 export async function PATCH(
   request: Request,
@@ -108,38 +104,36 @@ export async function PATCH(
 
     await connectDB();
 
-    const { sectionId, itemIndex } = await request.json();
+    const { itemId } = await request.json();
 
     const message = await ChannelMessage.findById(params.messageId);
     if (!message) {
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'impact-effort') {
+      return NextResponse.json({ error: 'No es una matriz Impact/Effort' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Matriz cerrada' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
-    }
+    const itemIndex = message.commandData.items.findIndex((i: any) => i.id === itemId);
 
-    const item = section.items[itemIndex];
-    if (!item) {
+    if (itemIndex === -1) {
       return NextResponse.json({ error: 'Item no encontrado' }, { status: 400 });
     }
+
+    const item = message.commandData.items[itemIndex];
 
     // Solo el creador o admin puede eliminar
     if (item.userId !== userId && (session.user as any).role !== 'ADMIN') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    section.items.splice(itemIndex, 1);
+    message.commandData.items.splice(itemIndex, 1);
     message.markModified('commandData');
     await message.save();
 
@@ -149,10 +143,6 @@ export async function PATCH(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -167,14 +157,14 @@ export async function PATCH(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro delete:', error);
+    console.error('Error in impact-effort delete:', error);
     return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/projects/[id]/messages/[messageId]/retro
- * Cerrar retrospectiva (solo creador)
+ * DELETE /api/projects/[id]/messages/[messageId]/impact-effort
+ * Cerrar (solo creador)
  */
 export async function DELETE(
   request: Request,
@@ -193,8 +183,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'impact-effort') {
+      return NextResponse.json({ error: 'No es una matriz Impact/Effort' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
@@ -212,10 +202,6 @@ export async function DELETE(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -230,7 +216,7 @@ export async function DELETE(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error closing retro:', error);
+    console.error('Error closing impact-effort:', error);
     return NextResponse.json({ error: 'Error al cerrar' }, { status: 500 });
   }
 }

@@ -18,7 +18,9 @@ const DYNAMIC_COMMAND_TYPES = [
   'action-items', 'checklist', 'agenda', 'parking-lot', 'pomodoro', 'estimation-poker',
   'kudos-wall', 'icebreaker', 'inception-deck', 'delegation-poker', 'moving-motivators',
   'swot', 'soar', 'six-hats', 'crazy-8s', 'affinity-map',
-  'rose-bud-thorn', 'sailboat', 'start-stop-continue', 'standup'
+  'rose-bud-thorn', 'sailboat', 'start-stop-continue', 'standup',
+  'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea', 'lotus-blossom',
+  'five-whys', 'impact-effort', 'opportunity-tree'
 ];
 
 interface DynamicMessage {
@@ -419,6 +421,82 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
           ...base,
           question: title,
           entries: []
+        };
+      // Nuevos widgets de ideación
+      case 'scamper':
+        return {
+          ...base,
+          sections: [
+            { id: 'substitute', title: 'Sustituir', icon: '🔄', color: '#ef4444', items: [] },
+            { id: 'combine', title: 'Combinar', icon: '🔗', color: '#f59e0b', items: [] },
+            { id: 'adapt', title: 'Adaptar', icon: '🔧', color: '#eab308', items: [] },
+            { id: 'modify', title: 'Modificar', icon: '✏️', color: '#84cc16', items: [] },
+            { id: 'put', title: 'Propósito', icon: '🎯', color: '#10b981', items: [] },
+            { id: 'eliminate', title: 'Eliminar', icon: '❌', color: '#06b6d4', items: [] },
+            { id: 'reverse', title: 'Reorganizar', icon: '🔀', color: '#8b5cf6', items: [] }
+          ]
+        };
+      case 'starbursting':
+        return {
+          ...base,
+          sections: [
+            { id: 'what', title: 'Qué', icon: '❓', color: '#ef4444', items: [] },
+            { id: 'who', title: 'Quién', icon: '👤', color: '#f59e0b', items: [] },
+            { id: 'where', title: 'Dónde', icon: '📍', color: '#10b981', items: [] },
+            { id: 'when', title: 'Cuándo', icon: '📅', color: '#3b82f6', items: [] },
+            { id: 'why', title: 'Por qué', icon: '💡', color: '#8b5cf6', items: [] },
+            { id: 'how', title: 'Cómo', icon: '⚙️', color: '#ec4899', items: [] }
+          ]
+        };
+      case 'reverse-brainstorm':
+        return {
+          ...base,
+          sections: [
+            { id: 'problems', title: 'Causar Problemas', icon: '💥', color: '#ef4444', items: [] },
+            { id: 'solutions', title: 'Soluciones Invertidas', icon: '✅', color: '#10b981', items: [] }
+          ]
+        };
+      case 'worst-idea':
+        return {
+          ...base,
+          sections: [
+            { id: 'worst', title: 'Peores Ideas', icon: '👎', color: '#ef4444', items: [] },
+            { id: 'transformed', title: 'Ideas Transformadas', icon: '✨', color: '#10b981', items: [] }
+          ]
+        };
+      case 'lotus-blossom':
+        return {
+          ...base,
+          centerIdea: title,
+          petals: [
+            { id: 'petal-1', title: 'Pétalo 1', items: [] },
+            { id: 'petal-2', title: 'Pétalo 2', items: [] },
+            { id: 'petal-3', title: 'Pétalo 3', items: [] },
+            { id: 'petal-4', title: 'Pétalo 4', items: [] },
+            { id: 'petal-5', title: 'Pétalo 5', items: [] },
+            { id: 'petal-6', title: 'Pétalo 6', items: [] },
+            { id: 'petal-7', title: 'Pétalo 7', items: [] },
+            { id: 'petal-8', title: 'Pétalo 8', items: [] }
+          ]
+        };
+      // Nuevos widgets de análisis
+      case 'five-whys':
+        return {
+          ...base,
+          problem: title,
+          whys: [],
+          rootCause: ''
+        };
+      case 'impact-effort':
+        return {
+          ...base,
+          items: []
+        };
+      case 'opportunity-tree':
+        return {
+          ...base,
+          objective: title,
+          opportunities: []
         };
       default:
         return base;

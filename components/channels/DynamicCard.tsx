@@ -85,6 +85,16 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   'start-stop-continue': { icon: RotateCcw, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
   // Standup
   'standup': { icon: Users, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+  // Nuevos widgets de ideación
+  'scamper': { icon: Lightbulb, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+  'starbursting': { icon: Lightbulb, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+  'reverse-brainstorm': { icon: Lightbulb, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
+  'worst-idea': { icon: Lightbulb, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+  'lotus-blossom': { icon: Lightbulb, color: 'text-pink-600', bg: 'bg-pink-100 dark:bg-pink-900/30' },
+  // Nuevos widgets de análisis
+  'five-whys': { icon: Target, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  'impact-effort': { icon: Target, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+  'opportunity-tree': { icon: Target, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
 };
 
 export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {

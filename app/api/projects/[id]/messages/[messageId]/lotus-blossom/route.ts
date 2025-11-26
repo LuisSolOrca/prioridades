@@ -5,11 +5,9 @@ import connectDB from '@/lib/mongodb';
 import ChannelMessage from '@/models/ChannelMessage';
 import { triggerPusherEvent } from '@/lib/pusher-server';
 
-const RETRO_TYPES = ['rose-bud-thorn', 'sailboat', 'start-stop-continue', 'swot', 'soar', 'six-hats', 'mind-map', 'crazy-8s', 'affinity-map', 'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea'];
-
 /**
- * POST /api/projects/[id]/messages/[messageId]/retro
- * Agregar item a una sección
+ * POST /api/projects/[id]/messages/[messageId]/lotus-blossom
+ * Agregar item a un pétalo
  */
 export async function POST(
   request: Request,
@@ -23,9 +21,9 @@ export async function POST(
 
     await connectDB();
 
-    const { sectionId, text } = await request.json();
+    const { petalId, text } = await request.json();
 
-    if (!sectionId || !text?.trim()) {
+    if (!petalId || !text?.trim()) {
       return NextResponse.json(
         { error: 'Datos inválidos' },
         { status: 400 }
@@ -37,24 +35,24 @@ export async function POST(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'lotus-blossom') {
+      return NextResponse.json({ error: 'No es un Lotus Blossom' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Lotus Blossom cerrado' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
     const userName = (session.user as any).name || 'Usuario';
 
-    // Encontrar sección y agregar item
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
+    // Encontrar pétalo y agregar item
+    const petal = message.commandData.petals.find((p: any) => p.id === petalId);
+    if (!petal) {
+      return NextResponse.json({ error: 'Pétalo no encontrado' }, { status: 400 });
     }
 
-    section.items.push({
+    petal.items.push({
       text: text.trim(),
       userId,
       userName
@@ -69,10 +67,6 @@ export async function POST(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -87,14 +81,14 @@ export async function POST(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro add:', error);
+    console.error('Error in lotus-blossom add:', error);
     return NextResponse.json({ error: 'Error al agregar' }, { status: 500 });
   }
 }
 
 /**
- * PATCH /api/projects/[id]/messages/[messageId]/retro
- * Eliminar item de una sección
+ * PATCH /api/projects/[id]/messages/[messageId]/lotus-blossom
+ * Eliminar item de un pétalo
  */
 export async function PATCH(
   request: Request,
@@ -108,28 +102,28 @@ export async function PATCH(
 
     await connectDB();
 
-    const { sectionId, itemIndex } = await request.json();
+    const { petalId, itemIndex } = await request.json();
 
     const message = await ChannelMessage.findById(params.messageId);
     if (!message) {
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'lotus-blossom') {
+      return NextResponse.json({ error: 'No es un Lotus Blossom' }, { status: 400 });
     }
 
     if (message.commandData.closed) {
-      return NextResponse.json({ error: 'Retrospectiva cerrada' }, { status: 400 });
+      return NextResponse.json({ error: 'Lotus Blossom cerrado' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
-    const section = message.commandData.sections.find((s: any) => s.id === sectionId);
-    if (!section) {
-      return NextResponse.json({ error: 'Sección no encontrada' }, { status: 400 });
+    const petal = message.commandData.petals.find((p: any) => p.id === petalId);
+    if (!petal) {
+      return NextResponse.json({ error: 'Pétalo no encontrado' }, { status: 400 });
     }
 
-    const item = section.items[itemIndex];
+    const item = petal.items[itemIndex];
     if (!item) {
       return NextResponse.json({ error: 'Item no encontrado' }, { status: 400 });
     }
@@ -139,7 +133,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    section.items.splice(itemIndex, 1);
+    petal.items.splice(itemIndex, 1);
     message.markModified('commandData');
     await message.save();
 
@@ -149,10 +143,6 @@ export async function PATCH(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -167,14 +157,14 @@ export async function PATCH(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in retro delete:', error);
+    console.error('Error in lotus-blossom delete:', error);
     return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/projects/[id]/messages/[messageId]/retro
- * Cerrar retrospectiva (solo creador)
+ * DELETE /api/projects/[id]/messages/[messageId]/lotus-blossom
+ * Cerrar (solo creador)
  */
 export async function DELETE(
   request: Request,
@@ -193,8 +183,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Mensaje no encontrado' }, { status: 404 });
     }
 
-    if (!RETRO_TYPES.includes(message.commandType)) {
-      return NextResponse.json({ error: 'No es una retrospectiva' }, { status: 400 });
+    if (message.commandType !== 'lotus-blossom') {
+      return NextResponse.json({ error: 'No es un Lotus Blossom' }, { status: 400 });
     }
 
     const userId = (session.user as any).id;
@@ -212,10 +202,6 @@ export async function DELETE(
       try {
         const populatedMessage = await ChannelMessage.findById(message._id)
           .populate('userId', 'name email')
-          .populate('mentions', 'name email')
-          .populate('priorityMentions', 'title status completionPercentage userId')
-          .populate('reactions.userId', 'name')
-          .populate('pinnedBy', 'name')
           .lean();
 
         await triggerPusherEvent(
@@ -230,7 +216,7 @@ export async function DELETE(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error closing retro:', error);
+    console.error('Error closing lotus-blossom:', error);
     return NextResponse.json({ error: 'Error al cerrar' }, { status: 500 });
   }
 }

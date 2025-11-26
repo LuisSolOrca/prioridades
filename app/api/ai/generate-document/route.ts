@@ -304,6 +304,10 @@ function formatDynamicForAI(dynamic: DynamicData): string {
     case 'start-stop-continue':
     case 'retro':
     case 'retrospective':
+    case 'scamper':
+    case 'starbursting':
+    case 'reverse-brainstorm':
+    case 'worst-idea':
       if (commandData.sections && commandData.sections.length > 0) {
         const totalItems = commandData.sections.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0);
         content += `Total de aportes: ${totalItems}\n`;
@@ -438,6 +442,104 @@ function formatDynamicForAI(dynamic: DynamicData): string {
         });
       } else {
         content += 'No hay votos registrados.\n';
+      }
+      break;
+
+    // === LOTUS BLOSSOM ===
+    case 'lotus-blossom':
+      content += `Idea central: ${commandData.centerIdea || title}\n`;
+      if (commandData.petals && commandData.petals.length > 0) {
+        const totalItems = commandData.petals.reduce((sum: number, p: any) => sum + (p.items?.length || 0), 0);
+        content += `Total de ideas: ${totalItems}\n\n`;
+        commandData.petals.forEach((petal: any) => {
+          const itemCount = petal.items?.length || 0;
+          content += `\n🌸 ${petal.title} (${itemCount}):\n`;
+          if (petal.items && petal.items.length > 0) {
+            petal.items.forEach((item: any) => {
+              content += `- ${item.text} (${item.userName || 'Anónimo'})\n`;
+            });
+          } else {
+            content += '  (vacío)\n';
+          }
+        });
+      }
+      break;
+
+    // === 5 WHYS ===
+    case 'five-whys':
+      content += `Problema: ${commandData.problem || title}\n`;
+      if (commandData.whys && commandData.whys.length > 0) {
+        content += `\nCadena de porqués (${commandData.whys.length}):\n`;
+        commandData.whys.forEach((why: any, idx: number) => {
+          content += `\n${idx + 1}. ¿Por qué? ${why.question} (${why.userName || 'Anónimo'})\n`;
+          if (why.answer) {
+            content += `   Respuesta: ${why.answer} (${why.answeredByName || 'Anónimo'})\n`;
+          }
+        });
+      }
+      if (commandData.rootCause) {
+        content += `\n🎯 Causa Raíz Identificada: ${commandData.rootCause}`;
+        if (commandData.rootCauseByName) {
+          content += ` (por ${commandData.rootCauseByName})`;
+        }
+        content += '\n';
+      }
+      break;
+
+    // === IMPACT/EFFORT MATRIX ===
+    case 'impact-effort':
+      if (commandData.items && commandData.items.length > 0) {
+        const quadrants = {
+          'quick-wins': { name: 'Quick Wins (Alto Impacto / Bajo Esfuerzo)', items: [] as any[] },
+          'big-bets': { name: 'Big Bets (Alto Impacto / Alto Esfuerzo)', items: [] as any[] },
+          'fill-ins': { name: 'Fill-Ins (Bajo Impacto / Bajo Esfuerzo)', items: [] as any[] },
+          'time-sinks': { name: 'Time Sinks (Bajo Impacto / Alto Esfuerzo)', items: [] as any[] }
+        };
+
+        commandData.items.forEach((item: any) => {
+          const q = item.quadrant as keyof typeof quadrants;
+          if (quadrants[q]) {
+            quadrants[q].items.push(item);
+          }
+        });
+
+        content += `Total de items: ${commandData.items.length}\n`;
+
+        Object.entries(quadrants).forEach(([key, quadrant]) => {
+          const emoji = key === 'quick-wins' ? '🚀' : key === 'big-bets' ? '🎯' : key === 'fill-ins' ? '📝' : '⚠️';
+          content += `\n${emoji} ${quadrant.name} (${quadrant.items.length}):\n`;
+          if (quadrant.items.length > 0) {
+            quadrant.items.forEach((item: any) => {
+              content += `- ${item.text} (${item.userName || 'Anónimo'})\n`;
+            });
+          } else {
+            content += '  (vacío)\n';
+          }
+        });
+      } else {
+        content += 'No hay items en la matriz.\n';
+      }
+      break;
+
+    // === OPPORTUNITY TREE ===
+    case 'opportunity-tree':
+      content += `Objetivo: ${commandData.objective || title}\n`;
+      if (commandData.opportunities && commandData.opportunities.length > 0) {
+        const totalSolutions = commandData.opportunities.reduce(
+          (sum: number, o: any) => sum + (o.children?.length || 0), 0
+        );
+        content += `${commandData.opportunities.length} oportunidades, ${totalSolutions} soluciones\n`;
+
+        commandData.opportunities.forEach((opp: any) => {
+          content += `\n🔷 Oportunidad: ${opp.text} (${opp.userName || 'Anónimo'})\n`;
+          if (opp.children && opp.children.length > 0) {
+            opp.children.forEach((sol: any) => {
+              content += `   └─ Solución: ${sol.text} (${sol.userName || 'Anónimo'})\n`;
+            });
+          }
+        });
+      } else {
+        content += 'No hay oportunidades registradas.\n';
       }
       break;
 

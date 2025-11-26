@@ -62,6 +62,11 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'six-hats', name: '6 Sombreros', description: '6 sombreros de Bono - perspectivas múltiples' },
       { type: 'crazy-8s', name: 'Crazy 8s', description: '8 ideas en 8 minutos - design sprint' },
       { type: 'affinity-map', name: 'Mapa de Afinidad', description: 'Agrupar ideas por categorías' },
+      { type: 'scamper', name: 'SCAMPER', description: 'Sustituir, Combinar, Adaptar, Modificar, Propósito, Eliminar, Reorganizar' },
+      { type: 'starbursting', name: 'Starbursting', description: 'Estrella de 6 puntas: Qué, Quién, Dónde, Cuándo, Por qué, Cómo' },
+      { type: 'reverse-brainstorm', name: 'Brainstorm Inverso', description: '¿Cómo causar el problema? → invertir soluciones' },
+      { type: 'worst-idea', name: 'Peores Ideas', description: 'Generar las peores ideas → transformarlas' },
+      { type: 'lotus-blossom', name: 'Lotus Blossom', description: 'Idea central con 8 pétalos de sub-ideas' },
     ]
   },
   {
@@ -90,6 +95,9 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
     dynamics: [
       { type: 'swot', name: 'SWOT', description: 'Fortalezas, Debilidades, Oportunidades, Amenazas' },
       { type: 'soar', name: 'SOAR', description: 'Fortalezas, Oportunidades, Aspiraciones, Resultados' },
+      { type: 'five-whys', name: '5 Porqués', description: 'Análisis de causa raíz preguntando "¿Por qué?" 5 veces' },
+      { type: 'impact-effort', name: 'Impacto/Esfuerzo', description: 'Matriz de priorización 2x2' },
+      { type: 'opportunity-tree', name: 'Árbol de Oportunidades', description: 'Objetivo → Oportunidades → Soluciones' },
     ]
   },
   {
