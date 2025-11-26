@@ -369,6 +369,217 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Timeline visual con milestones',
     usage: '/roadmap "Título del roadmap"',
     category: 'management'
+  },
+  // Batch 4: Votación y Gestión
+  {
+    name: 'roman-voting',
+    description: 'Pulgar arriba/abajo/lado - Decisiones rápidas sin matices',
+    usage: '/roman-voting "¿Pregunta o decisión?"',
+    category: 'collaboration'
+  },
+  {
+    name: 'lean-coffee',
+    description: 'Reunión estructurada con votación de temas - Sin agenda previa',
+    usage: '/lean-coffee "Título de la sesión"',
+    category: 'collaboration'
+  },
+  {
+    name: 'user-story-mapping',
+    description: 'Mapear historias de usuario por actividades y releases',
+    usage: '/user-story-mapping "Producto o feature"',
+    category: 'management'
+  },
+  {
+    name: 'fishbone',
+    description: 'Diagrama Ishikawa - Análisis causa-efecto visual',
+    usage: '/fishbone "Problema a analizar"',
+    category: 'analysis'
+  },
+  {
+    name: 'raci',
+    description: 'Matriz RACI - Responsable, Aprobador, Consultado, Informado',
+    usage: '/raci "Proyecto o iniciativa"',
+    category: 'management'
+  },
+  // Batch 5: Canvas y Frameworks
+  {
+    name: 'lean-canvas',
+    description: 'Lean Canvas - 9 bloques para validar modelo de negocio',
+    usage: '/lean-canvas "Nombre del producto"',
+    category: 'analysis'
+  },
+  {
+    name: 'customer-journey',
+    description: 'Customer Journey Map - Experiencia completa del cliente',
+    usage: '/customer-journey "Nombre del cliente/persona"',
+    category: 'analysis'
+  },
+  {
+    name: 'risk-matrix',
+    description: 'Matriz de Riesgos - Probabilidad × Impacto',
+    usage: '/risk-matrix "Proyecto o iniciativa"',
+    category: 'analysis'
+  },
+  {
+    name: 'rice',
+    description: 'RICE Scoring - Reach × Impact × Confidence ÷ Effort',
+    usage: '/rice "Backlog o lista de features"',
+    category: 'analysis'
+  },
+  {
+    name: 'working-agreements',
+    description: 'Acuerdos de trabajo del equipo - Fundacional para equipos',
+    usage: '/working-agreements "Nombre del equipo"',
+    category: 'collaboration'
+  },
+  {
+    name: 'brainwriting',
+    description: 'Brainwriting 6-3-5 - 6 personas, 3 ideas, 5 min (mejor para introvertidos)',
+    usage: '/brainwriting "Tema o reto"',
+    category: 'collaboration'
+  },
+  // Batch 6: Retrospectivas y UX
+  {
+    name: 'hot-air-balloon',
+    description: 'Retro visual - Fuego (impulsos), nubes (obstáculos), sacos (lastre)',
+    usage: '/hot-air-balloon "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'kalm',
+    description: 'KALM Retro - Keep, Add, Less, More (simple y efectiva)',
+    usage: '/kalm "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'persona',
+    description: 'Persona - Perfil de usuario ficticio para design thinking',
+    usage: '/persona "Tipo de usuario"',
+    category: 'analysis'
+  },
+  {
+    name: 'assumption-mapping',
+    description: 'Mapear supuestos por importancia y certeza - Validar antes de construir',
+    usage: '/assumption-mapping "Proyecto o hipótesis"',
+    category: 'analysis'
+  },
+  {
+    name: 'team-canvas',
+    description: 'Team Canvas - Roles, metas, valores y reglas del equipo',
+    usage: '/team-canvas "Nombre del equipo"',
+    category: 'collaboration'
+  },
+  // Ideación adicional
+  {
+    name: 'scamper',
+    description: 'SCAMPER - Sustituir, Combinar, Adaptar, Modificar, Propósito, Eliminar, Reorganizar',
+    usage: '/scamper "Producto o proceso a mejorar"',
+    category: 'collaboration'
+  },
+  {
+    name: 'starbursting',
+    description: 'Estrella 6 puntas - Qué, Quién, Dónde, Cuándo, Por qué, Cómo',
+    usage: '/starbursting "Idea o concepto"',
+    category: 'collaboration'
+  },
+  {
+    name: 'reverse-brainstorm',
+    description: 'Brainstorm Inverso - ¿Cómo causar el problema? → Invertir soluciones',
+    usage: '/reverse-brainstorm "Problema a resolver"',
+    category: 'collaboration'
+  },
+  {
+    name: 'worst-idea',
+    description: 'Peores Ideas - Generar las peores ideas → Transformarlas en buenas',
+    usage: '/worst-idea "Reto o problema"',
+    category: 'collaboration'
+  },
+  {
+    name: 'lotus-blossom',
+    description: 'Lotus Blossom - Idea central con 8 pétalos de sub-ideas',
+    usage: '/lotus-blossom "Tema central"',
+    category: 'collaboration'
+  },
+  {
+    name: 'how-might-we',
+    description: 'How Might We - Puente entre problema e ideación',
+    usage: '/how-might-we "Problema u oportunidad"',
+    category: 'collaboration'
+  },
+  // Retrospectivas adicionales
+  {
+    name: '4ls',
+    description: '4Ls Retro - Liked, Learned, Lacked, Longed for',
+    usage: '/4ls "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'starfish',
+    description: 'Starfish Retro - Keep, Less, More, Stop, Start (más completa)',
+    usage: '/starfish "Sprint o período"',
+    category: 'collaboration'
+  },
+  {
+    name: 'mad-sad-glad',
+    description: 'Mad/Sad/Glad - Retro emocional rápida',
+    usage: '/mad-sad-glad "Sprint o período"',
+    category: 'collaboration'
+  },
+  // Análisis adicional
+  {
+    name: 'five-whys',
+    description: '5 Porqués - Análisis de causa raíz preguntando "¿Por qué?" 5 veces',
+    usage: '/five-whys "Problema a analizar"',
+    category: 'analysis'
+  },
+  {
+    name: 'impact-effort',
+    description: 'Matriz Impacto/Esfuerzo - Priorización 2x2',
+    usage: '/impact-effort "Lista de opciones"',
+    category: 'analysis'
+  },
+  {
+    name: 'opportunity-tree',
+    description: 'Árbol de Oportunidades - Objetivo → Oportunidades → Soluciones',
+    usage: '/opportunity-tree "Objetivo principal"',
+    category: 'analysis'
+  },
+  {
+    name: 'empathy-map',
+    description: 'Mapa de Empatía - Dice, Piensa, Hace, Siente (Design Thinking)',
+    usage: '/empathy-map "Usuario o persona"',
+    category: 'analysis'
+  },
+  {
+    name: 'moscow',
+    description: 'MoSCoW - Must, Should, Could, Won\'t (priorización clásica)',
+    usage: '/moscow "Lista de features o requisitos"',
+    category: 'analysis'
+  },
+  {
+    name: 'pre-mortem',
+    description: 'Pre-mortem - Imaginar el fracaso para prevenir riesgos',
+    usage: '/pre-mortem "Proyecto o iniciativa"',
+    category: 'analysis'
+  },
+  // Frameworks de equipo
+  {
+    name: 'inception-deck',
+    description: 'Inception Deck - 10 cartas para alinear al equipo al inicio',
+    usage: '/inception-deck "Nombre del proyecto"',
+    category: 'management'
+  },
+  {
+    name: 'delegation-poker',
+    description: 'Delegation Poker - Definir niveles de delegación (Management 3.0)',
+    usage: '/delegation-poker "Decisión o área"',
+    category: 'collaboration'
+  },
+  {
+    name: 'moving-motivators',
+    description: 'Moving Motivators - Descubrir motivaciones del equipo (Management 3.0)',
+    usage: '/moving-motivators',
+    category: 'collaboration'
   }
 ];
 
