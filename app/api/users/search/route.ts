@@ -27,16 +27,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    // Buscar usuarios activos cuyo nombre coincida (case-insensitive)
+    const limit = parseInt(searchParams.get('limit') || '10');
+
+    // Buscar usuarios activos cuyo nombre o email coincida (case-insensitive)
     const users = await User.find({
       isActive: true,
-      name: { $regex: new RegExp(query, 'i') }
+      $or: [
+        { name: { $regex: new RegExp(query, 'i') } },
+        { email: { $regex: new RegExp(query, 'i') } }
+      ]
     })
-      .select('name email')
-      .limit(10)
+      .select('_id name email')
+      .limit(limit)
       .lean();
 
-    return NextResponse.json(users);
+    return NextResponse.json({ users });
   } catch (error: any) {
     console.error('Error searching users:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

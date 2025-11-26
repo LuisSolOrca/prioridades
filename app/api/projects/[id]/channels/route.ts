@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Channel from '@/models/Channel';
 import Project from '@/models/Project';
 import { trackChannelUsage } from '@/lib/gamification';
+import mongoose from 'mongoose';
 
 /**
  * GET /api/projects/[id]/channels
@@ -31,6 +32,7 @@ export async function GET(
 
     const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
     // Obtener todos los canales del proyecto
     // Filtrar: canales públicos O canales privados donde el usuario es miembro o creador
@@ -39,8 +41,8 @@ export async function GET(
       isActive: true,
       $or: [
         { isPrivate: { $ne: true } }, // Canales públicos (isPrivate false o undefined)
-        { isPrivate: true, members: userId }, // Canales privados donde es miembro
-        { isPrivate: true, createdBy: userId }, // Canales privados que creó
+        { isPrivate: true, members: userObjectId }, // Canales privados donde es miembro
+        { isPrivate: true, createdBy: userObjectId }, // Canales privados que creó
         ...(userRole === 'ADMIN' ? [{ isPrivate: true }] : []) // Admins ven todos
       ]
     })
