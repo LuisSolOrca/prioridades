@@ -7,7 +7,7 @@ import { triggerPusherEvent } from '@/lib/pusher-server';
 
 /**
  * POST /api/projects/[id]/messages/[messageId]/five-whys
- * Agregar un why o respuesta
+ * Agregar un why con respuesta
  */
 export async function POST(
   request: Request,
@@ -21,9 +21,10 @@ export async function POST(
 
     await connectDB();
 
-    const { type, text, whyId } = await request.json();
+    const body = await request.json();
+    const { why, answer } = body;
 
-    if (!type || !text?.trim()) {
+    if (!why?.trim() || !answer?.trim()) {
       return NextResponse.json(
         { error: 'Datos inválidos' },
         { status: 400 }
@@ -43,34 +44,22 @@ export async function POST(
       return NextResponse.json({ error: '5 Whys cerrado' }, { status: 400 });
     }
 
+    if (message.commandData.whys.length >= 5) {
+      return NextResponse.json({ error: 'Máximo 5 porqués' }, { status: 400 });
+    }
+
     const userId = (session.user as any).id;
     const userName = (session.user as any).name || 'Usuario';
 
-    if (type === 'why') {
-      // Agregar nuevo why
-      const newWhy = {
-        id: Date.now().toString(),
-        question: text.trim(),
-        answer: '',
-        userId,
-        userName
-      };
-      message.commandData.whys.push(newWhy);
-    } else if (type === 'answer' && whyId) {
-      // Agregar respuesta a un why
-      const why = message.commandData.whys.find((w: any) => w.id === whyId);
-      if (!why) {
-        return NextResponse.json({ error: 'Why no encontrado' }, { status: 400 });
-      }
-      why.answer = text.trim();
-      why.answeredBy = userId;
-      why.answeredByName = userName;
-    } else if (type === 'root-cause') {
-      // Establecer causa raíz
-      message.commandData.rootCause = text.trim();
-      message.commandData.rootCauseBy = userId;
-      message.commandData.rootCauseByName = userName;
-    }
+    // Agregar nuevo why con respuesta
+    const newWhy = {
+      id: Date.now().toString(),
+      why: why.trim(),
+      answer: answer.trim(),
+      userId,
+      userName
+    };
+    message.commandData.whys.push(newWhy);
 
     message.markModified('commandData');
     await message.save();
@@ -102,7 +91,7 @@ export async function POST(
 
 /**
  * PATCH /api/projects/[id]/messages/[messageId]/five-whys
- * Eliminar un why
+ * Guardar causa raíz o eliminar un why
  */
 export async function PATCH(
   request: Request,
@@ -116,7 +105,8 @@ export async function PATCH(
 
     await connectDB();
 
-    const { whyId } = await request.json();
+    const body = await request.json();
+    const { rootCause, whyId } = body;
 
     const message = await ChannelMessage.findById(params.messageId);
     if (!message) {
@@ -132,20 +122,32 @@ export async function PATCH(
     }
 
     const userId = (session.user as any).id;
-    const whyIndex = message.commandData.whys.findIndex((w: any) => w.id === whyId);
+    const userName = (session.user as any).name || 'Usuario';
 
-    if (whyIndex === -1) {
-      return NextResponse.json({ error: 'Why no encontrado' }, { status: 400 });
+    // Si se envía rootCause, guardar causa raíz
+    if (rootCause !== undefined) {
+      message.commandData.rootCause = rootCause.trim();
+      message.commandData.rootCauseBy = userId;
+      message.commandData.rootCauseByName = userName;
+    }
+    // Si se envía whyId, eliminar el why
+    else if (whyId) {
+      const whyIndex = message.commandData.whys.findIndex((w: any) => w.id === whyId);
+
+      if (whyIndex === -1) {
+        return NextResponse.json({ error: 'Why no encontrado' }, { status: 400 });
+      }
+
+      const why = message.commandData.whys[whyIndex];
+
+      // Solo el creador o admin puede eliminar
+      if (why.userId !== userId && (session.user as any).role !== 'ADMIN') {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      }
+
+      message.commandData.whys.splice(whyIndex, 1);
     }
 
-    const why = message.commandData.whys[whyIndex];
-
-    // Solo el creador o admin puede eliminar
-    if (why.userId !== userId && (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
-
-    message.commandData.whys.splice(whyIndex, 1);
     message.markModified('commandData');
     await message.save();
 
@@ -169,8 +171,8 @@ export async function PATCH(
 
     return NextResponse.json(savedMessage);
   } catch (error) {
-    console.error('Error in five-whys delete:', error);
-    return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 });
+    console.error('Error in five-whys patch:', error);
+    return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
 }
 
