@@ -97,18 +97,14 @@ export async function POST(
       );
     }
 
-    if (!channelId) {
-      return NextResponse.json(
-        { error: 'El ID del canal es requerido' },
-        { status: 400 }
-      );
-    }
+    // Si no se proporciona channelId, usar el projectId como canal principal
+    const effectiveChannelId = channelId || params.id;
 
     const userId = (session.user as any).id;
 
     const whiteboard = await Whiteboard.create({
       projectId: new mongoose.Types.ObjectId(params.id),
-      channelId: new mongoose.Types.ObjectId(channelId),
+      channelId: new mongoose.Types.ObjectId(effectiveChannelId),
       messageId: messageId ? new mongoose.Types.ObjectId(messageId) : null,
       title: title.trim(),
       elements: [],

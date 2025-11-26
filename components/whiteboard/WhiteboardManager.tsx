@@ -12,7 +12,9 @@ import {
   Search,
   Users,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Hash,
+  ChevronDown
 } from 'lucide-react';
 
 interface Whiteboard {
@@ -20,12 +22,19 @@ interface Whiteboard {
   title: string;
   projectId: string;
   channelId: string;
+  channelName?: string;
   createdBy: { _id: string; name: string; email: string };
   lastModifiedBy?: { _id: string; name: string; email: string };
   collaborators: any[];
   version: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface Channel {
+  _id: string;
+  name: string;
+  isPrivate?: boolean;
 }
 
 interface WhiteboardManagerProps {
@@ -36,17 +45,38 @@ interface WhiteboardManagerProps {
 export default function WhiteboardManager({ projectId, channelId }: WhiteboardManagerProps) {
   const { data: session } = useSession();
   const [whiteboards, setWhiteboards] = useState<Whiteboard[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [selectedChannelId, setSelectedChannelId] = useState<string>('');
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [filterChannelId, setFilterChannelId] = useState<string>('all');
 
   useEffect(() => {
+    loadChannels();
     loadWhiteboards();
   }, [projectId, channelId]);
+
+  const loadChannels = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/channels`);
+      if (response.ok) {
+        const data = await response.json();
+        const channelsList = data.channels || [];
+        setChannels(channelsList);
+        // Establecer el primer canal como seleccionado por defecto
+        if (channelsList.length > 0 && !selectedChannelId) {
+          setSelectedChannelId(channelsList[0]._id);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading channels:', err);
+    }
+  };
 
   const loadWhiteboards = async () => {
     try {
@@ -76,6 +106,13 @@ export default function WhiteboardManager({ projectId, channelId }: WhiteboardMa
   const handleCreate = async () => {
     if (!newTitle.trim() || creating) return;
 
+    // Validar que haya un canal seleccionado
+    const targetChannelId = selectedChannelId || channelId || (channels.length > 0 ? channels[0]._id : null);
+    if (!targetChannelId) {
+      setError('Selecciona un canal para la pizarra');
+      return;
+    }
+
     try {
       setCreating(true);
       setError(null);
@@ -85,7 +122,7 @@ export default function WhiteboardManager({ projectId, channelId }: WhiteboardMa
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newTitle.trim(),
-          channelId: channelId
+          channelId: targetChannelId
         })
       });
 
@@ -318,9 +355,39 @@ export default function WhiteboardManager({ projectId, channelId }: WhiteboardMa
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent mb-4"
               autoFocus
               onKeyPress={(e) => {
-                if (e.key === 'Enter') handleCreate();
+                if (e.key === 'Enter' && selectedChannelId) handleCreate();
               }}
             />
+
+            {/* Channel selector */}
+            {channels.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Canal
+                </label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <select
+                    value={selectedChannelId}
+                    onChange={(e) => setSelectedChannelId(e.target.value)}
+                    className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none cursor-pointer"
+                  >
+                    {channels.map((channel) => (
+                      <option key={channel._id} value={channel._id}>
+                        {channel.name} {channel.isPrivate ? '🔒' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                </div>
+              </div>
+            )}
+
+            {channels.length === 0 && !loading && (
+              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg text-sm text-yellow-700 dark:text-yellow-300">
+                No hay canales disponibles. La pizarra se creará en el canal principal.
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button
