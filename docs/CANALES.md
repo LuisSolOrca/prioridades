@@ -3811,6 +3811,13 @@ Para problemas o sugerencias:
 - ✅ **Documentación completa** - secciones detalladas en CANALES.md para comandos principales
 
 ### v1.3 (Noviembre 2025)
+- ✅ **Mensajes de voz** - grabar y enviar audio directamente en el chat
+  - Componente VoiceRecorder con visualización de waveform en tiempo real
+  - Componente VoicePlayer con controles de reproducción y progreso
+  - Límite de 5 minutos por mensaje
+  - Soporte para WebM (Opus) y MP4
+  - Cancelación de eco, supresión de ruido y ganancia automática
+  - Almacenamiento en base64 con datos de waveform
 - ✅ **Archivos adjuntos con Cloudflare R2** - sistema completo de gestión de archivos
   - Subir archivos desde el chat (botón 📎 Paperclip)
   - Pestaña dedicada "Archivos" por proyecto
