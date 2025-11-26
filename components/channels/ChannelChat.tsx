@@ -206,6 +206,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [semanticResults, setSemanticResults] = useState<any[]>([]);
   const [semanticSearching, setSemanticSearching] = useState(false);
   const [showSemanticResults, setShowSemanticResults] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [activeCommand, setActiveCommand] = useState<{
     type: string;
     data?: any;
@@ -677,6 +678,20 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       setSemanticResults([]);
     } finally {
       setSemanticSearching(false);
+    }
+  };
+
+  // Scroll to a specific message and highlight it
+  const scrollToMessage = (messageId: string) => {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedMessageId(messageId);
+      // Remove highlight after 3 seconds
+      setTimeout(() => setHighlightedMessageId(null), 3000);
+    } else {
+      // Message not in current view - might need to load more messages
+      console.log('Message not found in current view:', messageId);
     }
   };
 
@@ -4598,13 +4613,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     key={result._id}
                     className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 transition cursor-pointer"
                     onClick={() => {
-                      // Navigate to the message/dynamic
                       setShowSemanticResults(false);
-                      // If it's a dynamic, we could open it in fullscreen
-                      // For now, just show an alert with the info
-                      if (result.fullMessage?.commandType && result.fullMessage?.commandData) {
-                        alert(`Encontrado: ${result.title}\nTipo: ${result.commandType}\nCreado por: ${result.createdBy}`);
-                      }
+                      setSemanticSearchMode(false);
+                      setSearchQuery('');
+                      // Scroll to the message in the chat
+                      scrollToMessage(result._id);
                     }}
                   >
                     <div className="flex items-start gap-2">
@@ -4756,7 +4769,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               (index === 0 || new Date(messages[index - 1].createdAt) <= new Date(readMarker.lastReadAt));
 
             return (
-              <div key={message._id}>
+              <div
+                key={message._id}
+                id={`message-${message._id}`}
+                className={`transition-all duration-500 rounded-lg ${
+                  highlightedMessageId === message._id
+                    ? 'bg-yellow-100 dark:bg-yellow-900/30 ring-2 ring-yellow-400 dark:ring-yellow-500'
+                    : ''
+                }`}
+              >
                 {/* New Messages Divider */}
                 {isFirstUnread && unreadCount > 0 && (
                   <div className="flex items-center gap-3 my-4">
