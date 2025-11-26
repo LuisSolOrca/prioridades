@@ -5,6 +5,9 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getPusherClient } from '@/lib/pusher-client';
+
+// Importar CSS de Excalidraw
+import '@excalidraw/excalidraw/index.css';
 import {
   Loader2,
   Save,
@@ -65,6 +68,22 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const [localVersion, setLocalVersion] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [isUpdatingFromRemote, setIsUpdatingFromRemote] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Detectar tema
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
+
+    // Observer para cambios de tema
+    const observer = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme(isDark ? 'dark' : 'light');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Load whiteboard data
   useEffect(() => {
@@ -384,7 +403,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
       </div>
 
       {/* Excalidraw Canvas */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative" style={{ height: 'calc(100vh - 60px)' }}>
         <Excalidraw
           excalidrawAPI={(api) => {
             excalidrawAPIRef.current = api;
@@ -410,6 +429,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
             }
           }}
           langCode="es-ES"
+          theme={theme}
         />
       </div>
     </div>
