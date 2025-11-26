@@ -76,6 +76,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const [isUpdatingFromRemote, setIsUpdatingFromRemote] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [pendingLibraryUrl, setPendingLibraryUrl] = useState<string | null>(null);
+  const [excalidrawReady, setExcalidrawReady] = useState(false);
 
   // Manejar importación de librería desde URL hash (#addLibrary=...)
   useEffect(() => {
@@ -104,7 +105,7 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   // Importar librería pendiente cuando Excalidraw esté listo
   useEffect(() => {
     const importLibrary = async () => {
-      if (!pendingLibraryUrl || !excalidrawAPIRef.current) return;
+      if (!pendingLibraryUrl || !excalidrawReady || !excalidrawAPIRef.current) return;
 
       try {
         console.log('Fetching library from:', pendingLibraryUrl);
@@ -118,18 +119,17 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
         const libraryItems = libraryData.libraryItems || libraryData.library || [];
 
         if (libraryItems.length > 0) {
-          // Obtener librería actual y agregar los nuevos items
-          const currentLibrary = excalidrawAPIRef.current.getAppState()?.libraryItems || [];
-          const newLibrary = [...currentLibrary, ...libraryItems];
-
-          excalidrawAPIRef.current.updateScene({
-            libraryItems: newLibrary
+          // Usar updateLibrary para agregar items a la librería
+          await excalidrawAPIRef.current.updateLibrary({
+            libraryItems: libraryItems,
+            merge: true, // Merge con librería existente
+            openLibraryMenu: true // Abrir el menú de librería
           });
 
-          // Guardar en el servidor
-          handleLibraryChange(newLibrary);
-
+          console.log('Library updated successfully with', libraryItems.length, 'items');
           alert(`Librería importada: ${libraryItems.length} elementos agregados`);
+        } else {
+          console.log('No library items found in response');
         }
       } catch (err) {
         console.error('Error importing library:', err);
@@ -139,10 +139,31 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
       }
     };
 
-    // Esperar a que Excalidraw esté completamente cargado
-    const timer = setTimeout(importLibrary, 1000);
-    return () => clearTimeout(timer);
-  }, [pendingLibraryUrl, whiteboard]);
+    importLibrary();
+  }, [pendingLibraryUrl, excalidrawReady]);
+
+  // Cargar librería guardada después de que Excalidraw esté listo
+  useEffect(() => {
+    if (!whiteboard || !excalidrawReady || !excalidrawAPIRef.current) return;
+
+    const loadSavedLibrary = async () => {
+      const savedLibrary = whiteboard.libraryItems || [];
+      if (savedLibrary.length > 0) {
+        console.log('Loading saved library with', savedLibrary.length, 'items');
+        try {
+          await excalidrawAPIRef.current.updateLibrary({
+            libraryItems: savedLibrary,
+            merge: false // Reemplazar, no merge
+          });
+          console.log('Saved library loaded successfully');
+        } catch (err) {
+          console.error('Error loading saved library:', err);
+        }
+      }
+    };
+
+    loadSavedLibrary();
+  }, [whiteboard, excalidrawReady]);
 
   // Detectar tema
   useEffect(() => {
@@ -614,6 +635,8 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
         <Excalidraw
           excalidrawAPI={(api) => {
             excalidrawAPIRef.current = api;
+            // Marcar como listo después de un pequeño delay para asegurar inicialización completa
+            setTimeout(() => setExcalidrawReady(true), 100);
           }}
           initialData={{
             elements: whiteboard.elements || [],
