@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, FileText, Loader2, Copy, Check } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, FileText, Loader2, Copy, Check, Gauge } from 'lucide-react';
+
+const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 interface VoicePlayerProps {
   projectId: string;
@@ -36,6 +38,7 @@ export default function VoicePlayer({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -114,6 +117,15 @@ export default function VoicePlayer({
     if (!audioRef.current) return;
     audioRef.current.muted = !isMuted;
     setIsMuted(!isMuted);
+  };
+
+  const cyclePlaybackSpeed = () => {
+    if (!audioRef.current) return;
+    const currentIndex = PLAYBACK_SPEEDS.indexOf(playbackSpeed);
+    const nextIndex = (currentIndex + 1) % PLAYBACK_SPEEDS.length;
+    const newSpeed = PLAYBACK_SPEEDS[nextIndex];
+    audioRef.current.playbackRate = newSpeed;
+    setPlaybackSpeed(newSpeed);
   };
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -278,6 +290,15 @@ export default function VoicePlayer({
           title={isMuted ? 'Activar sonido' : 'Silenciar'}
         >
           {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </button>
+
+        {/* Playback speed button */}
+        <button
+          onClick={cyclePlaybackSpeed}
+          className="px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded transition flex-shrink-0 min-w-[40px]"
+          title="Cambiar velocidad de reproducción"
+        >
+          {playbackSpeed}x
         </button>
 
         {/* Transcribe button */}

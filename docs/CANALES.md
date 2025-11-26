@@ -2712,6 +2712,7 @@ Los mensajes de voz se muestran con un reproductor personalizado:
 - 🔊 **Control de mute** - silencia/activa el audio
 - ⏱️ **Tiempo** - muestra tiempo actual y duración total
 - 🖱️ **Barra clickeable** - salta a cualquier posición del audio
+- ⚡ **Control de velocidad** - cambia la velocidad de reproducción (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x)
 - 📄 **Transcripción con IA** - convierte el audio a texto
 
 ### Transcripción con IA
@@ -3526,6 +3527,15 @@ Para problemas o sugerencias:
 ---
 
 ## Changelog
+
+### v2.0.2 (Noviembre 2025) - Control de Velocidad de Reproducción
+
+#### Mensajes de Voz
+- ✅ **Control de velocidad** - Nueva función para acelerar o ralentizar la reproducción de mensajes de voz
+  - Velocidades disponibles: 0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x
+  - Botón intuitivo que muestra la velocidad actual
+  - Clic para ciclar entre velocidades
+  - Ideal para escuchar mensajes largos más rápido o para entender mejor mensajes complejos
 
 ### v2.0.1 (Noviembre 2025) - Almacenamiento R2 para Mensajes de Voz
 
