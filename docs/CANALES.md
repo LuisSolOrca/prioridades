@@ -21,11 +21,12 @@
 14. [Webhooks](#webhooks)
 15. [Archivos Adjuntos](#archivos-adjuntos)
 16. [Pestaña de Dinámicas](#pestaña-de-dinámicas)
-17. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
-18. [Notificaciones](#notificaciones)
-19. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
-20. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-21. [Roadmap Futuro](#roadmap-futuro)
+17. [Pizarra Colaborativa](#pizarra-colaborativa)
+18. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
+19. [Notificaciones](#notificaciones)
+20. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+21. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+22. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -76,6 +77,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🎯 **Pestaña de Dinámicas** - visualiza todas las dinámicas colaborativas del canal (encuestas, retrospectivas, etc.)
 - 📄 **Generación de documentos con IA** - crea documentos DOCX profesionales a partir de dinámicas seleccionadas
 - 🎨 **60+ Widgets colaborativos** - votaciones, retrospectivas, análisis, ideación, frameworks ágiles
+- 🎨 **Pizarra colaborativa** - canvas interactivo estilo Miro/Mural con Excalidraw y sincronización en tiempo real
 
 ---
 
@@ -1088,6 +1090,12 @@ Los **slash commands** son comandos especiales que empiezan con `/` para ejecuta
 | `/checklist` | Lista de tareas colaborativa | `/checklist "Título" "Item1" "Item2"` |
 | `/action-items` | Lista de acciones con responsable y fecha | `/action-items "Título"` |
 | `/question` | Pregunta a un stakeholder | `/question @usuario "¿pregunta?"` |
+
+##### 🎨 Visual y Canvas
+
+| Comando | Descripción | Uso |
+|---------|-------------|-----|
+| `/whiteboard` | Pizarra colaborativa (Excalidraw) | `/whiteboard "Título de la pizarra"` |
 
 #### ⚙️ Gestión (Management)
 
@@ -3108,6 +3116,199 @@ El sistema maneja elegantemente los usuarios eliminados:
 
 ---
 
+## Pizarra Colaborativa
+
+La **Pizarra Colaborativa** es un canvas interactivo estilo Miro/Mural que permite a los equipos dibujar, crear diagramas y colaborar visualmente en tiempo real. Utiliza **Excalidraw** como motor de dibujo.
+
+### Acceso a la Pizarra
+
+Hay dos formas de acceder a las pizarras:
+
+#### 1. Slash Command en Chat
+
+Escribe `/whiteboard "Título de la pizarra"` en el chat para crear una pizarra vinculada al mensaje:
+
+```
+/whiteboard "Arquitectura del Sistema"
+/whiteboard "Diagrama de Flujo - Login"
+/whiteboard "Ideas para MVP"
+```
+
+El widget mostrará:
+- 🖼️ Título de la pizarra
+- 👤 Creador
+- 🔗 Botón para abrir en nueva pestaña
+
+#### 2. Pestaña de Pizarras
+
+1. Ve a tu proyecto → Canales
+2. Selecciona un canal
+3. Haz clic en la pestaña **"Pizarras"** (ícono de lápiz)
+
+**Vista de la pestaña:**
+- 📋 Grid de pizarras existentes
+- ➕ Botón "Nueva Pizarra" para crear
+- 🔍 Búsqueda por título
+- 🗑️ Eliminar (solo creador/admin)
+
+### Herramientas del Canvas
+
+Excalidraw proporciona un conjunto completo de herramientas de dibujo:
+
+#### Formas Básicas
+- 📦 **Rectángulo** - cajas y contenedores
+- ⭕ **Elipse** - círculos y óvalos
+- 💎 **Diamante** - decisiones en diagramas de flujo
+- ➡️ **Flecha** - conectores direccionales
+- ➖ **Línea** - conexiones simples
+
+#### Texto y Anotaciones
+- 📝 **Texto** - etiquetas y descripciones
+- ✏️ **Lápiz** - dibujo a mano alzada
+
+#### Opciones de Estilo
+- 🎨 **Colores** - paleta de colores para relleno y trazo
+- 📏 **Grosor** - líneas finas a gruesas
+- 🔲 **Relleno** - sólido, rayado, punteado
+- ↔️ **Puntas de flecha** - varios estilos
+
+#### Acciones
+- ↩️ **Deshacer/Rehacer**
+- 📋 **Copiar/Pegar**
+- 🗑️ **Eliminar**
+- 🔒 **Bloquear elementos**
+- 📤 **Exportar** - PNG, SVG, archivo
+
+### Colaboración en Tiempo Real
+
+La pizarra soporta **colaboración en tiempo real** mediante Pusher:
+
+**Características:**
+- ⚡ **Sincronización instantánea** - los cambios aparecen para todos en < 100ms
+- 👥 **Indicador de usuarios** - ve cuántas personas están editando
+- 💾 **Auto-guardado** - cambios se guardan automáticamente cada 500ms
+- ✅ **Indicador de estado** - "Guardando...", "Guardado", "Error"
+
+**Control de concurrencia:**
+- 🔢 **Versionado optimista** - cada cambio incrementa la versión
+- 🔄 **Resolución de conflictos** - si hay conflicto, se sincroniza automáticamente
+- 🚫 **Sin pérdida de datos** - las actualizaciones remotas se fusionan correctamente
+
+### Modelo de Datos
+
+```typescript
+interface Whiteboard {
+  _id: ObjectId;
+  title: string;
+  projectId: ObjectId;
+  channelId: ObjectId;
+  messageId?: ObjectId;        // Si fue creada desde chat
+  elements: ExcalidrawElement[]; // Elementos del canvas
+  appState: {
+    viewBackgroundColor: string;
+    currentItemFontFamily: number;
+    zoom: { value: number };
+    scrollX: number;
+    scrollY: number;
+  };
+  files: { [key: string]: BinaryFile }; // Imágenes en base64
+  version: number;             // Para control de concurrencia
+  createdBy: ObjectId;
+  collaborators: ObjectId[];   // Usuarios que han editado
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### API Endpoints
+
+#### Gestión de Pizarras
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/api/projects/[id]/whiteboards` | Listar pizarras del proyecto |
+| `POST` | `/api/projects/[id]/whiteboards` | Crear nueva pizarra |
+| `GET` | `/api/projects/[id]/whiteboards/[whiteboardId]` | Obtener pizarra |
+| `PUT` | `/api/projects/[id]/whiteboards/[whiteboardId]` | Actualizar metadatos |
+| `DELETE` | `/api/projects/[id]/whiteboards/[whiteboardId]` | Eliminar pizarra |
+
+#### Sincronización de Elementos
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `PUT` | `/api/projects/[id]/whiteboards/[whiteboardId]/elements` | Sincronizar elementos (dispara Pusher) |
+
+#### Acceso Directo
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/api/whiteboards/[id]` | Obtener pizarra sin projectId |
+
+#### Creación desde Chat
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `POST` | `/api/projects/[id]/messages/[messageId]/whiteboard` | Crear pizarra vinculada a mensaje |
+
+### Página Full-Screen
+
+Cada pizarra tiene una página dedicada en `/whiteboard/[id]` con:
+
+**Header:**
+- ⬅️ Botón volver
+- 📝 Título de la pizarra
+- 👤 Creador
+- 👥 Contador de usuarios en línea
+- 💾 Indicador de guardado
+- 🔗 Abrir en nueva pestaña
+
+**Canvas:**
+- 🖼️ Área completa de dibujo (100% viewport)
+- 🛠️ Barra de herramientas de Excalidraw
+- 🌍 Idioma en español (es-ES)
+
+### Eventos Pusher
+
+La pizarra usa el canal `presence-whiteboard-{whiteboardId}`:
+
+```typescript
+// Eventos
+channel.bind('elements-updated', (data) => {
+  // data: { elements, appState, version, updatedBy }
+});
+
+channel.bind('pusher:subscription_succeeded', (members) => {
+  // Lista de miembros conectados
+});
+
+channel.bind('pusher:member_added', (member) => {
+  // Nuevo usuario conectado
+});
+
+channel.bind('pusher:member_removed', (member) => {
+  // Usuario desconectado
+});
+```
+
+### Integración con el Sistema
+
+#### Relación con Canales
+- Cada pizarra pertenece a un canal específico
+- Se lista en la pestaña "Pizarras" del canal
+- Puede crearse desde el chat con `/whiteboard`
+
+#### Relación con Mensajes
+- Las pizarras creadas con slash command se vinculan al mensaje
+- El widget muestra un preview en el chat
+- Click en "Abrir Pizarra" navega al editor full-screen
+
+#### Permisos
+- **Crear:** Cualquier miembro del proyecto
+- **Editar:** Cualquier miembro del proyecto (colaboración abierta)
+- **Eliminar:** Solo el creador o administradores
+
+---
+
 ## Limitaciones y Consideraciones
 
 ### Límites Técnicos
@@ -3148,6 +3349,7 @@ El sistema maneja elegantemente los usuarios eliminados:
 - [x] ✅ Webhooks entrantes y salientes
 - [x] ✅ Integración con Microsoft Teams
 - [x] ✅ Archivos adjuntos con Cloudflare R2
+- [x] ✅ Pizarra colaborativa con Excalidraw
 - [ ] Grabaciones de voz
 - [ ] Videollamadas integradas
 - [ ] Integración con Slack
@@ -3189,13 +3391,40 @@ Para problemas o sugerencias:
 ## Créditos
 
 **Desarrollado por:** Tu Empresa
-**Versión:** 1.9.0
+**Versión:** 2.0.0
 **Última actualización:** Noviembre 2025
 **Licencia:** Propietaria
 
 ---
 
 ## Changelog
+
+### v2.0.0 (Noviembre 2025) - Pizarra Colaborativa
+
+#### Pizarra Colaborativa (Whiteboard)
+- ✅ **Canvas interactivo** con Excalidraw para dibujo colaborativo estilo Miro/Mural
+  - Formas básicas: rectángulo, elipse, diamante, flechas, líneas
+  - Dibujo a mano alzada con lápiz
+  - Texto y anotaciones
+  - Paleta de colores y estilos de relleno
+
+- ✅ **Colaboración en tiempo real**
+  - Sincronización instantánea via Pusher (< 100ms)
+  - Indicador de usuarios en línea
+  - Control de concurrencia con versionado optimista
+  - Auto-guardado cada 500ms
+
+- ✅ **Integración completa**
+  - Slash command `/whiteboard "título"` en chat
+  - Pestaña "Pizarras" dedicada en canales
+  - Página full-screen en `/whiteboard/[id]`
+  - Widget visual en mensajes del chat
+
+- ✅ **Gestión de pizarras**
+  - Crear, editar, eliminar pizarras
+  - Búsqueda por título
+  - Grid de pizarras existentes
+  - Exportar a PNG, SVG, archivo
 
 ### v1.8.0 (Noviembre 2025) - Búsqueda Semántica con IA
 
