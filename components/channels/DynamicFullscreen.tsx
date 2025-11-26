@@ -17,7 +17,9 @@ import {
   Play,
   Pause,
   RotateCw,
-  Layers
+  Layers,
+  HelpCircle,
+  BookOpen
 } from 'lucide-react';
 
 // Import all collaborative widgets
@@ -135,6 +137,634 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string }> = {
   'opportunity-tree': { icon: Target, color: 'text-emerald-600' },
 };
 
+// Metodologías y guías de uso para cada tipo de dinámica
+const METHODOLOGY_GUIDE: Record<string, { title: string; description: string; steps: string[]; tips: string[] }> = {
+  'poll': {
+    title: 'Encuesta / Votación',
+    description: 'Herramienta para tomar decisiones democráticas mediante votación simple. Cada participante puede votar por una opción.',
+    steps: [
+      'El facilitador crea la encuesta con una pregunta clara',
+      'Se definen las opciones disponibles',
+      'Los participantes votan por su opción preferida',
+      'Los resultados se muestran en tiempo real'
+    ],
+    tips: [
+      'Usa preguntas claras y concisas',
+      'Limita las opciones a 3-5 para evitar dispersión',
+      'Establece un tiempo límite para votar'
+    ]
+  },
+  'dot-voting': {
+    title: 'Dot Voting (Votación por Puntos)',
+    description: 'Técnica de priorización donde cada participante distribuye un número fijo de puntos entre las opciones según su preferencia.',
+    steps: [
+      'Presenta las opciones a evaluar',
+      'Cada participante tiene N puntos para distribuir',
+      'Los puntos pueden asignarse a una o varias opciones',
+      'Las opciones con más puntos son las prioritarias'
+    ],
+    tips: [
+      'Usa 3-5 puntos por persona',
+      'Permite asignar múltiples puntos a una misma opción',
+      'Ideal para priorizar después de un brainstorm'
+    ]
+  },
+  'blind-vote': {
+    title: 'Voto Oculto',
+    description: 'Votación donde los resultados permanecen ocultos hasta que el facilitador los revela, evitando sesgos.',
+    steps: [
+      'Se presenta la pregunta y opciones',
+      'Los participantes votan sin ver los resultados',
+      'El facilitador revela los resultados cuando todos votaron',
+      'Se discuten los resultados'
+    ],
+    tips: [
+      'Ideal para temas sensibles',
+      'Evita el "efecto manada"',
+      'Útil para estimaciones y evaluaciones honestas'
+    ]
+  },
+  'brainstorm': {
+    title: 'Lluvia de Ideas (Brainstorming)',
+    description: 'Técnica creativa para generar muchas ideas en poco tiempo. Se enfoca en cantidad sobre calidad inicialmente.',
+    steps: [
+      'Define claramente el tema o problema',
+      'Los participantes agregan ideas libremente',
+      'No se critica ni juzga durante la generación',
+      'Se pueden votar las mejores ideas al final'
+    ],
+    tips: [
+      'Fomenta ideas "locas" - pueden inspirar soluciones',
+      'Construye sobre las ideas de otros',
+      'Usa timeboxing (5-10 min de generación)'
+    ]
+  },
+  'mind-map': {
+    title: 'Mapa Mental',
+    description: 'Representación visual de ideas conectadas alrededor de un concepto central. Facilita la organización y exploración de temas.',
+    steps: [
+      'Define el tema central',
+      'Agrega ramas principales (categorías)',
+      'Expande con sub-ramas (detalles)',
+      'Conecta ideas relacionadas'
+    ],
+    tips: [
+      'Usa palabras clave, no oraciones largas',
+      'Añade colores para diferenciar categorías',
+      'Mantén la jerarquía clara (máx 3-4 niveles)'
+    ]
+  },
+  'pros-cons': {
+    title: 'Pros y Contras',
+    description: 'Análisis estructurado de ventajas y desventajas de una decisión o propuesta.',
+    steps: [
+      'Define claramente la decisión a evaluar',
+      'Lista todos los aspectos positivos (Pros)',
+      'Lista todos los aspectos negativos (Contras)',
+      'Evalúa el balance y toma la decisión'
+    ],
+    tips: [
+      'Sé específico en cada punto',
+      'Considera pros/contras a corto y largo plazo',
+      'Involucra diferentes perspectivas del equipo'
+    ]
+  },
+  'decision-matrix': {
+    title: 'Matriz de Decisión',
+    description: 'Herramienta para evaluar opciones contra múltiples criterios ponderados, facilitando decisiones objetivas.',
+    steps: [
+      'Define las opciones a evaluar',
+      'Establece los criterios de evaluación',
+      'Puntúa cada opción en cada criterio',
+      'La opción con mayor puntaje es la recomendada'
+    ],
+    tips: [
+      'Usa 3-5 criterios relevantes',
+      'Pondera los criterios si no son igual de importantes',
+      'Involucra a stakeholders en la puntuación'
+    ]
+  },
+  'ranking': {
+    title: 'Ranking / Priorización',
+    description: 'Ordena elementos según preferencia o importancia. Cada participante crea su ranking y se calcula el consenso.',
+    steps: [
+      'Presenta los elementos a ordenar',
+      'Cada participante ordena de mayor a menor preferencia',
+      'Se calcula el ranking promedio',
+      'Se identifica el consenso del grupo'
+    ],
+    tips: [
+      'Limita a 5-7 elementos para facilitar la decisión',
+      'Discute las diferencias significativas entre rankings',
+      'Usa criterios claros para ordenar'
+    ]
+  },
+  'retrospective': {
+    title: 'Retrospectiva Ágil',
+    description: 'Reunión de mejora continua donde el equipo reflexiona sobre qué funcionó bien, qué mejorar y qué acciones tomar.',
+    steps: [
+      'Revisa el período/sprint anterior',
+      'Identifica qué salió bien',
+      'Identifica qué puede mejorar',
+      'Define acciones concretas de mejora'
+    ],
+    tips: [
+      'Crea un ambiente seguro para feedback honesto',
+      'Enfócate en procesos, no personas',
+      'Limita las acciones a 2-3 por retro'
+    ]
+  },
+  'rose-bud-thorn': {
+    title: 'Rose, Bud, Thorn (Rosa, Brote, Espina)',
+    description: 'Técnica de retrospectiva que identifica éxitos (rosas), potenciales (brotes) y problemas (espinas).',
+    steps: [
+      '🌹 Rosas: ¿Qué funcionó bien? ¿Qué celebramos?',
+      '🌱 Brotes: ¿Qué tiene potencial? ¿Qué ideas nuevas?',
+      '🌵 Espinas: ¿Qué nos causó problemas? ¿Qué eliminar?',
+      'Prioriza y define acciones'
+    ],
+    tips: [
+      'Empieza con las rosas para crear ambiente positivo',
+      'Los brotes son oportunidades de mejora',
+      'Transforma espinas en acciones concretas'
+    ]
+  },
+  'sailboat': {
+    title: 'Velero (Sailboat)',
+    description: 'Metáfora de retrospectiva: el equipo es un velero navegando hacia una meta, con vientos que impulsan y anclas que frenan.',
+    steps: [
+      '🏝️ Isla: Define la meta/visión del equipo',
+      '💨 Viento: ¿Qué nos impulsa hacia adelante?',
+      '⚓ Ancla: ¿Qué nos frena o detiene?',
+      '🪨 Rocas: ¿Qué riesgos vemos adelante?'
+    ],
+    tips: [
+      'Visualiza el velero en el centro',
+      'Los vientos son fortalezas a mantener',
+      'Las anclas son problemas a resolver'
+    ]
+  },
+  'start-stop-continue': {
+    title: 'Start, Stop, Continue',
+    description: 'Framework simple de retrospectiva que identifica qué comenzar, qué dejar de hacer y qué continuar.',
+    steps: [
+      '🟢 Start: ¿Qué deberíamos empezar a hacer?',
+      '🔴 Stop: ¿Qué deberíamos dejar de hacer?',
+      '🟡 Continue: ¿Qué debemos seguir haciendo?',
+      'Prioriza y asigna responsables'
+    ],
+    tips: [
+      'Sé específico en cada categoría',
+      'Los "stops" requieren valentía - crea espacio seguro',
+      'Celebra los "continues" - reconoce lo bueno'
+    ]
+  },
+  'swot': {
+    title: 'Análisis SWOT/FODA',
+    description: 'Framework estratégico que analiza Fortalezas, Oportunidades, Debilidades y Amenazas de un proyecto u organización.',
+    steps: [
+      '💪 Fortalezas: Ventajas internas actuales',
+      '⚠️ Debilidades: Limitaciones internas actuales',
+      '🎯 Oportunidades: Factores externos favorables',
+      '⚡ Amenazas: Factores externos desfavorables'
+    ],
+    tips: [
+      'Fortalezas/Debilidades = factores internos (controlables)',
+      'Oportunidades/Amenazas = factores externos',
+      'Usa SWOT para planificación estratégica'
+    ]
+  },
+  'soar': {
+    title: 'Análisis SOAR',
+    description: 'Alternativa positiva al SWOT que se enfoca en Fortalezas, Oportunidades, Aspiraciones y Resultados.',
+    steps: [
+      '💪 Fortalezas: ¿En qué somos buenos?',
+      '🎯 Oportunidades: ¿Qué posibilidades tenemos?',
+      '✨ Aspiraciones: ¿Qué queremos lograr?',
+      '🏆 Resultados: ¿Cómo mediremos el éxito?'
+    ],
+    tips: [
+      'Enfoque apreciativo - construye desde lo positivo',
+      'Ideal para planificación y visión',
+      'Más motivador que SWOT tradicional'
+    ]
+  },
+  'six-hats': {
+    title: '6 Sombreros de Bono',
+    description: 'Técnica de pensamiento paralelo donde cada "sombrero" representa una perspectiva diferente para analizar un tema.',
+    steps: [
+      '⚪ Blanco: Hechos y datos objetivos',
+      '🔴 Rojo: Emociones e intuiciones',
+      '⚫ Negro: Crítica y riesgos',
+      '🟡 Amarillo: Beneficios y optimismo',
+      '🟢 Verde: Creatividad y alternativas',
+      '🔵 Azul: Control del proceso'
+    ],
+    tips: [
+      'Todos usan el mismo sombrero a la vez',
+      'El sombrero azul modera la sesión',
+      'Evita que las discusiones se mezclen'
+    ]
+  },
+  'crazy-8s': {
+    title: 'Crazy 8s',
+    description: 'Técnica de Design Sprint para generar 8 ideas en 8 minutos, forzando pensamiento rápido y creativo.',
+    steps: [
+      'Dobla una hoja en 8 secciones',
+      'Tienes 1 minuto por sección',
+      'Dibuja/escribe una idea por sección',
+      'No borres ni juzgues - solo genera'
+    ],
+    tips: [
+      'La presión de tiempo libera creatividad',
+      'Bocetos rápidos, no arte perfecto',
+      'Ideal antes de votar por la mejor idea'
+    ]
+  },
+  'affinity-map': {
+    title: 'Mapa de Afinidad',
+    description: 'Técnica para organizar grandes cantidades de ideas agrupándolas por temas o categorías similares.',
+    steps: [
+      'Genera todas las ideas (post-its virtuales)',
+      'Agrupa ideas similares',
+      'Nombra cada grupo/categoría',
+      'Identifica patrones y prioridades'
+    ],
+    tips: [
+      'Trabaja en silencio durante el agrupamiento',
+      'Los grupos emergen naturalmente',
+      'Ideal después de brainstorming o investigación'
+    ]
+  },
+  'fist-of-five': {
+    title: 'Puño de Cinco',
+    description: 'Técnica de consenso rápido donde cada persona muestra 0-5 dedos para indicar su nivel de acuerdo.',
+    steps: [
+      'El facilitador hace una propuesta',
+      'Todos muestran dedos simultáneamente',
+      '5 = totalmente de acuerdo',
+      '0-2 = necesita discusión adicional'
+    ],
+    tips: [
+      '0-2: Veto - requiere discusión',
+      '3: Apoyo con reservas',
+      '4-5: Apoyo total'
+    ]
+  },
+  'confidence-vote': {
+    title: 'Voto de Confianza',
+    description: 'Mide el nivel de confianza del equipo en una decisión, estimación o plan.',
+    steps: [
+      'Presenta la propuesta/plan',
+      'Cada persona vota su nivel de confianza (1-5)',
+      'Discute los votos bajos',
+      'Ajusta el plan si es necesario'
+    ],
+    tips: [
+      'Votos bajos no son críticas personales',
+      'Explora las razones de baja confianza',
+      'Busca un mínimo de 3/5 promedio'
+    ]
+  },
+  'nps': {
+    title: 'Net Promoter Score (NPS)',
+    description: 'Métrica que mide la probabilidad de recomendación en una escala de 0-10.',
+    steps: [
+      'Pregunta: "¿Qué tan probable es que recomiendes...?"',
+      'Los participantes votan de 0 a 10',
+      'Se calculan: Promotores (9-10), Pasivos (7-8), Detractores (0-6)',
+      'NPS = % Promotores - % Detractores'
+    ],
+    tips: [
+      'NPS > 0 es positivo, > 50 es excelente',
+      'Pregunta "¿Por qué?" para entender los votos',
+      'Útil para feedback de clientes o equipo'
+    ]
+  },
+  'action-items': {
+    title: 'Lista de Acciones',
+    description: 'Registro de tareas con responsable, fecha límite y seguimiento de estado.',
+    steps: [
+      'Define la acción específica',
+      'Asigna un responsable',
+      'Establece fecha límite',
+      'Haz seguimiento del progreso'
+    ],
+    tips: [
+      'Acciones deben ser específicas y medibles',
+      'Un solo responsable por acción',
+      'Revisa el avance regularmente'
+    ]
+  },
+  'checklist': {
+    title: 'Checklist',
+    description: 'Lista de verificación para asegurar que se completen todos los pasos o requisitos.',
+    steps: [
+      'Lista todos los items a verificar',
+      'Ordena por prioridad o secuencia',
+      'Marca cada item al completarlo',
+      'Revisa que todo esté completo'
+    ],
+    tips: [
+      'Ideal para procesos repetitivos',
+      'Reduce errores por olvido',
+      'Mantén las listas actualizadas'
+    ]
+  },
+  'agenda': {
+    title: 'Agenda de Reunión',
+    description: 'Estructura los temas a tratar en una reunión con tiempos asignados.',
+    steps: [
+      'Lista los temas a discutir',
+      'Asigna tiempo a cada tema',
+      'Designa presentador si aplica',
+      'Sigue el orden durante la reunión'
+    ],
+    tips: [
+      'Comparte la agenda antes de la reunión',
+      'Respeta los tiempos asignados',
+      'Deja tiempo para preguntas'
+    ]
+  },
+  'parking-lot': {
+    title: 'Parking Lot (Estacionamiento)',
+    description: 'Espacio para "estacionar" temas importantes que surgen pero no corresponden al momento actual.',
+    steps: [
+      'Cuando surge un tema fuera de agenda, anótalo',
+      'Continúa con el tema actual',
+      'Al final, revisa los temas estacionados',
+      'Programa tiempo para abordarlos'
+    ],
+    tips: [
+      'Evita desviaciones en reuniones',
+      'Valida que los temas son importantes',
+      'No dejes temas abandonados'
+    ]
+  },
+  'estimation-poker': {
+    title: 'Planning Poker',
+    description: 'Técnica ágil para estimar esfuerzo usando cartas con valores de Fibonacci, promoviendo discusión.',
+    steps: [
+      'Presenta la historia/tarea a estimar',
+      'Cada persona elige una carta en secreto',
+      'Todos revelan simultáneamente',
+      'Discute las diferencias y re-estima si es necesario'
+    ],
+    tips: [
+      'Usa Fibonacci: 1, 2, 3, 5, 8, 13, 21...',
+      'Las diferencias grandes indican falta de entendimiento',
+      'El debate es más valioso que el número final'
+    ]
+  },
+  'kudos-wall': {
+    title: 'Muro de Kudos',
+    description: 'Espacio para reconocer públicamente los logros y contribuciones de los miembros del equipo.',
+    steps: [
+      'Escribe un reconocimiento específico',
+      'Menciona a quién va dirigido',
+      'Explica por qué lo merece',
+      'Comparte con el equipo'
+    ],
+    tips: [
+      'Sé específico sobre la contribución',
+      'Reconoce comportamientos, no solo resultados',
+      'Fomenta que todos participen'
+    ]
+  },
+  'icebreaker': {
+    title: 'Icebreaker (Rompe-hielo)',
+    description: 'Pregunta o actividad para crear conexión y energía positiva al inicio de una sesión.',
+    steps: [
+      'El facilitador lanza una pregunta',
+      'Cada participante responde brevemente',
+      'Se crea un ambiente relajado',
+      'Se procede con la agenda principal'
+    ],
+    tips: [
+      'Preguntas ligeras y divertidas',
+      'Respuestas cortas (30 seg - 1 min)',
+      'Ideal para equipos remotos o nuevos'
+    ]
+  },
+  'team-health': {
+    title: 'Team Health Check (Spotify)',
+    description: 'Metodología de Spotify para evaluar la salud del equipo en diferentes dimensiones.',
+    steps: [
+      'Evalúa cada área de 1-5',
+      'Verde = bien, Amarillo = ok, Rojo = problema',
+      'Discute las áreas en rojo',
+      'Define acciones de mejora'
+    ],
+    tips: [
+      'Hazlo regularmente (mensual)',
+      'Compara tendencias en el tiempo',
+      'Enfócate en 1-2 áreas a mejorar'
+    ]
+  },
+  'mood': {
+    title: 'Check-in de Estado de Ánimo',
+    description: 'Captura rápida del estado emocional del equipo al inicio de una sesión.',
+    steps: [
+      'Cada persona comparte su estado',
+      'Usa emojis o escala simple',
+      'No se juzga ni se profundiza',
+      'Ayuda a calibrar la energía del equipo'
+    ],
+    tips: [
+      'Rápido: 1-2 minutos total',
+      'Opcional: agregar una palabra',
+      'Ajusta la sesión según el ánimo general'
+    ]
+  },
+  'standup': {
+    title: 'Daily Standup',
+    description: 'Reunión diaria corta donde cada miembro comparte su progreso, plan y bloqueos.',
+    steps: [
+      '¿Qué hice ayer?',
+      '¿Qué haré hoy?',
+      '¿Tengo algún bloqueo?',
+      'Máximo 15 minutos total'
+    ],
+    tips: [
+      'De pie para mantenerlo corto',
+      'Respuestas de 1-2 minutos por persona',
+      'Los bloqueos se resuelven después'
+    ]
+  },
+  'scamper': {
+    title: 'SCAMPER',
+    description: 'Técnica de creatividad con 7 preguntas para generar ideas innovadoras sobre un producto o servicio existente.',
+    steps: [
+      'S - Sustituir: ¿Qué puedo reemplazar?',
+      'C - Combinar: ¿Qué puedo unir o mezclar?',
+      'A - Adaptar: ¿Qué puedo ajustar o copiar de otro contexto?',
+      'M - Modificar: ¿Qué puedo cambiar (tamaño, forma, color)?',
+      'P - Propósito: ¿Para qué más puede servir?',
+      'E - Eliminar: ¿Qué puedo quitar o simplificar?',
+      'R - Reorganizar: ¿Qué puedo invertir o reordenar?'
+    ],
+    tips: [
+      'Aplica cada letra al producto/servicio',
+      'No todas las preguntas aplican siempre',
+      'Genera múltiples ideas por categoría'
+    ]
+  },
+  'starbursting': {
+    title: 'Starbursting (Estrella de Preguntas)',
+    description: 'Técnica que genera preguntas en 6 dimensiones (Qué, Quién, Dónde, Cuándo, Por qué, Cómo) para explorar un tema.',
+    steps: [
+      '❓ Qué: ¿Qué es? ¿Qué incluye? ¿Qué necesita?',
+      '👤 Quién: ¿Quién lo usará? ¿Quién lo hará?',
+      '📍 Dónde: ¿Dónde se usará? ¿Dónde se implementará?',
+      '📅 Cuándo: ¿Cuándo estará listo? ¿Cuándo se necesita?',
+      '💡 Por qué: ¿Por qué es necesario? ¿Por qué ahora?',
+      '⚙️ Cómo: ¿Cómo funcionará? ¿Cómo lo haremos?'
+    ],
+    tips: [
+      'Genera muchas preguntas antes de responder',
+      'Las preguntas revelan lo que no sabemos',
+      'Ideal para nuevos proyectos o productos'
+    ]
+  },
+  'reverse-brainstorm': {
+    title: 'Brainstorming Inverso',
+    description: 'Técnica creativa que pregunta "¿Cómo causaríamos el problema?" para luego invertir las respuestas en soluciones.',
+    steps: [
+      'Define el problema a resolver',
+      'Pregunta: "¿Cómo podríamos CAUSAR este problema?"',
+      'Genera ideas de cómo empeorar las cosas',
+      'Invierte cada idea en una solución positiva'
+    ],
+    tips: [
+      'Es más fácil pensar en cómo causar problemas',
+      'Libera creatividad sin autocensura',
+      'Las soluciones invertidas son sorprendentemente útiles'
+    ]
+  },
+  'worst-idea': {
+    title: 'Peores Ideas',
+    description: 'Técnica donde se generan intencionalmente las peores ideas posibles, para luego transformarlas en buenas.',
+    steps: [
+      'Define el desafío o pregunta',
+      'Genera las peores ideas posibles',
+      'Analiza qué hace "mala" a cada idea',
+      'Transforma cada mala idea en una buena'
+    ],
+    tips: [
+      'Elimina el miedo a proponer ideas',
+      'Las malas ideas a menudo contienen semillas de buenas',
+      'Muy divertido y energizante'
+    ]
+  },
+  'lotus-blossom': {
+    title: 'Lotus Blossom (Flor de Loto)',
+    description: 'Técnica de expansión de ideas: una idea central se rodea de 8 pétalos, cada uno con sub-ideas.',
+    steps: [
+      'Escribe la idea central en el centro',
+      'Genera 8 temas/aspectos relacionados (pétalos)',
+      'Para cada pétalo, genera más sub-ideas',
+      'Explora las conexiones entre pétalos'
+    ],
+    tips: [
+      'Ideal para explorar un concepto en profundidad',
+      'Los pétalos pueden ser categorías o perspectivas',
+      'Combina con dot-voting para priorizar'
+    ]
+  },
+  'five-whys': {
+    title: '5 Porqués (5 Whys)',
+    description: 'Técnica de análisis de causa raíz que pregunta "¿Por qué?" repetidamente hasta llegar a la causa fundamental.',
+    steps: [
+      'Define el problema claramente',
+      'Pregunta "¿Por qué ocurre?" - primera respuesta',
+      'Pregunta "¿Por qué?" sobre esa respuesta',
+      'Repite hasta llegar a la causa raíz (generalmente 5 veces)',
+      'Define acciones para la causa raíz'
+    ],
+    tips: [
+      'No siempre son exactamente 5 porqués',
+      'Evita culpar personas - enfócate en procesos',
+      'Puede haber múltiples ramas de causas'
+    ]
+  },
+  'impact-effort': {
+    title: 'Matriz Impacto/Esfuerzo',
+    description: 'Framework de priorización 2x2 que clasifica ideas según su impacto potencial y esfuerzo requerido.',
+    steps: [
+      'Lista las ideas/tareas a priorizar',
+      'Evalúa el impacto de cada una (alto/bajo)',
+      'Evalúa el esfuerzo requerido (alto/bajo)',
+      'Clasifica en los 4 cuadrantes'
+    ],
+    tips: [
+      '🚀 Quick Wins (alto impacto, bajo esfuerzo): Hacer primero',
+      '🎯 Big Bets (alto impacto, alto esfuerzo): Planificar bien',
+      '📝 Fill-ins (bajo impacto, bajo esfuerzo): Si hay tiempo',
+      '⚠️ Time Sinks (bajo impacto, alto esfuerzo): Evitar'
+    ]
+  },
+  'opportunity-tree': {
+    title: 'Árbol de Oportunidades',
+    description: 'Framework visual que conecta un objetivo con oportunidades y las soluciones propuestas para cada una.',
+    steps: [
+      'Define el objetivo/outcome deseado (raíz)',
+      'Identifica oportunidades que llevan al objetivo',
+      'Para cada oportunidad, genera posibles soluciones',
+      'Prioriza las soluciones a implementar'
+    ],
+    tips: [
+      'Un objetivo puede tener múltiples oportunidades',
+      'Las oportunidades son necesidades del usuario',
+      'Las soluciones son ideas a experimentar'
+    ]
+  },
+  'inception-deck': {
+    title: 'Inception Deck (Mazo de Incepción)',
+    description: 'Conjunto de 10 ejercicios para alinear al equipo al inicio de un proyecto sobre visión, alcance y expectativas.',
+    steps: [
+      'Completa las 10 cartas con el equipo',
+      'Incluye: Why, Elevator Pitch, NOT list, Neighbors...',
+      'Discute cada carta hasta lograr consenso',
+      'Documenta y comparte con stakeholders'
+    ],
+    tips: [
+      'Ideal al inicio de proyectos nuevos',
+      'Involucra a todos los stakeholders clave',
+      'Revisa si hay cambios significativos'
+    ]
+  },
+  'delegation-poker': {
+    title: 'Delegation Poker (Management 3.0)',
+    description: 'Técnica para clarificar niveles de delegación entre manager y equipo en diferentes decisiones.',
+    steps: [
+      'Lista las decisiones a discutir',
+      'Cada persona vota el nivel de delegación (1-7)',
+      'Se revelan y discuten las diferencias',
+      'Se acuerda el nivel para cada decisión'
+    ],
+    tips: [
+      'Niveles: 1=Tell, 2=Sell, 3=Consult, 4=Agree, 5=Advise, 6=Inquire, 7=Delegate',
+      'Clarifica expectativas de autonomía',
+      'Revisa periódicamente si cambia el contexto'
+    ]
+  },
+  'moving-motivators': {
+    title: 'Moving Motivators (Management 3.0)',
+    description: 'Ejercicio para descubrir qué motiva a cada persona del equipo ordenando 10 motivadores.',
+    steps: [
+      'Ordena los 10 motivadores de más a menos importante',
+      'Comparte tu orden con el equipo',
+      'Marca cuáles suben o bajan con un cambio',
+      'Discute insights y diferencias'
+    ],
+    tips: [
+      'Los 10: Curiosidad, Honor, Aceptación, Maestría, Poder, Libertad, Relación, Orden, Meta, Estatus',
+      'No hay respuestas correctas o incorrectas',
+      'Útil para entender qué motiva al equipo'
+    ]
+  }
+};
+
 export default function DynamicFullscreen({
   dynamic,
   projectId,
@@ -147,6 +777,7 @@ export default function DynamicFullscreen({
   const { data: session } = useSession();
   const [closing, setClosing] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(5);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -858,6 +1489,20 @@ export default function DynamicFullscreen({
             </span>
           </div>
 
+          {/* Help Button */}
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition text-sm font-medium ${
+              showHelp
+                ? 'bg-blue-500 text-white'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+            }`}
+            title="Ver metodología"
+          >
+            <BookOpen size={16} />
+            Guía
+          </button>
+
           {/* Timer */}
           <div className="flex items-center gap-2">
             {!showTimer ? (
@@ -1009,16 +1654,107 @@ export default function DynamicFullscreen({
         </div>
       </div>
 
-      {/* Dynamic Content */}
-      <div className="flex-1 overflow-auto p-4">
-        <div className="w-full h-full">
-          <ErrorBoundary
-            componentName={`dinámica ${dynamic.commandType}`}
-            onClose={onClose}
-          >
-            {renderDynamicComponent()}
-          </ErrorBoundary>
+      {/* Dynamic Content with Help Panel */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main Content */}
+        <div className={`flex-1 overflow-auto p-4 transition-all ${showHelp ? 'pr-2' : ''}`}>
+          <div className="w-full h-full">
+            <ErrorBoundary
+              componentName={`dinámica ${dynamic.commandType}`}
+              onClose={onClose}
+            >
+              {renderDynamicComponent()}
+            </ErrorBoundary>
+          </div>
         </div>
+
+        {/* Methodology Help Panel */}
+        {showHelp && (
+          <div className="w-80 lg:w-96 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto flex-shrink-0">
+            <div className="p-4">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="text-blue-500" size={20} />
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    Guía de Metodología
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowHelp(false)}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                >
+                  <X size={16} className="text-gray-400" />
+                </button>
+              </div>
+
+              {/* Content */}
+              {METHODOLOGY_GUIDE[dynamic.commandType] ? (
+                <div className="space-y-4">
+                  {/* Title & Description */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-bold text-blue-800 dark:text-blue-200 text-lg mb-2">
+                      {METHODOLOGY_GUIDE[dynamic.commandType].title}
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      {METHODOLOGY_GUIDE[dynamic.commandType].description}
+                    </p>
+                  </div>
+
+                  {/* Steps */}
+                  <div>
+                    <h5 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 text-xs">
+                        ✓
+                      </span>
+                      Pasos a seguir
+                    </h5>
+                    <ol className="space-y-2 ml-2">
+                      {METHODOLOGY_GUIDE[dynamic.commandType].steps.map((step, idx) => (
+                        <li key={idx} className="flex gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <span className="flex-shrink-0 w-5 h-5 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
+                            {idx + 1}
+                          </span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {/* Tips */}
+                  <div>
+                    <h5 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400 text-xs">
+                        💡
+                      </span>
+                      Tips y recomendaciones
+                    </h5>
+                    <ul className="space-y-2 ml-2">
+                      {METHODOLOGY_GUIDE[dynamic.commandType].tips.map((tip, idx) => (
+                        <li key={idx} className="flex gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <span className="flex-shrink-0 text-amber-500">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <HelpCircle size={40} className="mx-auto mb-2 opacity-50" />
+                  <p>No hay guía disponible para este tipo de dinámica.</p>
+                </div>
+              )}
+
+              {/* Footer tip */}
+              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  Presiona el botón "Guía" para ocultar este panel
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
