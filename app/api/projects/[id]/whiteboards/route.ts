@@ -110,7 +110,10 @@ export async function POST(
       elements: [],
       appState: {
         viewBackgroundColor: '#ffffff',
-        currentItemFontFamily: 1
+        currentItemFontFamily: 1,
+        zoom: { value: 1 },
+        scrollX: 0,
+        scrollY: 0
       },
       files: {},
       createdBy: new mongoose.Types.ObjectId(userId),

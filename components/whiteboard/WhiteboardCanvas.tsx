@@ -366,7 +366,11 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
           initialData={{
             elements: whiteboard.elements || [],
             appState: {
-              ...whiteboard.appState,
+              viewBackgroundColor: whiteboard.appState?.viewBackgroundColor || '#ffffff',
+              currentItemFontFamily: whiteboard.appState?.currentItemFontFamily || 1,
+              zoom: whiteboard.appState?.zoom || { value: 1 },
+              scrollX: whiteboard.appState?.scrollX || 0,
+              scrollY: whiteboard.appState?.scrollY || 0,
               collaborators: new Map()
             },
             files: whiteboard.files || {}
