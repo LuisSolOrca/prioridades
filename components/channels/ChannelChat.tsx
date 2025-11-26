@@ -4631,7 +4631,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                   ) : (message.commandType === 'rose-bud-thorn' || message.commandType === 'sailboat' ||
                        message.commandType === 'start-stop-continue' || message.commandType === 'swot' ||
                        message.commandType === 'soar' || message.commandType === 'six-hats' ||
-                       message.commandType === 'crazy-8s' || message.commandType === 'affinity-map') &&
+                       message.commandType === 'crazy-8s' || message.commandType === 'affinity-map' ||
+                       message.commandType === 'scamper' || message.commandType === 'starbursting' ||
+                       message.commandType === 'reverse-brainstorm' || message.commandType === 'worst-idea' ||
+                       message.commandType === 'empathy-map' || message.commandType === 'moscow' ||
+                       message.commandType === '4ls' || message.commandType === 'pre-mortem' ||
+                       message.commandType === 'starfish' || message.commandType === 'mad-sad-glad' ||
+                       message.commandType === 'how-might-we' || message.commandType === 'hot-air-balloon' ||
+                       message.commandType === 'kalm') &&
                        message.commandData ? (
                     /* Render Retro Command */
                     <div className="relative group">
@@ -4652,6 +4659,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'six-hats' ? <span className="text-white text-xl">🎩</span> :
                           message.commandType === 'crazy-8s' ? <span className="text-white text-xl">🎨</span> :
                           message.commandType === 'affinity-map' ? <span className="text-white text-xl">📌</span> :
+                          message.commandType === 'scamper' ? <span className="text-white text-xl">🔄</span> :
+                          message.commandType === 'starbursting' ? <span className="text-white text-xl">⭐</span> :
+                          message.commandType === 'reverse-brainstorm' ? <span className="text-white text-xl">🔀</span> :
+                          message.commandType === 'worst-idea' ? <span className="text-white text-xl">👎</span> :
+                          message.commandType === 'empathy-map' ? <span className="text-white text-xl">💭</span> :
+                          message.commandType === 'moscow' ? <span className="text-white text-xl">📋</span> :
+                          message.commandType === '4ls' ? <span className="text-white text-xl">4️⃣</span> :
+                          message.commandType === 'pre-mortem' ? <span className="text-white text-xl">💀</span> :
+                          message.commandType === 'starfish' ? <span className="text-white text-xl">⭐</span> :
+                          message.commandType === 'mad-sad-glad' ? <span className="text-white text-xl">😊</span> :
+                          message.commandType === 'how-might-we' ? <span className="text-white text-xl">💡</span> :
+                          message.commandType === 'hot-air-balloon' ? <span className="text-white text-xl">🎈</span> :
+                          message.commandType === 'kalm' ? <span className="text-white text-xl">🧘</span> :
                           <Target className="text-white" size={20} />
                         }
                         gradient={
@@ -4662,6 +4682,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'six-hats' ? 'from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'crazy-8s' ? 'from-fuchsia-50 to-pink-50 dark:from-gray-800 dark:to-gray-900' :
                           message.commandType === 'affinity-map' ? 'from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'scamper' ? 'from-red-50 to-orange-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'starbursting' ? 'from-yellow-50 to-amber-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'reverse-brainstorm' ? 'from-rose-50 to-red-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'worst-idea' ? 'from-gray-50 to-slate-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'empathy-map' ? 'from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'moscow' ? 'from-red-50 to-orange-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === '4ls' ? 'from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'pre-mortem' ? 'from-gray-50 to-zinc-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'starfish' ? 'from-cyan-50 to-teal-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'mad-sad-glad' ? 'from-red-50 to-green-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'how-might-we' ? 'from-yellow-50 to-lime-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'hot-air-balloon' ? 'from-sky-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900' :
+                          message.commandType === 'kalm' ? 'from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900' :
                           'from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900'
                         }
                         border={
@@ -4672,6 +4705,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                           message.commandType === 'six-hats' ? 'border-slate-400 dark:border-slate-600' :
                           message.commandType === 'crazy-8s' ? 'border-fuchsia-400 dark:border-fuchsia-600' :
                           message.commandType === 'affinity-map' ? 'border-amber-400 dark:border-amber-600' :
+                          message.commandType === 'scamper' ? 'border-red-400 dark:border-red-600' :
+                          message.commandType === 'starbursting' ? 'border-yellow-400 dark:border-yellow-600' :
+                          message.commandType === 'reverse-brainstorm' ? 'border-rose-400 dark:border-rose-600' :
+                          message.commandType === 'worst-idea' ? 'border-gray-400 dark:border-gray-600' :
+                          message.commandType === 'empathy-map' ? 'border-violet-400 dark:border-violet-600' :
+                          message.commandType === 'moscow' ? 'border-red-400 dark:border-red-600' :
+                          message.commandType === '4ls' ? 'border-blue-400 dark:border-blue-600' :
+                          message.commandType === 'pre-mortem' ? 'border-gray-400 dark:border-gray-600' :
+                          message.commandType === 'starfish' ? 'border-cyan-400 dark:border-cyan-600' :
+                          message.commandType === 'mad-sad-glad' ? 'border-red-400 dark:border-red-600' :
+                          message.commandType === 'how-might-we' ? 'border-yellow-400 dark:border-yellow-600' :
+                          message.commandType === 'hot-air-balloon' ? 'border-sky-400 dark:border-sky-600' :
+                          message.commandType === 'kalm' ? 'border-emerald-400 dark:border-emerald-600' :
                           'border-purple-400 dark:border-purple-600'
                         }
                         onClose={() => {}}
