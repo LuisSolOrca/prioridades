@@ -9,6 +9,7 @@ export interface IWhiteboard extends Document {
   elements: any[];
   appState: any;
   files: { [key: string]: any };
+  libraryItems: any[];
   createdBy: mongoose.Types.ObjectId;
   lastModifiedBy?: mongoose.Types.ObjectId;
   collaborators: mongoose.Types.ObjectId[];
@@ -56,6 +57,10 @@ const WhiteboardSchema = new Schema<IWhiteboard>(
     files: {
       type: Schema.Types.Mixed,
       default: {}
+    },
+    libraryItems: {
+      type: Schema.Types.Mixed,
+      default: []
     },
     createdBy: {
       type: Schema.Types.ObjectId,

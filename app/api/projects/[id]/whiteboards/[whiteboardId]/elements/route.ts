@@ -33,7 +33,7 @@ export async function PUT(
       console.error('Error parsing request body:', parseError);
       return NextResponse.json({ error: 'Error en formato de datos' }, { status: 400 });
     }
-    const { elements, appState, files, version } = body;
+    const { elements, appState, files, libraryItems, version } = body;
 
     const userId = (session.user as any).id;
     const userName = (session.user as any).name || 'Usuario';
@@ -86,6 +86,11 @@ export async function PUT(
       whiteboard.files = files;
     }
 
+    // Actualizar libraryItems
+    if (libraryItems !== undefined) {
+      whiteboard.libraryItems = libraryItems;
+    }
+
     // Incrementar versión
     whiteboard.version += 1;
     whiteboard.lastModifiedBy = new mongoose.Types.ObjectId(userId);
@@ -99,6 +104,7 @@ export async function PUT(
     whiteboard.markModified('elements');
     whiteboard.markModified('appState');
     whiteboard.markModified('files');
+    whiteboard.markModified('libraryItems');
     await whiteboard.save();
 
     // Broadcast via Pusher para sync en tiempo real
@@ -111,6 +117,7 @@ export async function PUT(
           elements: whiteboard.elements,
           appState: whiteboard.appState,
           files: whiteboard.files,
+          libraryItems: whiteboard.libraryItems,
           version: whiteboard.version,
           updatedBy: userId,
           updatedByName: userName,
@@ -126,7 +133,8 @@ export async function PUT(
       success: true,
       version: whiteboard.version,
       elements: whiteboard.elements,
-      appState: whiteboard.appState
+      appState: whiteboard.appState,
+      libraryItems: whiteboard.libraryItems
     });
   } catch (error: any) {
     console.error('Error updating whiteboard elements:', {
@@ -164,7 +172,7 @@ export async function GET(
       projectId: new mongoose.Types.ObjectId(params.id),
       isActive: true
     })
-      .select('elements appState files version')
+      .select('elements appState files libraryItems version')
       .lean();
 
     if (!whiteboard) {
@@ -178,6 +186,7 @@ export async function GET(
       elements: whiteboard.elements,
       appState: whiteboard.appState,
       files: whiteboard.files,
+      libraryItems: whiteboard.libraryItems,
       version: whiteboard.version
     });
   } catch (error: any) {

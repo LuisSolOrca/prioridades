@@ -48,6 +48,7 @@ interface WhiteboardData {
   elements: any[];
   appState: any;
   files: { [key: string]: any };
+  libraryItems: any[];
   version: number;
   projectId: string;
   channelId: string;
@@ -60,8 +61,10 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
   const router = useRouter();
   const excalidrawAPIRef = useRef<ExcalidrawAPI | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const librarySaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isReadyToSaveRef = useRef(false);
   const lastSavedElementsRef = useRef<string>('');
+  const lastSavedLibraryRef = useRef<string>('');
   const localVersionRef = useRef(0);
 
   const [whiteboard, setWhiteboard] = useState<WhiteboardData | null>(null);
@@ -133,6 +136,10 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
             isDeleted: el.isDeleted
           }))
         );
+
+        // Inicializar hash de librería
+        const initialLibrary = data.whiteboard.libraryItems || [];
+        lastSavedLibraryRef.current = JSON.stringify(initialLibrary);
 
         // Marcar como listo para guardar después de un delay
         // para evitar guardados durante la inicialización de Excalidraw
@@ -357,11 +364,61 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
     }, 1000);
   }, [saveElements, isUpdatingFromRemote]);
 
-  // Cleanup timeout on unmount
+  // Guardar librería cuando cambia
+  const saveLibrary = useCallback(async (libraryItems: any[]) => {
+    if (!whiteboard || !isReadyToSaveRef.current) return;
+
+    try {
+      const response = await fetch(
+        `/api/projects/${whiteboard.projectId}/whiteboards/${whiteboardId}/elements`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            libraryItems,
+            version: localVersion
+          })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setLocalVersion(data.version);
+        console.log('Library saved successfully');
+      }
+    } catch (err) {
+      console.error('Error saving library:', err);
+    }
+  }, [whiteboard, whiteboardId, localVersion]);
+
+  // Handle library changes
+  const handleLibraryChange = useCallback((items: readonly any[]) => {
+    if (!isReadyToSaveRef.current) return;
+
+    const itemsArray = [...items]; // Convert readonly to mutable
+    const libraryHash = JSON.stringify(itemsArray);
+    if (libraryHash === lastSavedLibraryRef.current) return;
+
+    // Clear previous timeout
+    if (librarySaveTimeoutRef.current) {
+      clearTimeout(librarySaveTimeoutRef.current);
+    }
+
+    // Debounce save (2 segundos para librería)
+    librarySaveTimeoutRef.current = setTimeout(() => {
+      lastSavedLibraryRef.current = libraryHash;
+      saveLibrary(itemsArray);
+    }, 2000);
+  }, [saveLibrary]);
+
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+      }
+      if (librarySaveTimeoutRef.current) {
+        clearTimeout(librarySaveTimeoutRef.current);
       }
     };
   }, []);
@@ -500,16 +557,18 @@ export default function WhiteboardCanvas({ whiteboardId, projectId }: Whiteboard
               scrollY: whiteboard.appState?.scrollY || 0,
               collaborators: new Map()
             },
-            files: whiteboard.files || {}
+            files: whiteboard.files || {},
+            libraryItems: whiteboard.libraryItems || []
           }}
           onChange={handleChange}
+          onLibraryChange={handleLibraryChange}
           UIOptions={{
             canvasActions: {
               saveToActiveFile: false,
-              loadScene: false,
               export: { saveFileToDisk: true }
             }
           }}
+          libraryReturnUrl={typeof window !== 'undefined' ? window.location.href : ''}
           langCode="es-ES"
           theme={theme}
         />
