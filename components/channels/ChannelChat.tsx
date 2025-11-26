@@ -684,49 +684,67 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   // Scroll to a specific message and highlight it
   const scrollToMessage = async (messageId: string, channelId?: string) => {
     const targetChannelId = channelId || selectedChannelId;
-    const messageElement = document.getElementById(`message-${messageId}`);
-    if (messageElement) {
-      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setHighlightedMessageId(messageId);
-      // Remove highlight after 3 seconds
-      setTimeout(() => setHighlightedMessageId(null), 3000);
-    } else {
-      // Message not in current view - load messages around it
-      try {
-        setLoading(true);
-        const response = await fetch(
-          `/api/projects/${projectId}/messages?limit=50&channelId=${targetChannelId}&aroundMessageId=${messageId}`
-        );
 
-        if (response.ok) {
-          const data = await response.json();
-          const newMessages = (data.messages || []).reverse();
-
-          // Deduplicate messages
-          const messageMap = new Map();
-          newMessages.forEach((msg: Message) => {
-            messageMap.set(msg._id, msg);
-          });
-
-          setMessages(Array.from(messageMap.values()));
-          setHasMore(data.pagination?.hasMore || false);
-          setNextCursor(data.pagination?.nextCursor || null);
-
-          // Wait for DOM to update, then scroll to message
-          setTimeout(() => {
-            const element = document.getElementById(`message-${messageId}`);
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setHighlightedMessageId(messageId);
-              setTimeout(() => setHighlightedMessageId(null), 3000);
-            }
-          }, 100);
-        }
-      } catch (err) {
-        console.error('Error loading messages around target:', err);
-      } finally {
-        setLoading(false);
+    // Helper to scroll and highlight
+    const doScrollAndHighlight = () => {
+      const element = document.getElementById(`message-${messageId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightedMessageId(messageId);
+        setTimeout(() => setHighlightedMessageId(null), 3000);
+        return true;
       }
+      return false;
+    };
+
+    // Try to scroll immediately if element exists
+    if (doScrollAndHighlight()) {
+      return;
+    }
+
+    // Message not in current view - load messages around it
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/messages?limit=50&channelId=${targetChannelId}&aroundMessageId=${messageId}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const newMessages = (data.messages || []).reverse();
+
+        // Deduplicate messages
+        const messageMap = new Map();
+        newMessages.forEach((msg: Message) => {
+          messageMap.set(msg._id, msg);
+        });
+
+        setMessages(Array.from(messageMap.values()));
+        setHasMore(data.pagination?.hasMore || false);
+        setNextCursor(data.pagination?.nextCursor || null);
+
+        // Wait for DOM to update with multiple retry attempts
+        let attempts = 0;
+        const maxAttempts = 10;
+        const tryScroll = () => {
+          attempts++;
+          if (doScrollAndHighlight()) {
+            return;
+          }
+          if (attempts < maxAttempts) {
+            setTimeout(tryScroll, 100);
+          } else {
+            console.warn('Could not find message element after loading:', messageId);
+          }
+        };
+
+        // Start trying after initial render
+        setTimeout(tryScroll, 150);
+      }
+    } catch (err) {
+      console.error('Error loading messages around target:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -4655,8 +4673,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       if (result.channelId && result.channelId !== selectedChannelId) {
                         // Switch channel, then scroll after channel loads
                         setSelectedChannelId(result.channelId);
-                        // Use setTimeout to wait for channel to load, then scroll with the target channelId
-                        setTimeout(() => scrollToMessage(result._id, result.channelId), 500);
+                        // Use longer timeout to wait for channel to fully load
+                        setTimeout(() => scrollToMessage(result._id, result.channelId), 1000);
                       } else {
                         scrollToMessage(result._id);
                       }
