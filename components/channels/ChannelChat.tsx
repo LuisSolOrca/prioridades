@@ -682,7 +682,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   };
 
   // Scroll to a specific message and highlight it
-  const scrollToMessage = (messageId: string) => {
+  const scrollToMessage = async (messageId: string) => {
     const messageElement = document.getElementById(`message-${messageId}`);
     if (messageElement) {
       messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -690,8 +690,42 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       // Remove highlight after 3 seconds
       setTimeout(() => setHighlightedMessageId(null), 3000);
     } else {
-      // Message not in current view - might need to load more messages
-      console.log('Message not found in current view:', messageId);
+      // Message not in current view - load messages around it
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `/api/projects/${projectId}/messages?limit=50&channelId=${selectedChannelId}&aroundMessageId=${messageId}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const newMessages = (data.messages || []).reverse();
+
+          // Deduplicate messages
+          const messageMap = new Map();
+          newMessages.forEach((msg: Message) => {
+            messageMap.set(msg._id, msg);
+          });
+
+          setMessages(Array.from(messageMap.values()));
+          setHasMore(data.pagination?.hasMore || false);
+          setNextCursor(data.pagination?.nextCursor || null);
+
+          // Wait for DOM to update, then scroll to message
+          setTimeout(() => {
+            const element = document.getElementById(`message-${messageId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setHighlightedMessageId(messageId);
+              setTimeout(() => setHighlightedMessageId(null), 3000);
+            }
+          }, 100);
+        }
+      } catch (err) {
+        console.error('Error loading messages around target:', err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

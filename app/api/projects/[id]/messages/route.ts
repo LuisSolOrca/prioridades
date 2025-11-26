@@ -38,6 +38,7 @@ export async function GET(
     const channelId = searchParams.get('channelId');
     const search = searchParams.get('search') || '';
     const isDynamic = searchParams.get('isDynamic') === 'true';
+    const aroundMessageId = searchParams.get('aroundMessageId'); // Para cargar mensajes alrededor de uno específico
 
     // Construir query
     const query: any = {
@@ -89,8 +90,120 @@ export async function GET(
     }
 
     // Cursor-based pagination: obtener mensajes más antiguos que el cursor
-    if (cursor) {
+    if (cursor && !aroundMessageId) {
       query._id = { $lt: cursor };
+    }
+
+    // Si se solicita cargar mensajes alrededor de un mensaje específico
+    if (aroundMessageId) {
+      const halfLimit = Math.floor(limit / 2);
+
+      // Base query for around message (only main messages, same channel)
+      const baseAroundQuery: any = {
+        projectId: params.id,
+        isDeleted: false,
+        parentMessageId: null
+      };
+      if (channelId) {
+        baseAroundQuery.channelId = channelId;
+      }
+
+      // Fetch messages newer than or equal to target (including target)
+      const newerQuery = { ...baseAroundQuery, _id: { $gte: aroundMessageId } };
+      const newerMessages = await ChannelMessage.find(newerQuery)
+        .sort({ _id: 1 })
+        .limit(halfLimit + 1)
+        .populate('userId', 'name email')
+        .populate('mentions', 'name email')
+        .populate('priorityMentions', 'title status completionPercentage userId')
+        .populate('reactions.userId', 'name')
+        .populate('pinnedBy', 'name')
+        .lean();
+
+      // Fetch messages older than target
+      const olderQuery = { ...baseAroundQuery, _id: { $lt: aroundMessageId } };
+      const olderMessages = await ChannelMessage.find(olderQuery)
+        .sort({ _id: -1 })
+        .limit(halfLimit)
+        .populate('userId', 'name email')
+        .populate('mentions', 'name email')
+        .populate('priorityMentions', 'title status completionPercentage userId')
+        .populate('reactions.userId', 'name')
+        .populate('pinnedBy', 'name')
+        .lean();
+
+      // Combine: older (reversed) + newer
+      const combinedMessages = [...olderMessages.reverse(), ...newerMessages];
+
+      // Process attachments
+      const messagesWithAttachments = await Promise.all(combinedMessages.map(async (msg: any) => {
+        if (msg.attachments && msg.attachments.length > 0) {
+          const attachmentDocs = await Attachment.find({
+            _id: { $in: msg.attachments },
+            isDeleted: false
+          }).select('fileName originalName fileSize mimeType uploadedBy uploadedAt').lean();
+
+          const populatedAttachments = await Promise.all(
+            attachmentDocs.map(async (att: any) => {
+              const uploader = await User.findById(att.uploadedBy).select('name email').lean();
+              return {
+                ...att,
+                _id: att._id.toString(),
+                uploadedBy: uploader ? {
+                  ...uploader,
+                  _id: uploader._id.toString()
+                } : { _id: 'deleted', name: 'Usuario Eliminado', email: 'deleted@system.local' }
+              };
+            })
+          );
+
+          return {
+            ...msg,
+            _id: msg._id.toString(),
+            userId: msg.userId ? { ...msg.userId, _id: msg.userId._id?.toString() || msg.userId._id } : msg.userId,
+            attachments: populatedAttachments
+          };
+        }
+        return {
+          ...msg,
+          _id: msg._id.toString(),
+          userId: msg.userId ? { ...msg.userId, _id: msg.userId._id?.toString() || msg.userId._id } : msg.userId,
+          attachments: []
+        };
+      }));
+
+      // Handle deleted users
+      const messagesWithDeletedUsers = messagesWithAttachments.map((msg: any) => {
+        if (!msg.userId) {
+          msg.userId = {
+            _id: 'deleted',
+            name: 'Usuario Eliminado',
+            email: 'deleted@system.local'
+          };
+        }
+        if (msg.reactions && msg.reactions.length > 0) {
+          msg.reactions = msg.reactions.map((reaction: any) => {
+            if (!reaction.userId) {
+              reaction.userId = { _id: 'deleted', name: 'Usuario Eliminado' };
+            }
+            return reaction;
+          });
+        }
+        return msg;
+      });
+
+      // Return with special pagination (sorted oldest to newest for display)
+      const lastOlderMessage = olderMessages[olderMessages.length - 1] as any;
+      return NextResponse.json({
+        messages: messagesWithDeletedUsers.sort((a: any, b: any) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
+        pagination: {
+          hasMore: olderMessages.length >= halfLimit,
+          nextCursor: olderMessages.length > 0 ? lastOlderMessage._id.toString() : null,
+          aroundMessageId
+        }
+      });
     }
 
     // Obtener mensajes (ordenar por _id descendente que es equivalente a createdAt)
