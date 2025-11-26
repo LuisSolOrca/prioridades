@@ -6,6 +6,7 @@
 3. [Mensajería](#mensajería)
 4. [Tiempo Real y Presencia](#tiempo-real-y-presencia)
 5. [Canales y Subcanales](#canales-y-subcanales)
+   - [Canales Privados](#canales-privados)
 6. [Formato Markdown](#formato-markdown)
 7. [Link Previews](#link-previews)
 8. [Menciones](#menciones)
@@ -62,6 +63,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🔔 **Notificaciones** por email y en aplicación
 - 👻 **Soporte para usuarios eliminados**
 - 🗂️ **Sistema de canales y subcanales** jerárquico (máx 2 niveles)
+- 🔒 **Canales privados** con control de acceso por miembros
 - 🔌 **Webhooks entrantes y salientes** para integración con sistemas externos
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
@@ -258,6 +260,52 @@ El selector en el header del chat permite:
 **Migración automática:**
 - Los mensajes existentes se asignan a "General"
 - Script de migración: `scripts/migrate-channels.ts`
+
+### Canales Privados
+
+El sistema soporta **canales privados** donde solo los miembros seleccionados pueden ver y participar.
+
+**Crear canal privado:**
+1. Ve a la pestaña "Canales" en el proyecto
+2. Haz clic en "➕ Nuevo Canal"
+3. Activa el toggle "Canal Privado" (cambia a color ámbar)
+4. Busca y selecciona los miembros que tendrán acceso
+5. El creador se agrega automáticamente como miembro
+6. Guarda
+
+**Características:**
+- 🔒 **Visibilidad restringida**: Solo los miembros pueden ver el canal en la lista
+- 👥 **Gestión de miembros**: Búsqueda y selección de usuarios al crear
+- 🔐 **Icono de candado**: Los canales privados muestran un candado y badge "Privado"
+- 👤 **Creador automático**: El creador siempre es miembro del canal
+- 👑 **Acceso admin**: Los administradores pueden ver todos los canales privados
+- 📊 **Contador de miembros**: Muestra cuántos miembros tiene el canal
+
+**Control de acceso:**
+- **Canales públicos**: Visibles para todos los usuarios del proyecto
+- **Canales privados**: Solo visibles para:
+  - Miembros del canal
+  - El creador del canal
+  - Administradores del sistema
+
+**Modelo de datos:**
+```typescript
+interface Channel {
+  // ... campos existentes
+  isPrivate: boolean;       // true = canal privado
+  members: ObjectId[];      // Lista de usuarios con acceso
+}
+```
+
+**API:**
+- `GET /api/projects/[id]/channels` - Filtra automáticamente según permisos
+- `POST /api/projects/[id]/channels` - Acepta `isPrivate` y `members[]`
+
+**Casos de uso:**
+- Canales de liderazgo o gerencia
+- Discusiones confidenciales de proyecto
+- Grupos de trabajo específicos
+- Canales de recursos humanos
 
 ---
 
