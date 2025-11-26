@@ -96,20 +96,40 @@ export async function GET(
 
     // Si se solicita cargar mensajes alrededor de un mensaje específico
     if (aroundMessageId) {
+      const mongoose = require('mongoose');
       const halfLimit = Math.floor(limit / 2);
 
-      // Base query for around message (only main messages, same channel)
+      // First, fetch the target message to get its channelId
+      let targetObjectId;
+      try {
+        targetObjectId = new mongoose.Types.ObjectId(aroundMessageId);
+      } catch {
+        return NextResponse.json({ error: 'Invalid message ID' }, { status: 400 });
+      }
+
+      const targetMessage = await ChannelMessage.findOne({
+        _id: targetObjectId,
+        projectId: params.id,
+        isDeleted: false
+      }).lean() as any;
+
+      if (!targetMessage) {
+        return NextResponse.json({ error: 'Message not found' }, { status: 404 });
+      }
+
+      // Use the target message's channelId for the query
+      const targetChannelId = targetMessage.channelId;
+
+      // Base query for around message (only main messages in same channel)
       const baseAroundQuery: any = {
         projectId: params.id,
         isDeleted: false,
-        parentMessageId: null
+        parentMessageId: null,
+        channelId: targetChannelId
       };
-      if (channelId) {
-        baseAroundQuery.channelId = channelId;
-      }
 
       // Fetch messages newer than or equal to target (including target)
-      const newerQuery = { ...baseAroundQuery, _id: { $gte: aroundMessageId } };
+      const newerQuery = { ...baseAroundQuery, _id: { $gte: targetObjectId } };
       const newerMessages = await ChannelMessage.find(newerQuery)
         .sort({ _id: 1 })
         .limit(halfLimit + 1)
@@ -121,7 +141,7 @@ export async function GET(
         .lean();
 
       // Fetch messages older than target
-      const olderQuery = { ...baseAroundQuery, _id: { $lt: aroundMessageId } };
+      const olderQuery = { ...baseAroundQuery, _id: { $lt: targetObjectId } };
       const olderMessages = await ChannelMessage.find(olderQuery)
         .sort({ _id: -1 })
         .limit(halfLimit)
@@ -133,7 +153,27 @@ export async function GET(
         .lean();
 
       // Combine: older (reversed) + newer
-      const combinedMessages = [...olderMessages.reverse(), ...newerMessages];
+      // Also ensure target message is included even if it's a thread reply
+      let combinedMessages = [...olderMessages.reverse(), ...newerMessages];
+
+      // If target message is not in the combined list (could be a thread message), add it
+      const targetInList = combinedMessages.some((m: any) => m._id.toString() === aroundMessageId);
+      if (!targetInList) {
+        // Add target message and re-sort
+        const populatedTarget = await ChannelMessage.findById(targetObjectId)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean() as any;
+        if (populatedTarget) {
+          combinedMessages.push(populatedTarget);
+          combinedMessages.sort((a: any, b: any) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        }
+      }
 
       // Process attachments
       const messagesWithAttachments = await Promise.all(combinedMessages.map(async (msg: any) => {
