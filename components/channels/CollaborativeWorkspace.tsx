@@ -20,7 +20,13 @@ const DYNAMIC_COMMAND_TYPES = [
   'swot', 'soar', 'six-hats', 'crazy-8s', 'affinity-map',
   'rose-bud-thorn', 'sailboat', 'start-stop-continue', 'standup',
   'scamper', 'starbursting', 'reverse-brainstorm', 'worst-idea', 'lotus-blossom',
-  'five-whys', 'impact-effort', 'opportunity-tree'
+  'five-whys', 'impact-effort', 'opportunity-tree',
+  // Batch 4: Lean Coffee, User Story Mapping, Fishbone, RACI, Roman Voting
+  'lean-coffee', 'user-story-mapping', 'fishbone', 'raci', 'roman-voting',
+  // Batch 5: Lean Canvas, Customer Journey, Risk Matrix, RICE, Working Agreements, Brainwriting
+  'lean-canvas', 'customer-journey', 'risk-matrix', 'rice', 'working-agreements', 'brainwriting',
+  // Batch 6: Hot Air Balloon, KALM, Persona, Assumption Mapping, Team Canvas
+  'hot-air-balloon', 'kalm', 'persona', 'assumption-mapping', 'team-canvas'
 ];
 
 interface DynamicMessage {
