@@ -2673,6 +2673,1393 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         setNewMessage('');
         break;
 
+      // ===== BATCH NUEVOS WIDGETS =====
+
+      case 'scamper':
+        if (parsed.args.length < 1) {
+          alert('Uso: /scamper "Producto o proceso"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/scamper ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'scamper',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'substitute', title: 'Sustituir', icon: '🔄', color: '#ef4444', items: [] },
+                  { id: 'combine', title: 'Combinar', icon: '🔗', color: '#f59e0b', items: [] },
+                  { id: 'adapt', title: 'Adaptar', icon: '🔧', color: '#eab308', items: [] },
+                  { id: 'modify', title: 'Modificar', icon: '✏️', color: '#84cc16', items: [] },
+                  { id: 'put', title: 'Propósito', icon: '🎯', color: '#10b981', items: [] },
+                  { id: 'eliminate', title: 'Eliminar', icon: '❌', color: '#06b6d4', items: [] },
+                  { id: 'reverse', title: 'Reorganizar', icon: '🔀', color: '#8b5cf6', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating scamper:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'starbursting':
+        if (parsed.args.length < 1) {
+          alert('Uso: /starbursting "Idea o concepto"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/starbursting ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'starbursting',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'what', title: 'Qué', icon: '❓', color: '#ef4444', items: [] },
+                  { id: 'who', title: 'Quién', icon: '👤', color: '#f59e0b', items: [] },
+                  { id: 'where', title: 'Dónde', icon: '📍', color: '#10b981', items: [] },
+                  { id: 'when', title: 'Cuándo', icon: '📅', color: '#3b82f6', items: [] },
+                  { id: 'why', title: 'Por qué', icon: '💡', color: '#8b5cf6', items: [] },
+                  { id: 'how', title: 'Cómo', icon: '⚙️', color: '#ec4899', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating starbursting:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'reverse-brainstorm':
+        if (parsed.args.length < 1) {
+          alert('Uso: /reverse-brainstorm "Problema"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/reverse-brainstorm ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'reverse-brainstorm',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'problems', title: 'Causar Problemas', icon: '💥', color: '#ef4444', items: [] },
+                  { id: 'solutions', title: 'Soluciones Invertidas', icon: '✅', color: '#10b981', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating reverse-brainstorm:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'worst-idea':
+        if (parsed.args.length < 1) {
+          alert('Uso: /worst-idea "Reto o problema"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/worst-idea ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'worst-idea',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'worst', title: 'Peores Ideas', icon: '👎', color: '#ef4444', items: [] },
+                  { id: 'transformed', title: 'Ideas Transformadas', icon: '✨', color: '#10b981', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating worst-idea:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'empathy-map':
+        if (parsed.args.length < 1) {
+          alert('Uso: /empathy-map "Usuario o persona"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/empathy-map ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'empathy-map',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'says', title: 'Dice', icon: '💬', color: '#3b82f6', items: [] },
+                  { id: 'thinks', title: 'Piensa', icon: '💭', color: '#8b5cf6', items: [] },
+                  { id: 'does', title: 'Hace', icon: '🏃', color: '#10b981', items: [] },
+                  { id: 'feels', title: 'Siente', icon: '❤️', color: '#ef4444', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating empathy-map:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'moscow':
+        if (parsed.args.length < 1) {
+          alert('Uso: /moscow "Lista de features"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/moscow ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'moscow',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'must', title: 'Must Have', icon: '🔴', color: '#ef4444', items: [] },
+                  { id: 'should', title: 'Should Have', icon: '🟠', color: '#f59e0b', items: [] },
+                  { id: 'could', title: 'Could Have', icon: '🟡', color: '#eab308', items: [] },
+                  { id: 'wont', title: "Won't Have", icon: '⚪', color: '#6b7280', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating moscow:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case '4ls':
+        if (parsed.args.length < 1) {
+          alert('Uso: /4ls "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/4ls ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: '4ls',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'liked', title: 'Liked', icon: '👍', color: '#10b981', items: [] },
+                  { id: 'learned', title: 'Learned', icon: '📚', color: '#3b82f6', items: [] },
+                  { id: 'lacked', title: 'Lacked', icon: '❌', color: '#ef4444', items: [] },
+                  { id: 'longed', title: 'Longed For', icon: '✨', color: '#8b5cf6', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating 4ls:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'pre-mortem':
+        if (parsed.args.length < 1) {
+          alert('Uso: /pre-mortem "Proyecto o iniciativa"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/pre-mortem ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'pre-mortem',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'failures', title: 'Posibles Fracasos', icon: '💥', color: '#ef4444', items: [] },
+                  { id: 'causes', title: 'Causas', icon: '🔍', color: '#f59e0b', items: [] },
+                  { id: 'mitigations', title: 'Mitigaciones', icon: '🛡️', color: '#10b981', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating pre-mortem:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'starfish':
+        if (parsed.args.length < 1) {
+          alert('Uso: /starfish "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/starfish ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'starfish',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'keep', title: 'Keep Doing', icon: '✅', color: '#10b981', items: [] },
+                  { id: 'less', title: 'Less Of', icon: '📉', color: '#f59e0b', items: [] },
+                  { id: 'more', title: 'More Of', icon: '📈', color: '#3b82f6', items: [] },
+                  { id: 'stop', title: 'Stop Doing', icon: '🛑', color: '#ef4444', items: [] },
+                  { id: 'start', title: 'Start Doing', icon: '🚀', color: '#8b5cf6', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating starfish:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'mad-sad-glad':
+        if (parsed.args.length < 1) {
+          alert('Uso: /mad-sad-glad "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/mad-sad-glad ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'mad-sad-glad',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'mad', title: 'Mad', icon: '😠', color: '#ef4444', items: [] },
+                  { id: 'sad', title: 'Sad', icon: '😢', color: '#3b82f6', items: [] },
+                  { id: 'glad', title: 'Glad', icon: '😊', color: '#10b981', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating mad-sad-glad:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'how-might-we':
+        if (parsed.args.length < 1) {
+          alert('Uso: /how-might-we "Problema u oportunidad"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/how-might-we ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'how-might-we',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'problems', title: 'Problemas', icon: '❓', color: '#ef4444', items: [] },
+                  { id: 'hmw', title: 'How Might We...', icon: '💡', color: '#f59e0b', items: [] },
+                  { id: 'ideas', title: 'Ideas', icon: '✨', color: '#10b981', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating how-might-we:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'hot-air-balloon':
+        if (parsed.args.length < 1) {
+          alert('Uso: /hot-air-balloon "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/hot-air-balloon ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'hot-air-balloon',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'fire', title: 'Fuego (Impulsos)', icon: '🔥', color: '#f97316', items: [] },
+                  { id: 'clouds', title: 'Nubes (Obstáculos)', icon: '☁️', color: '#6b7280', items: [] },
+                  { id: 'sandbags', title: 'Sacos (Lastre)', icon: '🎒', color: '#78716c', items: [] },
+                  { id: 'destination', title: 'Destino (Metas)', icon: '🎯', color: '#10b981', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating hot-air-balloon:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'kalm':
+        if (parsed.args.length < 1) {
+          alert('Uso: /kalm "Sprint o período"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/kalm ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'kalm',
+              commandData: {
+                title: parsed.args[0],
+                sections: [
+                  { id: 'keep', title: 'Keep (Mantener)', icon: '✅', color: '#10b981', items: [] },
+                  { id: 'add', title: 'Add (Agregar)', icon: '➕', color: '#3b82f6', items: [] },
+                  { id: 'less', title: 'Less (Menos)', icon: '➖', color: '#f59e0b', items: [] },
+                  { id: 'more', title: 'More (Más)', icon: '⬆️', color: '#8b5cf6', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating kalm:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'roman-voting':
+        if (parsed.args.length < 1) {
+          alert('Uso: /roman-voting "¿Pregunta o decisión?"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/roman-voting ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'roman-voting',
+              commandData: {
+                title: parsed.args[0],
+                question: parsed.args[0],
+                votes: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating roman-voting:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'lean-coffee':
+        if (parsed.args.length < 1) {
+          alert('Uso: /lean-coffee "Título de la sesión"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/lean-coffee ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'lean-coffee',
+              commandData: {
+                title: parsed.args[0],
+                topics: [],
+                currentTopic: null,
+                timePerTopic: 5,
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating lean-coffee:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'user-story-mapping':
+        if (parsed.args.length < 1) {
+          alert('Uso: /user-story-mapping "Producto o feature"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/user-story-mapping ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'user-story-mapping',
+              commandData: {
+                title: parsed.args[0],
+                activities: [],
+                releases: [{ id: 'release-1', title: 'Release 1', color: '#3b82f6' }],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating user-story-mapping:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'fishbone':
+        if (parsed.args.length < 1) {
+          alert('Uso: /fishbone "Problema a analizar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/fishbone ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'fishbone',
+              commandData: {
+                title: parsed.args[0],
+                problem: parsed.args[0],
+                categories: [
+                  { id: 'people', title: 'Personas', icon: '👥', causes: [] },
+                  { id: 'process', title: 'Procesos', icon: '⚙️', causes: [] },
+                  { id: 'technology', title: 'Tecnología', icon: '💻', causes: [] },
+                  { id: 'materials', title: 'Materiales', icon: '📦', causes: [] },
+                  { id: 'environment', title: 'Entorno', icon: '🌍', causes: [] },
+                  { id: 'measurement', title: 'Medición', icon: '📊', causes: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating fishbone:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'raci':
+        if (parsed.args.length < 1) {
+          alert('Uso: /raci "Proyecto o iniciativa"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/raci ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'raci',
+              commandData: {
+                title: parsed.args[0],
+                roles: [],
+                tasks: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating raci:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'lean-canvas':
+        if (parsed.args.length < 1) {
+          alert('Uso: /lean-canvas "Nombre del producto"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/lean-canvas ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'lean-canvas',
+              commandData: {
+                title: parsed.args[0],
+                blocks: {
+                  problem: { items: [] },
+                  customerSegments: { items: [] },
+                  uniqueValue: { items: [] },
+                  solution: { items: [] },
+                  channels: { items: [] },
+                  revenueStreams: { items: [] },
+                  costStructure: { items: [] },
+                  keyMetrics: { items: [] },
+                  unfairAdvantage: { items: [] }
+                },
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating lean-canvas:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'customer-journey':
+        if (parsed.args.length < 1) {
+          alert('Uso: /customer-journey "Nombre del cliente"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/customer-journey ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'customer-journey',
+              commandData: {
+                title: parsed.args[0],
+                persona: '',
+                stages: [
+                  { id: 'awareness', name: 'Descubrimiento', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+                  { id: 'consideration', name: 'Consideración', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+                  { id: 'purchase', name: 'Compra', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+                  { id: 'retention', name: 'Retención', touchpoints: [], emotions: [], painPoints: [], opportunities: [] },
+                  { id: 'advocacy', name: 'Recomendación', touchpoints: [], emotions: [], painPoints: [], opportunities: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating customer-journey:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'risk-matrix':
+        if (parsed.args.length < 1) {
+          alert('Uso: /risk-matrix "Proyecto o iniciativa"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/risk-matrix ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'risk-matrix',
+              commandData: {
+                title: parsed.args[0],
+                risks: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating risk-matrix:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'rice':
+        if (parsed.args.length < 1) {
+          alert('Uso: /rice "Backlog o lista de features"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/rice ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'rice',
+              commandData: {
+                title: parsed.args[0],
+                items: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating rice:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'working-agreements':
+        if (parsed.args.length < 1) {
+          alert('Uso: /working-agreements "Nombre del equipo"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/working-agreements ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'working-agreements',
+              commandData: {
+                title: parsed.args[0],
+                categories: [
+                  { id: 'communication', title: 'Comunicación', icon: '💬', agreements: [] },
+                  { id: 'meetings', title: 'Reuniones', icon: '📅', agreements: [] },
+                  { id: 'code', title: 'Código', icon: '💻', agreements: [] },
+                  { id: 'collaboration', title: 'Colaboración', icon: '🤝', agreements: [] },
+                  { id: 'feedback', title: 'Feedback', icon: '📣', agreements: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating working-agreements:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'brainwriting':
+        if (parsed.args.length < 1) {
+          alert('Uso: /brainwriting "Tema o reto"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/brainwriting ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'brainwriting',
+              commandData: {
+                title: parsed.args[0],
+                rounds: [],
+                currentRound: 0,
+                timePerRound: 5,
+                ideasPerRound: 3,
+                participants: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating brainwriting:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'persona':
+        if (parsed.args.length < 1) {
+          alert('Uso: /persona "Tipo de usuario"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/persona ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'persona',
+              commandData: {
+                title: parsed.args[0],
+                name: '',
+                photo: '',
+                demographics: { age: '', occupation: '', location: '', education: '' },
+                goals: [],
+                frustrations: [],
+                motivations: [],
+                behaviors: [],
+                quote: '',
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating persona:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'assumption-mapping':
+        if (parsed.args.length < 1) {
+          alert('Uso: /assumption-mapping "Proyecto o hipótesis"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/assumption-mapping ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'assumption-mapping',
+              commandData: {
+                title: parsed.args[0],
+                assumptions: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating assumption-mapping:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'team-canvas':
+        if (parsed.args.length < 1) {
+          alert('Uso: /team-canvas "Nombre del equipo"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/team-canvas ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'team-canvas',
+              commandData: {
+                title: parsed.args[0],
+                blocks: {
+                  people: { items: [] },
+                  goals: { items: [] },
+                  values: { items: [] },
+                  rules: { items: [] },
+                  activities: { items: [] },
+                  strengths: { items: [] },
+                  weaknesses: { items: [] },
+                  needs: { items: [] }
+                },
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating team-canvas:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'five-whys':
+        if (parsed.args.length < 1) {
+          alert('Uso: /five-whys "Problema a analizar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/five-whys ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'five-whys',
+              commandData: {
+                title: parsed.args[0],
+                problem: parsed.args[0],
+                whys: [],
+                rootCause: '',
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating five-whys:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'impact-effort':
+        if (parsed.args.length < 1) {
+          alert('Uso: /impact-effort "Lista de opciones"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/impact-effort ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'impact-effort',
+              commandData: {
+                title: parsed.args[0],
+                items: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating impact-effort:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'opportunity-tree':
+        if (parsed.args.length < 1) {
+          alert('Uso: /opportunity-tree "Objetivo principal"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/opportunity-tree ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'opportunity-tree',
+              commandData: {
+                title: parsed.args[0],
+                objective: parsed.args[0],
+                opportunities: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating opportunity-tree:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'lotus-blossom':
+        if (parsed.args.length < 1) {
+          alert('Uso: /lotus-blossom "Tema central"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/lotus-blossom ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'lotus-blossom',
+              commandData: {
+                title: parsed.args[0],
+                centerIdea: parsed.args[0],
+                petals: [
+                  { id: 'petal-1', title: 'Pétalo 1', items: [] },
+                  { id: 'petal-2', title: 'Pétalo 2', items: [] },
+                  { id: 'petal-3', title: 'Pétalo 3', items: [] },
+                  { id: 'petal-4', title: 'Pétalo 4', items: [] },
+                  { id: 'petal-5', title: 'Pétalo 5', items: [] },
+                  { id: 'petal-6', title: 'Pétalo 6', items: [] },
+                  { id: 'petal-7', title: 'Pétalo 7', items: [] },
+                  { id: 'petal-8', title: 'Pétalo 8', items: [] }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating lotus-blossom:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'inception-deck':
+        if (parsed.args.length < 1) {
+          alert('Uso: /inception-deck "Nombre del proyecto"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/inception-deck ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'inception-deck',
+              commandData: {
+                title: parsed.args[0],
+                cards: [
+                  { id: 'why', title: '¿Por qué estamos aquí?', content: '' },
+                  { id: 'elevator', title: 'Elevator Pitch', content: '' },
+                  { id: 'product-box', title: 'Product Box', content: '' },
+                  { id: 'not-list', title: 'NOT List', inScope: [], outOfScope: [] },
+                  { id: 'neighbors', title: 'Conoce a tus vecinos', content: '' },
+                  { id: 'solution', title: 'Muestra la solución', content: '' },
+                  { id: 'risks', title: '¿Qué nos quita el sueño?', items: [] },
+                  { id: 'size', title: 'Tamaño', content: '' },
+                  { id: 'tradeoffs', title: 'Trade-offs', items: [] },
+                  { id: 'cost', title: '¿Cuánto va a costar?', content: '' }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating inception-deck:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'delegation-poker':
+        if (parsed.args.length < 1) {
+          alert('Uso: /delegation-poker "Decisión o área"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/delegation-poker ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'delegation-poker',
+              commandData: {
+                title: parsed.args[0],
+                decisions: [],
+                levels: [
+                  { id: 1, name: 'Tell', description: 'Yo decido y les informo' },
+                  { id: 2, name: 'Sell', description: 'Yo decido y les convenzo' },
+                  { id: 3, name: 'Consult', description: 'Les consulto y luego decido' },
+                  { id: 4, name: 'Agree', description: 'Decidimos juntos' },
+                  { id: 5, name: 'Advise', description: 'Ellos deciden y yo aconsejo' },
+                  { id: 6, name: 'Inquire', description: 'Ellos deciden y me informan' },
+                  { id: 7, name: 'Delegate', description: 'Ellos deciden completamente' }
+                ],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating delegation-poker:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'moving-motivators':
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/moving-motivators`,
+              channelId: selectedChannelId,
+              commandType: 'moving-motivators',
+              commandData: {
+                title: 'Moving Motivators',
+                motivators: [
+                  { id: 'curiosity', name: 'Curiosidad', icon: '🔍' },
+                  { id: 'honor', name: 'Honor', icon: '🏆' },
+                  { id: 'acceptance', name: 'Aceptación', icon: '🤝' },
+                  { id: 'mastery', name: 'Maestría', icon: '🎯' },
+                  { id: 'power', name: 'Poder', icon: '👑' },
+                  { id: 'freedom', name: 'Libertad', icon: '🦅' },
+                  { id: 'relatedness', name: 'Relación', icon: '❤️' },
+                  { id: 'order', name: 'Orden', icon: '📋' },
+                  { id: 'goal', name: 'Meta', icon: '🎪' },
+                  { id: 'status', name: 'Estatus', icon: '⭐' }
+                ],
+                rankings: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating moving-motivators:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
       default:
         alert(`Comando desconocido: ${parsed.command}\nEscribe /help para ver comandos disponibles`);
         return;
