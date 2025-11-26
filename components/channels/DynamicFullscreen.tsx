@@ -2154,6 +2154,34 @@ export default function DynamicFullscreen({
             closed={isClosed()}
           />
         );
+      case 'hot-air-balloon':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="hot-air-balloon"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">🎈</span>}
+            gradient="from-sky-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-sky-400 dark:border-sky-600"
+          />
+        );
+      case 'kalm':
+        return (
+          <RetroCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            type="kalm"
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+            icon={<span className="text-white text-xl">🧘</span>}
+            gradient="from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900"
+            border="border-emerald-400 dark:border-emerald-600"
+          />
+        );
       default:
         return (
           <div className="text-center py-12 text-gray-500">
