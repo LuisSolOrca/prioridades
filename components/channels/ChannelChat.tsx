@@ -5626,6 +5626,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'rice' && message.commandData ? (
                     <div className="relative group">
@@ -5640,6 +5653,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'lean-canvas' && message.commandData ? (
                     <div className="relative group">
@@ -5654,6 +5680,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'customer-journey' && message.commandData ? (
                     <div className="relative group">
@@ -5669,6 +5708,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'lean-coffee' && message.commandData ? (
                     <div className="relative group">
@@ -5685,6 +5737,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'user-story-mapping' && message.commandData ? (
                     <div className="relative group">
@@ -5700,6 +5765,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'fishbone' && message.commandData ? (
                     <div className="relative group">
@@ -5715,6 +5793,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'raci' && message.commandData ? (
                     <div className="relative group">
@@ -5730,6 +5821,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'roman-voting' && message.commandData ? (
                     <div className="relative group">
@@ -5746,6 +5850,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'working-agreements' && message.commandData ? (
                     <div className="relative group">
@@ -5760,6 +5877,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'brainwriting' && message.commandData ? (
                     <div className="relative group">
@@ -5778,6 +5908,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'persona' && message.commandData ? (
                     <div className="relative group">
@@ -5799,6 +5942,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'assumption-mapping' && message.commandData ? (
                     <div className="relative group">
@@ -5813,6 +5969,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'team-canvas' && message.commandData ? (
                     <div className="relative group">
@@ -5827,6 +5996,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'five-whys' && message.commandData ? (
                     <div className="relative group">
@@ -5843,6 +6025,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'impact-effort' && message.commandData ? (
                     <div className="relative group">
@@ -5857,6 +6052,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'opportunity-tree' && message.commandData ? (
                     <div className="relative group">
@@ -5872,6 +6080,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'lotus-blossom' && message.commandData ? (
                     <div className="relative group">
@@ -5887,6 +6108,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'inception-deck' && message.commandData ? (
                     <div className="relative group">
@@ -5902,6 +6136,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'delegation-poker' && message.commandData ? (
                     <div className="relative group">
@@ -5917,6 +6164,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : message.commandType === 'moving-motivators' && message.commandData ? (
                     <div className="relative group">
@@ -5932,6 +6192,19 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                         onUpdate={() => {}}
                       />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div
