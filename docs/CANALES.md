@@ -4,6 +4,7 @@
 1. [Introducción](#introducción)
 2. [Características Principales](#características-principales)
 3. [Mensajería](#mensajería)
+   - [Crear Prioridad desde Mensaje](#crear-prioridad-desde-mensaje)
    - [Marcadores de Lectura](#marcadores-de-lectura)
 4. [Tiempo Real y Presencia](#tiempo-real-y-presencia)
 5. [Canales y Subcanales](#canales-y-subcanales)
@@ -84,6 +85,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 📄 **Generación de documentos con IA** - crea documentos DOCX profesionales a partir de dinámicas seleccionadas
 - 🎨 **60+ Widgets colaborativos** - votaciones, retrospectivas, análisis, ideación, frameworks ágiles
 - 🎨 **Pizarra colaborativa** - canvas interactivo estilo Miro/Mural con Excalidraw y sincronización en tiempo real
+- 🎯 **Crear prioridad desde mensaje** - convierte cualquier mensaje en una prioridad con un clic
 
 ---
 
@@ -138,6 +140,51 @@ El chat implementa **scroll infinito con cursor-based pagination** para carga ef
 **Permisos:**
 - Usuarios pueden eliminar sus propios mensajes
 - Administradores pueden eliminar cualquier mensaje
+
+### Crear Prioridad desde Mensaje
+
+Convierte cualquier mensaje del chat en una **prioridad** del proyecto con un solo clic. Ideal para capturar tareas, compromisos o ideas que surgen en las conversaciones.
+
+**Cómo usar:**
+1. Pasa el mouse sobre cualquier mensaje
+2. Haz clic en el ícono de **Target** (🎯)
+3. Se abre el modal completo de creación de prioridad
+4. Completa los campos requeridos (iniciativa, cliente)
+5. Guarda la prioridad
+
+**Pre-llenado automático:**
+
+| Campo | Contenido |
+|-------|-----------|
+| **Título** | Primera línea del mensaje (hasta 100 caracteres) |
+| **Descripción** | Contenido completo del mensaje con referencia al autor |
+| **Semana** | Siguiente semana laboral (lunes a viernes) |
+| **Estado** | EN_TIEMPO |
+| **Tipo** | ESTRATEGICA |
+
+**Características del modal:**
+- ✅ Mismo formulario completo de `/priorities`
+- 📋 Selector múltiple de iniciativas estratégicas
+- 👥 Selector de cliente (requerido)
+- 📁 Selector de proyecto (opcional)
+- ☑️ Gestión de checklist con horas estimadas
+- 🔗 Links de evidencia
+- 🤖 Mejora de título/descripción con IA
+
+**Ejemplo de descripción generada:**
+```markdown
+**Origen:** Mensaje de Juan Pérez en canal de chat
+
+Necesitamos implementar la nueva API de pagos antes del viernes.
+El cliente está esperando esta funcionalidad para el lanzamiento.
+#urgente #api
+```
+
+**Beneficios:**
+- 🚀 Captura tareas sin salir del chat
+- 📝 No pierdes el contexto original
+- 🔗 Trazabilidad del origen de la prioridad
+- ⏱️ Ahorra tiempo vs crear manualmente
 
 ### Marcadores de Lectura
 
