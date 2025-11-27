@@ -69,6 +69,28 @@ import PersonaCommand from '../slashCommands/PersonaCommand';
 import AssumptionMappingCommand from '../slashCommands/AssumptionMappingCommand';
 import TeamCanvasCommand from '../slashCommands/TeamCanvasCommand';
 import OddOneOutCommand from '../slashCommands/OddOneOutCommand';
+import HopesFearsCommand from '../slashCommands/HopesFearsCommand';
+import JTBDCanvasCommand from '../slashCommands/JTBDCanvasCommand';
+import StoryboardCommand from '../slashCommands/StoryboardCommand';
+import LightningDemosCommand from '../slashCommands/LightningDemosCommand';
+import OpenSpaceCommand from '../slashCommands/OpenSpaceCommand';
+import FuturesWheelCommand from '../slashCommands/FuturesWheelCommand';
+import ImpactMappingCommand from '../slashCommands/ImpactMappingCommand';
+import VPCCommand from '../slashCommands/VPCCommand';
+import DACICommand from '../slashCommands/DACICommand';
+import InnovationMatrixCommand from '../slashCommands/InnovationMatrixCommand';
+import KanoModelCommand from '../slashCommands/KanoModelCommand';
+import TimelineBoardCommand from '../slashCommands/TimelineBoardCommand';
+import ReframingBoardCommand from '../slashCommands/ReframingBoardCommand';
+import PerceptualPositionsCommand from '../slashCommands/PerceptualPositionsCommand';
+import ValuesWheelCommand from '../slashCommands/ValuesWheelCommand';
+import WheelOfLifeCommand from '../slashCommands/WheelOfLifeCommand';
+import SwishPatternCommand from '../slashCommands/SwishPatternCommand';
+import ActionTriadsCommand from '../slashCommands/ActionTriadsCommand';
+import VAKOGBoardCommand from '../slashCommands/VAKOGBoardCommand';
+import AnchorMappingCommand from '../slashCommands/AnchorMappingCommand';
+import MetamodelBoardCommand from '../slashCommands/MetamodelBoardCommand';
+import MetaphorCanvasCommand from '../slashCommands/MetaphorCanvasCommand';
 import ErrorBoundary from '../ErrorBoundary';
 
 interface DynamicMessage {
@@ -2211,6 +2233,234 @@ export default function DynamicFullscreen({
             rounds={data.rounds || []}
             currentRound={data.currentRound || 1}
             winner={data.winner}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'hopes-fears':
+        return (
+          <HopesFearsCommand
+            {...commonProps}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'jtbd-canvas':
+        return (
+          <JTBDCanvasCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'storyboard':
+        return (
+          <StoryboardCommand
+            {...commonProps}
+            title={getTitle()}
+            frames={data.frames || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'lightning-demos':
+        return (
+          <LightningDemosCommand
+            {...commonProps}
+            title={getTitle()}
+            demos={data.demos || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'open-space':
+        return (
+          <OpenSpaceCommand
+            {...commonProps}
+            title={getTitle()}
+            sessions={data.sessions || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'futures-wheel':
+        return (
+          <FuturesWheelCommand
+            {...commonProps}
+            title={getTitle()}
+            centralTrend={data.centralTrend || data.centerTopic || ''}
+            nodes={data.nodes || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'impact-mapping':
+        return (
+          <ImpactMappingCommand
+            {...commonProps}
+            title={getTitle()}
+            goal={data.goal || ''}
+            nodes={data.nodes || data.actors || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'vpc':
+        return (
+          <VPCCommand
+            {...commonProps}
+            title={getTitle()}
+            sections={data.sections || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'daci':
+        return (
+          <DACICommand
+            {...commonProps}
+            title={getTitle()}
+            decision={data.decision || ''}
+            roles={data.roles || []}
+            status={data.status || 'pending'}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'innovation-matrix':
+        return (
+          <InnovationMatrixCommand
+            {...commonProps}
+            title={getTitle()}
+            items={data.items || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'kano-model':
+        return (
+          <KanoModelCommand
+            {...commonProps}
+            title={getTitle()}
+            features={data.features || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'timeline-board':
+        return (
+          <TimelineBoardCommand
+            {...commonProps}
+            title={getTitle()}
+            events={data.events || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'reframing-board':
+        return (
+          <ReframingBoardCommand
+            {...commonProps}
+            title={getTitle()}
+            situation={data.situation || data.title || ''}
+            reframes={data.reframes || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'perceptual-positions':
+        return (
+          <PerceptualPositionsCommand
+            {...commonProps}
+            title={getTitle()}
+            situation={data.situation || data.title || ''}
+            perspectives={data.perspectives || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'values-wheel':
+        return (
+          <ValuesWheelCommand
+            {...commonProps}
+            title={getTitle()}
+            values={data.values || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'wheel-of-life':
+        return (
+          <WheelOfLifeCommand
+            {...commonProps}
+            title={getTitle()}
+            areas={data.areas || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'swish-pattern':
+        return (
+          <SwishPatternCommand
+            {...commonProps}
+            title={getTitle()}
+            behavior={data.behavior || data.title || ''}
+            entries={data.entries || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'action-triads':
+        return (
+          <ActionTriadsCommand
+            {...commonProps}
+            title={getTitle()}
+            goal={data.goal || data.title || ''}
+            triads={data.triads || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'vakog-board':
+        return (
+          <VAKOGBoardCommand
+            {...commonProps}
+            title={getTitle()}
+            entries={data.entries || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'anchor-mapping':
+        return (
+          <AnchorMappingCommand
+            {...commonProps}
+            title={getTitle()}
+            anchors={data.anchors || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'metamodel-board':
+        return (
+          <MetamodelBoardCommand
+            {...commonProps}
+            title={getTitle()}
+            patterns={data.patterns || []}
+            createdBy={getCreatedBy()}
+            closed={isClosed()}
+          />
+        );
+      case 'metaphor-canvas':
+        return (
+          <MetaphorCanvasCommand
+            {...commonProps}
+            title={getTitle()}
+            entries={data.entries || []}
             createdBy={getCreatedBy()}
             closed={isClosed()}
           />
