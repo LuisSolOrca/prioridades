@@ -5458,13 +5458,27 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     const nextWeek = getWeekDates(1);
     const currentUserId = (session?.user as any)?.id;
 
+    // Determinar el contenido a usar (transcripción de voz si existe, sino contenido normal)
+    let messageContent = message.content;
+    let isVoiceMessage = false;
+
+    if (message.voiceMessage?.transcription) {
+      messageContent = message.voiceMessage.transcription;
+      isVoiceMessage = true;
+    }
+
     // Crear título basado en el contenido (primeras palabras)
-    const contentClean = message.content.replace(/#\S+/g, '').trim(); // Quitar hashtags
+    const contentClean = messageContent.replace(/#\S+/g, '').trim(); // Quitar hashtags
     const titleFromContent = contentClean.split('\n')[0].substring(0, 100);
+
+    // Construir descripción con contexto apropiado
+    const origen = isVoiceMessage
+      ? `**Origen:** Mensaje de voz de ${message.userId.name} (transcripción)`
+      : `**Origen:** Mensaje de ${message.userId.name} en canal de chat`;
 
     setPriorityFormData({
       title: titleFromContent || 'Nueva prioridad',
-      description: `**Origen:** Mensaje de ${message.userId.name} en canal de chat\n\n${message.content}`,
+      description: `${origen}\n\n${messageContent}`,
       initiativeIds: [],
       completionPercentage: 0,
       status: 'EN_TIEMPO',
