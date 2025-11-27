@@ -5453,34 +5453,217 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     return { monday, friday };
   };
 
+  // Función para extraer contenido de dinámicas colaborativas
+  const extractDynamicContent = (message: Message): { title: string; description: string } => {
+    const { commandType, commandData } = message;
+    if (!commandType || !commandData) {
+      return { title: '', description: '' };
+    }
+
+    const creatorName = commandData.createdBy?.name || message.userId.name;
+    let title = '';
+    let description = '';
+
+    switch (commandType) {
+      case 'poll':
+      case 'blind-vote':
+      case 'vote': {
+        const question = commandData.question || commandData.title || 'Votación';
+        const options = commandData.options || [];
+        const sortedOptions = [...options].sort((a: any, b: any) => (b.votes?.length || 0) - (a.votes?.length || 0));
+        const winner = sortedOptions[0];
+        title = `Resultado: ${question}`;
+        description = `**Dinámica:** ${commandType === 'poll' ? 'Encuesta' : 'Votación'}\n**Pregunta:** ${question}\n\n**Resultados:**\n`;
+        sortedOptions.forEach((opt: any, i: number) => {
+          const votes = opt.votes?.length || 0;
+          description += `${i + 1}. ${opt.text || opt.option} - ${votes} votos${i === 0 ? ' ✅' : ''}\n`;
+        });
+        if (winner) description += `\n**Ganador:** ${winner.text || winner.option}`;
+        break;
+      }
+
+      case 'brainstorm': {
+        const topic = commandData.topic || 'Brainstorming';
+        const ideas = commandData.ideas || [];
+        const sortedIdeas = [...ideas].sort((a: any, b: any) => (b.votes?.length || 0) - (a.votes?.length || 0));
+        title = `Ideas: ${topic}`;
+        description = `**Dinámica:** Brainstorming\n**Tema:** ${topic}\n**Total ideas:** ${ideas.length}\n\n**Top Ideas:**\n`;
+        sortedIdeas.slice(0, 10).forEach((idea: any, i: number) => {
+          const votes = idea.votes?.length || 0;
+          description += `${i + 1}. ${idea.text} (${votes} votos)\n`;
+        });
+        break;
+      }
+
+      case 'retro':
+      case 'retrospective': {
+        title = `Retrospectiva: ${commandData.title || 'Equipo'}`;
+        description = `**Dinámica:** Retrospectiva\n\n`;
+        const sections = ['good', 'bad', 'improve', 'actions'];
+        const labels: Record<string, string> = { good: '✅ Qué salió bien', bad: '❌ Qué salió mal', improve: '💡 Qué mejorar', actions: '🎯 Acciones' };
+        sections.forEach(section => {
+          const items = commandData[section] || commandData[`${section}Items`] || [];
+          if (items.length > 0) {
+            description += `**${labels[section] || section}:**\n`;
+            items.forEach((item: any) => description += `- ${item.text || item}\n`);
+            description += '\n';
+          }
+        });
+        break;
+      }
+
+      case 'decision-matrix': {
+        title = `Decisión: ${commandData.title || commandData.question || 'Matriz de decisión'}`;
+        const options = commandData.options || [];
+        const best = options.reduce((a: any, b: any) => ((a.totalScore || 0) > (b.totalScore || 0) ? a : b), {});
+        description = `**Dinámica:** Matriz de Decisión\n\n**Opciones evaluadas:**\n`;
+        options.forEach((opt: any) => {
+          description += `- ${opt.name}: ${opt.totalScore || 0} pts\n`;
+        });
+        if (best.name) description += `\n**Mejor opción:** ${best.name} (${best.totalScore || 0} pts)`;
+        break;
+      }
+
+      case 'five-whys': {
+        title = `Análisis 5 Porqués: ${commandData.problem || 'Problema'}`;
+        description = `**Dinámica:** 5 Porqués\n**Problema:** ${commandData.problem}\n\n**Análisis:**\n`;
+        const whys = commandData.whys || [];
+        whys.forEach((why: any, i: number) => {
+          description += `${i + 1}. ¿Por qué? ${why.question || why}\n   → ${why.answer || ''}\n`;
+        });
+        if (commandData.rootCause) description += `\n**Causa raíz:** ${commandData.rootCause}`;
+        break;
+      }
+
+      case 'action-items': {
+        title = `Action Items: ${commandData.title || 'Tareas'}`;
+        const items = commandData.items || [];
+        description = `**Dinámica:** Action Items\n**Total:** ${items.length}\n\n**Tareas:**\n`;
+        items.forEach((item: any) => {
+          const assignee = item.assignee?.name || item.assignee || 'Sin asignar';
+          const status = item.completed ? '✅' : '⬜';
+          description += `${status} ${item.text} (${assignee})\n`;
+        });
+        break;
+      }
+
+      case 'swot': {
+        title = 'Análisis SWOT';
+        description = `**Dinámica:** Análisis SWOT\n\n`;
+        const sections = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+        const labels: Record<string, string> = { strengths: '💪 Fortalezas', weaknesses: '⚠️ Debilidades', opportunities: '🌟 Oportunidades', threats: '🚨 Amenazas' };
+        sections.forEach(section => {
+          const items = commandData[section] || [];
+          if (items.length > 0) {
+            description += `**${labels[section]}:**\n`;
+            items.forEach((item: any) => description += `- ${item.text || item}\n`);
+            description += '\n';
+          }
+        });
+        break;
+      }
+
+      case 'risk-matrix': {
+        title = `Matriz de Riesgos: ${commandData.title || ''}`;
+        const risks = commandData.risks || [];
+        description = `**Dinámica:** Risk Matrix\n**Total riesgos:** ${risks.length}\n\n**Riesgos identificados:**\n`;
+        risks.forEach((risk: any) => {
+          const score = (risk.probability || 0) * (risk.impact || 0);
+          description += `- ${risk.name}: P=${risk.probability} I=${risk.impact} (Score: ${score})\n`;
+        });
+        break;
+      }
+
+      case 'dot-voting': {
+        title = `Dot Voting: ${commandData.question || 'Votación'}`;
+        const options = commandData.options || [];
+        const sorted = [...options].sort((a: any, b: any) => (b.totalDots || 0) - (a.totalDots || 0));
+        description = `**Dinámica:** Dot Voting\n\n**Resultados:**\n`;
+        sorted.forEach((opt: any, i: number) => {
+          description += `${i + 1}. ${opt.text} - ${opt.totalDots || 0} puntos${i === 0 ? ' ✅' : ''}\n`;
+        });
+        break;
+      }
+
+      case 'rice': {
+        title = `RICE Scoring: ${commandData.title || ''}`;
+        const items = commandData.items || [];
+        const sorted = [...items].sort((a: any, b: any) => (b.riceScore || 0) - (a.riceScore || 0));
+        description = `**Dinámica:** RICE Scoring\n\n**Priorización:**\n`;
+        sorted.forEach((item: any, i: number) => {
+          description += `${i + 1}. ${item.name} - Score: ${item.riceScore?.toFixed(1) || 0}\n`;
+        });
+        break;
+      }
+
+      case 'standup': {
+        title = `Daily Standup: ${new Date(commandData.date || Date.now()).toLocaleDateString('es-ES')}`;
+        const entries = commandData.entries || [];
+        description = `**Dinámica:** Daily Standup\n\n`;
+        entries.forEach((entry: any) => {
+          description += `**${entry.userName || 'Usuario'}:**\n`;
+          if (entry.yesterday) description += `- Ayer: ${entry.yesterday}\n`;
+          if (entry.today) description += `- Hoy: ${entry.today}\n`;
+          if (entry.blockers) description += `- Blockers: ${entry.blockers}\n`;
+          description += '\n';
+        });
+        break;
+      }
+
+      default: {
+        // Para otros tipos de dinámicas, usar título genérico
+        title = commandData.title || commandData.question || commandData.topic || `Dinámica: ${commandType}`;
+        description = `**Dinámica:** ${commandType}\n\n`;
+        if (commandData.description) description += commandData.description;
+        // Intentar serializar datos relevantes
+        const relevantKeys = ['items', 'options', 'ideas', 'results', 'entries', 'participants'];
+        relevantKeys.forEach(key => {
+          if (commandData[key] && Array.isArray(commandData[key])) {
+            description += `\n**${key}:** ${commandData[key].length} elementos\n`;
+          }
+        });
+      }
+    }
+
+    return { title: title.substring(0, 100), description };
+  };
+
   // Handler para abrir modal de crear prioridad desde mensaje
   const handleCreatePriorityFromMessage = (message: Message) => {
     const nextWeek = getWeekDates(1);
     const currentUserId = (session?.user as any)?.id;
 
-    // Determinar el contenido a usar (transcripción de voz si existe, sino contenido normal)
-    let messageContent = message.content;
-    let isVoiceMessage = false;
+    let messageTitle = '';
+    let messageContent = '';
+    let origen = '';
 
-    if (message.voiceMessage?.transcription) {
+    // Verificar si es una dinámica colaborativa
+    if (message.commandType && message.commandData) {
+      const dynamicContent = extractDynamicContent(message);
+      messageTitle = dynamicContent.title;
+      messageContent = dynamicContent.description;
+      origen = `**Origen:** Dinámica "${message.commandType}" creada por ${message.userId.name}`;
+    }
+    // Verificar si es mensaje de voz con transcripción
+    else if (message.voiceMessage?.transcription) {
       messageContent = message.voiceMessage.transcription;
-      isVoiceMessage = true;
+      const contentClean = messageContent.replace(/#\S+/g, '').trim();
+      messageTitle = contentClean.split('\n')[0].substring(0, 100);
+      origen = `**Origen:** Mensaje de voz de ${message.userId.name} (transcripción)`;
+    }
+    // Mensaje de texto normal
+    else {
+      messageContent = message.content;
+      const contentClean = messageContent.replace(/#\S+/g, '').trim();
+      messageTitle = contentClean.split('\n')[0].substring(0, 100);
+      origen = `**Origen:** Mensaje de ${message.userId.name} en canal de chat`;
     }
 
-    // Crear título basado en el contenido (primeras palabras)
-    const contentClean = messageContent.replace(/#\S+/g, '').trim(); // Quitar hashtags
-    const titleFromContent = contentClean.split('\n')[0].substring(0, 100);
-
-    // Construir descripción con contexto apropiado
-    const origen = isVoiceMessage
-      ? `**Origen:** Mensaje de voz de ${message.userId.name} (transcripción)`
-      : `**Origen:** Mensaje de ${message.userId.name} en canal de chat`;
-
     setPriorityFormData({
-      title: titleFromContent || 'Nueva prioridad',
+      title: messageTitle || 'Nueva prioridad',
       description: `${origen}\n\n${messageContent}`,
       initiativeIds: [],
-      projectId: projectId, // Pre-llenar con el proyecto del canal
+      projectId: projectId,
       completionPercentage: 0,
       status: 'EN_TIEMPO',
       type: 'ESTRATEGICA',
@@ -6088,7 +6271,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Poll */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6117,7 +6307,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Brainstorm */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6147,7 +6344,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Dot Voting */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6177,7 +6381,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Blind Vote */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6206,7 +6417,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Mind Map */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6234,7 +6452,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Whiteboard */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6344,7 +6569,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Retro */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6373,7 +6605,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for NPS */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6402,7 +6641,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Parking Lot */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6431,7 +6677,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Kudos Wall */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6460,7 +6713,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Icebreaker */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6489,7 +6749,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Action Items */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6518,7 +6785,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Team Health */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6547,7 +6821,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Confidence Vote */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6582,7 +6863,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Pomodoro */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6611,7 +6899,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Agenda */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6640,7 +6935,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Capacity */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6669,7 +6971,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Dependency Map */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6698,7 +7007,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for OKR */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6727,7 +7043,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Roadmap */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6758,7 +7081,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Decision Matrix */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6788,7 +7118,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6816,7 +7153,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6845,7 +7189,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6874,7 +7225,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6901,7 +7259,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6927,7 +7292,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6953,7 +7325,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -6978,7 +7357,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onClose={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7006,7 +7392,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7033,7 +7426,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7062,7 +7462,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7116,7 +7523,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Celebrate */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7142,7 +7556,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Decision */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7174,7 +7595,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                       />
                       {/* Actions Menu for Question */}
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7198,7 +7626,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         createdAt={message.createdAt}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7225,7 +7660,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7252,7 +7694,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7279,7 +7728,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7307,7 +7763,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7336,7 +7799,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7364,7 +7834,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7392,7 +7869,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7420,7 +7904,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7449,7 +7940,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7476,7 +7974,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7507,7 +8012,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7541,7 +8053,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7568,7 +8087,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7595,7 +8121,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7624,7 +8157,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7651,7 +8191,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7679,7 +8226,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7706,7 +8260,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7733,7 +8294,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7760,7 +8328,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7787,7 +8362,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7815,7 +8397,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7843,7 +8432,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7870,7 +8466,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7899,7 +8502,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7926,7 +8536,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7953,7 +8570,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -7980,7 +8604,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8007,7 +8638,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8035,7 +8673,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8063,7 +8708,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8090,7 +8742,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8117,7 +8776,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8145,7 +8811,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8173,7 +8846,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8200,7 +8880,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8227,7 +8914,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8254,7 +8948,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8281,7 +8982,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8309,7 +9017,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8337,7 +9052,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8365,7 +9087,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
@@ -8393,7 +9122,14 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onUpdate={() => {}}
                       />
                       {!message.isDeleted && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde esta dinámica"
+                          >
+                            <Target size={14} />
+                          </button>
                           {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
                             <button
                               onClick={() => handleDeleteMessage(message._id)}
