@@ -71,6 +71,7 @@ export default function TeamCanvasCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setBlocks(initialBlocks || {
       people: { items: [] },
@@ -82,8 +83,11 @@ export default function TeamCanvasCommand({
       weaknesses: { items: [] },
       needs: { items: [] }
     });
+  }, [JSON.stringify(initialBlocks)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialBlocks, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddItem = async () => {
     if (!session?.user || !newItem?.text.trim() || submitting) return;

@@ -46,10 +46,14 @@ export default function FuturesWheelCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setNodes(initialNodes || []);
+  }, [JSON.stringify(initialNodes)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialNodes, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddNode = async (parentId: string | null = null) => {
     if (!session?.user || !newImpact.text.trim() || submitting) return;

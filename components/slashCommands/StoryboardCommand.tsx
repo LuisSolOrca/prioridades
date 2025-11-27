@@ -46,10 +46,14 @@ export default function StoryboardCommand({
   const [currentView, setCurrentView] = useState<'grid' | 'strip'>('grid');
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setFrames(initialFrames || []);
+  }, [JSON.stringify(initialFrames)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialFrames, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddFrame = async () => {
     if (!session?.user || !newFrame.title.trim() || submitting) return;

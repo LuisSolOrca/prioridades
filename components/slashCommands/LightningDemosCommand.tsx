@@ -46,10 +46,14 @@ export default function LightningDemosCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setDemos(initialDemos || []);
+  }, [JSON.stringify(initialDemos)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialDemos, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddDemo = async () => {
     if (!session?.user || !newDemo.title.trim() || !newDemo.source.trim() || submitting) return;

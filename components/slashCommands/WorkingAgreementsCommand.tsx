@@ -50,10 +50,14 @@ export default function WorkingAgreementsCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setCategories(initialCategories || []);
+  }, [JSON.stringify(initialCategories)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialCategories, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddAgreement = async () => {
     if (!session?.user || !newAgreement?.text.trim() || submitting) return;

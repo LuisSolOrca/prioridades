@@ -74,10 +74,14 @@ export default function RICECommand({
   const [sortBy, setSortBy] = useState<'score' | 'name'>('score');
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setItems(initialItems || []);
+  }, [JSON.stringify(initialItems)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialItems, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddItem = async () => {
     if (!session?.user || !newItem.title.trim() || submitting) return;

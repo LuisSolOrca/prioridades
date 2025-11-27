@@ -57,12 +57,16 @@ export default function OddOneOutCommand({
   const [showConfetti, setShowConfetti] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setRounds(initialRounds || []);
+  }, [JSON.stringify(initialRounds)]);
+
+  useEffect(() => {
     setCurrentRound(initialCurrentRound || 1);
     setWinner(initialWinner);
     setClosed(initialClosed);
-  }, [initialRounds, initialCurrentRound, initialWinner, initialClosed]);
+  }, [initialCurrentRound, initialWinner, initialClosed]);
 
   // Get current round data
   const currentRoundData = rounds.find(r => r.roundNumber === currentRound);

@@ -60,11 +60,15 @@ export default function CustomerJourneyCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
+  useEffect(() => {
+    setStages(initialStages || []);
+  }, [JSON.stringify(initialStages)]);
+
   useEffect(() => {
     setPersona(initialPersona || '');
-    setStages(initialStages || []);
     setClosed(initialClosed);
-  }, [initialPersona, initialStages, initialClosed]);
+  }, [initialPersona, initialClosed]);
 
   const handleAddItem = async () => {
     if (!session?.user || !newItem?.text.trim() || submitting) return;

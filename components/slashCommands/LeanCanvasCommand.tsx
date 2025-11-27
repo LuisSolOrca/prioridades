@@ -68,10 +68,14 @@ export default function LeanCanvasCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setBlocks(initialBlocks);
+  }, [JSON.stringify(initialBlocks)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialBlocks, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddItem = async () => {
     if (!session?.user || !newItem?.text.trim() || submitting) return;

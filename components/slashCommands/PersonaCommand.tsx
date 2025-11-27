@@ -61,17 +61,21 @@ export default function PersonaCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
-    setName(initialName || '');
-    setPhoto(initialPhoto || '');
-    setDemographics(initialDemographics || { age: '', occupation: '', location: '', education: '' });
     setGoals(initialGoals || []);
     setFrustrations(initialFrustrations || []);
     setMotivations(initialMotivations || []);
     setBehaviors(initialBehaviors || []);
+  }, [JSON.stringify(initialGoals), JSON.stringify(initialFrustrations), JSON.stringify(initialMotivations), JSON.stringify(initialBehaviors)]);
+
+  useEffect(() => {
+    setName(initialName || '');
+    setPhoto(initialPhoto || '');
+    setDemographics(initialDemographics || { age: '', occupation: '', location: '', education: '' });
     setQuote(initialQuote || '');
     setClosed(initialClosed);
-  }, [initialName, initialPhoto, initialDemographics, initialGoals, initialFrustrations, initialMotivations, initialBehaviors, initialQuote, initialClosed]);
+  }, [initialName, initialPhoto, JSON.stringify(initialDemographics), initialQuote, initialClosed]);
 
   const handleUpdateField = async (field: string, value: any) => {
     if (!session?.user || submitting) return;

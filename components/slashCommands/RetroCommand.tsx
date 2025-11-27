@@ -51,11 +51,14 @@ export default function RetroCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Sincronizar estado cuando llegan actualizaciones de Pusher
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setSections(initialSections);
+  }, [JSON.stringify(initialSections)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialSections, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddItem = async (sectionId: string) => {
     const text = newItems[sectionId]?.trim();

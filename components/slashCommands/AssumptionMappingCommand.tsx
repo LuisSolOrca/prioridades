@@ -45,10 +45,14 @@ export default function AssumptionMappingCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setAssumptions(initialAssumptions || []);
+  }, [JSON.stringify(initialAssumptions)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialAssumptions, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddAssumption = async () => {
     if (!session?.user || !newAssumption.text.trim() || submitting) return;

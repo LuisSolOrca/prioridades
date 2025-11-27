@@ -62,13 +62,17 @@ export default function BrainwritingCommand({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setRounds(initialRounds || []);
-    setCurrentRound(initialCurrentRound || 0);
     setParticipants(initialParticipants || []);
     setIdeas(initialIdeas || []);
+  }, [JSON.stringify(initialRounds), JSON.stringify(initialParticipants), JSON.stringify(initialIdeas)]);
+
+  useEffect(() => {
+    setCurrentRound(initialCurrentRound || 0);
     setClosed(initialClosed);
-  }, [initialRounds, initialCurrentRound, initialParticipants, initialIdeas, initialClosed]);
+  }, [initialCurrentRound, initialClosed]);
 
   // Timer logic
   useEffect(() => {

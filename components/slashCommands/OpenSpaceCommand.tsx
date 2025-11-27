@@ -45,10 +45,14 @@ export default function OpenSpaceCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setSessions(initialSessions || []);
+  }, [JSON.stringify(initialSessions)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialSessions, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddSession = async () => {
     if (!session?.user || !newSession.topic.trim() || submitting) return;

@@ -45,10 +45,14 @@ export default function HopesFearsCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setItems(initialItems || []);
+  }, [JSON.stringify(initialItems)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialItems, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddItem = async (type: 'hope' | 'fear') => {
     const text = type === 'hope' ? newHope.trim() : newFear.trim();

@@ -59,10 +59,14 @@ export default function RiskMatrixCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setRisks(initialRisks || []);
+  }, [JSON.stringify(initialRisks)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialRisks, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddRisk = async () => {
     if (!session?.user || !newRisk.title.trim() || submitting) return;

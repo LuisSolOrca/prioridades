@@ -53,11 +53,15 @@ export default function DACICommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setRoles(initialRoles || []);
+  }, [JSON.stringify(initialRoles)]);
+
+  useEffect(() => {
     setStatus(initialStatus || 'draft');
     setClosed(initialClosed);
-  }, [initialRoles, initialStatus, initialClosed]);
+  }, [initialStatus, initialClosed]);
 
   const handleAssignRole = async (role: 'driver' | 'approver' | 'contributor' | 'informed') => {
     if (!session?.user || submitting) return;

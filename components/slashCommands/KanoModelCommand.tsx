@@ -76,10 +76,14 @@ export default function KanoModelCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setFeatures(initialFeatures || []);
+  }, [JSON.stringify(initialFeatures)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialFeatures, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddFeature = async (category: keyof typeof CATEGORIES) => {
     const text = newItems[category]?.trim();
