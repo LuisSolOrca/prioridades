@@ -229,6 +229,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [semanticSearching, setSemanticSearching] = useState(false);
   const [showSemanticResults, setShowSemanticResults] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [showCatchUp, setShowCatchUp] = useState(false);
+  const [catchUpLoading, setCatchUpLoading] = useState(false);
   const [activeCommand, setActiveCommand] = useState<{
     type: string;
     data?: any;
@@ -5466,6 +5468,25 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             )}
             <span className="hidden sm:inline">IA</span>
           </button>
+
+          {/* Catch Up Button - Ponme al día */}
+          <button
+            onClick={() => setShowCatchUp(true)}
+            disabled={messages.length === 0 || catchUpLoading}
+            title="Ponme al día - Resumen inteligente del chat con IA"
+            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition ${
+              messages.length > 0
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {catchUpLoading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Sparkles size={16} />
+            )}
+            <span className="hidden sm:inline">Ponme al día</span>
+          </button>
         </div>
 
         {/* Regular search results count */}
@@ -5554,6 +5575,21 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
               Búsqueda por concepto usando Groq AI
             </p>
+          </div>
+        )}
+
+        {/* Catch Up Panel - Ponme al día */}
+        {showCatchUp && (
+          <div className="mt-2 relative">
+            <AiSummaryCommand
+              projectId={projectId}
+              messages={messages}
+              args={['100']}
+              onClose={() => setShowCatchUp(false)}
+              onSuccess={() => {
+                // Opcional: cerrar el panel después de guardar
+              }}
+            />
           </div>
         )}
       </div>
