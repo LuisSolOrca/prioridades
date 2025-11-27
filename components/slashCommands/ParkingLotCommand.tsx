@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Plus, Trash2, ParkingCircle } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
+import { LinkifyText } from '@/lib/linkify';
 
 interface ParkingItem {
   text: string;
@@ -169,7 +170,9 @@ export default function ParkingLotCommand({
             key={index}
             className="bg-white dark:bg-gray-700 rounded-lg p-3 text-sm group relative"
           >
-            <p className="text-gray-800 dark:text-gray-100 pr-6">{item.text}</p>
+            <p className="text-gray-800 dark:text-gray-100 pr-6">
+              <LinkifyText text={item.text} />
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               — {item.userName}
             </p>

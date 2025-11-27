@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Scale, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { LinkifyText } from '@/lib/linkify';
 
 interface ProsConsItem {
   id: string;
@@ -126,7 +127,7 @@ export default function ProsConsCommand({
                   className="bg-white dark:bg-gray-700 rounded p-3 shadow-sm"
                 >
                   <p className="text-sm text-gray-800 dark:text-gray-100 mb-1 break-words">
-                    {item.text}
+                    <LinkifyText text={item.text} />
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     — {item.author.name}
@@ -179,7 +180,7 @@ export default function ProsConsCommand({
                   className="bg-white dark:bg-gray-700 rounded p-3 shadow-sm"
                 >
                   <p className="text-sm text-gray-800 dark:text-gray-100 mb-1 break-words">
-                    {item.text}
+                    <LinkifyText text={item.text} />
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     — {item.author.name}

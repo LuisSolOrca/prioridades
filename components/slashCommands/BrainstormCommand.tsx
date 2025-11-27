@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Lightbulb, ThumbsUp, Send, Lock, TrendingUp, User } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
+import { LinkifyText } from '@/lib/linkify';
 
 interface Idea {
   id: string;
@@ -323,7 +324,9 @@ export default function BrainstormCommand({
                         🏆 Top Idea
                       </div>
                     )}
-                    <p className="text-gray-800 dark:text-gray-100 text-sm mb-1 break-words">{idea.text}</p>
+                    <p className="text-gray-800 dark:text-gray-100 text-sm mb-1 break-words">
+                      <LinkifyText text={idea.text} />
+                    </p>
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <User size={12} />
                       <span>{idea.author.name}</span>
@@ -378,7 +381,7 @@ export default function BrainstormCommand({
             <p className="text-sm text-gray-700 dark:text-gray-300">
               Sesión cerrada. {topIdea && (
                 <>
-                  Idea ganadora: <strong>{topIdea.text}</strong> ({topIdea.votes.length} votos)
+                  Idea ganadora: <strong><LinkifyText text={topIdea.text} /></strong> ({topIdea.votes.length} votos)
                 </>
               )}
             </p>

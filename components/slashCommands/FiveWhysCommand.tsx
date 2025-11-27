@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { HelpCircle, Plus, ChevronRight } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
+import { LinkifyText } from '@/lib/linkify';
 
 interface WhyEntry {
   why: string;
@@ -157,7 +158,9 @@ export default function FiveWhysCommand({
       {/* Problem Statement */}
       <div className="bg-amber-100 dark:bg-amber-900/30 rounded-lg p-4 mb-4 border-l-4 border-amber-500">
         <p className="text-sm font-semibold text-amber-800 dark:text-amber-200 mb-1">Problema:</p>
-        <p className="text-gray-800 dark:text-gray-200">{problem || title}</p>
+        <p className="text-gray-800 dark:text-gray-200">
+          <LinkifyText text={problem || title} />
+        </p>
       </div>
 
       {/* Why Chain */}
@@ -173,7 +176,7 @@ export default function FiveWhysCommand({
                   ¿Por qué {entry.why}?
                 </p>
                 <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-600 rounded p-2">
-                  {entry.answer}
+                  <LinkifyText text={entry.answer} />
                 </p>
                 <p className="text-xs text-gray-500 mt-1">— {entry.userName}</p>
               </div>
@@ -246,7 +249,7 @@ export default function FiveWhysCommand({
             </div>
           ) : (
             <p className="text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700 rounded p-3">
-              {rootCause || 'No se identificó causa raíz'}
+              <LinkifyText text={rootCause || 'No se identificó causa raíz'} />
             </p>
           )}
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { CheckSquare, Square, Plus } from 'lucide-react';
+import { LinkifyText } from '@/lib/linkify';
 
 interface ChecklistItem {
   id: string;
@@ -140,7 +141,7 @@ export default function ChecklistCommand({
               <Square className="text-gray-400 flex-shrink-0" size={20} />
             )}
             <span className={`flex-1 min-w-0 break-words ${item.checked ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}>
-              {item.text}
+              <LinkifyText text={item.text} />
             </span>
             {item.checkedBy && (
               <span className="text-xs text-gray-500 dark:text-gray-400">

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { MessageSquare, ThumbsUp, Plus, Check } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
+import { LinkifyText } from '@/lib/linkify';
 
 interface RetroItem {
   id: string;
@@ -199,7 +200,9 @@ export default function RetrospectiveCommand({
                     <span className="text-xs font-bold">{item.votes.length}</span>
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-800 dark:text-gray-100 break-words">{item.text}</p>
+                    <p className="text-sm text-gray-800 dark:text-gray-100 break-words">
+                      <LinkifyText text={item.text} />
+                    </p>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{item.author.name}</span>
                   </div>
                 </div>

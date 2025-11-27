@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { HelpCircle, User as UserIcon, Calendar, MessageSquare, Send, CheckCircle } from 'lucide-react';
+import { LinkifyText } from '@/lib/linkify';
 
 interface QuestionCommandProps {
   projectId: string;
@@ -131,7 +132,7 @@ export default function QuestionCommand({
               </span>
             </div>
             <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-base font-medium">
-              {question}
+              <LinkifyText text={question} />
             </p>
           </div>
 
@@ -145,7 +146,7 @@ export default function QuestionCommand({
                 </span>
               </div>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-2">
-                {answer}
+                <LinkifyText text={answer} />
               </p>
               {formattedAnswerDate && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 italic">

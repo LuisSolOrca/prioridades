@@ -1,6 +1,7 @@
 'use client';
 
 import { Lightbulb, User as UserIcon, Calendar, FileCheck } from 'lucide-react';
+import { LinkifyText } from '@/lib/linkify';
 
 interface DecisionCommandProps {
   projectId: string;
@@ -49,7 +50,7 @@ export default function DecisionCommand({
           {/* Decision Text */}
           <div className="bg-white dark:bg-gray-700 rounded-lg p-4 mb-4 shadow-sm">
             <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-base">
-              {decision}
+              <LinkifyText text={decision} />
             </p>
           </div>
 

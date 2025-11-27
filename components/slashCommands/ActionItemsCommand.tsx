@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { CheckSquare, Square, Trash2, Plus } from 'lucide-react';
 import { captureCardScreenshot } from '@/lib/captureCardScreenshot';
+import { LinkifyText } from '@/lib/linkify';
 
 interface ActionItem {
   description: string;
@@ -230,7 +231,7 @@ export default function ActionItemsCommand({
                 </button>
                 <div className="flex-1">
                   <p className={`text-gray-800 dark:text-gray-100 ${item.completed ? 'line-through' : ''}`}>
-                    {item.description}
+                    <LinkifyText text={item.description} />
                   </p>
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-600 dark:text-gray-400">
                     <span className="font-semibold">👤 {item.assignedToName}</span>
