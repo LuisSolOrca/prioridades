@@ -586,6 +586,73 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Moving Motivators - Descubrir motivaciones del equipo (Management 3.0)',
     usage: '/moving-motivators',
     category: 'collaboration'
+  },
+  // New collaborative dynamics
+  {
+    name: 'jtbd-canvas',
+    description: 'JTBD Canvas - Jobs to Be Done para entender motivaciones del cliente',
+    usage: '/jtbd-canvas "Título del canvas"',
+    category: 'analysis'
+  },
+  {
+    name: 'storyboard',
+    description: 'Storyboard - Secuencia visual de frames estilo Design Sprint',
+    usage: '/storyboard "Título del storyboard"',
+    category: 'collaboration'
+  },
+  {
+    name: 'lightning-demos',
+    description: 'Lightning Demos - Compartir inspiración de otros productos con votación',
+    usage: '/lightning-demos "Título de la sesión"',
+    category: 'collaboration'
+  },
+  {
+    name: 'open-space',
+    description: 'Open Space / Marketplace - Proponer y unirse a sesiones',
+    usage: '/open-space "Título del evento"',
+    category: 'collaboration'
+  },
+  {
+    name: 'futures-wheel',
+    description: 'Futures Wheel - Explorar consecuencias de tendencias en múltiples niveles',
+    usage: '/futures-wheel "Tendencia a analizar"',
+    category: 'analysis'
+  },
+  {
+    name: 'impact-mapping',
+    description: 'Impact Mapping (Gojko Adzic) - Goal → Actors → Impacts → Deliverables',
+    usage: '/impact-mapping "Objetivo principal"',
+    category: 'analysis'
+  },
+  {
+    name: 'vpc',
+    description: 'Value Proposition Canvas - Customer Profile vs Value Proposition',
+    usage: '/vpc "Nombre del producto"',
+    category: 'analysis'
+  },
+  {
+    name: 'daci',
+    description: 'DACI Framework - Driver, Approver, Contributor, Informed para decisiones',
+    usage: '/daci "Decisión a tomar"',
+    category: 'management'
+  },
+  {
+    name: 'innovation-matrix',
+    description: 'Innovation Matrix - Clasificar ideas por tipo de innovación',
+    usage: '/innovation-matrix "Título del ejercicio"',
+    category: 'analysis'
+  },
+  {
+    name: 'kano-model',
+    description: 'Kano Model - Clasificar features por satisfacción del cliente',
+    usage: '/kano-model "Producto o feature set"',
+    category: 'analysis'
+  },
+  {
+    name: 'hopes-fears',
+    description: 'Hopes & Fears - Explorar esperanzas y miedos del equipo',
+    usage: '/hopes-fears "Título del ejercicio"',
+    category: 'collaboration'
   }
 ];
 

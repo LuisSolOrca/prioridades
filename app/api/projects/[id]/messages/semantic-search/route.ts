@@ -128,6 +128,113 @@ function extractCommandContent(message: any): ExtractedContent | null {
         content: `Objetivo: ${data.objective || ''} | ${(data.opportunities || []).map((o: any) => o.text || o.title || '').join(', ')}`
       };
 
+    case 'jtbd-canvas':
+      return {
+        ...base,
+        title: data.title || 'JTBD Canvas',
+        content: (data.sections || []).map((s: any) =>
+          `${s.title || s.type}: ${(s.items || []).map((i: any) => i.text || '').join(', ')}`
+        ).join(' | ')
+      };
+
+    case 'storyboard':
+      return {
+        ...base,
+        title: data.title || 'Storyboard',
+        content: (data.frames || []).map((f: any, idx: number) =>
+          `Frame ${idx + 1}: ${f.title || ''} - ${f.description || ''}`
+        ).join(' | ')
+      };
+
+    case 'lightning-demos':
+      return {
+        ...base,
+        title: data.title || 'Lightning Demos',
+        content: (data.demos || []).map((d: any) =>
+          `${d.title || ''} (${d.source || ''}): ${d.description || ''} - ${d.bigIdea || ''}`
+        ).join(' | ')
+      };
+
+    case 'open-space':
+      return {
+        ...base,
+        title: data.title || 'Open Space',
+        content: (data.sessions || []).map((s: any) =>
+          `${s.title || ''}: ${s.description || ''} (Host: ${s.hostName || ''}, ${s.attendees?.length || 0} asistentes)`
+        ).join(' | ')
+      };
+
+    case 'futures-wheel':
+      const extractFWNodes = (nodes: any[], level: number = 1): string =>
+        (nodes || []).map((n: any) =>
+          `[L${level}] ${n.text || ''} ${extractFWNodes(n.children || [], level + 1)}`
+        ).join(' ');
+      return {
+        ...base,
+        title: data.title || 'Futures Wheel',
+        content: `Centro: ${data.centerTopic || ''} | ${extractFWNodes(data.nodes || [])}`
+      };
+
+    case 'impact-mapping':
+      return {
+        ...base,
+        title: data.title || 'Impact Mapping',
+        content: `WHY: ${data.goal || ''} | WHO: ${(data.actors || []).map((a: any) =>
+          `${a.name || ''} -> HOW: ${(a.impacts || []).map((i: any) =>
+            `${i.text || ''} -> WHAT: ${(i.deliverables || []).map((d: any) => d.text || '').join(', ')}`
+          ).join('; ')}`
+        ).join(' | ')}`
+      };
+
+    case 'vpc':
+      return {
+        ...base,
+        title: data.title || 'Value Proposition Canvas',
+        content: `Customer: Jobs=${(data.customerProfile?.jobs || []).map((j: any) => j.text || '').join(', ')} | ` +
+          `Pains=${(data.customerProfile?.pains || []).map((p: any) => p.text || '').join(', ')} | ` +
+          `Gains=${(data.customerProfile?.gains || []).map((g: any) => g.text || '').join(', ')} | ` +
+          `Value: Products=${(data.valueProposition?.products || []).map((p: any) => p.text || '').join(', ')} | ` +
+          `Pain Relievers=${(data.valueProposition?.painRelievers || []).map((r: any) => r.text || '').join(', ')} | ` +
+          `Gain Creators=${(data.valueProposition?.gainCreators || []).map((c: any) => c.text || '').join(', ')}`
+      };
+
+    case 'daci':
+      return {
+        ...base,
+        title: data.title || data.decision || 'DACI Decision',
+        content: `Decisión: ${data.decision || ''} | Driver: ${(data.driver || []).map((d: any) => d.name || d).join(', ')} | ` +
+          `Approver: ${(data.approver || []).map((a: any) => a.name || a).join(', ')} | ` +
+          `Contributors: ${(data.contributors || []).map((c: any) => c.name || c).join(', ')} | ` +
+          `Informed: ${(data.informed || []).map((i: any) => i.name || i).join(', ')} | ` +
+          `Status: ${data.status || ''}`
+      };
+
+    case 'innovation-matrix':
+      return {
+        ...base,
+        title: data.title || 'Innovation Matrix',
+        content: (data.items || []).map((i: any) =>
+          `${i.text || ''} [${i.quadrant || ''}] (${i.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'kano-model':
+      return {
+        ...base,
+        title: data.title || 'Kano Model',
+        content: (data.features || []).map((f: any) =>
+          `${f.text || ''} [${f.category || ''}] (${f.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'hopes-fears':
+      return {
+        ...base,
+        title: data.title || 'Hopes & Fears',
+        content: `Hopes: ${(data.items || []).filter((i: any) => i.type === 'hope').map((h: any) => h.text || '').join(', ')} | ` +
+          `Fears: ${(data.items || []).filter((i: any) => i.type === 'fear').map((f: any) => f.text || '').join(', ')}`
+      };
+
     case 'fishbone':
       return {
         ...base,

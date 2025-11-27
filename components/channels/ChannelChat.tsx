@@ -109,6 +109,17 @@ import RomanVotingCommand from '../slashCommands/RomanVotingCommand';
 import InceptionDeckCommand from '../slashCommands/InceptionDeckCommand';
 import DelegationPokerCommand from '../slashCommands/DelegationPokerCommand';
 import MovingMotivatorsCommand from '../slashCommands/MovingMotivatorsCommand';
+import JTBDCanvasCommand from '../slashCommands/JTBDCanvasCommand';
+import StoryboardCommand from '../slashCommands/StoryboardCommand';
+import LightningDemosCommand from '../slashCommands/LightningDemosCommand';
+import OpenSpaceCommand from '../slashCommands/OpenSpaceCommand';
+import FuturesWheelCommand from '../slashCommands/FuturesWheelCommand';
+import ImpactMappingCommand from '../slashCommands/ImpactMappingCommand';
+import VPCCommand from '../slashCommands/VPCCommand';
+import DACICommand from '../slashCommands/DACICommand';
+import InnovationMatrixCommand from '../slashCommands/InnovationMatrixCommand';
+import KanoModelCommand from '../slashCommands/KanoModelCommand';
+import HopesFearsCommand from '../slashCommands/HopesFearsCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
@@ -4187,6 +4198,406 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         setNewMessage('');
         break;
 
+      case 'jtbd-canvas':
+        if (parsed.args.length < 1) {
+          alert('Uso: /jtbd-canvas "Título del canvas"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/jtbd-canvas ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'jtbd-canvas',
+              commandData: {
+                title: parsed.args[0],
+                sections: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating jtbd-canvas:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'storyboard':
+        if (parsed.args.length < 1) {
+          alert('Uso: /storyboard "Título del storyboard"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/storyboard ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'storyboard',
+              commandData: {
+                title: parsed.args[0],
+                frames: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating storyboard:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'lightning-demos':
+        if (parsed.args.length < 1) {
+          alert('Uso: /lightning-demos "Título de la sesión"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/lightning-demos ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'lightning-demos',
+              commandData: {
+                title: parsed.args[0],
+                demos: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating lightning-demos:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'open-space':
+        if (parsed.args.length < 1) {
+          alert('Uso: /open-space "Título del evento"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/open-space ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'open-space',
+              commandData: {
+                title: parsed.args[0],
+                sessions: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating open-space:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'futures-wheel':
+        if (parsed.args.length < 1) {
+          alert('Uso: /futures-wheel "Tendencia a analizar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/futures-wheel ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'futures-wheel',
+              commandData: {
+                title: parsed.args[0],
+                centralTrend: parsed.args[0],
+                nodes: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating futures-wheel:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'impact-mapping':
+        if (parsed.args.length < 1) {
+          alert('Uso: /impact-mapping "Objetivo principal"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/impact-mapping ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'impact-mapping',
+              commandData: {
+                title: parsed.args[0],
+                goal: parsed.args[0],
+                nodes: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating impact-mapping:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'vpc':
+        if (parsed.args.length < 1) {
+          alert('Uso: /vpc "Nombre del producto"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/vpc ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'vpc',
+              commandData: {
+                title: parsed.args[0],
+                sections: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating vpc:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'daci':
+        if (parsed.args.length < 1) {
+          alert('Uso: /daci "Decisión a tomar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/daci ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'daci',
+              commandData: {
+                title: parsed.args[0],
+                decision: parsed.args[0],
+                roles: [],
+                status: 'draft',
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating daci:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'innovation-matrix':
+        if (parsed.args.length < 1) {
+          alert('Uso: /innovation-matrix "Título del ejercicio"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/innovation-matrix ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'innovation-matrix',
+              commandData: {
+                title: parsed.args[0],
+                items: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating innovation-matrix:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'kano-model':
+        if (parsed.args.length < 1) {
+          alert('Uso: /kano-model "Producto o feature set"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/kano-model ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'kano-model',
+              commandData: {
+                title: parsed.args[0],
+                features: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating kano-model:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'hopes-fears':
+        if (parsed.args.length < 1) {
+          alert('Uso: /hopes-fears "Título del ejercicio"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/hopes-fears ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'hopes-fears',
+              commandData: {
+                title: parsed.args[0],
+                items: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating hopes-fears:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
       case 'lotus-blossom':
         if (parsed.args.length < 1) {
           alert('Uso: /lotus-blossom "Tema central"');
@@ -6529,6 +6940,307 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         title={message.commandData.title}
                         objective={message.commandData.objective || ''}
                         opportunities={message.commandData.opportunities || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'jtbd-canvas' && message.commandData ? (
+                    <div className="relative group">
+                      <JTBDCanvasCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        sections={message.commandData.sections || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'storyboard' && message.commandData ? (
+                    <div className="relative group">
+                      <StoryboardCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        frames={message.commandData.frames || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'lightning-demos' && message.commandData ? (
+                    <div className="relative group">
+                      <LightningDemosCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        demos={message.commandData.demos || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'open-space' && message.commandData ? (
+                    <div className="relative group">
+                      <OpenSpaceCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        sessions={message.commandData.sessions || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'futures-wheel' && message.commandData ? (
+                    <div className="relative group">
+                      <FuturesWheelCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        centralTrend={message.commandData.centralTrend || ''}
+                        nodes={message.commandData.nodes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'impact-mapping' && message.commandData ? (
+                    <div className="relative group">
+                      <ImpactMappingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        goal={message.commandData.goal || ''}
+                        nodes={message.commandData.nodes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'vpc' && message.commandData ? (
+                    <div className="relative group">
+                      <VPCCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        sections={message.commandData.sections || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'daci' && message.commandData ? (
+                    <div className="relative group">
+                      <DACICommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        decision={message.commandData.decision || ''}
+                        roles={message.commandData.roles || []}
+                        status={message.commandData.status || 'draft'}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'innovation-matrix' && message.commandData ? (
+                    <div className="relative group">
+                      <InnovationMatrixCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'kano-model' && message.commandData ? (
+                    <div className="relative group">
+                      <KanoModelCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        features={message.commandData.features || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'hopes-fears' && message.commandData ? (
+                    <div className="relative group">
+                      <HopesFearsCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        items={message.commandData.items || []}
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
