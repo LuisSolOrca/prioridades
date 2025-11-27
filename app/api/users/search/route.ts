@@ -7,6 +7,17 @@ import User from '@/models/User';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Normaliza un string removiendo acentos y caracteres especiales
+ * "José María" -> "jose maria"
+ */
+function normalizeString(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+    .toLowerCase();
+}
+
+/**
  * API endpoint para buscar usuarios por nombre
  * Usado para autocompletar menciones en comentarios
  */
@@ -34,17 +45,23 @@ export async function GET(request: NextRequest) {
         .limit(limit)
         .lean();
     } else {
-      // Buscar usuarios activos cuyo nombre o email coincida (case-insensitive)
-      users = await User.find({
-        isActive: true,
-        $or: [
-          { name: { $regex: new RegExp(query, 'i') } },
-          { email: { $regex: new RegExp(query, 'i') } }
-        ]
-      })
+      // Normalizar el query para búsqueda sin acentos
+      const normalizedQuery = normalizeString(query);
+
+      // Primero obtener más usuarios de los necesarios para filtrar después
+      const allActiveUsers = await User.find({ isActive: true })
         .select('_id name email')
-        .limit(limit)
         .lean();
+
+      // Filtrar usuarios cuyo nombre o email normalizado coincida
+      users = allActiveUsers
+        .filter(user => {
+          const normalizedName = normalizeString(user.name || '');
+          const normalizedEmail = normalizeString(user.email || '');
+          return normalizedName.includes(normalizedQuery) ||
+                 normalizedEmail.includes(normalizedQuery);
+        })
+        .slice(0, limit);
     }
 
     return NextResponse.json({ users });

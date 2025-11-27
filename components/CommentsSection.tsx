@@ -54,6 +54,17 @@ interface UserGroup {
 
 type MentionItem = (User & { isGroup?: false }) | UserGroup;
 
+/**
+ * Normaliza un string removiendo acentos
+ * "José María" -> "jose maria"
+ */
+function normalizeString(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
 export default function CommentsSection({ priorityId }: CommentsSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -159,10 +170,11 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
       const allGroups: UserGroup[] = groupsRes.ok ? await groupsRes.json() : [];
 
       // Filtrar grupos que coincidan con la búsqueda (o mostrar todos si no hay query)
+      const normalizedQuery = normalizeString(query);
       const filteredGroups = query.length >= 1
         ? allGroups.filter((g: any) =>
-            g.name.toLowerCase().includes(query.toLowerCase()) ||
-            g.tag.toLowerCase().includes(query.toLowerCase())
+            normalizeString(g.name).includes(normalizedQuery) ||
+            normalizeString(g.tag).includes(normalizedQuery)
           )
         : allGroups;
 
