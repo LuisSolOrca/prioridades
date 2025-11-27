@@ -4,10 +4,19 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const {
+    isSupported: pushSupported,
+    isSubscribed: pushSubscribed,
+    permission: pushPermission,
+    isLoading: pushLoading,
+    error: pushError,
+    toggleSubscription: togglePushSubscription
+  } = usePushNotifications();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -426,6 +435,108 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Push Notifications Section */}
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">🔔 Notificaciones Push del Navegador</h2>
+
+            {!pushSupported ? (
+              <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                <div className="flex items-center">
+                  <span className="text-xl mr-2">⚠️</span>
+                  <span className="text-yellow-800 dark:text-yellow-200">
+                    Tu navegador no soporta notificaciones push. Prueba con Chrome, Firefox o Edge.
+                  </span>
+                </div>
+              </div>
+            ) : pushPermission === 'denied' ? (
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                <div className="flex items-start">
+                  <span className="text-xl mr-2">🚫</span>
+                  <div>
+                    <span className="text-red-800 dark:text-red-200 font-medium">
+                      Las notificaciones están bloqueadas
+                    </span>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                      Para activarlas, haz clic en el candado de la barra de direcciones y habilita las notificaciones.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pushError && (
+                  <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <span className="text-xl mr-2">⚠️</span>
+                      <span className="text-red-800 dark:text-red-200">{pushError}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-800 dark:text-gray-200">
+                      {pushSubscribed ? '🔔 Notificaciones activadas' : '🔕 Notificaciones desactivadas'}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {pushSubscribed
+                        ? 'Recibirás alertas en tiempo real sobre menciones, mensajes y actualizaciones importantes.'
+                        : 'Activa las notificaciones para recibir alertas instantáneas en tu navegador.'}
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={pushSubscribed}
+                      disabled={pushLoading}
+                      onChange={togglePushSubscription}
+                    />
+                    <div className={`w-11 h-6 ${pushLoading ? 'bg-gray-200' : 'bg-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 ${pushLoading ? 'opacity-50 cursor-wait' : ''}`}></div>
+                  </label>
+                </div>
+
+                {pushSubscribed && (
+                  <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <span className="text-xl mr-2">✅</span>
+                      <div className="text-sm text-green-800 dark:text-green-200">
+                        <strong>Notificaciones activas</strong>
+                        <p className="mt-1 text-green-700 dark:text-green-300">
+                          Recibirás notificaciones cuando:
+                        </p>
+                        <ul className="mt-2 space-y-1 list-disc list-inside text-green-700 dark:text-green-300">
+                          <li>Alguien te mencione en un canal</li>
+                          <li>Recibas un nuevo mensaje directo</li>
+                          <li>Se te asigne una prioridad o tarea</li>
+                          <li>Cambie el estado de tus prioridades</li>
+                          <li>Se inicie una dinámica colaborativa</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!pushSubscribed && (
+                  <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <span className="text-xl mr-2">💡</span>
+                      <div className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>¿Por qué activar notificaciones push?</strong>
+                        <ul className="mt-2 space-y-1 list-disc list-inside text-blue-700 dark:text-blue-300">
+                          <li>Recibe alertas instantáneas sin tener la app abierta</li>
+                          <li>Nunca te pierdas una mención o mensaje importante</li>
+                          <li>Mantente al tanto de cambios en tus prioridades</li>
+                          <li>Funciona incluso con el navegador cerrado</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Change Password Section */}

@@ -12,6 +12,7 @@ import { notifyChannelMention, notifyChannelReply, notifyGroupMention } from '@/
 import { triggerPusherEvent } from '@/lib/pusher-server';
 import { trackChannelUsage } from '@/lib/gamification';
 import { triggerOutgoingWebhooks } from '@/lib/webhooks';
+import { notifyMention, sendPushToUsers } from '@/lib/pushNotifications';
 
 /**
  * Extrae hashtags del contenido del mensaje
@@ -653,6 +654,17 @@ export async function POST(
                   content,
                   message._id.toString()
                 );
+                // Enviar push notification al grupo
+                await sendPushToUsers(memberIds, {
+                  title: `🔔 ${author.name} mencionó a @${group.tag}`,
+                  body: content.length > 80 ? content.substring(0, 80) + '...' : content,
+                  tag: `mention-group-${message._id.toString()}`,
+                  data: {
+                    type: 'mention',
+                    channelId,
+                    messageId: message._id.toString()
+                  }
+                });
               }
             } else {
               // No es un grupo, buscar usuario
@@ -678,6 +690,15 @@ export async function POST(
                   content,
                   message._id.toString()
                 );
+                // Enviar push notification
+                await notifyMention(
+                  mentionedUser._id.toString(),
+                  author.name,
+                  project.name,
+                  content.substring(0, 100),
+                  channelId,
+                  message._id.toString()
+                );
               }
             }
           } catch (err) {
@@ -701,6 +722,17 @@ export async function POST(
             content,
             message._id.toString()
           );
+          // Enviar push notification por respuesta
+          await sendPushToUsers([parentMessage.userId._id.toString()], {
+            title: `💬 ${author.name} respondió tu mensaje`,
+            body: content.length > 80 ? content.substring(0, 80) + '...' : content,
+            tag: `reply-${message._id.toString()}`,
+            data: {
+              type: 'message',
+              channelId,
+              messageId: message._id.toString()
+            }
+          });
         }
       }
     } catch (notifError) {

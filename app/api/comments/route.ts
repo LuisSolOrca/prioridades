@@ -11,6 +11,7 @@ import { notifyComment, notifyMention, notifyGroupMentionInPriority } from '@/li
 import { trackCommentBadges } from '@/lib/gamification';
 import { sendPriorityNotificationToSlack } from '@/lib/slack';
 import { logCommentAdded } from '@/lib/projectActivity';
+import { sendPushToUser, sendPushToUsers } from '@/lib/pushNotifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -194,6 +195,18 @@ export async function POST(request: NextRequest) {
             comment._id.toString()
           ).catch(err => console.error('[NOTIFICATION] Error creating comment notification:', err));
 
+          // Enviar push notification al dueño de la prioridad
+          await sendPushToUser(priorityOwner._id.toString(), {
+            title: `💬 Nuevo comentario de ${commentAuthor.name}`,
+            body: `En "${priority.title}": ${commentText.length > 60 ? commentText.substring(0, 60) + '...' : commentText}`,
+            tag: `comment-${priorityId}`,
+            data: {
+              type: 'priority',
+              priorityId,
+              url: `/priorities?id=${priorityId}`
+            }
+          }).catch(err => console.error('[PUSH] Error sending comment push:', err));
+
           // Notificar a Slack si el proyecto tiene canal configurado
           if (priority.projectId) {
             const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
@@ -252,6 +265,18 @@ export async function POST(request: NextRequest) {
                     comment._id.toString()
                   ).catch(err => console.error('[NOTIFICATION] Error creating group mention notification:', err));
 
+                  // Enviar push notification al grupo
+                  await sendPushToUsers(memberIds, {
+                    title: `🔔 ${commentAuthor.name} mencionó a @${group.tag}`,
+                    body: `En "${priority.title}": ${mentionText.length > 60 ? mentionText.substring(0, 60) + '...' : mentionText}`,
+                    tag: `mention-group-${comment._id.toString()}`,
+                    data: {
+                      type: 'priority',
+                      priorityId,
+                      url: `/priorities?id=${priorityId}`
+                    }
+                  }).catch(err => console.error('[PUSH] Error sending group mention push:', err));
+
                   // Notificar a Slack si el proyecto tiene canal configurado
                   if (priority.projectId) {
                     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
@@ -294,6 +319,19 @@ export async function POST(request: NextRequest) {
                     priorityId,
                     comment._id.toString()
                   ).catch(err => console.error('[NOTIFICATION] Error creating mention notification:', err));
+
+                  // Enviar push notification por mención
+                  await sendPushToUser(mentionedUser._id.toString(), {
+                    title: `🔔 ${commentAuthor.name} te mencionó`,
+                    body: `En "${priority.title}": ${mentionText.length > 60 ? mentionText.substring(0, 60) + '...' : mentionText}`,
+                    tag: `mention-${comment._id.toString()}`,
+                    requireInteraction: true,
+                    data: {
+                      type: 'priority',
+                      priorityId,
+                      url: `/priorities?id=${priorityId}`
+                    }
+                  }).catch(err => console.error('[PUSH] Error sending mention push:', err));
 
                   // Notificar a Slack si el proyecto tiene canal configurado
                   if (priority.projectId) {
