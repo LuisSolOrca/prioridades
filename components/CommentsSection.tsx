@@ -157,7 +157,8 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
         fetch('/api/user-groups')
       ]);
 
-      const users: User[] = usersRes.ok ? await usersRes.json() : [];
+      const usersData = usersRes.ok ? await usersRes.json() : { users: [] };
+      const users: User[] = usersData.users || usersData || [];
       const allGroups: UserGroup[] = groupsRes.ok ? await groupsRes.json() : [];
 
       // Filtrar grupos que coincidan con la búsqueda
