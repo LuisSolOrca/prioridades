@@ -181,13 +181,13 @@ function extractParticipants(commandType: string, commandData: any): string[] {
 }
 
 /**
- * Genera el HTML del resumen de la dinámica
+ * Genera el HTML COMPLETO de los resultados de la dinámica
  */
-function generateDynamicSummaryHTML(commandType: string, commandData: any): string {
+function generateDynamicResultsHTML(commandType: string, commandData: any): string {
   const typeName = COMMAND_TYPE_NAMES[commandType] || commandType;
   const title = commandData.title || commandData.question || commandData.topic || 'Sin título';
 
-  let summaryHTML = `
+  let resultsHTML = `
     <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
       <h3 style="color: #1f2937; margin: 0 0 15px 0;">${title}</h3>
       <span style="background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
@@ -196,19 +196,19 @@ function generateDynamicSummaryHTML(commandType: string, commandData: any): stri
     </div>
   `;
 
-  // Generar resumen específico según el tipo
+  // Generar resultados COMPLETOS según el tipo
   switch (commandType) {
     case 'brainstorm':
       if (commandData.ideas?.length > 0) {
         const sortedIdeas = [...commandData.ideas].sort((a, b) => (b.votes?.length || 0) - (a.votes?.length || 0));
-        summaryHTML += `
+        resultsHTML += `
           <div style="margin-bottom: 15px;">
-            <h4 style="color: #6b7280; margin: 0 0 10px 0;">Ideas (${commandData.ideas.length})</h4>
-            ${sortedIdeas.slice(0, 5).map((idea: any, i: number) => `
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">💡 Todas las Ideas (${commandData.ideas.length})</h4>
+            ${sortedIdeas.map((idea: any, i: number) => `
               <div style="background: white; padding: 12px; margin: 8px 0; border-radius: 6px; border-left: 3px solid ${i === 0 ? '#f59e0b' : '#e5e7eb'};">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="color: #374151;">${i === 0 ? '🏆 ' : ''}${idea.text}</span>
-                  <span style="color: #6b7280; font-size: 12px;">👍 ${idea.votes?.length || 0}</span>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <span style="color: #374151; flex: 1;">${i === 0 ? '🏆 ' : `${i + 1}. `}${idea.text}</span>
+                  <span style="color: #6b7280; font-size: 12px; margin-left: 10px; white-space: nowrap;">👍 ${idea.votes?.length || 0}</span>
                 </div>
                 <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">— ${idea.author?.name || 'Anónimo'}</div>
               </div>
@@ -220,23 +220,26 @@ function generateDynamicSummaryHTML(commandType: string, commandData: any): stri
 
     case 'poll':
     case 'dot-voting':
+    case 'blind-vote':
       if (commandData.options?.length > 0) {
         const totalVotes = commandData.options.reduce((sum: number, opt: any) =>
           sum + (opt.votes?.length || opt.dots?.length || 0), 0);
-        summaryHTML += `
+        const sortedOptions = [...commandData.options].sort((a, b) =>
+          (b.votes?.length || b.dots?.length || 0) - (a.votes?.length || a.dots?.length || 0));
+        resultsHTML += `
           <div style="margin-bottom: 15px;">
-            <h4 style="color: #6b7280; margin: 0 0 10px 0;">Resultados (${totalVotes} votos)</h4>
-            ${commandData.options.map((opt: any) => {
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">📊 Resultados Completos (${totalVotes} votos)</h4>
+            ${sortedOptions.map((opt: any, i: number) => {
               const votes = opt.votes?.length || opt.dots?.length || 0;
               const percentage = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
               return `
-                <div style="background: white; padding: 12px; margin: 8px 0; border-radius: 6px;">
+                <div style="background: white; padding: 12px; margin: 8px 0; border-radius: 6px; ${i === 0 ? 'border: 2px solid #3b82f6;' : ''}">
                   <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: #374151;">${opt.text}</span>
-                    <span style="color: #6b7280; font-weight: 600;">${votes} (${percentage}%)</span>
+                    <span style="color: #374151; font-weight: ${i === 0 ? '600' : '400'};">${i === 0 ? '🥇 ' : ''}${opt.text}</span>
+                    <span style="color: #1f2937; font-weight: 600;">${votes} votos (${percentage}%)</span>
                   </div>
-                  <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
-                    <div style="background: #3b82f6; height: 100%; width: ${percentage}%;"></div>
+                  <div style="background: #e5e7eb; border-radius: 4px; height: 10px; overflow: hidden;">
+                    <div style="background: ${i === 0 ? '#3b82f6' : '#9ca3af'}; height: 100%; width: ${percentage}%;"></div>
                   </div>
                 </div>
               `;
@@ -247,63 +250,110 @@ function generateDynamicSummaryHTML(commandType: string, commandData: any): stri
       break;
 
     case 'retrospective':
-    case 'retro':
-      const columns = ['well', 'improve', 'actions'];
-      const columnNames: Record<string, string> = { well: '✅ Fue Bien', improve: '⚠️ Mejorar', actions: '💡 Acciones' };
+      const retroColumns = ['well', 'improve', 'actions'];
+      const retroColumnConfig: Record<string, { name: string; color: string; bg: string }> = {
+        well: { name: '✅ Fue Bien', color: '#10b981', bg: '#f0fdf4' },
+        improve: { name: '⚠️ A Mejorar', color: '#f59e0b', bg: '#fffbeb' },
+        actions: { name: '💡 Acciones', color: '#3b82f6', bg: '#eff6ff' }
+      };
       if (commandData.items?.length > 0) {
-        summaryHTML += `<div style="margin-bottom: 15px;">`;
-        columns.forEach(col => {
+        resultsHTML += `<div style="margin-bottom: 15px;">`;
+        retroColumns.forEach(col => {
           const items = commandData.items.filter((i: any) => i.column === col);
+          const config = retroColumnConfig[col];
           if (items.length > 0) {
-            summaryHTML += `
-              <h4 style="color: #6b7280; margin: 15px 0 10px 0;">${columnNames[col]} (${items.length})</h4>
-              ${items.slice(0, 3).map((item: any) => `
-                <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px;">
-                  ${item.text}
-                </div>
-              `).join('')}
+            resultsHTML += `
+              <div style="background: ${config.bg}; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid ${config.color};">
+                <h4 style="color: ${config.color}; margin: 0 0 10px 0;">${config.name} (${items.length})</h4>
+                ${items.map((item: any) => `
+                  <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px;">
+                    <div style="color: #374151;">${item.text}</div>
+                    <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">— ${item.author?.name || 'Anónimo'} ${item.votes?.length ? `• 👍 ${item.votes.length}` : ''}</div>
+                  </div>
+                `).join('')}
+              </div>
             `;
           }
         });
-        summaryHTML += `</div>`;
+        resultsHTML += `</div>`;
+      }
+      break;
+
+    case 'retro':
+      // Retro con secciones (rose-bud-thorn, etc.)
+      if (commandData.sections?.length > 0) {
+        resultsHTML += `<div style="margin-bottom: 15px;">`;
+        commandData.sections.forEach((section: any) => {
+          if (section.items?.length > 0) {
+            resultsHTML += `
+              <div style="background: #f9fafb; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <h4 style="color: #1f2937; margin: 0 0 10px 0;">${section.icon || ''} ${section.title} (${section.items.length})</h4>
+                ${section.items.map((item: any) => `
+                  <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px;">
+                    <div style="color: #374151;">${item.text}</div>
+                    <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">— ${item.author?.name || item.userName || 'Anónimo'}</div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+        });
+        resultsHTML += `</div>`;
       }
       break;
 
     case 'pros-cons':
-      summaryHTML += `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div>
-            <h4 style="color: #10b981; margin: 0 0 10px 0;">✅ Pros (${commandData.pros?.length || 0})</h4>
-            ${(commandData.pros || []).slice(0, 3).map((item: any) => `
-              <div style="background: #f0fdf4; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px; color: #166534;">
-                ${item.text}
+      resultsHTML += `
+        <table style="width: 100%; border-collapse: separate; border-spacing: 15px 0; margin-bottom: 15px;">
+          <tr>
+            <td style="vertical-align: top; width: 50%;">
+              <div style="background: #f0fdf4; border-radius: 8px; padding: 15px; border-left: 4px solid #10b981;">
+                <h4 style="color: #10b981; margin: 0 0 10px 0;">✅ Pros (${commandData.pros?.length || 0})</h4>
+                ${(commandData.pros || []).map((item: any) => `
+                  <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px;">
+                    <div style="color: #166534;">${item.text}</div>
+                    <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">— ${item.author?.name || 'Anónimo'}</div>
+                  </div>
+                `).join('')}
               </div>
-            `).join('')}
-          </div>
-          <div>
-            <h4 style="color: #ef4444; margin: 0 0 10px 0;">❌ Cons (${commandData.cons?.length || 0})</h4>
-            ${(commandData.cons || []).slice(0, 3).map((item: any) => `
-              <div style="background: #fef2f2; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px; color: #991b1b;">
-                ${item.text}
+            </td>
+            <td style="vertical-align: top; width: 50%;">
+              <div style="background: #fef2f2; border-radius: 8px; padding: 15px; border-left: 4px solid #ef4444;">
+                <h4 style="color: #ef4444; margin: 0 0 10px 0;">❌ Contras (${commandData.cons?.length || 0})</h4>
+                ${(commandData.cons || []).map((item: any) => `
+                  <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px;">
+                    <div style="color: #991b1b;">${item.text}</div>
+                    <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">— ${item.author?.name || 'Anónimo'}</div>
+                  </div>
+                `).join('')}
               </div>
-            `).join('')}
-          </div>
-        </div>
+            </td>
+          </tr>
+        </table>
       `;
       break;
 
     case 'action-items':
       if (commandData.items?.length > 0) {
         const completed = commandData.items.filter((i: any) => i.completed).length;
-        summaryHTML += `
+        const pending = commandData.items.length - completed;
+        resultsHTML += `
           <div style="margin-bottom: 15px;">
-            <h4 style="color: #6b7280; margin: 0 0 10px 0;">
-              Acciones: ${completed}/${commandData.items.length} completadas
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">
+              📋 Action Items - ${completed} completadas, ${pending} pendientes
             </h4>
-            ${commandData.items.slice(0, 5).map((item: any) => `
-              <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
-                <span style="color: ${item.completed ? '#10b981' : '#6b7280'};">${item.completed ? '✅' : '⬜'}</span>
-                <span style="color: #374151; ${item.completed ? 'text-decoration: line-through;' : ''}">${item.description}</span>
+            ${commandData.items.map((item: any) => `
+              <div style="background: white; padding: 12px; margin: 8px 0; border-radius: 6px; border-left: 3px solid ${item.completed ? '#10b981' : '#f59e0b'};">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                  <span style="font-size: 16px;">${item.completed ? '✅' : '⬜'}</span>
+                  <div style="flex: 1;">
+                    <div style="color: #374151; ${item.completed ? 'text-decoration: line-through; color: #9ca3af;' : ''}">${item.description}</div>
+                    <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">
+                      👤 ${item.assignedToName || 'Sin asignar'}
+                      ${item.dueDate ? `• 📅 ${new Date(item.dueDate).toLocaleDateString('es-ES')}` : ''}
+                    </div>
+                  </div>
+                </div>
               </div>
             `).join('')}
           </div>
@@ -311,27 +361,166 @@ function generateDynamicSummaryHTML(commandType: string, commandData: any): stri
       }
       break;
 
-    default:
-      // Para otros tipos, mostrar estadísticas básicas
-      const stats: string[] = [];
-      if (commandData.ideas?.length) stats.push(`${commandData.ideas.length} ideas`);
-      if (commandData.items?.length) stats.push(`${commandData.items.length} items`);
-      if (commandData.votes?.length) stats.push(`${commandData.votes.length} votos`);
-      if (commandData.sections?.length) {
-        const totalItems = commandData.sections.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0);
-        stats.push(`${totalItems} aportes`);
-      }
-      if (stats.length > 0) {
-        summaryHTML += `
-          <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <p style="color: #6b7280; margin: 0;">${stats.join(' • ')}</p>
+    case 'checklist':
+      if (commandData.items?.length > 0) {
+        const checked = commandData.items.filter((i: any) => i.checked).length;
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">
+              ✅ Checklist - ${checked}/${commandData.items.length} completados
+            </h4>
+            ${commandData.items.map((item: any) => `
+              <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 16px;">${item.checked ? '✅' : '⬜'}</span>
+                <span style="color: ${item.checked ? '#9ca3af' : '#374151'}; ${item.checked ? 'text-decoration: line-through;' : ''}">${item.text}</span>
+                ${item.checkedBy ? `<span style="color: #9ca3af; font-size: 11px; margin-left: auto;">— ${item.checkedBy.name}</span>` : ''}
+              </div>
+            `).join('')}
           </div>
         `;
       }
       break;
+
+    case 'fist-of-five':
+    case 'confidence-vote':
+    case 'nps':
+      if (commandData.votes?.length > 0) {
+        const voteGroups: Record<number, number> = {};
+        commandData.votes.forEach((v: any) => {
+          const value = v.value || v.vote || 0;
+          voteGroups[value] = (voteGroups[value] || 0) + 1;
+        });
+        const avgVote = commandData.votes.reduce((sum: number, v: any) => sum + (v.value || v.vote || 0), 0) / commandData.votes.length;
+
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">
+              🗳️ Resultados (${commandData.votes.length} votos) - Promedio: ${avgVote.toFixed(1)}
+            </h4>
+            <div style="background: white; padding: 15px; border-radius: 8px;">
+              ${Object.entries(voteGroups).sort((a, b) => Number(b[0]) - Number(a[0])).map(([value, count]) => `
+                <div style="display: flex; align-items: center; margin: 8px 0;">
+                  <span style="width: 40px; font-weight: 600; color: #374151;">${value}</span>
+                  <div style="flex: 1; background: #e5e7eb; border-radius: 4px; height: 20px; margin: 0 10px; overflow: hidden;">
+                    <div style="background: #3b82f6; height: 100%; width: ${(count / commandData.votes.length) * 100}%;"></div>
+                  </div>
+                  <span style="width: 60px; text-align: right; color: #6b7280;">${count} (${Math.round((count / commandData.votes.length) * 100)}%)</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      break;
+
+    case 'five-whys':
+      resultsHTML += `<div style="margin-bottom: 15px;">`;
+      if (commandData.problem) {
+        resultsHTML += `
+          <div style="background: #fef3c7; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+            <h4 style="color: #92400e; margin: 0 0 5px 0;">❓ Problema</h4>
+            <p style="color: #1f2937; margin: 0;">${commandData.problem}</p>
+          </div>
+        `;
+      }
+      if (commandData.whys?.length > 0) {
+        commandData.whys.forEach((why: any, i: number) => {
+          resultsHTML += `
+            <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #6366f1;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <span style="background: #6366f1; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600;">${i + 1}</span>
+                <span style="color: #6366f1; font-weight: 600;">¿Por qué ${why.why}?</span>
+              </div>
+              <p style="color: #374151; margin: 0 0 0 34px;">${why.answer}</p>
+              <p style="color: #9ca3af; font-size: 11px; margin: 5px 0 0 34px;">— ${why.userName}</p>
+            </div>
+          `;
+        });
+      }
+      if (commandData.rootCause) {
+        resultsHTML += `
+          <div style="background: #f0fdf4; border-radius: 8px; padding: 15px; margin-top: 15px; border-left: 4px solid #10b981;">
+            <h4 style="color: #059669; margin: 0 0 5px 0;">🎯 Causa Raíz Identificada</h4>
+            <p style="color: #1f2937; margin: 0; font-weight: 600;">${commandData.rootCause}</p>
+          </div>
+        `;
+      }
+      resultsHTML += `</div>`;
+      break;
+
+    case 'parking-lot':
+      if (commandData.items?.length > 0) {
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">🅿️ Parking Lot (${commandData.items.length} temas)</h4>
+            ${commandData.items.map((item: any, i: number) => `
+              <div style="background: white; padding: 12px; margin: 8px 0; border-radius: 6px; border-left: 3px solid #6366f1;">
+                <div style="color: #374151;">${i + 1}. ${item.text}</div>
+                <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">— ${item.userName || item.author?.name || 'Anónimo'}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      break;
+
+    // Para dinámicas con secciones genéricas (SWOT, SOAR, Six Hats, etc.)
+    default:
+      if (commandData.sections?.length > 0) {
+        resultsHTML += `<div style="margin-bottom: 15px;">`;
+        commandData.sections.forEach((section: any) => {
+          const totalItems = section.items?.length || 0;
+          if (totalItems > 0) {
+            resultsHTML += `
+              <div style="background: #f9fafb; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid ${section.color || '#6366f1'};">
+                <h4 style="color: #1f2937; margin: 0 0 10px 0;">${section.icon || ''} ${section.title} (${totalItems})</h4>
+                ${section.items.map((item: any) => `
+                  <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px;">
+                    <div style="color: #374151;">${item.text}</div>
+                    <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">— ${item.author?.name || item.userName || 'Anónimo'}</div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+        });
+        resultsHTML += `</div>`;
+      } else if (commandData.blocks) {
+        // Para lean-canvas, team-canvas
+        resultsHTML += `<div style="margin-bottom: 15px;">`;
+        Object.entries(commandData.blocks).forEach(([key, block]: [string, any]) => {
+          if (block.items?.length > 0) {
+            resultsHTML += `
+              <div style="background: #f9fafb; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <h4 style="color: #1f2937; margin: 0 0 10px 0; text-transform: capitalize;">${key.replace(/([A-Z])/g, ' $1').trim()} (${block.items.length})</h4>
+                ${block.items.map((item: any) => `
+                  <div style="background: white; padding: 10px; margin: 6px 0; border-radius: 6px; font-size: 14px;">
+                    <div style="color: #374151;">${item.text || item.content}</div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+        });
+        resultsHTML += `</div>`;
+      } else {
+        // Estadísticas básicas
+        const stats: string[] = [];
+        if (commandData.ideas?.length) stats.push(`${commandData.ideas.length} ideas`);
+        if (commandData.items?.length) stats.push(`${commandData.items.length} items`);
+        if (commandData.votes?.length) stats.push(`${commandData.votes.length} votos`);
+        if (stats.length > 0) {
+          resultsHTML += `
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+              <p style="color: #6b7280; margin: 0;">${stats.join(' • ')}</p>
+            </div>
+          `;
+        }
+      }
+      break;
   }
 
-  return summaryHTML;
+  return resultsHTML;
 }
 
 /**
@@ -368,21 +557,30 @@ export async function POST(
     }
 
     // Buscar mensaje con screenshot de la dinámica (se crea al cerrar)
-    // El mensaje contiene "Captura de **commandType**"
+    // Busca mensajes con "Captura de" que contengan attachments de imagen
     let screenshotUrl = '';
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     try {
-      const screenshotMessage = await ChannelMessage.findOne({
+      // Buscar por contenido que mencione el tipo de dinámica o el título
+      const dynamicTitle = message.commandData.title || message.commandData.question || message.commandData.topic || '';
+      const screenshotMessages = await ChannelMessage.find({
         channelId: message.channelId,
-        content: { $regex: `Captura de \\*\\*${message.commandType}\\*\\*`, $options: 'i' },
+        $or: [
+          { content: { $regex: `Captura de \\*\\*${message.commandType}\\*\\*`, $options: 'i' } },
+          { content: { $regex: `📸.*${message.commandType}`, $options: 'i' } }
+        ],
         attachments: { $exists: true, $ne: [] },
-        createdAt: { $gte: new Date(message.createdAt) } // Buscar después de crear la dinámica
-      }).populate('attachments').sort({ createdAt: -1 });
+        createdAt: { $gte: new Date(message.createdAt) }
+      }).populate('attachments').sort({ createdAt: -1 }).limit(5);
 
-      if (screenshotMessage && screenshotMessage.attachments?.length > 0) {
-        const attachment = screenshotMessage.attachments[0] as any;
-        if (attachment.url) {
-          const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-          screenshotUrl = attachment.url.startsWith('http') ? attachment.url : `${baseUrl}${attachment.url}`;
+      // Buscar el attachment de imagen más reciente
+      for (const msg of screenshotMessages) {
+        if (msg.attachments?.length > 0) {
+          const attachment = msg.attachments[0] as any;
+          if (attachment.url && attachment.mimeType?.startsWith('image/')) {
+            screenshotUrl = attachment.url.startsWith('http') ? attachment.url : `${baseUrl}${attachment.url}`;
+            break;
+          }
         }
       }
     } catch (err) {
@@ -415,10 +613,9 @@ export async function POST(
     // Generar contenido del email
     const typeName = COMMAND_TYPE_NAMES[message.commandType] || message.commandType;
     const title = message.commandData.title || message.commandData.question || message.commandData.topic || 'Sin título';
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const channelUrl = `${baseUrl}/channels/${message.channelId}`;
 
-    const summaryHTML = generateDynamicSummaryHTML(message.commandType, message.commandData);
+    const resultsHTML = generateDynamicResultsHTML(message.commandType, message.commandData);
 
     const screenshotSection = screenshotUrl ? `
       <div style="margin: 25px 0; text-align: center;">
@@ -502,7 +699,7 @@ export async function POST(
 
               ${screenshotSection}
 
-              ${summaryHTML}
+              ${resultsHTML}
 
               <div style="text-align: center; margin-top: 30px;">
                 <a href="${channelUrl}" class="button">Ver en el Canal</a>
