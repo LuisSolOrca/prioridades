@@ -5418,75 +5418,149 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSemanticResults(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchQuery.length >= 3) {
-                  performSemanticSearch();
-                }
-              }}
-              placeholder="Buscar mensajes... (contenido, usuario, o usa IA)"
-              className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {searchQuery && (
+        {/* Search Section - Redesigned */}
+        <div className="space-y-2">
+          {/* Search Mode Tabs */}
+          <div className="flex items-center gap-2">
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
               <button
                 onClick={() => {
-                  setSearchQuery('');
+                  setSemanticSearchMode(false);
                   setShowSemanticResults(false);
-                  setSemanticResults([]);
                 }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 ${
+                  !semanticSearchMode
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
               >
-                <X size={16} />
+                <Search size={14} />
+                <span>Búsqueda rápida</span>
+              </button>
+              <button
+                onClick={() => setSemanticSearchMode(true)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-1.5 ${
+                  semanticSearchMode
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <Brain size={14} />
+                <span>Búsqueda con IA</span>
+                <Sparkles size={12} className={semanticSearchMode ? 'text-yellow-300' : 'text-purple-400'} />
+              </button>
+            </div>
+
+            {/* Catch Up Button - Ponme al día */}
+            <button
+              onClick={() => setShowCatchUp(true)}
+              disabled={messages.length === 0 || catchUpLoading}
+              title="Ponme al día - Resumen inteligente del chat con IA"
+              className={`ml-auto px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-medium transition ${
+                messages.length > 0
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-sm'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {catchUpLoading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Sparkles size={14} />
+              )}
+              <span>Ponme al día</span>
+            </button>
+          </div>
+
+          {/* Search Input */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              {semanticSearchMode ? (
+                <Brain className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-500" size={18} />
+              ) : (
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              )}
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (!semanticSearchMode) {
+                    setShowSemanticResults(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.length >= 3 && semanticSearchMode) {
+                    performSemanticSearch();
+                  }
+                }}
+                placeholder={
+                  semanticSearchMode
+                    ? '¿Qué buscas? Ej: "decisiones sobre el proyecto", "problemas de rendimiento"...'
+                    : 'Filtrar por texto o @usuario...'
+                }
+                className={`w-full pl-10 pr-10 py-2.5 text-sm border rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 transition ${
+                  semanticSearchMode
+                    ? 'border-purple-300 dark:border-purple-600 focus:ring-purple-500 focus:border-purple-500'
+                    : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
+                }`}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSemanticResults(false);
+                    setSemanticResults([]);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Search Button - Only for semantic mode */}
+            {semanticSearchMode && (
+              <button
+                onClick={performSemanticSearch}
+                disabled={searchQuery.length < 3 || semanticSearching}
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition ${
+                  searchQuery.length >= 3
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-md'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {semanticSearching ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Buscando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Brain size={16} />
+                    <span>Buscar</span>
+                  </>
+                )}
               </button>
             )}
           </div>
-          {/* Semantic Search Button */}
-          <button
-            onClick={performSemanticSearch}
-            disabled={searchQuery.length < 3 || semanticSearching}
-            title="Búsqueda semántica con IA (busca por concepto, no solo palabras)"
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition ${
-              searchQuery.length >= 3
-                ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-md'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {semanticSearching ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Brain size={16} />
-            )}
-            <span className="hidden sm:inline">IA</span>
-          </button>
 
-          {/* Catch Up Button - Ponme al día */}
-          <button
-            onClick={() => setShowCatchUp(true)}
-            disabled={messages.length === 0 || catchUpLoading}
-            title="Ponme al día - Resumen inteligente del chat con IA"
-            className={`px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-medium transition ${
-              messages.length > 0
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {catchUpLoading ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Sparkles size={16} />
-            )}
-            <span className="hidden sm:inline">Ponme al día</span>
-          </button>
+          {/* Helper text for semantic mode */}
+          {semanticSearchMode && !showSemanticResults && !searchQuery && (
+            <div className="flex items-start gap-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+              <Sparkles size={16} className="text-purple-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-purple-700 dark:text-purple-300">
+                <p className="font-medium mb-1">Búsqueda inteligente con IA</p>
+                <p className="text-purple-600 dark:text-purple-400">
+                  Busca por concepto, no solo palabras exactas. Prueba preguntas como:
+                </p>
+                <ul className="mt-1 space-y-0.5 text-purple-600 dark:text-purple-400">
+                  <li>• "¿Qué se decidió sobre el presupuesto?"</li>
+                  <li>• "Problemas mencionados esta semana"</li>
+                  <li>• "Tareas pendientes del equipo"</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Regular search results count */}
