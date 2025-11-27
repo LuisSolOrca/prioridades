@@ -50,10 +50,14 @@ export default function PerceptualPositionsCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setPerspectives(initialPerspectives || []);
+  }, [JSON.stringify(initialPerspectives)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialPerspectives, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddPerspective = async () => {
     if (!session?.user || !newPerspective.insight.trim() || submitting) return;

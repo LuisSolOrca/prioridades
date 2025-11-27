@@ -48,10 +48,14 @@ export default function ReframingBoardCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setReframes(initialReframes || []);
+  }, [JSON.stringify(initialReframes)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialReframes, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddReframe = async () => {
     if (!session?.user || !newReframe.originalView.trim() || !newReframe.reframedView.trim() || submitting) return;

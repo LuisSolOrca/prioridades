@@ -47,10 +47,14 @@ export default function TimelineBoardCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setEvents(initialEvents || []);
+  }, [JSON.stringify(initialEvents)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialEvents, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddEvent = async () => {
     if (!session?.user || !newEvent.text.trim() || submitting) return;

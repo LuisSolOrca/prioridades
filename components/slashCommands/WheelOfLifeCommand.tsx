@@ -48,10 +48,14 @@ export default function WheelOfLifeCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setAreas(initialAreas || []);
+  }, [JSON.stringify(initialAreas)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialAreas, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddArea = async () => {
     if (!session?.user || !newArea.area.trim() || submitting) return;

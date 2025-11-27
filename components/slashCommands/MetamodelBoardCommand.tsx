@@ -48,10 +48,14 @@ export default function MetamodelBoardCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setPatterns(initialPatterns || []);
+  }, [JSON.stringify(initialPatterns)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialPatterns, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddPattern = async () => {
     if (!session?.user || !newPattern.original.trim() || submitting) return;

@@ -48,10 +48,14 @@ export default function ActionTriadsCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setTriads(initialTriads || []);
+  }, [JSON.stringify(initialTriads)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialTriads, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddTriad = async () => {
     if (!session?.user || !newTriad.state.trim() || submitting) return;

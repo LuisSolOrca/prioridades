@@ -45,10 +45,14 @@ export default function MetaphorCanvasCommand({
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setEntries(initialEntries || []);
+  }, [JSON.stringify(initialEntries)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialEntries, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddEntry = async (section: typeof newEntry.section) => {
     if (!session?.user || !newEntry.text.trim() || submitting) return;

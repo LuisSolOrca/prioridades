@@ -48,10 +48,14 @@ export default function ValuesWheelCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setValues(initialValues || []);
+  }, [JSON.stringify(initialValues)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialValues, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddValue = async () => {
     if (!session?.user || !newValue.name.trim() || submitting) return;

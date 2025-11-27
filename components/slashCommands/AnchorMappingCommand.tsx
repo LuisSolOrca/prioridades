@@ -49,10 +49,14 @@ export default function AnchorMappingCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setAnchors(initialAnchors || []);
+  }, [JSON.stringify(initialAnchors)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialAnchors, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddAnchor = async () => {
     if (!session?.user || !newAnchor.resource.trim() || submitting) return;

@@ -47,10 +47,14 @@ export default function VAKOGBoardCommand({
   const [showForm, setShowForm] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
   useEffect(() => {
     setEntries(initialEntries || []);
+  }, [JSON.stringify(initialEntries)]);
+
+  useEffect(() => {
     setClosed(initialClosed);
-  }, [initialEntries, initialClosed]);
+  }, [initialClosed]);
 
   const handleAddEntry = async () => {
     if (!session?.user || !newEntry.preference.trim() || submitting) return;
