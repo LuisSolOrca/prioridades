@@ -6230,7 +6230,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     )}
                   </div>
 
-                  {editingId === message._id ? (
+                  {editingId === message._id && !message.voiceMessage && !message.commandType ? (
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -6238,6 +6238,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         onChange={(e) => setEditContent(e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                         autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleEditMessage(message._id);
+                          } else if (e.key === 'Escape') {
+                            setEditingId(null);
+                            setEditContent('');
+                          }
+                        }}
                       />
                       <button
                         onClick={() => handleEditMessage(message._id)}
@@ -9227,19 +9236,17 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                             >
                               <Target size={14} />
                             </button>
-                            {isOwn && (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    setEditingId(message._id);
-                                    setEditContent(message.content);
-                                  }}
-                                  className="p-1 bg-white/20 rounded hover:bg-white/30"
-                                  title="Editar"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                              </>
+                            {isOwn && !message.voiceMessage && !message.commandType && (
+                              <button
+                                onClick={() => {
+                                  setEditingId(message._id);
+                                  setEditContent(message.content || '');
+                                }}
+                                className="p-1 bg-white/20 rounded hover:bg-white/30"
+                                title="Editar"
+                              >
+                                <Edit2 size={14} />
+                              </button>
                             )}
                             {(isOwn || session?.user?.role === 'ADMIN') && (
                               <button
