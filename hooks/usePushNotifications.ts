@@ -134,12 +134,15 @@ export function usePushNotifications() {
 
       // Obtener la clave pública VAPID
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      console.log('[Push] VAPID key present:', !!vapidPublicKey, vapidPublicKey?.substring(0, 20) + '...');
+
       if (!vapidPublicKey) {
-        throw new Error('VAPID public key no configurada');
+        throw new Error('VAPID public key no configurada. Verifica NEXT_PUBLIC_VAPID_PUBLIC_KEY en las variables de entorno.');
       }
 
       // Convertir clave a Uint8Array
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+      console.log('[Push] Application server key length:', applicationServerKey.length);
 
       // Suscribirse al PushManager
       const subscription = await registration.pushManager.subscribe({
