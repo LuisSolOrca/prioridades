@@ -132,6 +132,7 @@ import AnchorMappingCommand from '../slashCommands/AnchorMappingCommand';
 import MetamodelBoardCommand from '../slashCommands/MetamodelBoardCommand';
 import MetaphorCanvasCommand from '../slashCommands/MetaphorCanvasCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
+import PriorityFormModal from '../PriorityFormModal';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
 import VoiceRecorder from './VoiceRecorder';
@@ -216,7 +217,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [openThread, setOpenThread] = useState<Message | null>(null);
-  const [users, setUsers] = useState<Array<{ _id: string; name: string; email: string }>>([]);
+  const [users, setUsers] = useState<Array<{ _id: string; name: string; email: string; role?: string }>>([]);
   const [userGroups, setUserGroups] = useState<Array<{ _id: string; name: string; tag: string; color: string; members: any[] }>>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [selectedChannelName, setSelectedChannelName] = useState<string>('');
@@ -263,9 +264,41 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   }>({ lastReadMessageId: null, lastReadAt: null });
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Priority creation modal states
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
+  const [priorityFormData, setPriorityFormData] = useState<{
+    title: string;
+    description?: string;
+    initiativeIds: string[];
+    clientId?: string;
+    projectId?: string;
+    completionPercentage: number;
+    status: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO' | 'REPROGRAMADO';
+    type: 'ESTRATEGICA' | 'OPERATIVA';
+    checklist: any[];
+    evidenceLinks: any[];
+    weekStart?: string;
+    weekEnd?: string;
+  }>({
+    title: '',
+    description: '',
+    initiativeIds: [],
+    completionPercentage: 0,
+    status: 'EN_TIEMPO',
+    type: 'ESTRATEGICA',
+    checklist: [],
+    evidenceLinks: []
+  });
+  const [initiatives, setInitiatives] = useState<Array<{ _id: string; name: string; color: string }>>([]);
+  const [clients, setClients] = useState<Array<{ _id: string; name: string; isActive: boolean }>>([]);
+  const [projects, setProjects] = useState<Array<{ _id: string; name: string; description?: string; isActive: boolean }>>([]);
+
   useEffect(() => {
     loadUsers();
     loadUserGroups();
+    loadInitiatives();
+    loadClients();
+    loadProjects();
     // No cargar mensajes aquí, esperar a que se seleccione un canal
   }, [projectId]);
 
@@ -521,6 +554,42 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       }
     } catch (err) {
       console.error('Error loading user groups:', err);
+    }
+  };
+
+  const loadInitiatives = async () => {
+    try {
+      const response = await fetch('/api/initiatives');
+      if (response.ok) {
+        const data = await response.json();
+        setInitiatives(data || []);
+      }
+    } catch (err) {
+      console.error('Error loading initiatives:', err);
+    }
+  };
+
+  const loadClients = async () => {
+    try {
+      const response = await fetch('/api/clients');
+      if (response.ok) {
+        const data = await response.json();
+        setClients((data || []).filter((c: any) => c.isActive));
+      }
+    } catch (err) {
+      console.error('Error loading clients:', err);
+    }
+  };
+
+  const loadProjects = async () => {
+    try {
+      const response = await fetch('/api/projects-catalog');
+      if (response.ok) {
+        const data = await response.json();
+        setProjects((data || []).filter((p: any) => p.isActive));
+      }
+    } catch (err) {
+      console.error('Error loading projects:', err);
     }
   };
 
@@ -5367,6 +5436,107 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   };
 
+  // Helper para calcular fechas de la semana
+  const getWeekDates = (offset: number = 1) => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + daysUntilMonday + (offset - 1) * 7);
+    monday.setHours(0, 0, 0, 0);
+
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+    friday.setHours(23, 59, 59, 999);
+
+    return { monday, friday };
+  };
+
+  // Handler para abrir modal de crear prioridad desde mensaje
+  const handleCreatePriorityFromMessage = (message: Message) => {
+    const nextWeek = getWeekDates(1);
+    const currentUserId = (session?.user as any)?.id;
+
+    // Crear título basado en el contenido (primeras palabras)
+    const contentClean = message.content.replace(/#\S+/g, '').trim(); // Quitar hashtags
+    const titleFromContent = contentClean.split('\n')[0].substring(0, 100);
+
+    setPriorityFormData({
+      title: titleFromContent || 'Nueva prioridad',
+      description: `**Origen:** Mensaje de ${message.userId.name} en canal de chat\n\n${message.content}`,
+      initiativeIds: [],
+      completionPercentage: 0,
+      status: 'EN_TIEMPO',
+      type: 'ESTRATEGICA',
+      checklist: [],
+      evidenceLinks: [],
+      weekStart: nextWeek.monday.toISOString(),
+      weekEnd: nextWeek.friday.toISOString()
+    });
+    setShowPriorityModal(true);
+  };
+
+  // Handler para guardar la prioridad
+  const handleSavePriority = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!priorityFormData.title.trim()) {
+      alert('El título es requerido');
+      return;
+    }
+
+    if (priorityFormData.initiativeIds.length === 0) {
+      alert('Debes seleccionar al menos una iniciativa');
+      return;
+    }
+
+    if (!priorityFormData.clientId) {
+      alert('Debes seleccionar un cliente');
+      return;
+    }
+
+    try {
+      const currentUserId = (session?.user as any)?.id;
+      const response = await fetch('/api/priorities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...priorityFormData,
+          userId: currentUserId
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al crear prioridad');
+      }
+
+      const newPriority = await response.json();
+      setShowPriorityModal(false);
+
+      // Enviar mensaje al chat notificando la creación
+      const priorityMessage = `✅ Nueva prioridad creada: **${newPriority.title}**\n#P-${newPriority._id}`;
+
+      // Resetear form
+      setPriorityFormData({
+        title: '',
+        description: '',
+        initiativeIds: [],
+        completionPercentage: 0,
+        status: 'EN_TIEMPO',
+        type: 'ESTRATEGICA',
+        checklist: [],
+        evidenceLinks: []
+      });
+
+      alert('Prioridad creada exitosamente');
+    } catch (error: any) {
+      console.error('Error creating priority:', error);
+      alert(error.message || 'Error al crear la prioridad');
+    }
+  };
+
   const handleMentionSelect = (item: { name?: string; tag?: string; isGroup?: boolean }) => {
     const lastAtIndex = newMessage.lastIndexOf('@');
     const beforeAt = newMessage.substring(0, lastAtIndex);
@@ -8299,6 +8469,13 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                                 <Pin size={14} />
                               </button>
                             )}
+                            <button
+                              onClick={() => handleCreatePriorityFromMessage(message)}
+                              className="p-1 bg-white/20 rounded hover:bg-white/30"
+                              title="Crear prioridad desde este mensaje"
+                            >
+                              <Target size={14} />
+                            </button>
                             {isOwn && (
                               <>
                                 <button
@@ -8821,6 +8998,49 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
           }}
         />
       )}
+
+      {/* Priority Creation Modal */}
+      <PriorityFormModal
+        isOpen={showPriorityModal}
+        onClose={() => {
+          setShowPriorityModal(false);
+          setPriorityFormData({
+            title: '',
+            description: '',
+            initiativeIds: [],
+            completionPercentage: 0,
+            status: 'EN_TIEMPO',
+            type: 'ESTRATEGICA',
+            checklist: [],
+            evidenceLinks: []
+          });
+        }}
+        formData={priorityFormData}
+        setFormData={(data) => setPriorityFormData({ ...priorityFormData, ...data })}
+        handleSubmit={handleSavePriority}
+        initiatives={initiatives}
+        clients={clients}
+        onClientCreated={(newClient) => setClients([...clients, newClient])}
+        projects={projects}
+        onProjectCreated={(newProject) => setProjects([...projects, newProject])}
+        isEditing={false}
+        weekLabel={`Semana del ${new Date(priorityFormData.weekStart || '').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} al ${new Date(priorityFormData.weekEnd || '').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}`}
+        currentWeek={getWeekDates(0)}
+        nextWeek={getWeekDates(1)}
+        selectedWeekOffset={1}
+        setSelectedWeekOffset={(offset) => {
+          const week = getWeekDates(offset);
+          setPriorityFormData({
+            ...priorityFormData,
+            weekStart: week.monday.toISOString(),
+            weekEnd: week.friday.toISOString()
+          });
+        }}
+        allowUserReassignment={false}
+        users={users as any}
+        selectedUserId={(session?.user as any)?.id || ''}
+        onUserChange={() => {}}
+      />
     </div>
   );
 }
