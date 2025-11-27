@@ -42,7 +42,7 @@ export default function ImpactMappingCommand({
   const { data: session } = useSession();
   const [nodes, setNodes] = useState<MapNode[]>(initialNodes || []);
   const [closed, setClosed] = useState(initialClosed);
-  const [newItem, setNewItem] = useState({ text: '', parentId: '', level: 'actor' as const });
+  const [newItem, setNewItem] = useState<{ text: string; parentId: string; level: 'actor' | 'impact' | 'deliverable' }>({ text: '', parentId: '', level: 'actor' });
   const [submitting, setSubmitting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
