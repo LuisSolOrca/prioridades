@@ -49,14 +49,29 @@ export async function POST(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('reactions.userId', 'name')
-      .lean();
-    triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populatedMessage).catch(console.error);
+    const savedMessage = message.toObject();
 
-    return NextResponse.json(message.toObject());
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({ error: 'Error' }, { status: 500 });
@@ -90,14 +105,29 @@ export async function PATCH(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('reactions.userId', 'name')
-      .lean();
-    triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populatedMessage).catch(console.error);
+    const savedMessage = message.toObject();
 
-    return NextResponse.json(message.toObject());
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
+
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({ error: 'Error' }, { status: 500 });
@@ -125,20 +155,35 @@ export async function DELETE(
     message.markModified('commandData');
     await message.save();
 
+    const savedMessage = message.toObject();
+
     notifyDynamicClosed({
       projectId: params.id, channelId: message.channelId, messageId: params.messageId,
       commandType: 'swish-pattern', commandData: message.commandData,
       closedByUserId: userId, closedByUserName: (session.user as any).name || 'Usuario'
     }).catch(console.error);
 
-    const populatedMessage = await ChannelMessage.findById(message._id)
-      .populate('userId', 'name email')
-      .populate('mentions', 'name email')
-      .populate('reactions.userId', 'name')
-      .lean();
-    triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populatedMessage).catch(console.error);
+    (async () => {
+      try {
+        const populatedMessage = await ChannelMessage.findById(message._id)
+          .populate('userId', 'name email')
+          .populate('mentions', 'name email')
+          .populate('priorityMentions', 'title status completionPercentage userId')
+          .populate('reactions.userId', 'name')
+          .populate('pinnedBy', 'name')
+          .lean();
 
-    return NextResponse.json(message.toObject());
+        await triggerPusherEvent(
+          `presence-channel-${message.channelId}`,
+          'message-updated',
+          populatedMessage
+        );
+      } catch (pusherError) {
+        console.error('Error triggering Pusher event:', pusherError);
+      }
+    })();
+
+    return NextResponse.json(savedMessage);
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({ error: 'Error' }, { status: 500 });
