@@ -5480,6 +5480,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       title: titleFromContent || 'Nueva prioridad',
       description: `${origen}\n\n${messageContent}`,
       initiativeIds: [],
+      projectId: projectId, // Pre-llenar con el proyecto del canal
       completionPercentage: 0,
       status: 'EN_TIEMPO',
       type: 'ESTRATEGICA',
