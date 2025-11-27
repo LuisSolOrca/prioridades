@@ -55,8 +55,9 @@ export default function FuturesWheelCommand({
     setClosed(initialClosed);
   }, [initialClosed]);
 
-  const handleAddNode = async (parentId: string | null = null) => {
-    if (!session?.user || !newImpact.text.trim() || submitting) return;
+  const handleAddNode = async (parentId: string | null = null, textOverride?: string) => {
+    const textToAdd = textOverride || newImpact.text;
+    if (!session?.user || !textToAdd.trim() || submitting) return;
 
     const level = parentId ? (nodes.find(n => n.id === parentId)?.level || 0) + 1 : 1;
     if (level > 3) {
@@ -70,7 +71,7 @@ export default function FuturesWheelCommand({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: newImpact.text.trim(),
+          text: textToAdd.trim(),
           parentId
         })
       });
@@ -82,7 +83,7 @@ export default function FuturesWheelCommand({
       }
 
       const data = await response.json();
-      setNodes(data.commandData.nodes || []);
+      setNodes(data.commandData?.nodes || []);
       setNewImpact({ text: '', parentId: '' });
       onUpdate?.();
     } catch (error) {
@@ -252,9 +253,12 @@ export default function FuturesWheelCommand({
                               placeholder="Impacto 3°..."
                               className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
-                                  setNewImpact({ text: (e.target as HTMLInputElement).value, parentId: child.id });
-                                  setTimeout(() => handleAddNode(child.id), 0);
+                                if (e.key === 'Enter') {
+                                  const input = e.target as HTMLInputElement;
+                                  if (input.value.trim()) {
+                                    handleAddNode(child.id, input.value);
+                                    input.value = '';
+                                  }
                                 }
                               }}
                             />
@@ -271,9 +275,12 @@ export default function FuturesWheelCommand({
                           placeholder="Impacto 2°..."
                           className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
-                              setNewImpact({ text: (e.target as HTMLInputElement).value, parentId: node.id });
-                              setTimeout(() => handleAddNode(node.id), 0);
+                            if (e.key === 'Enter') {
+                              const input = e.target as HTMLInputElement;
+                              if (input.value.trim()) {
+                                handleAddNode(node.id, input.value);
+                                input.value = '';
+                              }
                             }
                           }}
                         />
