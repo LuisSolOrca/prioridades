@@ -583,7 +583,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
   const loadProjects = async () => {
     try {
-      const response = await fetch('/api/projects-catalog');
+      const response = await fetch('/api/projects');
       if (response.ok) {
         const data = await response.json();
         setProjects((data || []).filter((p: any) => p.isActive));
