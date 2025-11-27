@@ -176,6 +176,27 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'innovation-matrix', name: 'Innovation Matrix', description: 'Clasificar ideas en 4 cuadrantes de innovación' },
       { type: 'open-space', name: 'Open Space', description: 'Open Space Technology - sesiones auto-organizadas' },
     ]
+  },
+  {
+    id: 'pnl',
+    name: 'PNL',
+    icon: Target,
+    color: 'text-fuchsia-600 dark:text-fuchsia-400',
+    bgColor: 'bg-fuchsia-50 dark:bg-fuchsia-900/20',
+    borderColor: 'border-fuchsia-200 dark:border-fuchsia-800',
+    dynamics: [
+      { type: 'timeline-board', name: 'Timeline Board', description: 'Explorar pasado → presente → futuro' },
+      { type: 'reframing-board', name: 'Reframing Board', description: 'Reencuadrar problemas - contenido, contexto, intención' },
+      { type: 'perceptual-positions', name: 'Posiciones Perceptuales', description: '1ª, 2ª y 3ª persona - resolver conflictos' },
+      { type: 'values-wheel', name: 'Rueda de Valores', description: 'Clarificar valores y su estado actual' },
+      { type: 'wheel-of-life', name: 'Rueda de la Vida', description: 'Autoevaluación en 8 áreas de vida' },
+      { type: 'swish-pattern', name: 'Swish Pattern', description: 'Anclaje visual para cambiar hábitos' },
+      { type: 'action-triads', name: 'Triadas de Acción', description: 'Estado + Fisiología + Enfoque + Lenguaje' },
+      { type: 'vakog-board', name: 'VAKOG Board', description: 'Mapear sistemas representacionales V-A-K-O-G' },
+      { type: 'anchor-mapping', name: 'Anchor Mapping', description: 'Crear anclajes de recursos positivos' },
+      { type: 'metamodel-board', name: 'Metamodelo', description: 'Generalizaciones, omisiones y distorsiones' },
+      { type: 'metaphor-canvas', name: 'Metaphor Canvas', description: 'Trabajar con metáforas transformacionales' },
+    ]
   }
 ];
 

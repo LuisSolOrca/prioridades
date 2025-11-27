@@ -235,6 +235,106 @@ function extractCommandContent(message: any): ExtractedContent | null {
           `Fears: ${(data.items || []).filter((i: any) => i.type === 'fear').map((f: any) => f.text || '').join(', ')}`
       };
 
+    case 'timeline-board':
+      return {
+        ...base,
+        title: data.title || 'Timeline Board',
+        content: (data.events || []).map((e: any) =>
+          `[${e.period || ''}] ${e.text || ''} (${e.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'reframing-board':
+      return {
+        ...base,
+        title: data.title || 'Reframing Board',
+        content: (data.reframes || []).map((r: any) =>
+          `[${r.type || ''}] Original: ${r.original || ''} -> Reencuadre: ${r.reframe || ''} (${r.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'perceptual-positions':
+      return {
+        ...base,
+        title: data.title || 'Perceptual Positions',
+        content: (data.perspectives || []).map((p: any) =>
+          `[Posición ${p.position || ''}] ${p.text || ''} (${p.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'values-wheel':
+      return {
+        ...base,
+        title: data.title || 'Values Wheel',
+        content: (data.values || []).map((v: any) =>
+          `${v.value || ''}: Importancia=${v.importance || 0}/10, Estado=${v.currentState || 0}/10 (${v.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'wheel-of-life':
+      return {
+        ...base,
+        title: data.title || 'Wheel of Life',
+        content: (data.assessments || []).map((a: any) => {
+          const areas = Object.entries(a.areas || {}).map(([k, v]) => `${k}=${v}`).join(', ');
+          return `${a.userName || ''}: ${areas}`;
+        }).join(' | ')
+      };
+
+    case 'swish-pattern':
+      return {
+        ...base,
+        title: data.title || 'Swish Pattern',
+        content: (data.patterns || []).map((p: any) =>
+          `Actual: ${p.currentImage || ''} -> Deseado: ${p.desiredImage || ''} (${p.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'action-triads':
+      return {
+        ...base,
+        title: data.title || 'Action Triads',
+        content: (data.triads || []).map((t: any) =>
+          `Estado: ${t.state || ''} | Fisiología: ${t.physiology || ''} | Foco: ${t.focus || ''} | Lenguaje: ${t.language || ''} (${t.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'vakog-board':
+      return {
+        ...base,
+        title: data.title || 'VAKOG Board',
+        content: (data.entries || []).map((e: any) =>
+          `[${e.system || ''}] ${e.text || ''} (${e.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'anchor-mapping':
+      return {
+        ...base,
+        title: data.title || 'Anchor Mapping',
+        content: (data.anchors || []).map((a: any) =>
+          `Recurso: ${a.resource || ''} | Situación: ${a.situation || ''} | Estímulo: ${a.stimulus || ''} | Asociación: ${a.association || ''} | Intensidad: ${a.intensity || 0}/10 (${a.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'metamodel-board':
+      return {
+        ...base,
+        title: data.title || 'Metamodel Board',
+        content: (data.patterns || []).map((p: any) =>
+          `[${p.type || ''}] Original: ${p.original || ''} | Desafío: ${p.challenge || ''} | Clarificado: ${p.clarified || ''} (${p.userName || ''})`
+        ).join(' | ')
+      };
+
+    case 'metaphor-canvas':
+      return {
+        ...base,
+        title: data.title || 'Metaphor Canvas',
+        content: (data.entries || []).map((e: any) =>
+          `[${e.section || ''}] ${e.text || ''} (${e.userName || ''})`
+        ).join(' | ')
+      };
+
     case 'fishbone':
       return {
         ...base,

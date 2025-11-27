@@ -653,6 +653,73 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     description: 'Hopes & Fears - Explorar esperanzas y miedos del equipo',
     usage: '/hopes-fears "Título del ejercicio"',
     category: 'collaboration'
+  },
+  // PNL Commands
+  {
+    name: 'timeline-board',
+    description: 'Timeline Board (PNL) - Explorar pasado, presente y futuro',
+    usage: '/timeline-board "Título del timeline"',
+    category: 'analysis'
+  },
+  {
+    name: 'reframing-board',
+    description: 'Reframing Board (PNL) - Reencuadrar problemas desde nuevas perspectivas',
+    usage: '/reframing-board "Situación a reencuadrar"',
+    category: 'collaboration'
+  },
+  {
+    name: 'perceptual-positions',
+    description: 'Posiciones Perceptuales (PNL) - Ver situaciones desde 1ª, 2ª y 3ª persona',
+    usage: '/perceptual-positions "Situación a analizar"',
+    category: 'collaboration'
+  },
+  {
+    name: 'values-wheel',
+    description: 'Rueda de Valores (PNL) - Clarificar valores y su estado actual',
+    usage: '/values-wheel "Contexto o proyecto"',
+    category: 'analysis'
+  },
+  {
+    name: 'wheel-of-life',
+    description: 'Rueda de la Vida (PNL) - Autoevaluación en áreas de vida',
+    usage: '/wheel-of-life "Título"',
+    category: 'analysis'
+  },
+  {
+    name: 'swish-pattern',
+    description: 'Swish Pattern (PNL) - Cambiar hábitos y comportamientos',
+    usage: '/swish-pattern "Comportamiento a cambiar"',
+    category: 'collaboration'
+  },
+  {
+    name: 'action-triads',
+    description: 'Triadas de Acción (PNL) - Estado, Fisiología, Enfoque y Lenguaje',
+    usage: '/action-triads "Objetivo"',
+    category: 'collaboration'
+  },
+  {
+    name: 'vakog-board',
+    description: 'VAKOG Board (PNL) - Mapear sistemas representacionales del equipo',
+    usage: '/vakog-board "Contexto"',
+    category: 'analysis'
+  },
+  {
+    name: 'anchor-mapping',
+    description: 'Anchor Mapping (PNL) - Crear anclajes de recursos positivos',
+    usage: '/anchor-mapping "Objetivo"',
+    category: 'collaboration'
+  },
+  {
+    name: 'metamodel-board',
+    description: 'Metamodelo del Lenguaje (PNL) - Identificar generalizaciones, omisiones y distorsiones',
+    usage: '/metamodel-board "Contexto"',
+    category: 'analysis'
+  },
+  {
+    name: 'metaphor-canvas',
+    description: 'Metaphor Canvas (PNL) - Trabajar con metáforas transformacionales',
+    usage: '/metaphor-canvas "Situación"',
+    category: 'collaboration'
   }
 ];
 

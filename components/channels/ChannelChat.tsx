@@ -120,6 +120,17 @@ import DACICommand from '../slashCommands/DACICommand';
 import InnovationMatrixCommand from '../slashCommands/InnovationMatrixCommand';
 import KanoModelCommand from '../slashCommands/KanoModelCommand';
 import HopesFearsCommand from '../slashCommands/HopesFearsCommand';
+import TimelineBoardCommand from '../slashCommands/TimelineBoardCommand';
+import ReframingBoardCommand from '../slashCommands/ReframingBoardCommand';
+import PerceptualPositionsCommand from '../slashCommands/PerceptualPositionsCommand';
+import ValuesWheelCommand from '../slashCommands/ValuesWheelCommand';
+import WheelOfLifeCommand from '../slashCommands/WheelOfLifeCommand';
+import SwishPatternCommand from '../slashCommands/SwishPatternCommand';
+import ActionTriadsCommand from '../slashCommands/ActionTriadsCommand';
+import VAKOGBoardCommand from '../slashCommands/VAKOGBoardCommand';
+import AnchorMappingCommand from '../slashCommands/AnchorMappingCommand';
+import MetamodelBoardCommand from '../slashCommands/MetamodelBoardCommand';
+import MetaphorCanvasCommand from '../slashCommands/MetaphorCanvasCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
@@ -4598,6 +4609,402 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
         setNewMessage('');
         break;
 
+      case 'timeline-board':
+        if (parsed.args.length < 1) {
+          alert('Uso: /timeline-board "Título de la línea de tiempo"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/timeline-board ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'timeline-board',
+              commandData: {
+                title: parsed.args[0],
+                events: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating timeline-board:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'reframing-board':
+        if (parsed.args.length < 1) {
+          alert('Uso: /reframing-board "Situación a reencuadrar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/reframing-board ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'reframing-board',
+              commandData: {
+                title: parsed.args[0],
+                reframes: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating reframing-board:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'perceptual-positions':
+        if (parsed.args.length < 1) {
+          alert('Uso: /perceptual-positions "Situación a analizar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/perceptual-positions ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'perceptual-positions',
+              commandData: {
+                title: parsed.args[0],
+                perspectives: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating perceptual-positions:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'values-wheel':
+        if (parsed.args.length < 1) {
+          alert('Uso: /values-wheel "Título del ejercicio"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/values-wheel ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'values-wheel',
+              commandData: {
+                title: parsed.args[0],
+                values: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating values-wheel:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'wheel-of-life':
+        if (parsed.args.length < 1) {
+          alert('Uso: /wheel-of-life "Nombre del participante"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/wheel-of-life ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'wheel-of-life',
+              commandData: {
+                title: parsed.args[0],
+                assessments: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating wheel-of-life:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'swish-pattern':
+        if (parsed.args.length < 1) {
+          alert('Uso: /swish-pattern "Hábito a cambiar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/swish-pattern ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'swish-pattern',
+              commandData: {
+                title: parsed.args[0],
+                patterns: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating swish-pattern:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'action-triads':
+        if (parsed.args.length < 1) {
+          alert('Uso: /action-triads "Estado deseado"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/action-triads ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'action-triads',
+              commandData: {
+                title: parsed.args[0],
+                triads: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating action-triads:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'vakog-board':
+        if (parsed.args.length < 1) {
+          alert('Uso: /vakog-board "Experiencia a mapear"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/vakog-board ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'vakog-board',
+              commandData: {
+                title: parsed.args[0],
+                entries: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating vakog-board:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'anchor-mapping':
+        if (parsed.args.length < 1) {
+          alert('Uso: /anchor-mapping "Recurso a anclar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/anchor-mapping ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'anchor-mapping',
+              commandData: {
+                title: parsed.args[0],
+                anchors: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating anchor-mapping:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'metamodel-board':
+        if (parsed.args.length < 1) {
+          alert('Uso: /metamodel-board "Frase a analizar"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/metamodel-board ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'metamodel-board',
+              commandData: {
+                title: parsed.args[0],
+                patterns: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating metamodel-board:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
+      case 'metaphor-canvas':
+        if (parsed.args.length < 1) {
+          alert('Uso: /metaphor-canvas "Metáfora inicial"');
+          return;
+        }
+        if (sending) return;
+        try {
+          setSending(true);
+          const response = await fetch(`/api/projects/${projectId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: `/metaphor-canvas ${commandText.substring(commandText.indexOf(' ') + 1)}`,
+              channelId: selectedChannelId,
+              commandType: 'metaphor-canvas',
+              commandData: {
+                title: parsed.args[0],
+                entries: [],
+                createdBy: session?.user?.id,
+                closed: false
+              }
+            })
+          });
+          if (response.ok) {
+            const msg = await response.json();
+            setMessages((prev) => [...prev, msg]);
+            scrollToBottom();
+          }
+        } catch (error) {
+          console.error('Error creating metaphor-canvas:', error);
+        } finally {
+          setSending(false);
+        }
+        setNewMessage('');
+        break;
+
       case 'lotus-blossom':
         if (parsed.args.length < 1) {
           alert('Uso: /lotus-blossom "Tema central"');
@@ -7241,6 +7648,307 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         channelId={selectedChannelId || ''}
                         title={message.commandData.title}
                         items={message.commandData.items || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'timeline-board' && message.commandData ? (
+                    <div className="relative group">
+                      <TimelineBoardCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        events={message.commandData.events || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'reframing-board' && message.commandData ? (
+                    <div className="relative group">
+                      <ReframingBoardCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        situation={message.commandData.situation || message.commandData.title || ''}
+                        reframes={message.commandData.reframes || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'perceptual-positions' && message.commandData ? (
+                    <div className="relative group">
+                      <PerceptualPositionsCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        situation={message.commandData.situation || message.commandData.title || ''}
+                        perspectives={message.commandData.perspectives || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'values-wheel' && message.commandData ? (
+                    <div className="relative group">
+                      <ValuesWheelCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        values={message.commandData.values || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'wheel-of-life' && message.commandData ? (
+                    <div className="relative group">
+                      <WheelOfLifeCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        areas={message.commandData.areas || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'swish-pattern' && message.commandData ? (
+                    <div className="relative group">
+                      <SwishPatternCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        behavior={message.commandData.behavior || message.commandData.title || ''}
+                        entries={message.commandData.entries || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'action-triads' && message.commandData ? (
+                    <div className="relative group">
+                      <ActionTriadsCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        goal={message.commandData.goal || message.commandData.title || ''}
+                        triads={message.commandData.triads || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'vakog-board' && message.commandData ? (
+                    <div className="relative group">
+                      <VAKOGBoardCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        entries={message.commandData.entries || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'anchor-mapping' && message.commandData ? (
+                    <div className="relative group">
+                      <AnchorMappingCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        anchors={message.commandData.anchors || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'metamodel-board' && message.commandData ? (
+                    <div className="relative group">
+                      <MetamodelBoardCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        patterns={message.commandData.patterns || []}
+                        createdBy={message.commandData.createdBy}
+                        closed={message.commandData.closed || false}
+                        onClose={() => {}}
+                        onUpdate={() => {}}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10">
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'metaphor-canvas' && message.commandData ? (
+                    <div className="relative group">
+                      <MetaphorCanvasCommand
+                        projectId={projectId}
+                        messageId={message._id}
+                        channelId={selectedChannelId || ''}
+                        title={message.commandData.title}
+                        entries={message.commandData.entries || []}
                         createdBy={message.commandData.createdBy}
                         closed={message.commandData.closed || false}
                         onClose={() => {}}
