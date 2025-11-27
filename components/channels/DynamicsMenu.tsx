@@ -63,6 +63,8 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'ranking', name: 'Ranking', description: 'Ordenar opciones por preferencia' },
       { type: 'six-hats', name: '6 Sombreros', description: '6 sombreros de Bono - perspectivas múltiples' },
       { type: 'crazy-8s', name: 'Crazy 8s', description: '8 ideas en 8 minutos - design sprint' },
+      { type: 'storyboard', name: 'Storyboard', description: 'Secuencia visual de frames - Design Sprint' },
+      { type: 'lightning-demos', name: 'Lightning Demos', description: 'Compartir demos con votación de Big Ideas' },
       { type: 'affinity-map', name: 'Mapa de Afinidad', description: 'Agrupar ideas por categorías' },
       { type: 'scamper', name: 'SCAMPER', description: 'Sustituir, Combinar, Adaptar, Modificar, Propósito, Eliminar, Reorganizar' },
       { type: 'starbursting', name: 'Starbursting', description: 'Estrella de 6 puntas: Qué, Quién, Dónde, Cuándo, Por qué, Cómo' },
@@ -107,6 +109,11 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'five-whys', name: '5 Porqués', description: 'Análisis de causa raíz preguntando "¿Por qué?" 5 veces' },
       { type: 'impact-effort', name: 'Impacto/Esfuerzo', description: 'Matriz de priorización 2x2' },
       { type: 'opportunity-tree', name: 'Árbol de Oportunidades', description: 'Objetivo → Oportunidades → Soluciones' },
+      { type: 'jtbd-canvas', name: 'JTBD Canvas', description: 'Jobs to Be Done - entender motivaciones del cliente' },
+      { type: 'futures-wheel', name: 'Futures Wheel', description: 'Análisis de impactos en 3 niveles jerárquicos' },
+      { type: 'impact-mapping', name: 'Impact Mapping', description: 'WHY → WHO → HOW → WHAT (Gojko Adzic)' },
+      { type: 'vpc', name: 'Value Proposition Canvas', description: 'Customer Profile vs Value Proposition' },
+      { type: 'kano-model', name: 'Kano Model', description: 'Clasificar features: Must-be, Attractive, etc.' },
       { type: 'empathy-map', name: 'Mapa de Empatía', description: 'Dice, Piensa, Hace, Siente - Design Thinking' },
       { type: 'moscow', name: 'MoSCoW', description: 'Must, Should, Could, Won\'t - Priorización clásica' },
       { type: 'pre-mortem', name: 'Pre-mortem', description: 'Imaginar el fracaso para prevenir riesgos' },
@@ -136,6 +143,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'lean-coffee', name: 'Lean Coffee', description: 'Reunión estructurada con votación de temas' },
       { type: 'user-story-mapping', name: 'User Story Mapping', description: 'Mapear historias de usuario por actividades' },
       { type: 'raci', name: 'RACI', description: 'Matriz de responsabilidades - Responsable, Aprobador, Consultado, Informado' },
+      { type: 'daci', name: 'DACI', description: 'Driver, Approver, Contributor, Informed - framework de decisiones' },
     ]
   },
   {
@@ -148,6 +156,7 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
     dynamics: [
       { type: 'kudos-wall', name: 'Muro de Kudos', description: 'Reconocimientos del equipo' },
       { type: 'icebreaker', name: 'Icebreaker', description: 'Pregunta para romper el hielo' },
+      { type: 'hopes-fears', name: 'Hopes & Fears', description: 'Esperanzas y miedos del equipo con votación' },
     ]
   },
   {
@@ -164,6 +173,8 @@ const DYNAMIC_CATEGORIES: DynamicCategory[] = [
       { type: 'lean-canvas', name: 'Lean Canvas', description: '9 bloques para validar modelo de negocio - startups y productos nuevos' },
       { type: 'working-agreements', name: 'Working Agreements', description: 'Acuerdos de trabajo del equipo - fundacional para equipos nuevos' },
       { type: 'team-canvas', name: 'Team Canvas', description: 'Canvas para formar equipos - roles, metas, valores y reglas' },
+      { type: 'innovation-matrix', name: 'Innovation Matrix', description: 'Clasificar ideas en 4 cuadrantes de innovación' },
+      { type: 'open-space', name: 'Open Space', description: 'Open Space Technology - sesiones auto-organizadas' },
     ]
   }
 ];
