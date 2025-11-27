@@ -54,18 +54,19 @@ export default function MetaphorCanvasCommand({
     setClosed(initialClosed);
   }, [initialClosed]);
 
-  const handleAddEntry = async (section: typeof newEntry.section) => {
-    if (!session?.user || !newEntry.text.trim() || submitting) return;
+  const handleAddEntry = async (section: typeof newEntry.section, textOverride?: string) => {
+    const textToAdd = textOverride || newEntry.text;
+    if (!session?.user || !textToAdd.trim() || submitting) return;
     try {
       setSubmitting(true);
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/metaphor-canvas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add', section, text: newEntry.text })
+        body: JSON.stringify({ action: 'add', section, text: textToAdd })
       });
       if (!response.ok) { alert('Error al agregar'); return; }
       const data = await response.json();
-      setEntries(data.commandData.entries || []);
+      setEntries(data.commandData?.entries || []);
       setNewEntry({ section: 'current', text: '' });
       onUpdate?.();
     } catch (error) { console.error('Error:', error); }
@@ -83,7 +84,7 @@ export default function MetaphorCanvasCommand({
       });
       if (!response.ok) throw new Error();
       const data = await response.json();
-      setEntries(data.commandData.entries || []);
+      setEntries(data.commandData?.entries || []);
       onUpdate?.();
     } catch (error) { console.error('Error:', error); }
     finally { setSubmitting(false); }
@@ -97,7 +98,7 @@ export default function MetaphorCanvasCommand({
       const response = await fetch(`/api/projects/${projectId}/messages/${messageId}/metaphor-canvas`, { method: 'DELETE' });
       if (!response.ok) throw new Error();
       const data = await response.json();
-      setClosed(data.commandData.closed);
+      setClosed(data.commandData?.closed ?? true);
       onUpdate?.();
     } catch (error) { console.error('Error:', error); }
     finally { setSubmitting(false); }
@@ -202,11 +203,8 @@ export default function MetaphorCanvasCommand({
                     if (e.key === 'Enter') {
                       const input = e.target as HTMLInputElement;
                       if (input.value.trim()) {
-                        setNewEntry({ section: key, text: input.value });
-                        setTimeout(() => {
-                          handleAddEntry(key);
-                          input.value = '';
-                        }, 0);
+                        handleAddEntry(key, input.value);
+                        input.value = '';
                       }
                     }
                   }}
@@ -215,11 +213,8 @@ export default function MetaphorCanvasCommand({
                   onClick={() => {
                     const input = document.querySelector(`input[placeholder="Agregar a ${config.label.split(' ')[1]}..."]`) as HTMLInputElement;
                     if (input?.value.trim()) {
-                      setNewEntry({ section: key, text: input.value });
-                      setTimeout(() => {
-                        handleAddEntry(key);
-                        input.value = '';
-                      }, 0);
+                      handleAddEntry(key, input.value);
+                      input.value = '';
                     }
                   }}
                   className="p-1 bg-fuchsia-500 text-white rounded hover:bg-fuchsia-600"
