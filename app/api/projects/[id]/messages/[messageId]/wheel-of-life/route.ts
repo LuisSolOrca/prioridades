@@ -43,7 +43,11 @@ export async function POST(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id).populate('userId', 'name email').lean();
+    const populatedMessage = await ChannelMessage.findById(message._id)
+      .populate('userId', 'name email')
+      .populate('mentions', 'name email')
+      .populate('reactions.userId', 'name')
+      .lean();
     triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populatedMessage).catch(console.error);
 
     return NextResponse.json(message.toObject());
@@ -80,7 +84,11 @@ export async function PATCH(
     message.markModified('commandData');
     await message.save();
 
-    const populatedMessage = await ChannelMessage.findById(message._id).populate('userId', 'name email').lean();
+    const populatedMessage = await ChannelMessage.findById(message._id)
+      .populate('userId', 'name email')
+      .populate('mentions', 'name email')
+      .populate('reactions.userId', 'name')
+      .lean();
     triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populatedMessage).catch(console.error);
 
     return NextResponse.json(message.toObject());
@@ -117,7 +125,11 @@ export async function DELETE(
       closedByUserId: userId, closedByUserName: (session.user as any).name || 'Usuario'
     }).catch(console.error);
 
-    const populatedMessage = await ChannelMessage.findById(message._id).populate('userId', 'name email').lean();
+    const populatedMessage = await ChannelMessage.findById(message._id)
+      .populate('userId', 'name email')
+      .populate('mentions', 'name email')
+      .populate('reactions.userId', 'name')
+      .lean();
     triggerPusherEvent(`presence-channel-${message.channelId}`, 'message-updated', populatedMessage).catch(console.error);
 
     return NextResponse.json(message.toObject());

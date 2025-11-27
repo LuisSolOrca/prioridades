@@ -53,6 +53,15 @@ export default function PollCommand({
   const [voting, setVoting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Sincronizar estado local cuando las props cambian (Pusher updates)
+  useEffect(() => {
+    setPoll(prev => ({
+      ...prev,
+      options: initialOptions,
+      closed: initialClosed
+    }));
+  }, [initialOptions, initialClosed]);
+
   useEffect(() => {
     // Verificar si el usuario ya votó
     const userVoted = poll.options.some(opt =>
