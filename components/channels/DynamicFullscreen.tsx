@@ -1261,6 +1261,381 @@ const METHODOLOGY_GUIDE: Record<string, { title: string; description: string; st
       'Divertido y justo - el azar decide',
       'Puede requerir varias rondas hasta tener un ganador'
     ]
+  },
+  'hopes-fears': {
+    title: 'Esperanzas y Temores',
+    description: 'Ejercicio para explorar las expectativas positivas (esperanzas) y preocupaciones (temores) del equipo sobre un proyecto, cambio o iniciativa.',
+    steps: [
+      'Define el contexto: proyecto, cambio o situación a analizar',
+      'Cada participante escribe sus esperanzas (qué espera que salga bien)',
+      'Cada participante escribe sus temores (qué le preocupa)',
+      'Se comparten y agrupan los temas comunes',
+      'Se discuten estrategias para maximizar esperanzas y mitigar temores'
+    ],
+    tips: [
+      'Crea un ambiente seguro para compartir temores',
+      'Las esperanzas pueden convertirse en objetivos',
+      'Los temores pueden convertirse en riesgos a gestionar',
+      'Ideal al inicio de proyectos o ante cambios importantes'
+    ]
+  },
+  'jtbd-canvas': {
+    title: 'Jobs To Be Done Canvas',
+    description: 'Marco para entender las motivaciones profundas de los usuarios. Se enfoca en el "trabajo" que el usuario intenta realizar, no en el producto.',
+    steps: [
+      'Identifica el "trabajo" principal que el usuario quiere realizar',
+      'Documenta el contexto: cuándo, dónde, con quién',
+      'Identifica las fuerzas que impulsan el cambio (push/pull)',
+      'Identifica las fuerzas que resisten el cambio (ansiedad/hábito)',
+      'Define los resultados deseados funcionales, emocionales y sociales'
+    ],
+    tips: [
+      'Usa entrevistas de "switch" para descubrir jobs reales',
+      'El job es estable, las soluciones cambian',
+      'Incluye aspectos emocionales y sociales, no solo funcionales',
+      'Un producto puede resolver múltiples jobs'
+    ]
+  },
+  'storyboard': {
+    title: 'Storyboard',
+    description: 'Técnica visual para narrar una experiencia de usuario paso a paso mediante viñetas, similar a un cómic o guión gráfico.',
+    steps: [
+      'Define el escenario y el usuario protagonista',
+      'Dibuja la situación inicial (el problema o necesidad)',
+      'Ilustra cada paso de la interacción con el producto/servicio',
+      'Muestra la resolución y el resultado final',
+      'Revisa y refina la narrativa con el equipo'
+    ],
+    tips: [
+      'No necesitas ser artista - dibujos simples funcionan',
+      'Incluye emociones y pensamientos del usuario',
+      'Usa 6-8 frames para mantener el foco',
+      'Útil para comunicar ideas a stakeholders'
+    ]
+  },
+  'lightning-demos': {
+    title: 'Lightning Demos',
+    description: 'Sesión rápida donde los miembros del equipo presentan ejemplos inspiradores de otros productos, servicios o soluciones relevantes.',
+    steps: [
+      'Cada participante busca 1-2 ejemplos inspiradores (15 min)',
+      'Presentaciones rápidas de 3 minutos cada una',
+      'Captura las "grandes ideas" de cada demo',
+      'Vota o prioriza las ideas más prometedoras',
+      'Discute cómo aplicar las ideas al proyecto actual'
+    ],
+    tips: [
+      'Busca fuera de tu industria para ideas frescas',
+      'Enfócate en patrones y principios, no en copiar',
+      'Toma notas visuales durante las demos',
+      'Parte del Design Sprint de Google'
+    ]
+  },
+  'open-space': {
+    title: 'Open Space Technology',
+    description: 'Metodología de facilitación donde los participantes crean y gestionan su propia agenda en torno a un tema central.',
+    steps: [
+      'El facilitador presenta el tema central',
+      'Los participantes proponen sesiones/temas que quieren discutir',
+      'Se crea un "marketplace" donde cada quien elige a qué sesión asistir',
+      'Las sesiones ocurren en paralelo (30-60 min)',
+      'Se comparten los resultados de cada sesión'
+    ],
+    tips: [
+      'La "Ley de los dos pies": si no estás aprendiendo o contribuyendo, muévete',
+      'Lo que pase es lo único que podía pasar',
+      'Ideal para grupos grandes (20+ personas)',
+      'Requiere un espacio físico o virtual con múltiples "salas"'
+    ]
+  },
+  'futures-wheel': {
+    title: 'Rueda de Futuros',
+    description: 'Técnica de prospectiva para explorar las consecuencias de primer, segundo y tercer orden de una tendencia o decisión.',
+    steps: [
+      'Coloca la tendencia o evento central en el medio',
+      'Identifica consecuencias directas (primer orden)',
+      'Para cada consecuencia, identifica sus consecuencias (segundo orden)',
+      'Continúa hasta el tercer orden si es relevante',
+      'Analiza patrones y conexiones entre consecuencias'
+    ],
+    tips: [
+      'Incluye consecuencias positivas y negativas',
+      'Piensa en impactos sociales, económicos, tecnológicos',
+      'Útil para análisis de riesgos y oportunidades',
+      'No todas las ramas necesitan el mismo nivel de detalle'
+    ]
+  },
+  'impact-mapping': {
+    title: 'Impact Mapping',
+    description: 'Técnica de planificación estratégica que conecta los entregables con los objetivos de negocio a través de actores e impactos.',
+    steps: [
+      'Define el objetivo de negocio (WHY)',
+      'Identifica los actores que pueden ayudar o dificultar (WHO)',
+      'Define los impactos/cambios de comportamiento necesarios (HOW)',
+      'Lista los entregables que pueden producir esos impactos (WHAT)',
+      'Prioriza los entregables por su potencial de impacto'
+    ],
+    tips: [
+      'Comienza por el WHY, no por el WHAT',
+      'Incluye actores internos y externos',
+      'Un entregable puede servir a múltiples impactos',
+      'Revisa y actualiza el mapa regularmente'
+    ]
+  },
+  'vpc': {
+    title: 'Value Proposition Canvas',
+    description: 'Herramienta para diseñar propuestas de valor que resuelven trabajos, dolores y alegrías de los clientes.',
+    steps: [
+      'Perfil del Cliente: documenta trabajos, dolores y ganancias',
+      'Mapa de Valor: lista productos, aliviadores de dolor y creadores de ganancia',
+      'Busca el encaje (fit) entre ambos lados',
+      'Prioriza los elementos más importantes',
+      'Valida con clientes reales'
+    ],
+    tips: [
+      'Empieza siempre por el lado del cliente',
+      'Sé específico: evita generalidades',
+      'No todos los dolores necesitan solución',
+      'Complementa con el Business Model Canvas'
+    ]
+  },
+  'daci': {
+    title: 'DACI Framework',
+    description: 'Marco de toma de decisiones que clarifica roles: Driver (impulsa), Approver (aprueba), Contributors (contribuyen), Informed (informados).',
+    steps: [
+      'Define la decisión a tomar claramente',
+      'Asigna el Driver: responsable de impulsar la decisión',
+      'Identifica el Approver: quien tiene la última palabra',
+      'Lista los Contributors: quienes aportan información',
+      'Identifica a los Informed: quienes deben saber el resultado'
+    ],
+    tips: [
+      'Solo un Approver por decisión',
+      'El Driver no necesita ser el más senior',
+      'Contributors ≠ derecho a veto',
+      'Documenta el proceso para decisiones futuras similares'
+    ]
+  },
+  'innovation-matrix': {
+    title: 'Matriz de Innovación',
+    description: 'Herramienta para clasificar ideas según su nivel de innovación (incremental vs. radical) y su impacto potencial.',
+    steps: [
+      'Lista todas las ideas o iniciativas a evaluar',
+      'Evalúa cada idea en el eje de novedad (incremental ↔ disruptivo)',
+      'Evalúa cada idea en el eje de impacto (bajo ↔ alto)',
+      'Posiciona cada idea en la matriz',
+      'Balancea tu portfolio entre los cuadrantes'
+    ],
+    tips: [
+      'No todas las ideas deben ser disruptivas',
+      'Las mejoras incrementales también son valiosas',
+      'Considera el riesgo asociado a cada cuadrante',
+      'Útil para conversaciones de portfolio de innovación'
+    ]
+  },
+  'kano-model': {
+    title: 'Modelo Kano',
+    description: 'Modelo para clasificar características de producto según cómo afectan la satisfacción del cliente: básicas, de desempeño y delighters.',
+    steps: [
+      'Lista las características o features a evaluar',
+      'Pregunta: "¿Cómo te sentirías si esta característica ESTÁ presente?"',
+      'Pregunta: "¿Cómo te sentirías si esta característica NO ESTÁ presente?"',
+      'Clasifica según las respuestas: básica, desempeño, delighter, indiferente',
+      'Prioriza: primero básicas, luego desempeño, luego delighters'
+    ],
+    tips: [
+      'Las básicas no emocionan pero su ausencia frustra',
+      'Los delighters de hoy son las básicas de mañana',
+      'Usa encuestas Kano para validar con usuarios reales',
+      'Útil para priorización de roadmap de producto'
+    ]
+  },
+  'timeline-board': {
+    title: 'Línea de Tiempo (Timeline Board)',
+    description: 'Técnica de PNL para explorar eventos significativos del pasado, situación presente y visión del futuro deseado.',
+    steps: [
+      'Divide el tablero en tres zonas: Pasado, Presente, Futuro',
+      'En Pasado: documenta eventos significativos, aprendizajes, hitos',
+      'En Presente: describe la situación actual, recursos, desafíos',
+      'En Futuro: visualiza el estado deseado, metas, aspiraciones',
+      'Identifica patrones y conexiones entre las tres zonas'
+    ],
+    tips: [
+      'El pasado informa pero no define el futuro',
+      'Sé específico con fechas y eventos',
+      'Incluye tanto logros como aprendizajes de fracasos',
+      'Útil para coaching individual y de equipos'
+    ]
+  },
+  'reframing-board': {
+    title: 'Tablero de Reencuadre',
+    description: 'Técnica de PNL para cambiar la perspectiva sobre una situación. Incluye reencuadre de contenido, contexto e intención.',
+    steps: [
+      'Describe la situación o creencia limitante original',
+      'Reencuadre de Contenido: ¿Qué otro significado podría tener?',
+      'Reencuadre de Contexto: ¿En qué contexto esto sería útil?',
+      'Reencuadre de Intención: ¿Cuál podría ser la intención positiva?',
+      'Elige el reencuadre más útil y actúa desde esa perspectiva'
+    ],
+    tips: [
+      '"No existen fracasos, solo retroalimentación"',
+      'Todo comportamiento tiene una intención positiva',
+      'El mapa no es el territorio',
+      'Útil para superar creencias limitantes'
+    ]
+  },
+  'perceptual-positions': {
+    title: 'Posiciones Perceptuales',
+    description: 'Técnica de PNL para analizar situaciones desde tres perspectivas: primera persona (yo), segunda persona (el otro), tercera persona (observador).',
+    steps: [
+      'Primera Posición: vive la situación desde tu perspectiva',
+      'Segunda Posición: ponte en los zapatos del otro, siente como él/ella',
+      'Tercera Posición: observa la situación como un espectador neutral',
+      'Meta Posición: observa las tres posiciones desde arriba',
+      'Integra los aprendizajes de cada posición'
+    ],
+    tips: [
+      'Cambia físicamente de lugar para cada posición',
+      'La segunda posición desarrolla empatía',
+      'La tercera posición aporta objetividad',
+      'Muy útil para resolver conflictos interpersonales'
+    ]
+  },
+  'values-wheel': {
+    title: 'Rueda de Valores',
+    description: 'Ejercicio de PNL para clarificar los valores personales o del equipo, evaluar su importancia y el grado de satisfacción actual.',
+    steps: [
+      'Lista tus valores más importantes (5-8)',
+      'Para cada valor, califica su importancia (1-10)',
+      'Para cada valor, califica tu satisfacción actual (1-10)',
+      'Identifica las brechas (alta importancia, baja satisfacción)',
+      'Define acciones para alinear tu vida con tus valores'
+    ],
+    tips: [
+      'Los valores son brújulas, no destinos',
+      'Los conflictos internos suelen ser conflictos de valores',
+      'Revisa tus valores periódicamente - pueden evolucionar',
+      'Útil para toma de decisiones alineadas'
+    ]
+  },
+  'wheel-of-life': {
+    title: 'Rueda de la Vida',
+    description: 'Herramienta de coaching para evaluar el equilibrio en 8 áreas de vida: salud, finanzas, carrera, relaciones, diversión, crecimiento, entorno, familia.',
+    steps: [
+      'Califica tu satisfacción actual en cada área (1-10)',
+      'Dibuja los puntajes en la rueda',
+      'Observa la "redondez" de tu rueda',
+      'Identifica las áreas que más necesitan atención',
+      'Define una acción específica para cada área prioritaria'
+    ],
+    tips: [
+      'No busques 10 en todo - busca equilibrio',
+      'Las áreas están interconectadas',
+      'Revisa tu rueda mensual o trimestralmente',
+      'Compara con tu rueda ideal, no con la de otros'
+    ]
+  },
+  'swish-pattern': {
+    title: 'Patrón Swish',
+    description: 'Técnica de PNL para cambiar hábitos no deseados. Reemplaza una imagen mental negativa por una positiva de forma rápida y repetida.',
+    steps: [
+      'Identifica el disparador del hábito no deseado (imagen actual)',
+      'Crea una imagen vívida de ti mismo con el nuevo comportamiento (imagen deseada)',
+      'Visualiza la imagen actual grande y brillante',
+      'En la esquina, coloca la imagen deseada pequeña y oscura',
+      '"Swish": la imagen deseada crece y reemplaza a la actual. Repite 5-7 veces'
+    ],
+    tips: [
+      'La velocidad es importante - hazlo rápido',
+      'Rompe el estado entre cada repetición',
+      'La imagen deseada debe ser disociada (te ves a ti mismo)',
+      'Practica en el contexto real cuando sea posible'
+    ]
+  },
+  'action-triads': {
+    title: 'Tríada de Acción',
+    description: 'Marco de PNL que establece que nuestro estado emocional es resultado de tres factores: fisiología, foco y lenguaje.',
+    steps: [
+      'Identifica el estado deseado (ej: confianza, motivación)',
+      'Fisiología: ¿Cómo es tu postura, respiración, expresión facial?',
+      'Foco: ¿En qué te enfocas? ¿Qué preguntas te haces?',
+      'Lenguaje: ¿Qué te dices a ti mismo? ¿Qué palabras usas?',
+      'Ajusta los tres elementos para lograr el estado deseado'
+    ],
+    tips: [
+      'El cambio de fisiología es el más rápido',
+      '"Peak state" = fisiología, foco y lenguaje alineados',
+      'Crea anclas para acceder a estados poderosos rápidamente',
+      'Útil antes de presentaciones, reuniones importantes'
+    ]
+  },
+  'vakog-board': {
+    title: 'Tablero VAKOG',
+    description: 'Herramienta para mapear experiencias usando los sistemas representacionales: Visual, Auditivo, Kinestésico, Olfativo, Gustativo.',
+    steps: [
+      'Elige una experiencia o estado deseado',
+      'Visual: ¿Qué ves? Colores, formas, movimiento, brillo',
+      'Auditivo: ¿Qué oyes? Sonidos, voces, música, volumen',
+      'Kinestésico: ¿Qué sientes? Texturas, temperatura, emociones',
+      'Olfativo/Gustativo: ¿Qué hueles o saboreas?'
+    ],
+    tips: [
+      'Todos tenemos un sistema representacional preferido',
+      'Para comunicar mejor, usa todos los sistemas',
+      'Las submodalidades (brillo, volumen, etc.) afectan la intensidad',
+      'Útil para hacer visualizaciones más vívidas y efectivas'
+    ]
+  },
+  'anchor-mapping': {
+    title: 'Mapa de Anclas',
+    description: 'Técnica de PNL para crear asociaciones estímulo-respuesta que permiten acceder a estados emocionales deseados.',
+    steps: [
+      'Identifica el recurso/estado emocional que deseas anclar',
+      'Recuerda una experiencia intensa de ese estado',
+      'En el pico de la experiencia, aplica un estímulo único (ancla)',
+      'Rompe el estado, luego dispara el ancla para probar',
+      'Apila múltiples experiencias para fortalecer el ancla'
+    ],
+    tips: [
+      'El ancla debe ser única y específica',
+      'El timing es crucial - ancla en el pico de intensidad',
+      'Usa anclas kinestésicas (tocar nudillo, presionar pulgar)',
+      'Las anclas negativas también existen - identifícalas y reemplázalas'
+    ]
+  },
+  'metamodel-board': {
+    title: 'Tablero del Metamodelo',
+    description: 'El Metamodelo de PNL identifica patrones lingüísticos que distorsionan, generalizan o eliminan información. Incluye preguntas para recuperar información precisa.',
+    steps: [
+      'Escucha o escribe la frase a analizar',
+      'Identifica el patrón: ¿Es una generalización, eliminación o distorsión?',
+      'Aplica la pregunta desafiante apropiada',
+      'Documenta la respuesta clarificada',
+      'Repite hasta tener información precisa y completa'
+    ],
+    tips: [
+      'Generalizaciones: "siempre", "nunca", "todos", "nadie"',
+      'Eliminaciones: ¿Quién? ¿Qué? ¿Cómo específicamente?',
+      'Distorsiones: lectura mental, causa-efecto, equivalencias',
+      'Usa con rapport - no es un interrogatorio'
+    ]
+  },
+  'metaphor-canvas': {
+    title: 'Canvas de Metáforas',
+    description: 'Trabajo con metáforas transformacionales. Las metáforas revelan estructuras profundas del pensamiento y permiten cambios indirectos.',
+    steps: [
+      'Situación Actual: ¿Cómo es tu situación actual?',
+      'Metáfora Actual: "Es como..." - encuentra una metáfora',
+      'Explora la Metáfora: recursos, limitaciones, personajes',
+      'Transforma la Metáfora: ¿Cómo podría evolucionar?',
+      'Metáfora Deseada: ¿Cuál sería la metáfora ideal?',
+      'Integra: ¿Qué cambia en tu situación real?'
+    ],
+    tips: [
+      'Las metáforas del cliente son más poderosas que las impuestas',
+      '"Clean Language": no contamines con tus metáforas',
+      'El cambio en la metáfora produce cambios reales',
+      'Útil cuando el pensamiento lógico no funciona'
+    ]
   }
 };
 
