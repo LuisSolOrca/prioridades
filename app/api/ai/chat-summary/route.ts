@@ -470,6 +470,22 @@ export async function POST(request: NextRequest) {
     const dynamicsCount = recentMessages.filter((m: any) => m.commandType && m.commandData).length;
     const regularMessagesCount = recentMessages.length - dynamicsCount;
 
+    // Extraer y contar hashtags de los mensajes
+    const tagCounts: Record<string, number> = {};
+    recentMessages.forEach((msg: any) => {
+      if (msg.tags && Array.isArray(msg.tags)) {
+        msg.tags.forEach((tag: string) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      }
+    });
+
+    // Ordenar tags por frecuencia
+    const topTags = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 15)
+      .map(([tag, count]) => `#${tag} (${count})`);
+
     // Formatear mensajes para el contexto
     const chatContext = recentMessages.map((msg: any) => {
       const userName = msg.userId?.name || 'Usuario';
@@ -487,14 +503,21 @@ export async function POST(request: NextRequest) {
       }
 
       // Para mensajes normales, usar el contenido
-      return `[${timestamp}] ${userName}: ${msg.content}`;
+      const tagsStr = msg.tags?.length > 0 ? ` [Tags: ${msg.tags.map((t: string) => `#${t}`).join(', ')}]` : '';
+      return `[${timestamp}] ${userName}: ${msg.content}${tagsStr}`;
     }).join('\n\n');
+
+    // Contexto de tags para el prompt
+    const tagsContext = topTags.length > 0
+      ? `\n\n📌 HASHTAGS MÁS USADOS:\n${topTags.join(', ')}`
+      : '';
 
     const systemPrompt = `Eres un asistente experto en análisis de conversaciones de equipos de trabajo. Tu tarea es generar un resumen ejecutivo completo que ponga al día a alguien que no ha estado presente.
 
-IMPORTANTE - El chat contiene dos tipos de contenido:
+IMPORTANTE - El chat contiene tres tipos de contenido:
 1. **Mensajes de texto**: Conversaciones normales entre usuarios
 2. **Dinámicas colaborativas**: Actividades estructuradas como votaciones, brainstorms, retrospectivas, análisis SWOT, etc. Estas están marcadas con emojis y etiquetas como [FINALIZADA] o [EN CURSO]
+3. **Hashtags (#tags)**: Etiquetas usadas para categorizar temas importantes. Los mensajes pueden tener tags como #urgente, #decision, #blocker, #idea, etc.
 
 El resumen DEBE incluir:
 
@@ -527,6 +550,11 @@ El resumen DEBE incluir:
 - Quiénes han sido más activos
 - Quiénes tienen tareas asignadas
 
+## 🏷️ Temas Principales (Hashtags)
+- Tags más usados y su contexto
+- Temas recurrentes identificados
+- Agrupa la información por tema cuando sea relevante
+
 REGLAS:
 - Prioriza la información de las dinámicas sobre los mensajes de texto
 - Menciona si las dinámicas están [FINALIZADAS] o [EN CURSO]
@@ -535,6 +563,7 @@ REGLAS:
 - Sé conciso pero no omitas información importante de las dinámicas`;
 
     const userPrompt = `Analiza este historial de chat (${regularMessagesCount} mensajes + ${dynamicsCount} dinámicas colaborativas) y genera un resumen ejecutivo:
+${tagsContext}
 
 ${chatContext}
 
@@ -585,6 +614,8 @@ Genera un resumen completo que permita a alguien ponerse al día rápidamente.`;
       summary,
       messagesAnalyzed: recentMessages.length,
       dynamicsAnalyzed: dynamicsCount,
+      tagsFound: Object.keys(tagCounts).length,
+      topTags: topTags.slice(0, 10),
       generatedAt: new Date().toISOString()
     });
 

@@ -22,9 +22,10 @@ interface Priority {
 interface MessageContentProps {
   content: string;
   priorityMentions?: Priority[];
+  onTagClick?: (tag: string) => void; // Callback para filtrar por hashtag
 }
 
-export default function MessageContent({ content, priorityMentions = [] }: MessageContentProps) {
+export default function MessageContent({ content, priorityMentions = [], onTagClick }: MessageContentProps) {
   const [hoveredPriority, setHoveredPriority] = useState<Priority | null>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
 
@@ -36,13 +37,10 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
     priorityMap.set(normalizedTitle, p);
   });
 
-  // Función para procesar menciones de prioridades en texto
-  const processPriorityMentions = (text: string): React.ReactNode => {
-    if (!priorityMentions || priorityMentions.length === 0) {
-      return text;
-    }
-
-    const pattern = /#P-([a-f0-9]{24})|#([\w\-áéíóúñÁÉÍÓÚÑ]+(?:-[\w\-áéíóúñÁÉÍÓÚÑ]+)*)/gi;
+  // Función para procesar menciones de prioridades y hashtags en texto
+  const processContentWithMentions = (text: string): React.ReactNode => {
+    // Patrón para detectar #P-{id} (prioridad), #palabra (hashtag o prioridad)
+    const pattern = /#P-([a-f0-9]{24})|#([\wáéíóúñÁÉÍÓÚÑ][\w\-áéíóúñÁÉÍÓÚÑ]*)/gi;
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
     let match;
@@ -56,13 +54,16 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
       let priority: Priority | undefined;
 
       if (match[1]) {
+        // Es #P-{objectId}
         priority = priorityMap.get(match[1]);
       } else if (match[2]) {
+        // Es #palabra - verificar si es una prioridad o un hashtag genérico
         const titleKey = match[2].toLowerCase();
         priority = priorityMap.get(titleKey);
       }
 
       if (priority) {
+        // Es una mención de prioridad
         parts.push(
           <span
             key={`priority-${match.index}`}
@@ -83,7 +84,26 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
             </Link>
           </span>
         );
+      } else if (match[2] && match[2].length >= 2) {
+        // Es un hashtag genérico (no es prioridad)
+        const tag = match[2].toLowerCase();
+        parts.push(
+          <span
+            key={`tag-${match.index}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onTagClick) onTagClick(tag);
+            }}
+            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer transition-colors
+              bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300
+              hover:bg-purple-200 dark:hover:bg-purple-800/50 ${onTagClick ? 'cursor-pointer' : ''}`}
+            title={`Filtrar por #${tag}`}
+          >
+            #{tag}
+          </span>
+        );
       } else {
+        // Fallback - mostrar como texto normal
         parts.push(matchText);
       }
 
@@ -94,7 +114,7 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
       parts.push(text.substring(lastIndex));
     }
 
-    return <>{parts}</>;
+    return parts.length > 0 ? <>{parts}</> : text;
   };
 
   const getStatusColor = (status: string) => {
@@ -155,7 +175,7 @@ export default function MessageContent({ content, priorityMentions = [] }: Messa
 
               return (
                 <p className="mb-2 last:mb-0 whitespace-pre-wrap break-words">
-                  {textContent ? processPriorityMentions(textContent) : children}
+                  {textContent ? processContentWithMentions(textContent) : children}
                 </p>
               );
             },

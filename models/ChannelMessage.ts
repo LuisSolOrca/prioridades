@@ -24,6 +24,7 @@ export interface IChannelMessage {
   mentions: mongoose.Types.ObjectId[]; // Array de userIds mencionados
   priorityMentions: mongoose.Types.ObjectId[]; // Array de priorityIds mencionados
   attachments: mongoose.Types.ObjectId[]; // Array de attachmentIds
+  tags: string[]; // Array de hashtags extraídos del mensaje (#urgente, #decision, etc.)
   reactions: IReaction[];
   parentMessageId?: mongoose.Types.ObjectId; // Para hilos/respuestas
   rootMessageId?: mongoose.Types.ObjectId; // Mensaje raíz del hilo (para hilos anidados)
@@ -74,6 +75,12 @@ const ChannelMessageSchema = new mongoose.Schema({
   attachments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Attachment'
+  }],
+  tags: [{
+    type: String,
+    trim: true,
+    lowercase: true,
+    maxlength: 50
   }],
   reactions: [{
     userId: {
@@ -166,6 +173,7 @@ ChannelMessageSchema.index({ projectId: 1, channelId: 1, createdAt: -1 });
 ChannelMessageSchema.index({ projectId: 1, channelId: 1, parentMessageId: 1, createdAt: -1 });
 ChannelMessageSchema.index({ projectId: 1, channelId: 1, rootMessageId: 1, createdAt: -1 }); // Para hilos anidados
 ChannelMessageSchema.index({ projectId: 1, channelId: 1, isPinned: 1, pinnedAt: -1 }); // Para mensajes anclados
+ChannelMessageSchema.index({ projectId: 1, channelId: 1, tags: 1, createdAt: -1 }); // Para búsqueda por hashtags
 
 export default mongoose.models.ChannelMessage ||
   mongoose.model<IChannelMessage>('ChannelMessage', ChannelMessageSchema);

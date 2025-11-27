@@ -14,6 +14,41 @@ import { trackChannelUsage } from '@/lib/gamification';
 import { triggerOutgoingWebhooks } from '@/lib/webhooks';
 
 /**
+ * Extrae hashtags del contenido del mensaje
+ * Ignora menciones de prioridades (#P-xxx) y menciones de usuarios (@xxx)
+ * @param content - Contenido del mensaje
+ * @param priorityMentionsIds - IDs de prioridades ya detectadas (para excluir)
+ * @returns Array de tags en lowercase sin el #
+ */
+function extractHashtags(content: string, priorityMentionsIds: string[] = []): string[] {
+  // Patrón para hashtags: # seguido de letras/números/guiones/acentos
+  // Excluye #P-{objectId} que son menciones de prioridades
+  const hashtagPattern = /#([\wáéíóúñÁÉÍÓÚÑ][\w\-áéíóúñÁÉÍÓÚÑ]*)/gi;
+  const matches = content.match(hashtagPattern);
+
+  if (!matches) return [];
+
+  const tags = new Set<string>();
+
+  for (const match of matches) {
+    const tag = match.substring(1).toLowerCase(); // Quitar # y lowercase
+
+    // Ignorar si es formato de mención de prioridad #P-{id}
+    if (/^p-[a-f0-9]{24}$/i.test(tag)) continue;
+
+    // Ignorar tags muy cortos (menos de 2 caracteres)
+    if (tag.length < 2) continue;
+
+    // Ignorar tags muy largos (más de 50 caracteres)
+    if (tag.length > 50) continue;
+
+    tags.add(tag);
+  }
+
+  return Array.from(tags);
+}
+
+/**
  * GET /api/projects/[id]/messages
  * Obtiene los mensajes del chat del proyecto
  */
@@ -37,6 +72,7 @@ export async function GET(
     const rootMessageId = searchParams.get('rootMessageId'); // Para cargar todo el árbol de hilos
     const channelId = searchParams.get('channelId');
     const search = searchParams.get('search') || '';
+    const tag = searchParams.get('tag')?.toLowerCase().replace(/^#/, '') || ''; // Filtro por hashtag
     const isDynamic = searchParams.get('isDynamic') === 'true';
     const aroundMessageId = searchParams.get('aroundMessageId'); // Para cargar mensajes alrededor de uno específico
 
@@ -49,6 +85,11 @@ export async function GET(
     // Filtrar por canal si se proporciona
     if (channelId) {
       query.channelId = channelId;
+    }
+
+    // Filtrar por hashtag
+    if (tag) {
+      query.tags = tag;
     }
 
     // Filtrar solo dinámicas (mensajes con commandType y commandData)
@@ -70,9 +111,10 @@ export async function GET(
 
       const userIds = matchingUsers.map(u => u._id);
 
-      // Buscar en contenido o por usuario (sin filtrar por parentMessageId)
+      // Buscar en contenido, por usuario, o por hashtag
       query.$or = [
         { content: searchRegex },
+        { tags: { $regex: search.trim(), $options: 'i' } }, // También buscar en tags
         ...(userIds.length > 0 ? [{ userId: { $in: userIds } }] : [])
       ];
     } else if (rootMessageId) {
@@ -439,6 +481,9 @@ export async function POST(
       }
     }
 
+    // Extraer hashtags del contenido
+    const tags = extractHashtags(content, priorityMentionsIds);
+
     // Crear mensaje
     const message = await ChannelMessage.create({
       projectId: params.id,
@@ -447,6 +492,7 @@ export async function POST(
       content: content.trim(),
       mentions,
       priorityMentions: priorityMentionsIds,
+      tags, // Hashtags extraídos
       parentMessageId: parentMessageId || null,
       rootMessageId: rootMessageId,
       threadDepth: threadDepth,

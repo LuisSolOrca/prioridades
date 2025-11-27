@@ -231,6 +231,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [showCatchUp, setShowCatchUp] = useState(false);
   const [catchUpLoading, setCatchUpLoading] = useState(false);
+  const [filterTag, setFilterTag] = useState<string | null>(null);
   const [activeCommand, setActiveCommand] = useState<{
     type: string;
     data?: any;
@@ -382,7 +383,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       loadPinnedMessages();
       loadReadMarker();
     }
-  }, [debouncedSearchQuery, selectedChannelId]);
+  }, [debouncedSearchQuery, selectedChannelId, filterTag]);
 
   // Pusher: suscribirse al canal cuando se selecciona un channelId
   useEffect(() => {
@@ -532,7 +533,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     try {
       setLoading(true);
       const searchParam = debouncedSearchQuery.trim() ? `&search=${encodeURIComponent(debouncedSearchQuery.trim())}` : '';
-      const response = await fetch(`/api/projects/${projectId}/messages?limit=50&channelId=${selectedChannelId}${searchParam}`);
+      const tagParam = filterTag ? `&tag=${encodeURIComponent(filterTag)}` : '';
+      const response = await fetch(`/api/projects/${projectId}/messages?limit=50&channelId=${selectedChannelId}${searchParam}${tagParam}`);
 
       if (!response.ok) {
         throw new Error('Error al cargar mensajes');
@@ -571,7 +573,8 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
       const previousScrollHeight = container?.scrollHeight || 0;
 
       const searchParam = debouncedSearchQuery.trim() ? `&search=${encodeURIComponent(debouncedSearchQuery.trim())}` : '';
-      const response = await fetch(`/api/projects/${projectId}/messages?limit=50&cursor=${nextCursor}&channelId=${selectedChannelId}${searchParam}`);
+      const tagParam = filterTag ? `&tag=${encodeURIComponent(filterTag)}` : '';
+      const response = await fetch(`/api/projects/${projectId}/messages?limit=50&cursor=${nextCursor}&channelId=${selectedChannelId}${searchParam}${tagParam}`);
 
       if (!response.ok) {
         throw new Error('Error al cargar más mensajes');
@@ -5355,6 +5358,15 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
     }
   };
 
+  const handleTagClick = (tag: string) => {
+    // Si ya estamos filtrando por este tag, limpiar el filtro
+    if (filterTag === tag) {
+      setFilterTag(null);
+    } else {
+      setFilterTag(tag);
+    }
+  };
+
   const handleMentionSelect = (item: { name?: string; tag?: string; isGroup?: boolean }) => {
     const lastAtIndex = newMessage.lastIndexOf('@');
     const beforeAt = newMessage.substring(0, lastAtIndex);
@@ -5561,12 +5573,30 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
               </div>
             </div>
           )}
+
+          {/* Active Tag Filter */}
+          {filterTag && (
+            <div className="flex items-center gap-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-700">
+              <span className="text-xs text-purple-700 dark:text-purple-300">Filtrando por:</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300">
+                #{filterTag}
+                <button
+                  onClick={() => setFilterTag(null)}
+                  className="ml-1 hover:text-purple-900 dark:hover:text-purple-100"
+                  title="Quitar filtro"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Regular search results count */}
-        {debouncedSearchQuery && !showSemanticResults && (
+        {(debouncedSearchQuery || filterTag) && !showSemanticResults && (
           <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             {messages.length} {messages.length === 1 ? 'mensaje' : 'mensajes'} encontrados
+            {filterTag && <span className="ml-1">con #{filterTag}</span>}
           </div>
         )}
 
@@ -5721,6 +5751,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                     <MessageContent
                       content={message.content}
                       priorityMentions={message.priorityMentions}
+                      onTagClick={handleTagClick}
                     />
                   </div>
                   {message.pinnedBy && (
@@ -8206,6 +8237,7 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                         <MessageContent
                           content={message.content}
                           priorityMentions={message.priorityMentions}
+                          onTagClick={handleTagClick}
                         />
                       </div>
 
