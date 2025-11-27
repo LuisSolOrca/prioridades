@@ -900,6 +900,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
                   <DynamicCard
                     key={dynamic._id}
                     dynamic={dynamic}
+                    projectId={projectId}
                     participantCount={onlineUsers.length}
                     onClick={() => handleOpenDynamic(dynamic)}
                     onDelete={handleDeleteDynamic}
@@ -952,6 +953,7 @@ export default function CollaborativeWorkspace({ projectId }: CollaborativeWorks
                     <DynamicCard
                       key={dynamic._id}
                       dynamic={dynamic}
+                      projectId={projectId}
                       onClick={() => handleOpenDynamic(dynamic)}
                       onDelete={handleDeleteDynamic}
                       canDelete={dynamic.commandData?.createdBy === session?.user?.id || dynamic.userId?._id === session?.user?.id}

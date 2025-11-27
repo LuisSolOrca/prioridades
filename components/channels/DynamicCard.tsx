@@ -14,12 +14,14 @@ import {
   Play,
   Trash2,
   Loader2,
-  Layers
+  Layers,
+  Mail
 } from 'lucide-react';
 
 interface DynamicCardProps {
   dynamic: {
     _id: string;
+    projectId?: string;
     commandType: string;
     commandData: {
       title?: string;
@@ -33,6 +35,7 @@ interface DynamicCardProps {
     };
     createdAt?: string;
   };
+  projectId?: string;
   participantCount?: number;
   onClick: () => void;
   onDelete?: (id: string) => void;
@@ -124,8 +127,9 @@ const DYNAMIC_ICONS: Record<string, { icon: typeof Vote; color: string; bg: stri
   'team-canvas': { icon: Users, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30' },
 };
 
-export default function DynamicCard({ dynamic, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {
+export default function DynamicCard({ dynamic, projectId, participantCount = 0, onClick, onDelete, canDelete }: DynamicCardProps) {
   const [deleting, setDeleting] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Safety check - return null if dynamic is invalid
   if (!dynamic || !dynamic._id) {
@@ -167,6 +171,37 @@ export default function DynamicCard({ dynamic, participantCount = 0, onClick, on
       console.error('Error deleting dynamic:', error);
       alert('Error al eliminar la dinámica');
       setDeleting(false);
+    }
+  };
+
+  const handleSendEmail = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const effectiveProjectId = projectId || dynamic.projectId;
+    if (!effectiveProjectId) {
+      alert('No se puede enviar: falta el ID del proyecto');
+      return;
+    }
+
+    if (!confirm('¿Enviar resumen de esta dinámica por correo a todos los participantes?')) return;
+
+    setSendingEmail(true);
+    try {
+      const response = await fetch(`/api/projects/${effectiveProjectId}/messages/${dynamic._id}/send-email`, {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al enviar');
+      }
+
+      alert(`✅ ${data.message}`);
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      alert(error.message || 'Error al enviar el correo');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -222,17 +257,32 @@ export default function DynamicCard({ dynamic, participantCount = 0, onClick, on
         </div>
       </button>
 
-      {/* Delete button - shows on hover for closed dynamics */}
-      {canDelete && onDelete && (
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-200 dark:hover:bg-red-900/50 transition-all disabled:opacity-50"
-          title="Eliminar dinámica"
-        >
-          {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-        </button>
-      )}
+      {/* Action buttons - shows on hover */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+        {/* Send email button - shows for closed dynamics */}
+        {isClosed && (projectId || dynamic.projectId) && (
+          <button
+            onClick={handleSendEmail}
+            disabled={sendingEmail}
+            className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all disabled:opacity-50"
+            title="Enviar por correo a participantes"
+          >
+            {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+          </button>
+        )}
+
+        {/* Delete button */}
+        {canDelete && onDelete && (
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-all disabled:opacity-50"
+            title="Eliminar dinámica"
+          >
+            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
