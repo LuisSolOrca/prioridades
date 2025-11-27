@@ -11,23 +11,25 @@
 6. [Formato Markdown](#formato-markdown)
 7. [Link Previews](#link-previews)
 8. [Menciones](#menciones)
-9. [Reacciones](#reacciones)
-10. [Threads (Hilos)](#threads-hilos)
+9. [Hashtags (#tags)](#hashtags-tags)
+10. [Reacciones](#reacciones)
+11. [Threads (Hilos)](#threads-hilos)
     - [Hilos Anidados](#hilos-anidados-threads-of-threads-)
-11. [Mensajes Anclados](#mensajes-anclados)
-12. [Búsqueda](#búsqueda)
+12. [Mensajes Anclados](#mensajes-anclados)
+13. [Búsqueda](#búsqueda)
     - [Búsqueda Semántica con IA](#búsqueda-semántica-con-ia)
-13. [Slash Commands](#slash-commands)
-14. [Webhooks](#webhooks)
-15. [Archivos Adjuntos](#archivos-adjuntos)
-16. [Mensajes de Voz](#mensajes-de-voz)
-17. [Pestaña de Dinámicas](#pestaña-de-dinámicas)
-18. [Pizarra Colaborativa](#pizarra-colaborativa)
-19. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
-20. [Notificaciones](#notificaciones)
-21. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
-22. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-23. [Roadmap Futuro](#roadmap-futuro)
+    - [Ponme al Día](#ponme-al-día)
+14. [Slash Commands](#slash-commands)
+15. [Webhooks](#webhooks)
+16. [Archivos Adjuntos](#archivos-adjuntos)
+17. [Mensajes de Voz](#mensajes-de-voz)
+18. [Pestaña de Dinámicas](#pestaña-de-dinámicas)
+19. [Pizarra Colaborativa](#pizarra-colaborativa)
+20. [Integración con Microsoft Teams](#integración-con-microsoft-teams)
+21. [Notificaciones](#notificaciones)
+22. [Gestión de Usuarios Eliminados](#gestión-de-usuarios-eliminados)
+23. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+24. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -56,6 +58,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 📜 **Scroll infinito** con lazy loading de mensajes antiguos
 - 👥 **Menciones de usuarios** con notificaciones
 - 📌 **Menciones de prioridades** con previsualizaciones
+- 🏷️ **Hashtags (#tags)** para categorizar mensajes con filtrado rápido
 - 😄 **Reacciones con emojis** - 43 emojis organizados en categorías
 - 📝 **Formato Markdown** - negrita, cursiva, código, listas, y más
 - 🔗 **Link Previews** - previews automáticas de URLs con metadata
@@ -71,6 +74,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🔒 **Canales privados** con control de acceso por miembros
 - 📖 **Marcadores de lectura** - línea "Mensajes nuevos" para equipos asíncronos
 - 🧠 **Búsqueda semántica con IA** - busca por concepto usando Groq (LLaMA 3.3)
+- ✨ **Ponme al día** - resumen ejecutivo instantáneo con IA del chat y dinámicas
 - 🔌 **Webhooks entrantes y salientes** para integración con sistemas externos
 - 👥 **Grupos de usuarios** para menciones masivas
 - 🔗 **Integración con Microsoft Teams** mediante bridge endpoint
@@ -722,6 +726,78 @@ Vincula prioridades del proyecto en tus mensajes:
 
 ---
 
+## Hashtags (#tags)
+
+Los **hashtags** permiten categorizar y etiquetar mensajes para facilitar su búsqueda y organización posterior.
+
+### Cómo Usar Hashtags
+
+Simplemente escribe `#` seguido de una palabra o frase (sin espacios):
+
+```
+#urgente Necesitamos resolver esto hoy
+#decision Se acordó usar PostgreSQL para el nuevo servicio
+#idea Podríamos automatizar el proceso de deploy
+#blocker El servidor de staging está caído
+#q4 Esto es parte de los objetivos del Q4
+```
+
+### Características
+
+- ✅ **Extracción automática**: Los hashtags se detectan y guardan automáticamente al enviar el mensaje
+- 🎨 **Renderizado visual**: Se muestran como badges púrpura clickeables
+- 🔍 **Filtrado por click**: Haz clic en cualquier hashtag para filtrar mensajes con ese tag
+- 🏷️ **Múltiples tags**: Un mensaje puede tener varios hashtags
+- 🔤 **Case insensitive**: `#Urgente` y `#urgente` se tratan igual
+- 🌍 **Soporte Unicode**: Funciona con caracteres especiales (`#decisión`, `#año2024`)
+
+### Filtrado por Hashtag
+
+**Desde un mensaje:**
+1. Haz clic en cualquier hashtag (badge púrpura) en un mensaje
+2. El chat se filtra automáticamente mostrando solo mensajes con ese tag
+3. Aparece un indicador "Filtrando por: #tag" con botón para limpiar
+
+**Desde la búsqueda:**
+- El filtro de hashtag es compatible con la búsqueda por texto
+- Puedes combinar filtro de tag + búsqueda de texto
+
+### Hashtags Recomendados
+
+| Tag | Uso sugerido |
+|-----|--------------|
+| `#urgente` | Temas que requieren atención inmediata |
+| `#decision` | Decisiones tomadas por el equipo |
+| `#idea` | Propuestas y sugerencias |
+| `#blocker` | Impedimentos que bloquean el trabajo |
+| `#pregunta` | Preguntas pendientes de respuesta |
+| `#followup` | Temas que requieren seguimiento |
+| `#q1` `#q2` etc. | Categorización por quarter |
+| `#sprint1` `#sprint2` | Categorización por sprint |
+
+### Análisis Semántico de Tags
+
+Los hashtags se incluyen en el análisis de **"Ponme al día"** (AI Summary):
+- La IA agrupa información por temas/tags
+- Muestra los tags más utilizados en el período
+- Identifica patrones y temas recurrentes
+
+### API
+
+**Crear mensaje con tags:**
+```javascript
+POST /api/projects/[id]/messages
+Body: { content: "Mensaje con #tag1 y #tag2", channelId: "..." }
+// Los tags se extraen automáticamente del contenido
+```
+
+**Filtrar por tag:**
+```
+GET /api/projects/[id]/messages?channelId=xxx&tag=urgente
+```
+
+---
+
 ## Reacciones
 
 ### Agregar Reacciones
@@ -880,6 +956,7 @@ maria@empresa.com
 - **Contador de resultados**: Muestra cuántos mensajes encontrados
 - **Resaltado**: Los resultados se muestran en el chat principal
 - **Limpiar búsqueda**: Botón X para borrar y volver a todos los mensajes
+- **Filtrado por hashtag**: Combina búsqueda de texto con filtro de tag activo
 
 ### Búsqueda Semántica con IA
 
@@ -932,6 +1009,59 @@ Body: { query: "tu búsqueda", channelId?: "id", limit?: 10 }
 **Requisitos:**
 - Variable de entorno `GROQ_API_KEY` configurada
 - Mínimo 3 caracteres en la búsqueda
+
+### Ponme al Día
+
+El botón **"Ponme al día"** ofrece un resumen ejecutivo instantáneo del chat usando IA, ideal para equipos asíncronos o para ponerse al corriente después de una ausencia.
+
+**Ubicación:** Botón verde junto a la barra de búsqueda
+
+**Cómo usar:**
+1. Haz clic en el botón verde **"✨ Ponme al día"**
+2. La IA analiza los últimos 100 mensajes y dinámicas
+3. Se muestra un resumen estructurado en un panel
+
+**El resumen incluye:**
+
+| Sección | Contenido |
+|---------|-----------|
+| 📊 **Resumen de Actividad** | Número de mensajes, dinámicas y período analizado |
+| 🎯 **Decisiones y Resultados** | Votaciones, decisiones registradas, conclusiones de análisis |
+| 💡 **Ideas y Propuestas** | Top ideas de brainstorms, propuestas más votadas |
+| 🔄 **Estado del Equipo** | Retrospectivas, health checks, mood del equipo |
+| ⚠️ **Puntos de Atención** | Blockers activos, riesgos, preguntas pendientes |
+| 👥 **Participación** | Usuarios más activos, tareas asignadas |
+| 🏷️ **Temas Principales** | Hashtags más usados y temas recurrentes |
+
+**Dinámicas analizadas:**
+- Votaciones y encuestas (resultados, ganadores)
+- Brainstorms (top ideas)
+- Retrospectivas (qué funciona, qué no)
+- Matrices de decisión (mejor opción)
+- SWOT, Five Whys, Risk Matrix
+- Team Health, Mood checks
+- Action Items (pendientes)
+- Y 60+ tipos más de dinámicas
+
+**Análisis de Hashtags:**
+- Muestra los tags más frecuentes del período
+- Agrupa información por tema cuando es relevante
+- Identifica patrones y categorías dominantes
+
+**API Endpoint:**
+```
+POST /api/ai/chat-summary
+Body: { messages: [...], maxMessages?: 100 }
+
+Response: {
+  summary: "...",
+  messagesAnalyzed: 100,
+  dynamicsAnalyzed: 15,
+  tagsFound: 8,
+  topTags: ["#urgente (5)", "#decision (3)", ...],
+  generatedAt: "2024-01-15T10:30:00Z"
+}
+```
 
 ---
 
