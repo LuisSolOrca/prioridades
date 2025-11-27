@@ -145,15 +145,12 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
 
   // Search users and groups for mention autocomplete
   const searchUsers = async (query: string) => {
-    if (query.length < 1) {
-      setMentionItems([]);
-      return;
-    }
-
     try {
       // Buscar usuarios y grupos en paralelo
       const [usersRes, groupsRes] = await Promise.all([
-        fetch(`/api/users/search?q=${encodeURIComponent(query)}`),
+        query.length >= 1
+          ? fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+          : fetch(`/api/users/search?q=&limit=5`), // Mostrar primeros 5 usuarios si no hay query
         fetch('/api/user-groups')
       ]);
 
@@ -161,14 +158,18 @@ export default function CommentsSection({ priorityId }: CommentsSectionProps) {
       const users: User[] = usersData.users || usersData || [];
       const allGroups: UserGroup[] = groupsRes.ok ? await groupsRes.json() : [];
 
-      // Filtrar grupos que coincidan con la búsqueda
-      const filteredGroups = allGroups.filter((g: any) =>
-        g.name.toLowerCase().includes(query.toLowerCase()) ||
-        g.tag.toLowerCase().includes(query.toLowerCase())
-      ).map((g: any) => ({ ...g, isGroup: true as const }));
+      // Filtrar grupos que coincidan con la búsqueda (o mostrar todos si no hay query)
+      const filteredGroups = query.length >= 1
+        ? allGroups.filter((g: any) =>
+            g.name.toLowerCase().includes(query.toLowerCase()) ||
+            g.tag.toLowerCase().includes(query.toLowerCase())
+          )
+        : allGroups;
+
+      const groupsWithFlag = filteredGroups.map((g: any) => ({ ...g, isGroup: true as const }));
 
       // Combinar y ordenar: grupos primero, luego usuarios
-      const combined: MentionItem[] = [...filteredGroups, ...users.map(u => ({ ...u, isGroup: false as const }))];
+      const combined: MentionItem[] = [...groupsWithFlag, ...users.map(u => ({ ...u, isGroup: false as const }))];
       setMentionItems(combined);
     } catch (error) {
       console.error('Error searching users/groups:', error);

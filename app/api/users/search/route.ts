@@ -22,24 +22,30 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
-
-    if (query.length < 1) {
-      return NextResponse.json([]);
-    }
-
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    // Buscar usuarios activos cuyo nombre o email coincida (case-insensitive)
-    const users = await User.find({
-      isActive: true,
-      $or: [
-        { name: { $regex: new RegExp(query, 'i') } },
-        { email: { $regex: new RegExp(query, 'i') } }
-      ]
-    })
-      .select('_id name email')
-      .limit(limit)
-      .lean();
+    let users;
+
+    if (query.length < 1) {
+      // Si no hay query, devolver los primeros usuarios ordenados por nombre
+      users = await User.find({ isActive: true })
+        .select('_id name email')
+        .sort({ name: 1 })
+        .limit(limit)
+        .lean();
+    } else {
+      // Buscar usuarios activos cuyo nombre o email coincida (case-insensitive)
+      users = await User.find({
+        isActive: true,
+        $or: [
+          { name: { $regex: new RegExp(query, 'i') } },
+          { email: { $regex: new RegExp(query, 'i') } }
+        ]
+      })
+        .select('_id name email')
+        .limit(limit)
+        .lean();
+    }
 
     return NextResponse.json({ users });
   } catch (error: any) {
