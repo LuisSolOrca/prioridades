@@ -69,7 +69,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🔍 **Búsqueda avanzada** por contenido y usuario
 - ⚡ **30+ Slash commands** para acciones rápidas
 - ✏️ **Edición y eliminación** de mensajes propios
-- 🔔 **Notificaciones** por email y en aplicación
+- 🔔 **Notificaciones** por email, in-app y **push del navegador**
 - 👻 **Soporte para usuarios eliminados**
 - 🗂️ **Sistema de canales y subcanales** jerárquico (máx 2 niveles)
 - 🔒 **Canales privados** con control de acceso por miembros
@@ -3309,6 +3309,7 @@ Ver: `docs/TEAMS_INTEGRATION.md` para guía paso a paso detallada.
 Cuando alguien te menciona:
 - **Email**: Recibes correo con el mensaje completo
 - **In-app**: Notificación en el ícono de campana
+- **Push**: Notificación del navegador (si está activada)
 - **Contenido**: Nombre de quien mencionó, mensaje, proyecto
 
 #### 2. Respuestas en Threads
@@ -3316,23 +3317,84 @@ Cuando alguien te menciona:
 Cuando responden a tu mensaje:
 - **Email**: Notificación de nueva respuesta
 - **In-app**: Badge en notificaciones
+- **Push**: Alerta instantánea con preview del mensaje
 - **Contenido**: Nombre del respondedor, respuesta, enlace al thread
 
-#### 3. Preguntas (/question)
+#### 3. Menciones de Grupo (@grupo)
+
+Cuando mencionan a un grupo del que eres miembro:
+- **Email**: Correo a todos los miembros
+- **Push**: Notificación a todos los miembros del grupo
+- **Contenido**: "X mencionó a @grupo" con preview del mensaje
+
+#### 4. Preguntas (/question)
 
 Cuando alguien te hace una pregunta:
 - **Email**: Correo con la pregunta completa
 - **In-app**: Notificación destacada
 - **Acción**: Botón para responder directamente
 
+### Push Notifications del Navegador
+
+El sistema soporta **notificaciones push nativas del navegador** que funcionan incluso cuando la aplicación no está abierta.
+
+#### Activar Push Notifications
+
+1. Ve a **Mi Perfil** (`/profile`)
+2. Busca la sección **"Notificaciones Push del Navegador"**
+3. Activa el toggle
+4. Acepta el permiso del navegador cuando lo solicite
+
+#### Eventos que Envían Push
+
+| Evento | Título | Ejemplo |
+|--------|--------|---------|
+| Mención en canal | 🔔 Juan te mencionó | "En Proyecto X: @Pedro revisa esto..." |
+| Respuesta a mensaje | 💬 María respondió tu mensaje | "Sí, de acuerdo con lo que dices..." |
+| Mención de grupo | 🔔 Carlos mencionó a @desarrollo | "Equipo, necesitamos revisar..." |
+| Comentario en prioridad | 💬 Nuevo comentario de Ana | "En 'Implementar login': Listo..." |
+| Mención en comentario | 🔔 Luis te mencionó | "En 'Bug crítico': @Admin urgente..." |
+
+#### Características
+
+- **Funcionan offline**: Recibes notificaciones aunque el navegador esté cerrado
+- **Click para navegar**: Al hacer clic vas directo al mensaje/prioridad
+- **Deduplicación**: El tag único evita notificaciones duplicadas
+- **requireInteraction**: Las menciones requieren acción del usuario (no se cierran solas)
+
+#### Compatibilidad
+
+- ✅ Chrome (desktop y Android)
+- ✅ Firefox
+- ✅ Edge
+- ✅ Safari (macOS Ventura+, iOS 16.4+)
+- ❌ Safari iOS < 16.4
+
+#### Troubleshooting
+
+**"Tu navegador no soporta notificaciones push"**
+- Verifica que estés usando un navegador compatible
+- En iOS, necesitas Safari 16.4+ y agregar la app a la pantalla de inicio
+
+**"Las notificaciones están bloqueadas"**
+- Haz clic en el candado de la barra de direcciones
+- Busca "Notificaciones" y cambia a "Permitir"
+- Recarga la página
+
+**No llegan las notificaciones**
+- Verifica que el toggle esté activado en `/profile`
+- Revisa que no tengas el modo "No molestar" del sistema operativo activado
+- En Windows, revisa Centro de Actividades → Configuración de notificaciones
+
 ### Configuración de Notificaciones
 
 Los usuarios pueden configurar:
-- Frecuencia de emails (inmediato, resumen diario, desactivado)
+- **Email**: Frecuencia de emails (inmediato, resumen diario, desactivado)
+- **Push**: Activar/desactivar notificaciones del navegador
 - Tipos de notificaciones a recibir
 - Horarios de no molestar
 
-**Ubicación:** Perfil de usuario → Preferencias de notificaciones
+**Ubicación:** Perfil de usuario → Preferencias de notificaciones (`/profile`)
 
 ---
 
