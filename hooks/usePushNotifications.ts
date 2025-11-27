@@ -22,18 +22,30 @@ export function usePushNotifications() {
   // Verificar soporte y estado inicial
   useEffect(() => {
     const checkSupport = async () => {
-      // Verificar si el navegador soporta push notifications
-      const isSupported =
-        'serviceWorker' in navigator &&
-        'PushManager' in window &&
-        'Notification' in window;
-
-      if (!isSupported) {
+      // Verificar que estamos en el cliente (no SSR)
+      if (typeof window === 'undefined') {
         setState(prev => ({
           ...prev,
           isSupported: false,
           isLoading: false,
-          error: 'Tu navegador no soporta notificaciones push'
+          error: 'Ejecutando en servidor'
+        }));
+        return;
+      }
+
+      // Verificar si el navegador soporta push notifications
+      const hasServiceWorker = 'serviceWorker' in navigator;
+      const hasPushManager = 'PushManager' in window;
+      const hasNotification = 'Notification' in window;
+
+      console.log('[Push] Checking support:', { hasServiceWorker, hasPushManager, hasNotification });
+
+      if (!hasServiceWorker || !hasPushManager || !hasNotification) {
+        setState(prev => ({
+          ...prev,
+          isSupported: false,
+          isLoading: false,
+          error: `Tu navegador no soporta notificaciones push (SW: ${hasServiceWorker}, PM: ${hasPushManager}, N: ${hasNotification})`
         }));
         return;
       }
@@ -44,11 +56,14 @@ export function usePushNotifications() {
       // Verificar si ya está suscrito
       let isSubscribed = false;
       try {
-        const registration = await navigator.serviceWorker.ready;
+        // Primero registrar el service worker si no existe
+        const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
         isSubscribed = !!subscription;
+        console.log('[Push] Current subscription:', isSubscribed);
       } catch (error) {
-        console.error('Error verificando suscripción:', error);
+        console.error('[Push] Error verificando suscripción:', error);
       }
 
       setState({
