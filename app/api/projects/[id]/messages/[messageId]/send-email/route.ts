@@ -464,6 +464,276 @@ function generateDynamicResultsHTML(commandType: string, commandData: any): stri
       }
       break;
 
+    case 'mood':
+      // Estado de ánimo del equipo
+      const moodOptions: Record<string, { label: string; color: string }> = {
+        '😊': { label: 'Genial', color: '#10b981' },
+        '💪': { label: 'Motivado', color: '#3b82f6' },
+        '😐': { label: 'Normal', color: '#6b7280' },
+        '😴': { label: 'Cansado', color: '#eab308' },
+        '😟': { label: 'Estresado', color: '#f97316' },
+        '😤': { label: 'Frustrado', color: '#ef4444' },
+        '🔥': { label: 'En llamas', color: '#e11d48' },
+        '🤯': { label: 'Abrumado', color: '#8b5cf6' }
+      };
+
+      if (commandData.moods?.length > 0) {
+        // Contar por tipo de mood
+        const moodCounts: Record<string, number> = {};
+        commandData.moods.forEach((m: any) => {
+          moodCounts[m.mood] = (moodCounts[m.mood] || 0) + 1;
+        });
+        const totalMoods = commandData.moods.length;
+
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">😊 Estado de Ánimo del Equipo (${totalMoods} respuestas)</h4>
+
+            <div style="background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+              <h5 style="color: #6b7280; margin: 0 0 10px 0; font-size: 14px;">Distribución:</h5>
+              ${Object.entries(moodCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([emoji, count]) => {
+                  const option = moodOptions[emoji] || { label: emoji, color: '#6b7280' };
+                  const percentage = Math.round((count / totalMoods) * 100);
+                  return `
+                    <div style="display: flex; align-items: center; margin: 10px 0;">
+                      <span style="font-size: 24px; width: 40px;">${emoji}</span>
+                      <div style="flex: 1; margin: 0 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                          <span style="font-size: 13px; color: #374151;">${option.label}</span>
+                          <span style="font-size: 13px; color: #6b7280; font-weight: 600;">${count} (${percentage}%)</span>
+                        </div>
+                        <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
+                          <div style="background: ${option.color}; height: 100%; width: ${percentage}%;"></div>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+            </div>
+
+            <div style="background: #fdf4ff; border-radius: 8px; padding: 15px; border-left: 4px solid #d946ef;">
+              <h5 style="color: #a21caf; margin: 0 0 10px 0; font-size: 14px;">👥 Respuestas individuales:</h5>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                ${commandData.moods.map((m: any) => `
+                  <div style="background: white; border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                    <span style="font-size: 18px;">${m.mood}</span>
+                    <span style="color: #374151;">${m.name}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      break;
+
+    case 'team-health':
+      // Team Health Check (Spotify model)
+      const healthRatings = [
+        { value: 1, label: 'Bad', emoji: '😞', color: '#ef4444' },
+        { value: 2, label: 'Concerning', emoji: '🙁', color: '#f97316' },
+        { value: 3, label: 'Okay', emoji: '😐', color: '#eab308' },
+        { value: 4, label: 'Good', emoji: '🙂', color: '#3b82f6' },
+        { value: 5, label: 'Awesome', emoji: '😀', color: '#10b981' }
+      ];
+
+      if (commandData.areas?.length > 0) {
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">📊 Team Health Check - ${commandData.areas.length} áreas evaluadas</h4>
+
+            ${commandData.areas.map((area: any) => {
+              const totalVotes = area.votes?.length || 0;
+              const avgRating = totalVotes > 0
+                ? area.votes.reduce((sum: number, v: any) => sum + v.rating, 0) / totalVotes
+                : 0;
+              const avgEmoji = healthRatings.find(r => Math.round(avgRating) === r.value)?.emoji || '❓';
+              const avgColor = healthRatings.find(r => Math.round(avgRating) === r.value)?.color || '#6b7280';
+
+              // Contar votos por rating
+              const voteCounts: Record<number, number> = {};
+              area.votes?.forEach((v: any) => {
+                voteCounts[v.rating] = (voteCounts[v.rating] || 0) + 1;
+              });
+
+              return `
+                <div style="background: white; border-radius: 8px; padding: 15px; margin-bottom: 12px; border-left: 4px solid ${avgColor};">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div>
+                      <h5 style="color: #1f2937; margin: 0; font-size: 15px; font-weight: 600;">${area.name}</h5>
+                      <p style="color: #6b7280; margin: 4px 0 0 0; font-size: 12px;">${totalVotes} votos</p>
+                    </div>
+                    <div style="text-align: center;">
+                      <div style="font-size: 28px;">${avgEmoji}</div>
+                      <div style="font-size: 14px; font-weight: 700; color: ${avgColor};">${avgRating.toFixed(1)}</div>
+                    </div>
+                  </div>
+
+                  ${totalVotes > 0 ? `
+                    <div style="display: flex; gap: 2px; height: 24px; border-radius: 4px; overflow: hidden;">
+                      ${healthRatings.map(r => {
+                        const count = voteCounts[r.value] || 0;
+                        const pct = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+                        return pct > 0 ? `
+                          <div style="background: ${r.color}; width: ${pct}%; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: white; font-size: 11px; font-weight: 600;">${count}</span>
+                          </div>
+                        ` : '';
+                      }).join('')}
+                    </div>
+
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 11px; margin: 0 0 6px 0;">Votos:</p>
+                      <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${area.votes.map((v: any) => {
+                          const r = healthRatings.find(x => x.value === v.rating);
+                          return `
+                            <span style="background: #f3f4f6; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
+                              ${r?.emoji || '❓'} ${v.userName}
+                            </span>
+                          `;
+                        }).join('')}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+      break;
+
+    case 'ranking':
+      // Ranking/priorización
+      if (commandData.items?.length > 0) {
+        const sortedItems = [...commandData.items].sort((a, b) => (a.rank || 999) - (b.rank || 999));
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">🏆 Ranking Final (${commandData.items.length} items)</h4>
+            ${sortedItems.map((item: any, i: number) => `
+              <div style="background: white; padding: 12px; margin: 8px 0; border-radius: 6px; display: flex; align-items: center; gap: 12px; border-left: 4px solid ${i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : '#e5e7eb'};">
+                <div style="width: 32px; height: 32px; background: ${i === 0 ? '#fef3c7' : i === 1 ? '#f1f5f9' : i === 2 ? '#fef3c7' : '#f9fafb'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: ${i === 0 ? '#f59e0b' : i === 1 ? '#64748b' : i === 2 ? '#b45309' : '#6b7280'};">
+                  ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                </div>
+                <div style="flex: 1;">
+                  <div style="color: #374151; font-weight: ${i < 3 ? '600' : '400'};">${item.text}</div>
+                  ${item.score ? `<div style="color: #6b7280; font-size: 12px;">Puntuación: ${item.score}</div>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      break;
+
+    case 'kudos-wall':
+      // Muro de reconocimientos
+      if (commandData.kudos?.length > 0) {
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">💝 Muro de Kudos (${commandData.kudos.length} reconocimientos)</h4>
+            ${commandData.kudos.map((kudo: any) => `
+              <div style="background: linear-gradient(135deg, #fdf4ff 0%, #fce7f3 100%); padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #ec4899;">
+                <div style="font-size: 24px; margin-bottom: 8px;">🎉</div>
+                <p style="color: #374151; margin: 0 0 8px 0; font-style: italic;">"${kudo.message}"</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: #be185d; font-size: 13px; font-weight: 600;">Para: ${kudo.toUserName}</span>
+                  <span style="color: #9ca3af; font-size: 12px;">De: ${kudo.fromUserName}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      break;
+
+    case 'estimation-poker':
+    case 'estimation':
+      // Planning poker / estimación
+      if (commandData.estimates?.length > 0 || commandData.story) {
+        const estimates = commandData.estimates || [];
+        const hasConsensus = estimates.length > 0 && estimates.every((e: any) => e.value === estimates[0]?.value);
+
+        resultsHTML += `
+          <div style="margin-bottom: 15px;">
+            <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 16px;">🃏 Planning Poker</h4>
+
+            ${commandData.story ? `
+              <div style="background: #eff6ff; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #3b82f6;">
+                <p style="color: #1e40af; font-size: 13px; margin: 0 0 5px 0; font-weight: 600;">Historia:</p>
+                <p style="color: #1f2937; margin: 0;">${commandData.story}</p>
+              </div>
+            ` : ''}
+
+            ${estimates.length > 0 ? `
+              <div style="background: white; border-radius: 8px; padding: 15px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                  ${estimates.map((est: any) => `
+                    <div style="background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 10px 15px; text-align: center; min-width: 80px;">
+                      <div style="font-size: 24px; font-weight: 700; color: #3b82f6;">${est.value}</div>
+                      <div style="font-size: 12px; color: #6b7280;">${est.userName}</div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                ${hasConsensus ? `
+                  <div style="background: #f0fdf4; border-radius: 6px; padding: 10px; text-align: center;">
+                    <span style="color: #16a34a; font-weight: 600;">✅ Consenso alcanzado: ${estimates[0]?.value}</span>
+                  </div>
+                ` : commandData.finalEstimate ? `
+                  <div style="background: #fef3c7; border-radius: 6px; padding: 10px; text-align: center;">
+                    <span style="color: #b45309; font-weight: 600;">📊 Estimación final: ${commandData.finalEstimate}</span>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+      break;
+
+    case 'question':
+      // Pregunta y respuesta
+      resultsHTML += `
+        <div style="margin-bottom: 15px;">
+          <div style="background: #fef3c7; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+            <p style="color: #92400e; font-size: 13px; margin: 0 0 5px 0; font-weight: 600;">❓ Pregunta:</p>
+            <p style="color: #1f2937; margin: 0; font-size: 15px;">${commandData.question || title}</p>
+          </div>
+
+          ${commandData.answer ? `
+            <div style="background: #f0fdf4; border-radius: 8px; padding: 15px; border-left: 4px solid #10b981;">
+              <p style="color: #166534; font-size: 13px; margin: 0 0 5px 0; font-weight: 600;">✅ Respuesta:</p>
+              <p style="color: #1f2937; margin: 0;">${commandData.answer}</p>
+              ${commandData.answeredBy ? `<p style="color: #6b7280; font-size: 12px; margin: 10px 0 0 0;">— ${commandData.answeredBy}</p>` : ''}
+            </div>
+          ` : `
+            <div style="background: #fef2f2; border-radius: 8px; padding: 15px; border-left: 4px solid #ef4444;">
+              <p style="color: #991b1b; margin: 0;">⏳ Pregunta sin responder</p>
+            </div>
+          `}
+        </div>
+      `;
+      break;
+
+    case 'decision':
+      // Decisión tomada
+      resultsHTML += `
+        <div style="margin-bottom: 15px;">
+          <div style="background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%); border-radius: 8px; padding: 20px; border-left: 4px solid #6366f1;">
+            <div style="font-size: 32px; margin-bottom: 10px;">⚖️</div>
+            <p style="color: #4338ca; font-size: 13px; margin: 0 0 8px 0; font-weight: 600;">DECISIÓN:</p>
+            <p style="color: #1f2937; margin: 0; font-size: 16px; font-weight: 600;">${commandData.decision || title}</p>
+            ${commandData.context ? `<p style="color: #6b7280; margin: 10px 0 0 0; font-size: 13px;">Contexto: ${commandData.context}</p>` : ''}
+            ${commandData.decidedBy ? `<p style="color: #6b7280; font-size: 12px; margin: 10px 0 0 0;">Decidido por: ${commandData.decidedBy}</p>` : ''}
+          </div>
+        </div>
+      `;
+      break;
+
     // Para dinámicas con secciones genéricas (SWOT, SOAR, Six Hats, etc.)
     default:
       if (commandData.sections?.length > 0) {
@@ -557,34 +827,71 @@ export async function POST(
     }
 
     // Buscar mensaje con screenshot de la dinámica (se crea al cerrar)
-    // Busca mensajes con "Captura de" que contengan attachments de imagen
     let screenshotUrl = '';
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const dynamicTitle = message.commandData.title || message.commandData.question || message.commandData.topic || '';
+
     try {
-      // Buscar por contenido que mencione el tipo de dinámica o el título
-      const dynamicTitle = message.commandData.title || message.commandData.question || message.commandData.topic || '';
-      const screenshotMessages = await ChannelMessage.find({
+      // Estrategia 1: Buscar por patrón "Captura de **tipo**" o "📸 Captura"
+      let screenshotMessages = await ChannelMessage.find({
         channelId: message.channelId,
         $or: [
           { content: { $regex: `Captura de \\*\\*${message.commandType}\\*\\*`, $options: 'i' } },
-          { content: { $regex: `📸.*${message.commandType}`, $options: 'i' } }
+          { content: { $regex: `📸.*Captura`, $options: 'i' } },
+          { content: { $regex: `Captura.*${message.commandType}`, $options: 'i' } }
         ],
         attachments: { $exists: true, $ne: [] },
         createdAt: { $gte: new Date(message.createdAt) }
-      }).populate('attachments').sort({ createdAt: -1 }).limit(5);
+      }).populate('attachments').sort({ createdAt: -1 }).limit(10);
 
       // Buscar el attachment de imagen más reciente
       for (const msg of screenshotMessages) {
         if (msg.attachments?.length > 0) {
-          const attachment = msg.attachments[0] as any;
-          if (attachment.url && attachment.mimeType?.startsWith('image/')) {
-            screenshotUrl = attachment.url.startsWith('http') ? attachment.url : `${baseUrl}${attachment.url}`;
-            break;
+          for (const att of msg.attachments) {
+            const attachment = att as any;
+            if (attachment.url && (attachment.mimeType?.startsWith('image/') || attachment.fileName?.endsWith('.png'))) {
+              screenshotUrl = attachment.url.startsWith('http') ? attachment.url : `${baseUrl}${attachment.url}`;
+              break;
+            }
+          }
+          if (screenshotUrl) break;
+        }
+      }
+
+      // Estrategia 2: Si no encontró, buscar cualquier mensaje con imagen cercano a la dinámica (mismo día)
+      if (!screenshotUrl) {
+        const dynamicDate = new Date(message.createdAt);
+        const nextDay = new Date(dynamicDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        screenshotMessages = await ChannelMessage.find({
+          channelId: message.channelId,
+          attachments: { $exists: true, $ne: [] },
+          createdAt: { $gte: dynamicDate, $lte: nextDay },
+          commandType: { $exists: false } // No es otra dinámica
+        }).populate('attachments').sort({ createdAt: -1 }).limit(5);
+
+        for (const msg of screenshotMessages) {
+          if (msg.attachments?.length > 0) {
+            for (const att of msg.attachments) {
+              const attachment = att as any;
+              // Solo imágenes PNG (screenshots generados)
+              if (attachment.url && attachment.fileName?.endsWith('.png')) {
+                // Verificar que el nombre contenga algo relacionado con la dinámica
+                if (attachment.fileName?.includes(message.commandType)) {
+                  screenshotUrl = attachment.url.startsWith('http') ? attachment.url : `${baseUrl}${attachment.url}`;
+                  break;
+                }
+              }
+            }
+            if (screenshotUrl) break;
           }
         }
       }
+
+      console.log(`[SendEmail] Screenshot search for ${message.commandType}: ${screenshotUrl ? 'found' : 'not found'}`);
     } catch (err) {
-      console.log('No screenshot found for dynamic:', err);
+      console.log('Error searching for screenshot:', err);
     }
 
     // Extraer participantes
