@@ -91,10 +91,10 @@ export default function CRMDashboard() {
       const contactsData = await contactsRes.json();
       const clientsData = await clientsRes.json();
 
-      setStages(stagesData);
-      setDeals(dealsData);
-      setActivities(activitiesData);
-      setContactsCount(contactsData.length);
+      setStages(Array.isArray(stagesData) ? stagesData : []);
+      setDeals(Array.isArray(dealsData) ? dealsData : []);
+      setActivities(Array.isArray(activitiesData) ? activitiesData : []);
+      setContactsCount(Array.isArray(contactsData) ? contactsData.length : 0);
       setClientsCount(Array.isArray(clientsData) ? clientsData.length : 0);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -440,7 +440,7 @@ export default function CRMDashboard() {
           </button>
 
           <button
-            onClick={() => router.push('/clients')}
+            onClick={() => router.push('/crm/clients')}
             className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition"
           >
             <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">

@@ -34,7 +34,16 @@ import {
   Percent,
   AlertCircle,
   Trophy,
-  Target
+  Target,
+  Package,
+  ShoppingCart,
+  FileSpreadsheet,
+  Send,
+  Download,
+  Trash2,
+  Search,
+  Receipt,
+  Eye,
 } from 'lucide-react';
 
 interface PipelineStage {
@@ -102,6 +111,63 @@ interface UserOption {
   email: string;
 }
 
+interface Product {
+  _id: string;
+  name: string;
+  sku?: string;
+  description?: string;
+  price: number;
+  currency: string;
+  category?: string;
+  unit?: string;
+  taxRate?: number;
+  pricingTiers?: { minQuantity: number; price: number }[];
+}
+
+interface DealProduct {
+  _id: string;
+  productId: Product;
+  productName: string;
+  productSku?: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  taxRate: number;
+  subtotal: number;
+  discountAmount: number;
+  taxAmount: number;
+  total: number;
+  notes?: string;
+  order: number;
+}
+
+interface Quote {
+  _id: string;
+  quoteNumber: string;
+  version: number;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  validUntil: string;
+  items: any[];
+  subtotal: number;
+  discountTotal: number;
+  taxTotal: number;
+  total: number;
+  currency: string;
+  clientName: string;
+  createdAt: string;
+  pdfGeneratedAt?: string;
+  sentAt?: string;
+  sentTo?: string;
+}
+
+interface ProductTotals {
+  subtotal: number;
+  discountAmount: number;
+  taxAmount: number;
+  total: number;
+  itemCount: number;
+}
+
 export default function DealDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -116,11 +182,23 @@ export default function DealDetailPage() {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Products & Quotes state
+  const [dealProducts, setDealProducts] = useState<DealProduct[]>([]);
+  const [productTotals, setProductTotals] = useState<ProductTotals | null>(null);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'activities' | 'products' | 'quotes'>('activities');
+
   // Modals
   const [showEditModal, setShowEditModal] = useState(false);
   const [showStageModal, setShowStageModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showLostModal, setShowLostModal] = useState(false);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showCreateQuoteModal, setShowCreateQuoteModal] = useState(false);
+  const [showSendQuoteModal, setShowSendQuoteModal] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Form states
@@ -144,6 +222,28 @@ export default function DealDetailPage() {
 
   const [lostReason, setLostReason] = useState('');
 
+  // Add product form
+  const [addProductForm, setAddProductForm] = useState({
+    productId: '',
+    quantity: 1,
+    discount: 0,
+    notes: '',
+  });
+
+  // Quote form
+  const [quoteForm, setQuoteForm] = useState({
+    validDays: 30,
+    terms: '',
+    notes: '',
+  });
+
+  // Send quote form
+  const [sendQuoteForm, setSendQuoteForm] = useState({
+    email: '',
+    subject: '',
+    message: '',
+  });
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -161,10 +261,12 @@ export default function DealDetailPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [dealRes, stagesRes, usersRes] = await Promise.all([
+      const [dealRes, stagesRes, usersRes, productsRes, quotesRes] = await Promise.all([
         fetch(`/api/crm/deals/${dealId}`),
         fetch('/api/crm/pipeline-stages?activeOnly=true'),
         fetch('/api/users'),
+        fetch(`/api/crm/deals/${dealId}/products`),
+        fetch(`/api/crm/quotes?dealId=${dealId}`),
       ]);
 
       if (!dealRes.ok) {
@@ -175,11 +277,16 @@ export default function DealDetailPage() {
       const dealData = await dealRes.json();
       const stagesData = await stagesRes.json();
       const usersData = await usersRes.json();
+      const productsData = await productsRes.json();
+      const quotesData = await quotesRes.json();
 
       setDeal(dealData);
       setActivities(dealData.activities || []);
       setStages(stagesData.sort((a: PipelineStage, b: PipelineStage) => a.order - b.order));
       setUsers(Array.isArray(usersData) ? usersData : []);
+      setDealProducts(productsData.products || []);
+      setProductTotals(productsData.totals || null);
+      setQuotes(quotesData.quotes || []);
 
       // Load contacts for the client
       if (dealData.clientId?._id) {
@@ -205,6 +312,149 @@ export default function DealDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadAvailableProducts = async (search: string = '') => {
+    try {
+      const res = await fetch(`/api/crm/products?activeOnly=true&search=${encodeURIComponent(search)}`);
+      const data = await res.json();
+      setAvailableProducts(data);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addProductForm.productId) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/crm/deals/${dealId}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addProductForm),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Error al agregar producto');
+      }
+      setShowAddProductModal(false);
+      setAddProductForm({ productId: '', quantity: 1, discount: 0, notes: '' });
+      loadData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveProduct = async (productLineId: string) => {
+    if (!confirm('¿Eliminar este producto del deal?')) return;
+    try {
+      const res = await fetch(`/api/crm/deals/${dealId}/products?lineId=${productLineId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Error al eliminar producto');
+      loadData();
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleCreateQuote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + quoteForm.validDays);
+
+      const res = await fetch('/api/crm/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dealId,
+          validUntil: validUntil.toISOString(),
+          terms: quoteForm.terms,
+          notes: quoteForm.notes,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Error al crear cotización');
+      }
+      setShowCreateQuoteModal(false);
+      setQuoteForm({ validDays: 30, terms: '', notes: '' });
+      loadData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDownloadQuotePdf = async (quoteId: string) => {
+    try {
+      const res = await fetch(`/api/crm/quotes/${quoteId}/pdf`);
+      if (!res.ok) throw new Error('Error al generar PDF');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cotizacion-${quoteId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleSendQuote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedQuote) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/crm/quotes/${selectedQuote._id}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sendQuoteForm),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Error al enviar cotización');
+      }
+      setShowSendQuoteModal(false);
+      setSendQuoteForm({ email: '', subject: '', message: '' });
+      setSelectedQuote(null);
+      loadData();
+      alert('Cotización enviada exitosamente');
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openSendQuoteModal = (quote: Quote) => {
+    setSelectedQuote(quote);
+    setSendQuoteForm({
+      email: deal?.contactId?.email || '',
+      subject: `Cotización ${quote.quoteNumber} - ${deal?.clientId?.name || ''}`,
+      message: '',
+    });
+    setShowSendQuoteModal(true);
+  };
+
+  const getQuoteStatusLabel = (status: string) => {
+    const labels: Record<string, { label: string; color: string; bg: string }> = {
+      draft: { label: 'Borrador', color: '#6b7280', bg: 'bg-gray-100 dark:bg-gray-700' },
+      sent: { label: 'Enviada', color: '#3b82f6', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+      accepted: { label: 'Aceptada', color: '#10b981', bg: 'bg-green-100 dark:bg-green-900/30' },
+      rejected: { label: 'Rechazada', color: '#ef4444', bg: 'bg-red-100 dark:bg-red-900/30' },
+      expired: { label: 'Expirada', color: '#f59e0b', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+    };
+    return labels[status] || labels.draft;
   };
 
   const handleUpdateDeal = async (e: React.FormEvent) => {
@@ -498,78 +748,304 @@ export default function DealDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main content - Activities */}
+          {/* Main content with tabs */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                  <Clock size={20} className="text-purple-500" />
-                  Actividades ({activities.length})
-                </h2>
+            {/* Tabs */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
+              <div className="flex border-b dark:border-gray-700">
                 <button
-                  onClick={() => setShowActivityModal(true)}
-                  className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 px-3 py-1.5 rounded-lg"
+                  onClick={() => setActiveTab('activities')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition ${
+                    activeTab === 'activities'
+                      ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
                 >
-                  <Plus size={16} />
-                  Nueva Actividad
+                  <Clock size={18} />
+                  Actividades ({activities.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('products')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition ${
+                    activeTab === 'products'
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <Package size={18} />
+                  Productos ({dealProducts.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('quotes')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition ${
+                    activeTab === 'quotes'
+                      ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <FileSpreadsheet size={18} />
+                  Cotizaciones ({quotes.length})
                 </button>
               </div>
+            </div>
 
-              <div className="divide-y dark:divide-gray-700">
-                {activities.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                    No hay actividades registradas
-                  </div>
-                ) : (
-                  activities.map((activity, index) => (
-                    <div key={activity._id} className="p-4 relative">
-                      {/* Timeline line */}
-                      {index < activities.length - 1 && (
-                        <div className="absolute left-7 top-12 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
-                      )}
+            {/* Activities Tab */}
+            {activeTab === 'activities' && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <Clock size={20} className="text-purple-500" />
+                    Actividades
+                  </h2>
+                  <button
+                    onClick={() => setShowActivityModal(true)}
+                    className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 px-3 py-1.5 rounded-lg"
+                  >
+                    <Plus size={16} />
+                    Nueva
+                  </button>
+                </div>
 
-                      <div className="flex gap-4">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                          {getActivityIcon(activity.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                {getActivityTypeLabel(activity.type)}
-                              </span>
-                              <h4 className="font-medium text-gray-800 dark:text-gray-100">{activity.title}</h4>
-                            </div>
-                            {activity.isCompleted && (
-                              <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
-                            )}
+                <div className="divide-y dark:divide-gray-700">
+                  {activities.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      No hay actividades registradas
+                    </div>
+                  ) : (
+                    activities.map((activity, index) => (
+                      <div key={activity._id} className="p-4 relative">
+                        {index < activities.length - 1 && (
+                          <div className="absolute left-7 top-12 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
+                        )}
+
+                        <div className="flex gap-4">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                            {getActivityIcon(activity.type)}
                           </div>
-
-                          {activity.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-wrap">
-                              {activity.description}
-                            </p>
-                          )}
-
-                          {activity.outcome && (
-                            <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-sm text-green-700 dark:text-green-300">
-                              <strong>Resultado:</strong> {activity.outcome}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  {getActivityTypeLabel(activity.type)}
+                                </span>
+                                <h4 className="font-medium text-gray-800 dark:text-gray-100">{activity.title}</h4>
+                              </div>
+                              {activity.isCompleted && (
+                                <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                              )}
                             </div>
-                          )}
 
-                          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                            <span>{formatDateTime(activity.createdAt)}</span>
-                            {activity.createdBy && (
-                              <span>• {activity.createdBy.name}</span>
+                            {activity.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-wrap">
+                                {activity.description}
+                              </p>
                             )}
+
+                            {activity.outcome && (
+                              <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded text-sm text-green-700 dark:text-green-300">
+                                <strong>Resultado:</strong> {activity.outcome}
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                              <span>{formatDateTime(activity.createdAt)}</span>
+                              {activity.createdBy && (
+                                <span>• {activity.createdBy.name}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Products Tab */}
+            {activeTab === 'products' && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <Package size={20} className="text-blue-500" />
+                    Productos del Deal
+                  </h2>
+                  <button
+                    onClick={() => { loadAvailableProducts(); setShowAddProductModal(true); }}
+                    className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-3 py-1.5 rounded-lg"
+                  >
+                    <Plus size={16} />
+                    Agregar
+                  </button>
+                </div>
+
+                {dealProducts.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <ShoppingCart size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">No hay productos agregados</p>
+                    <button
+                      onClick={() => { loadAvailableProducts(); setShowAddProductModal(true); }}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      <Plus size={16} />
+                      Agregar Producto
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="divide-y dark:divide-gray-700">
+                      {dealProducts.map((item) => (
+                        <div key={item._id} className="p-4 flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-800 dark:text-gray-100">{item.productName}</div>
+                            {item.productSku && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {item.productSku}</div>
+                            )}
+                            {item.notes && (
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{item.notes}</div>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {item.quantity} x {formatCurrency(item.unitPrice, deal?.currency || 'MXN')}
+                            </div>
+                            {item.discount > 0 && (
+                              <div className="text-xs text-green-600 dark:text-green-400">-{item.discount}% desc.</div>
+                            )}
+                          </div>
+                          <div className="text-right w-28">
+                            <div className="font-semibold text-gray-800 dark:text-gray-100">
+                              {formatCurrency(item.total, deal?.currency || 'MXN')}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">IVA: {item.taxRate}%</div>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveProduct(item._id)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ))
+
+                    {/* Totals */}
+                    {productTotals && (
+                      <div className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t dark:border-gray-700">
+                        <div className="max-w-xs ml-auto space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500 dark:text-gray-400">Subtotal:</span>
+                            <span className="text-gray-800 dark:text-gray-200">{formatCurrency(productTotals.subtotal, deal?.currency || 'MXN')}</span>
+                          </div>
+                          {productTotals.discountAmount > 0 && (
+                            <div className="flex justify-between text-green-600 dark:text-green-400">
+                              <span>Descuento:</span>
+                              <span>-{formatCurrency(productTotals.discountAmount, deal?.currency || 'MXN')}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-gray-500 dark:text-gray-400">IVA:</span>
+                            <span className="text-gray-800 dark:text-gray-200">{formatCurrency(productTotals.taxAmount, deal?.currency || 'MXN')}</span>
+                          </div>
+                          <div className="flex justify-between pt-2 border-t dark:border-gray-600 font-bold text-lg">
+                            <span className="text-gray-800 dark:text-gray-100">Total:</span>
+                            <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(productTotals.total, deal?.currency || 'MXN')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
-            </div>
+            )}
+
+            {/* Quotes Tab */}
+            {activeTab === 'quotes' && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <FileSpreadsheet size={20} className="text-emerald-500" />
+                    Cotizaciones
+                  </h2>
+                  <button
+                    onClick={() => setShowCreateQuoteModal(true)}
+                    disabled={dealProducts.length === 0}
+                    className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 px-3 py-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={dealProducts.length === 0 ? 'Agrega productos primero' : ''}
+                  >
+                    <Plus size={16} />
+                    Nueva Cotización
+                  </button>
+                </div>
+
+                {quotes.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Receipt size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">No hay cotizaciones</p>
+                    {dealProducts.length === 0 ? (
+                      <p className="text-sm text-gray-400 dark:text-gray-500">Agrega productos al deal para crear cotizaciones</p>
+                    ) : (
+                      <button
+                        onClick={() => setShowCreateQuoteModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                      >
+                        <Plus size={16} />
+                        Crear Cotización
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="divide-y dark:divide-gray-700">
+                    {quotes.map((quote) => {
+                      const statusInfo = getQuoteStatusLabel(quote.status);
+                      return (
+                        <div key={quote._id} className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <span className="font-medium text-gray-800 dark:text-gray-100">{quote.quoteNumber}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg}`} style={{ color: statusInfo.color }}>
+                                {statusInfo.label}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">v{quote.version}</span>
+                            </div>
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                              {formatCurrency(quote.total, quote.currency)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center gap-4">
+                              <span>{quote.items?.length || 0} productos</span>
+                              <span>Válida hasta: {formatDate(quote.validUntil)}</span>
+                              {quote.sentAt && (
+                                <span className="text-blue-600 dark:text-blue-400">Enviada: {formatDateTime(quote.sentAt)}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleDownloadQuotePdf(quote._id)}
+                                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                                title="Descargar PDF"
+                              >
+                                <Download size={16} />
+                              </button>
+                              {quote.status === 'draft' && (
+                                <button
+                                  onClick={() => openSendQuoteModal(quote)}
+                                  className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg"
+                                  title="Enviar por email"
+                                >
+                                  <Send size={16} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -979,6 +1455,306 @@ export default function DealDetailPage() {
                 <button type="submit" disabled={saving} className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50">
                   {saving && <Loader2 size={18} className="animate-spin" />}
                   Crear Actividad
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Product Modal */}
+      {showAddProductModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Package className="text-blue-500" />
+                Agregar Producto
+              </h2>
+              <button onClick={() => setShowAddProductModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-4 border-b dark:border-gray-700">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar producto..."
+                  value={productSearch}
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    loadAvailableProducts(e.target.value);
+                  }}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {availableProducts.length === 0 ? (
+                <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  <Package size={48} className="mx-auto mb-3 opacity-50" />
+                  <p>No hay productos disponibles</p>
+                  <Link href="/crm/products" className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+                    Ir al catálogo de productos
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {availableProducts.map((product) => (
+                    <button
+                      key={product._id}
+                      onClick={() => setAddProductForm({ ...addProductForm, productId: product._id })}
+                      className={`w-full text-left p-3 rounded-lg border transition ${
+                        addProductForm.productId === product._id
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                          : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-gray-800 dark:text-gray-100">{product.name}</div>
+                          {product.sku && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {product.sku}</div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(product.price, product.currency)}
+                          </div>
+                          {product.category && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{product.category}</div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {addProductForm.productId && (
+              <form onSubmit={handleAddProduct} className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cantidad</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      value={addProductForm.quantity}
+                      onChange={(e) => setAddProductForm({ ...addProductForm, quantity: parseFloat(e.target.value) || 1 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descuento %</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={addProductForm.discount}
+                      onChange={(e) => setAddProductForm({ ...addProductForm, discount: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas</label>
+                  <input
+                    type="text"
+                    value={addProductForm.notes}
+                    onChange={(e) => setAddProductForm({ ...addProductForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Notas opcionales..."
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddProductModal(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {saving && <Loader2 size={18} className="animate-spin" />}
+                    Agregar al Deal
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Quote Modal */}
+      {showCreateQuoteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <FileSpreadsheet className="text-emerald-500" />
+                Crear Cotización
+              </h2>
+              <button onClick={() => setShowCreateQuoteModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateQuote} className="p-4 space-y-4">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+                Se creará una cotización con {dealProducts.length} producto(s) por un total de{' '}
+                <strong>{productTotals ? formatCurrency(productTotals.total, deal?.currency || 'MXN') : '$0'}</strong>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Válida por (días)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={quoteForm.validDays}
+                  onChange={(e) => setQuoteForm({ ...quoteForm, validDays: parseInt(e.target.value) || 30 })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Notas para el cliente
+                </label>
+                <textarea
+                  value={quoteForm.notes}
+                  onChange={(e) => setQuoteForm({ ...quoteForm, notes: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Notas visibles en la cotización..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Términos y condiciones
+                </label>
+                <textarea
+                  value={quoteForm.terms}
+                  onChange={(e) => setQuoteForm({ ...quoteForm, terms: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Términos y condiciones de la cotización..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateQuoteModal(false)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {saving && <Loader2 size={18} className="animate-spin" />}
+                  Crear Cotización
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Send Quote Modal */}
+      {showSendQuoteModal && selectedQuote && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Send className="text-emerald-500" />
+                Enviar Cotización
+              </h2>
+              <button onClick={() => { setShowSendQuoteModal(false); setSelectedQuote(null); }} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendQuote} className="p-4 space-y-4">
+              <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-gray-800 dark:text-gray-100">{selectedQuote.quoteNumber}</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    {formatCurrency(selectedQuote.total, selectedQuote.currency)}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email del destinatario *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={sendQuoteForm.email}
+                  onChange={(e) => setSendQuoteForm({ ...sendQuoteForm, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="cliente@empresa.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Asunto
+                </label>
+                <input
+                  type="text"
+                  value={sendQuoteForm.subject}
+                  onChange={(e) => setSendQuoteForm({ ...sendQuoteForm, subject: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Mensaje personalizado
+                </label>
+                <textarea
+                  value={sendQuoteForm.message}
+                  onChange={(e) => setSendQuoteForm({ ...sendQuoteForm, message: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Mensaje opcional para el cliente..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => { setShowSendQuoteModal(false); setSelectedQuote(null); }}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {saving && <Loader2 size={18} className="animate-spin" />}
+                  <Send size={16} />
+                  Enviar
                 </button>
               </div>
             </form>
