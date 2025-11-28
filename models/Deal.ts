@@ -1,5 +1,16 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
+// Tipo de temperatura de lead
+export type LeadTemperature = 'hot' | 'warm' | 'cold';
+
+// Score breakdown interface
+export interface IScoreBreakdown {
+  fit: number;
+  engagement: number;
+  fitDetails?: { rule: string; points: number }[];
+  engagementDetails?: { action: string; points: number; count: number }[];
+}
+
 export interface IDeal {
   _id: mongoose.Types.ObjectId;
   title: string;
@@ -17,6 +28,14 @@ export interface IDeal {
   tags?: string[];
   customFields?: Record<string, any>;
   projectId?: mongoose.Types.ObjectId;
+
+  // Lead Scoring fields
+  leadScore?: number;
+  leadScoreUpdatedAt?: Date;
+  leadTemperature?: LeadTemperature;
+  scoreBreakdown?: IScoreBreakdown;
+  lastEngagementAt?: Date;
+
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -94,6 +113,39 @@ const DealSchema = new Schema<IDeal>({
     type: Schema.Types.ObjectId,
     ref: 'Project',
   },
+
+  // Lead Scoring fields
+  leadScore: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
+  },
+  leadScoreUpdatedAt: {
+    type: Date,
+  },
+  leadTemperature: {
+    type: String,
+    enum: ['hot', 'warm', 'cold'],
+    default: 'cold',
+  },
+  scoreBreakdown: {
+    fit: { type: Number, default: 0 },
+    engagement: { type: Number, default: 0 },
+    fitDetails: [{
+      rule: String,
+      points: Number,
+    }],
+    engagementDetails: [{
+      action: String,
+      points: Number,
+      count: Number,
+    }],
+  },
+  lastEngagementAt: {
+    type: Date,
+  },
+
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -108,6 +160,8 @@ DealSchema.index({ stageId: 1, ownerId: 1 });
 DealSchema.index({ clientId: 1, stageId: 1 });
 DealSchema.index({ expectedCloseDate: 1 });
 DealSchema.index({ createdAt: -1 });
+DealSchema.index({ leadTemperature: 1, leadScore: -1 });
+DealSchema.index({ leadScore: -1 });
 
 // Virtual para valor ponderado (valor * probabilidad)
 DealSchema.virtual('weightedValue').get(function() {

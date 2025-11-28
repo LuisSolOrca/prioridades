@@ -1,5 +1,16 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
+// Tipo de temperatura de lead
+export type LeadTemperature = 'hot' | 'warm' | 'cold';
+
+// Score breakdown interface
+export interface IScoreBreakdown {
+  fit: number;
+  engagement: number;
+  fitDetails?: { rule: string; points: number }[];
+  engagementDetails?: { action: string; points: number; count: number }[];
+}
+
 export interface IContact {
   _id: mongoose.Types.ObjectId;
   clientId: mongoose.Types.ObjectId;
@@ -15,6 +26,14 @@ export interface IContact {
   tags?: string[];
   customFields?: Record<string, any>;
   isActive: boolean;
+
+  // Lead Scoring fields
+  leadScore?: number;
+  leadScoreUpdatedAt?: Date;
+  leadTemperature?: LeadTemperature;
+  scoreBreakdown?: IScoreBreakdown;
+  lastEngagementAt?: Date;
+
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -85,6 +104,39 @@ const ContactSchema = new Schema<IContact>({
     type: Boolean,
     default: true,
   },
+
+  // Lead Scoring fields
+  leadScore: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
+  },
+  leadScoreUpdatedAt: {
+    type: Date,
+  },
+  leadTemperature: {
+    type: String,
+    enum: ['hot', 'warm', 'cold'],
+    default: 'cold',
+  },
+  scoreBreakdown: {
+    fit: { type: Number, default: 0 },
+    engagement: { type: Number, default: 0 },
+    fitDetails: [{
+      rule: String,
+      points: Number,
+    }],
+    engagementDetails: [{
+      action: String,
+      points: Number,
+      count: Number,
+    }],
+  },
+  lastEngagementAt: {
+    type: Date,
+  },
+
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -98,6 +150,7 @@ const ContactSchema = new Schema<IContact>({
 ContactSchema.index({ clientId: 1, isActive: 1 });
 ContactSchema.index({ email: 1 });
 ContactSchema.index({ lastName: 1, firstName: 1 });
+ContactSchema.index({ leadTemperature: 1, leadScore: -1 });
 
 // Virtual para nombre completo
 ContactSchema.virtual('fullName').get(function() {

@@ -6,6 +6,7 @@ import Deal from '@/models/Deal';
 import PipelineStage from '@/models/PipelineStage';
 import { hasPermission } from '@/lib/permissions';
 import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { updateDealScore } from '@/lib/leadScoringEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,12 +31,14 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const closedOnly = searchParams.get('closedOnly') === 'true';
     const openOnly = searchParams.get('openOnly') === 'true';
+    const leadTemperature = searchParams.get('leadTemperature');
 
     const query: any = {};
 
     if (clientId) query.clientId = clientId;
     if (stageId) query.stageId = stageId;
     if (ownerId) query.ownerId = ownerId;
+    if (leadTemperature) query.leadTemperature = leadTemperature;
 
     if (search) {
       query.title = { $regex: search, $options: 'i' };
@@ -129,6 +132,11 @@ export async function POST(request: NextRequest) {
       entityName: deal.title,
       newData: dealData,
       userId: userId,
+    });
+
+    // Calcular lead score inicial (async)
+    updateDealScore(deal._id.toString()).catch(err => {
+      console.error('Error calculating initial lead score:', err);
     });
 
     return NextResponse.json(populatedDeal, { status: 201 });
