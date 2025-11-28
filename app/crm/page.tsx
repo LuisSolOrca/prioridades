@@ -16,7 +16,8 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Settings
 } from 'lucide-react';
 
 interface PipelineStage {
@@ -175,6 +176,15 @@ export default function CRMDashboard() {
               Resumen de tu pipeline de ventas
             </p>
           </div>
+          {permissions.canManagePipelineStages && (
+            <button
+              onClick={() => router.push('/admin/pipeline')}
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+            >
+              <Settings size={20} />
+              Configurar Pipeline
+            </button>
+          )}
         </div>
 
         {/* KPI Cards */}
