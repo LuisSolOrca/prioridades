@@ -38,7 +38,8 @@ import {
   UserCircle,
   DollarSign,
   Clock,
-  Package
+  Package,
+  Send
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -666,6 +667,12 @@ export default function Navbar() {
                       label="Lead Scoring"
                       active={pathname?.startsWith('/crm/lead-scoring') || false}
                       onClick={() => handleNavigation('/crm/lead-scoring')}
+                    />
+                    <NavButton
+                      icon={<Send size={20} />}
+                      label="Secuencias"
+                      active={pathname?.startsWith('/crm/sequences') || false}
+                      onClick={() => handleNavigation('/crm/sequences')}
                     />
                     <NavButton
                       icon={<BarChart3 size={20} />}
