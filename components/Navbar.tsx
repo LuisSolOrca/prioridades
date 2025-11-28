@@ -636,6 +636,12 @@ export default function Navbar() {
                       active={pathname === '/crm/activities'}
                       onClick={() => handleNavigation('/crm/activities')}
                     />
+                    <NavButton
+                      icon={<BarChart3 size={20} />}
+                      label="Reportes CRM"
+                      active={pathname === '/crm/reports'}
+                      onClick={() => handleNavigation('/crm/reports')}
+                    />
                   </>
                 )}
 
