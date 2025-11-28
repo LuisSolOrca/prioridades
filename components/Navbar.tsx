@@ -680,6 +680,12 @@ export default function Navbar() {
                       active={pathname === '/crm/reports'}
                       onClick={() => handleNavigation('/crm/reports')}
                     />
+                    <NavButton
+                      icon={<Settings size={20} />}
+                      label="Campos Personalizados"
+                      active={pathname?.startsWith('/crm/settings/custom-fields') || false}
+                      onClick={() => handleNavigation('/crm/settings/custom-fields')}
+                    />
                   </>
                 )}
 

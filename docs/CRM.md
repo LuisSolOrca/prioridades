@@ -45,9 +45,13 @@
     - [Exportación PDF](#exportación-pdf)
 14. [Modelos de Datos](#modelos-de-datos)
 15. [API Endpoints](#api-endpoints)
-16. [Integración con Canales](#integración-con-canales)
-17. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-18. [Roadmap Futuro](#roadmap-futuro)
+16. [Email Tracking](#email-tracking)
+17. [Lead Scoring](#lead-scoring)
+18. [Workflows y Automatizaciones](#workflows-y-automatizaciones)
+19. [Secuencias de Email](#secuencias-de-email)
+20. [Campos Personalizados](#campos-personalizados)
+21. [Integración con Canales](#integración-con-canales)
+22. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
 
 ---
 
@@ -1006,6 +1010,406 @@ interface IClient {
 
 ---
 
+## Email Tracking
+
+**Ubicación:** `/crm/email-tracking`
+
+El sistema de Email Tracking permite monitorear el engagement de los emails enviados desde el CRM.
+
+### Funcionalidades
+
+- 📬 **Tracking de Aperturas** - Detecta cuándo un destinatario abre un email
+- 🔗 **Tracking de Clicks** - Registra clicks en enlaces dentro del email
+- 💬 **Detección de Respuestas** - Identifica cuando el contacto responde
+- 📊 **Métricas por Periodo** - Dashboard con estadísticas de engagement
+
+### Métricas Disponibles
+
+| Métrica | Descripción |
+|---------|-------------|
+| Emails Enviados | Total de emails con tracking activo |
+| Aperturas | Cantidad de emails abiertos |
+| Tasa de Apertura | % de emails abiertos vs enviados |
+| Clicks | Total de clicks en enlaces |
+| Tasa de Clicks | % de emails con al menos un click |
+| Respuestas | Emails que recibieron respuesta |
+
+### Cómo Funciona
+
+1. Al enviar un email desde el CRM, se inserta un pixel de tracking invisible
+2. Cuando el destinatario abre el email, el pixel carga y registra la apertura
+3. Los enlaces se reescriben para pasar por el servidor de tracking
+4. Las respuestas se detectan mediante monitoreo del inbox (si está configurado)
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/email-tracking` | Obtener estadísticas de tracking |
+| GET | `/api/crm/email-tracking/[id]` | Detalle de un email específico |
+
+---
+
+## Lead Scoring
+
+**Ubicación:** `/crm/lead-scoring`
+
+El sistema de Lead Scoring permite calificar automáticamente a los contactos y clientes basándose en criterios de FIT (perfil ideal) y ENGAGEMENT (interacción).
+
+### Componentes del Score
+
+**FIT Score (0-50 puntos)**
+- Califica qué tan bien coincide el lead con el perfil de cliente ideal
+- Basado en atributos demográficos y firmográficos
+- Ejemplo: industria, tamaño de empresa, cargo del contacto
+
+**Engagement Score (0-50 puntos)**
+- Mide la actividad e interacción del lead
+- Basado en comportamiento y acciones
+- Ejemplo: emails abiertos, reuniones, visitas al sitio
+
+**Score Total: FIT + Engagement = 0-100 puntos**
+
+### Reglas de FIT
+
+Las reglas de FIT evalúan características estáticas del lead:
+
+| Campo | Operadores | Ejemplo |
+|-------|------------|---------|
+| Industria | igual, contiene | Industria = "Tecnología" (+15 pts) |
+| Empleados | mayor que, menor que, entre | Empleados > 100 (+10 pts) |
+| Cargo | igual, contiene | Cargo contiene "Director" (+20 pts) |
+| País/Región | igual | País = "México" (+5 pts) |
+| Ingresos Anuales | mayor que | Ingresos > $1M (+15 pts) |
+
+### Reglas de Engagement
+
+Las reglas de Engagement evalúan comportamiento reciente:
+
+| Acción | Puntos Sugeridos | Decaimiento |
+|--------|------------------|-------------|
+| Email abierto | +2 | 7 días |
+| Click en email | +5 | 14 días |
+| Respuesta a email | +10 | 30 días |
+| Reunión agendada | +15 | 30 días |
+| Reunión completada | +20 | 60 días |
+| Cotización solicitada | +25 | 90 días |
+| Visita a pricing | +10 | 14 días |
+
+### Temperatura del Lead
+
+El score total determina la temperatura visual:
+
+| Rango | Temperatura | Color | Badge |
+|-------|-------------|-------|-------|
+| 0-25 | Frío | Azul | 🧊 |
+| 26-50 | Tibio | Amarillo | 🌤️ |
+| 51-75 | Caliente | Naranja | 🔥 |
+| 76-100 | Muy Caliente | Rojo | 🌋 |
+
+### Gestión de Reglas (Admin)
+
+**Ubicación:** `/crm/lead-scoring` → Tab "Configuración"
+
+Los administradores pueden:
+- ➕ Crear nuevas reglas de FIT y Engagement
+- ✏️ Editar puntuación y criterios
+- 🔄 Activar/desactivar reglas
+- 📊 Ver impacto de cada regla
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/lead-scoring/rules` | Listar reglas |
+| POST | `/api/crm/lead-scoring/rules` | Crear regla |
+| PUT | `/api/crm/lead-scoring/rules/[id]` | Actualizar regla |
+| DELETE | `/api/crm/lead-scoring/rules/[id]` | Eliminar regla |
+| POST | `/api/crm/lead-scoring/calculate` | Recalcular scores |
+
+---
+
+## Workflows y Automatizaciones
+
+**Ubicación:** `/crm/workflows`
+
+El sistema de Workflows permite automatizar acciones basadas en triggers y condiciones.
+
+### Estructura de un Workflow
+
+```
+Trigger (Evento) → Condiciones (Filtros) → Acciones (Automatización)
+```
+
+### Triggers Disponibles
+
+| Trigger | Descripción |
+|---------|-------------|
+| `deal_created` | Cuando se crea un nuevo deal |
+| `deal_stage_changed` | Cuando un deal cambia de etapa |
+| `deal_won` | Cuando un deal se marca como ganado |
+| `deal_lost` | Cuando un deal se marca como perdido |
+| `contact_created` | Cuando se crea un nuevo contacto |
+| `activity_completed` | Cuando se completa una actividad |
+| `lead_score_changed` | Cuando cambia el score de un lead |
+| `email_opened` | Cuando se abre un email tracked |
+| `email_replied` | Cuando se recibe respuesta a email |
+
+### Condiciones
+
+Las condiciones filtran cuándo debe ejecutarse el workflow:
+
+```typescript
+interface WorkflowCondition {
+  field: string;       // Campo a evaluar
+  operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
+  value: any;          // Valor a comparar
+}
+```
+
+**Ejemplo:** Solo ejecutar si el valor del deal > $10,000
+
+### Acciones Disponibles
+
+| Acción | Descripción |
+|--------|-------------|
+| `send_email` | Enviar email automático |
+| `create_task` | Crear tarea para el vendedor |
+| `update_field` | Actualizar campo del registro |
+| `add_tag` | Agregar etiqueta |
+| `assign_owner` | Cambiar vendedor asignado |
+| `send_notification` | Enviar notificación in-app |
+| `add_to_sequence` | Agregar a secuencia de emails |
+| `webhook` | Llamar webhook externo |
+
+### Ejemplos de Workflows
+
+**1. Notificación de Deal Grande:**
+- Trigger: `deal_created`
+- Condición: `value > 50000`
+- Acción: `send_notification` al gerente de ventas
+
+**2. Follow-up Automático:**
+- Trigger: `deal_stage_changed` a "Propuesta Enviada"
+- Condición: ninguna
+- Acciones:
+  - `create_task` "Llamar en 3 días"
+  - `add_to_sequence` "Follow-up Propuesta"
+
+**3. Alerta de Deal Inactivo:**
+- Trigger: `scheduled` (diario)
+- Condición: `days_since_activity > 7`
+- Acción: `send_notification` al vendedor
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/workflows` | Listar workflows |
+| POST | `/api/crm/workflows` | Crear workflow |
+| PUT | `/api/crm/workflows/[id]` | Actualizar workflow |
+| DELETE | `/api/crm/workflows/[id]` | Eliminar workflow |
+| POST | `/api/crm/workflows/[id]/toggle` | Activar/desactivar |
+| GET | `/api/crm/workflows/[id]/logs` | Ver historial de ejecución |
+
+---
+
+## Secuencias de Email
+
+**Ubicación:** `/crm/sequences`
+
+Las secuencias permiten automatizar series de emails de seguimiento con delays configurables.
+
+### Estructura de una Secuencia
+
+```
+Paso 1 (Día 0) → [Espera 3 días] → Paso 2 → [Espera 5 días] → Paso 3 → ...
+```
+
+### Elementos de la Secuencia
+
+**Pasos (Steps):**
+- Cada paso es un email con asunto y contenido
+- Soporta variables dinámicas: `{{contacto.nombre}}`, `{{empresa}}`, etc.
+- Puede incluir tracking de apertura y clicks
+
+**Delays:**
+- Tiempo de espera entre pasos
+- Configurable en días u horas
+- Excluye fines de semana (opcional)
+
+**Condiciones de Salida:**
+- Si el contacto responde → Sale de la secuencia
+- Si el deal cambia de etapa → Sale de la secuencia
+- Manual: El vendedor puede pausar o remover
+
+### Crear una Secuencia
+
+1. Ve a `/crm/sequences`
+2. Click en "Nueva Secuencia"
+3. Configura nombre y descripción
+4. Agrega pasos con email templates
+5. Configura delays entre pasos
+6. Activa la secuencia
+
+### Variables Disponibles
+
+| Variable | Descripción |
+|----------|-------------|
+| `{{contacto.nombre}}` | Nombre del contacto |
+| `{{contacto.apellido}}` | Apellido del contacto |
+| `{{empresa.nombre}}` | Nombre de la empresa |
+| `{{deal.titulo}}` | Título del deal |
+| `{{deal.valor}}` | Valor del deal formateado |
+| `{{vendedor.nombre}}` | Nombre del vendedor |
+| `{{fecha}}` | Fecha actual |
+
+### Estados de Contacto en Secuencia
+
+| Estado | Descripción |
+|--------|-------------|
+| `active` | En progreso, esperando siguiente paso |
+| `paused` | Pausado manualmente |
+| `completed` | Completó todos los pasos |
+| `replied` | Respondió a un email (salió) |
+| `bounced` | Email rebotó |
+| `unsubscribed` | Se desuscribió |
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/sequences` | Listar secuencias |
+| POST | `/api/crm/sequences` | Crear secuencia |
+| PUT | `/api/crm/sequences/[id]` | Actualizar secuencia |
+| DELETE | `/api/crm/sequences/[id]` | Eliminar secuencia |
+| POST | `/api/crm/sequences/[id]/enroll` | Agregar contacto a secuencia |
+| POST | `/api/crm/sequences/[id]/unenroll` | Remover contacto |
+| GET | `/api/crm/sequences/[id]/enrollments` | Ver contactos en secuencia |
+
+---
+
+## Campos Personalizados
+
+**Ubicación:** `/crm/settings/custom-fields`
+
+El sistema de campos personalizados permite a los administradores crear campos adicionales para las entidades del CRM.
+
+### Entidades Soportadas
+
+| Entidad | Descripción |
+|---------|-------------|
+| `client` | Clientes/Empresas |
+| `contact` | Contactos/Personas |
+| `deal` | Deals/Oportunidades |
+| `product` | Productos/Servicios |
+
+### Tipos de Campo
+
+| Tipo | Descripción | Validaciones |
+|------|-------------|--------------|
+| `text` | Texto libre | minLength, maxLength |
+| `number` | Número entero o decimal | minValue, maxValue |
+| `date` | Selector de fecha | - |
+| `boolean` | Checkbox Sí/No | - |
+| `select` | Lista desplegable | opciones definidas |
+| `multiselect` | Selección múltiple | opciones definidas |
+| `url` | URL/Link | formato URL |
+| `email` | Correo electrónico | formato email |
+| `phone` | Teléfono | - |
+| `currency` | Valor monetario | currencyCode, minValue, maxValue |
+
+### Propiedades del Campo
+
+| Propiedad | Descripción |
+|-----------|-------------|
+| `name` | Identificador único (snake_case) |
+| `label` | Etiqueta visible para usuarios |
+| `description` | Texto de ayuda |
+| `fieldType` | Tipo de campo |
+| `required` | Si es obligatorio |
+| `defaultValue` | Valor por defecto |
+| `placeholder` | Texto placeholder |
+| `options` | Opciones para select/multiselect |
+| `showInList` | Mostrar en listas |
+| `showInCard` | Mostrar en cards/vista rápida |
+| `order` | Posición en formularios |
+
+### Opciones de Select/Multiselect
+
+```typescript
+interface SelectOption {
+  value: string;   // Valor almacenado
+  label: string;   // Texto visible
+  color?: string;  // Color hex opcional
+}
+```
+
+### Uso en Formularios
+
+Los campos personalizados se renderizan automáticamente en:
+- Formularios de creación/edición
+- Cards de vista rápida (si `showInCard: true`)
+- Columnas de lista (si `showInList: true`)
+
+**Componente Reutilizable:**
+
+```tsx
+import CustomFieldsRenderer from '@/components/crm/CustomFieldsRenderer';
+
+<CustomFieldsRenderer
+  entityType="client"
+  values={customFields}
+  onChange={setCustomFields}
+  mode="form" // 'form' | 'display' | 'list'
+/>
+```
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/custom-fields` | Listar campos |
+| POST | `/api/crm/custom-fields` | Crear campo (admin) |
+| GET | `/api/crm/custom-fields/[id]` | Obtener campo |
+| PUT | `/api/crm/custom-fields/[id]` | Actualizar campo (admin) |
+| DELETE | `/api/crm/custom-fields/[id]` | Desactivar campo (admin) |
+
+**Parámetros de query (GET):**
+- `entityType` - Filtrar por entidad
+- `includeInactive` - Incluir campos desactivados
+
+### Modelo de Datos
+
+```typescript
+interface ICustomField {
+  _id: ObjectId;
+  name: string;              // Identificador único
+  label: string;             // Etiqueta visible
+  description?: string;
+  fieldType: CustomFieldType;
+  entityType: 'client' | 'contact' | 'deal' | 'product';
+  options?: SelectOption[];  // Para select/multiselect
+  defaultValue?: any;
+  placeholder?: string;
+  required: boolean;
+  minLength?: number;        // Para text
+  maxLength?: number;        // Para text
+  minValue?: number;         // Para number/currency
+  maxValue?: number;         // Para number/currency
+  currencyCode?: string;     // Para currency (MXN, USD, EUR)
+  order: number;
+  showInList: boolean;
+  showInCard: boolean;
+  isActive: boolean;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+---
+
 ## Integración con Canales
 
 El CRM se integra con el sistema de canales existente:
@@ -1029,9 +1433,7 @@ El CRM se integra con el sistema de canales existente:
 
 1. **Sin multi-pipeline**: Solo hay un pipeline global
 2. **Sin cuotas de venta**: No hay gestión de metas por vendedor
-3. **Sin automatizaciones**: No hay workflows automáticos al cambiar etapa
-4. **Sin integración email**: No hay tracking de emails automático
-5. **Sin duplicados**: No hay detección automática de duplicados
+3. **Sin duplicados**: No hay detección automática de duplicados
 
 ### Consideraciones Técnicas
 
@@ -1057,14 +1459,20 @@ El CRM se integra con el sistema de canales existente:
 
 - [ ] **Cuotas de venta** - Metas mensuales/trimestrales/anuales por vendedor
 - [ ] **Multi-pipeline** - Pipelines separados por tipo de negocio
-- [ ] **Automatizaciones** - Workflows al cambiar etapa
-- [ ] **Email tracking** - Integración con correo electrónico
 - [ ] **Duplicados** - Detección y merge de registros
 - [ ] **Campos calculados** - Fórmulas personalizadas
 - [ ] **API pública** - Endpoints para integraciones externas
 - [ ] **Webhooks** - Notificaciones a sistemas externos
 - [ ] **Dashboard personalizable** - Widgets configurables
 - [ ] **Competidores** - Tracking de competencia en deals
+
+### Funcionalidades Implementadas
+
+- [x] **Email tracking** - Tracking de aperturas, clicks y respuestas
+- [x] **Lead Scoring** - Calificación automática de leads (FIT + Engagement)
+- [x] **Workflows** - Automatizaciones basadas en triggers y condiciones
+- [x] **Secuencias de Email** - Series de emails automatizados
+- [x] **Campos Personalizados** - Campos custom por entidad
 
 ---
 
@@ -1086,12 +1494,23 @@ app/
 │   │   ├── page.tsx                # Pipeline Kanban
 │   │   └── [id]/
 │   │       └── page.tsx            # Detalle del deal (con tabs)
+│   ├── email-tracking/
+│   │   └── page.tsx                # Dashboard de email tracking
 │   ├── import/
 │   │   └── page.tsx                # Wizard de importación
+│   ├── lead-scoring/
+│   │   └── page.tsx                # Lead scoring y reglas
 │   ├── products/
 │   │   └── page.tsx                # Catálogo de productos
-│   └── reports/
-│       └── page.tsx                # Reportes CRM
+│   ├── reports/
+│   │   └── page.tsx                # Reportes CRM
+│   ├── sequences/
+│   │   └── page.tsx                # Secuencias de email
+│   ├── settings/
+│   │   └── custom-fields/
+│   │       └── page.tsx            # Gestión de campos personalizados
+│   └── workflows/
+│       └── page.tsx                # Gestión de workflows
 ├── admin/
 │   └── pipeline/
 │       └── page.tsx                # Gestión de etapas (admin)
@@ -1134,8 +1553,25 @@ app/
         │   ├── route.ts            # CRUD etapas
         │   └── [id]/
         │       └── route.ts        # Etapa individual
-        └── reports/
-            └── route.ts            # Reportes/métricas
+        ├── reports/
+        │   └── route.ts            # Reportes/métricas
+        ├── custom-fields/
+        │   ├── route.ts            # CRUD campos personalizados
+        │   └── [id]/
+        │       └── route.ts        # Campo individual
+        ├── email-tracking/
+        │   └── route.ts            # Estadísticas de tracking
+        ├── lead-scoring/
+        │   └── rules/
+        │       └── route.ts        # CRUD reglas de scoring
+        ├── workflows/
+        │   ├── route.ts            # CRUD workflows
+        │   └── [id]/
+        │       └── route.ts        # Workflow individual
+        └── sequences/
+            ├── route.ts            # CRUD secuencias
+            └── [id]/
+                └── route.ts        # Secuencia individual
 
 models/
 ├── Deal.ts                         # Modelo de deals
@@ -1145,10 +1581,18 @@ models/
 ├── Contact.ts                      # Modelo de contactos
 ├── Activity.ts                     # Modelo de actividades
 ├── PipelineStage.ts                # Modelo de etapas
-└── Client.ts                       # Modelo de clientes (compartido)
+├── Client.ts                       # Modelo de clientes (compartido)
+├── CustomField.ts                  # Modelo de campos personalizados
+├── LeadScoringRule.ts              # Modelo de reglas de scoring
+├── Workflow.ts                     # Modelo de workflows
+└── EmailSequence.ts                # Modelo de secuencias
 
 hooks/
 └── usePermissions.ts               # Hook de permisos (incluye CRM)
+
+components/
+└── crm/
+    └── CustomFieldsRenderer.tsx    # Componente para renderizar campos custom
 ```
 
 ---

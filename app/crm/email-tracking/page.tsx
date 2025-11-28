@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import Navbar from '@/components/Navbar';
 import {
   Mail,
   Send,
@@ -163,26 +164,28 @@ export default function EmailTrackingPage() {
   );
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Mail className="w-7 h-7 text-blue-500" />
-            Email Tracking
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Monitorea aperturas, clics y respuestas de tus emails
-          </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <div className="pt-16 p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Mail className="w-7 h-7 text-blue-500" />
+              Email Tracking
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Monitorea aperturas, clics y respuestas de tus emails
+            </p>
+          </div>
+          <button
+            onClick={() => { fetchStats(); fetchEmails(); }}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Actualizar
+          </button>
         </div>
-        <button
-          onClick={() => { fetchStats(); fetchEmails(); }}
-          className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Actualizar
-        </button>
-      </div>
 
       {/* Stats Cards */}
       {stats && (
@@ -562,6 +565,7 @@ export default function EmailTrackingPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
