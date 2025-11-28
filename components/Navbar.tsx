@@ -37,7 +37,8 @@ import {
   Handshake,
   UserCircle,
   DollarSign,
-  Clock
+  Clock,
+  Package
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -635,6 +636,18 @@ export default function Navbar() {
                       label="Actividades"
                       active={pathname === '/crm/activities'}
                       onClick={() => handleNavigation('/crm/activities')}
+                    />
+                    <NavButton
+                      icon={<Package size={20} />}
+                      label="Productos"
+                      active={pathname === '/crm/products'}
+                      onClick={() => handleNavigation('/crm/products')}
+                    />
+                    <NavButton
+                      icon={<Target size={20} />}
+                      label="Metas de Venta"
+                      active={pathname?.startsWith('/crm/quotas') || false}
+                      onClick={() => handleNavigation('/crm/quotas')}
                     />
                     <NavButton
                       icon={<BarChart3 size={20} />}

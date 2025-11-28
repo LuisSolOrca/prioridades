@@ -14,27 +14,40 @@
    - [Editar Deal](#editar-deal)
    - [Mover Deal entre Etapas](#mover-deal-entre-etapas)
    - [Marcar como Ganado/Perdido](#marcar-como-ganadoperdido)
+   - [Productos del Deal](#productos-del-deal)
+   - [Cotizaciones del Deal](#cotizaciones-del-deal)
 7. [Clientes](#clientes)
    - [Perfil de Cliente](#perfil-de-cliente)
    - [Información CRM del Cliente](#información-crm-del-cliente)
 8. [Contactos](#contactos)
    - [Gestión de Contactos](#gestión-de-contactos)
    - [Contacto Principal](#contacto-principal)
-9. [Actividades](#actividades)
-   - [Tipos de Actividad](#tipos-de-actividad)
-   - [Registro de Actividades](#registro-de-actividades)
-   - [Tareas Pendientes](#tareas-pendientes)
-10. [Reportes CRM](#reportes-crm)
+9. [Productos](#productos)
+   - [Catálogo de Productos](#catálogo-de-productos)
+   - [Niveles de Precio](#niveles-de-precio)
+10. [Cotizaciones](#cotizaciones)
+    - [Crear Cotización](#crear-cotización)
+    - [Generar PDF](#generar-pdf)
+    - [Enviar por Email](#enviar-por-email)
+11. [Actividades](#actividades)
+    - [Tipos de Actividad](#tipos-de-actividad)
+    - [Registro de Actividades](#registro-de-actividades)
+    - [Tareas Pendientes](#tareas-pendientes)
+12. [Importación de Datos](#importación-de-datos)
+    - [Tipos de Importación](#tipos-de-importación)
+    - [Flujo de Importación](#flujo-de-importación)
+    - [Mapeo de Columnas](#mapeo-de-columnas)
+13. [Reportes CRM](#reportes-crm)
     - [Métricas del Pipeline](#métricas-del-pipeline)
     - [Tendencia Mensual](#tendencia-mensual)
     - [Forecast](#forecast)
     - [Rendimiento por Vendedor](#rendimiento-por-vendedor)
     - [Exportación PDF](#exportación-pdf)
-11. [Modelos de Datos](#modelos-de-datos)
-12. [API Endpoints](#api-endpoints)
-13. [Integración con Canales](#integración-con-canales)
-14. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-15. [Roadmap Futuro](#roadmap-futuro)
+14. [Modelos de Datos](#modelos-de-datos)
+15. [API Endpoints](#api-endpoints)
+16. [Integración con Canales](#integración-con-canales)
+17. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+18. [Roadmap Futuro](#roadmap-futuro)
 
 ---
 
@@ -50,6 +63,9 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - **@hello-pangea/dnd** para drag & drop en el pipeline
 - **Recharts** para gráficos y visualizaciones
 - **jsPDF + autoTable** para exportación de reportes
+- **PDFKit** para generación de cotizaciones PDF
+- **Nodemailer** para envío de emails con cotizaciones
+- **XLSX** para importación de datos CSV/Excel
 
 ---
 
@@ -62,6 +78,8 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - 💰 **Gestión de Deals** - Crear, editar, mover entre etapas
 - 🏢 **Gestión de Clientes** - Perfil completo con información CRM
 - 👥 **Gestión de Contactos** - Contactos asociados a clientes con datos profesionales
+- 📦 **Catálogo de Productos** - Productos con niveles de precio por volumen
+- 📋 **Cotizaciones** - Crear, generar PDF y enviar por email
 - 📝 **Registro de Actividades** - Llamadas, emails, reuniones, notas, tareas
 - 📈 **Reportes Profesionales** - Métricas, gráficos y exportación PDF
 - ⚙️ **Configuración de Pipeline** - Admin puede crear/editar/reordenar etapas
@@ -70,6 +88,7 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - 📅 **Forecast** - Proyección de ventas a 3 meses
 - 👤 **Asignación de Vendedor** - Cada deal tiene un responsable asignado
 - 🏷️ **Tags y Campos Personalizados** - Categorización flexible
+- 📥 **Importación CSV/Excel** - Carga masiva de datos con mapeo de columnas
 
 ---
 
@@ -102,8 +121,10 @@ interface UserPermissions {
 | `/crm/clients` | `viewCRM` |
 | `/crm/clients/[id]` | `viewCRM` |
 | `/crm/contacts` | `viewCRM` |
+| `/crm/products` | `viewCRM` |
 | `/crm/activities` | `viewCRM` |
 | `/crm/reports` | `viewCRM` |
+| `/crm/import` | `canManagePipelineStages` |
 | `/admin/pipeline` | `canManagePipelineStages` (ADMIN) |
 
 ---
@@ -130,7 +151,12 @@ El dashboard proporciona una vista general del estado del CRM:
 2. **Pipeline Visual** - Resumen de deals por etapa con barras de progreso
 3. **Deals Recientes** - Lista de últimos deals creados/actualizados
 4. **Actividades Recientes** - Últimas actividades registradas
-5. **Accesos Rápidos** - Botones para navegar a secciones principales
+5. **Accesos Rápidos** - Botones para navegar a secciones principales:
+   - Pipeline de Ventas
+   - Contactos
+   - Clientes
+   - Productos
+   - Importar
 
 ---
 
@@ -255,6 +281,43 @@ Los administradores pueden gestionar las etapas del pipeline:
 2. Se solicita una razón de pérdida (opcional pero recomendado)
 3. Se registra `lostReason` y `actualCloseDate`
 
+### Productos del Deal
+
+**Ubicación:** `/crm/deals/[id]` → Tab "Productos"
+
+Cada deal puede tener múltiples productos asociados:
+
+**Funcionalidades:**
+- ➕ **Agregar productos** del catálogo
+- 📦 **Cantidad** ajustable
+- 💰 **Precio unitario** - Automático según niveles de precio
+- 🏷️ **Descuento** por línea (%)
+- 📊 **Cálculo automático** de subtotal, impuestos y total
+- 🔄 **Sincronización** - El valor del deal se actualiza automáticamente
+
+**Columnas visibles:**
+| Columna | Descripción |
+|---------|-------------|
+| Producto | Nombre y SKU |
+| Cantidad | Cantidad solicitada |
+| Precio Unit. | Precio según nivel de volumen |
+| Descuento | Porcentaje de descuento |
+| IVA | Tasa de impuesto |
+| Total | Total de la línea |
+
+### Cotizaciones del Deal
+
+**Ubicación:** `/crm/deals/[id]` → Tab "Cotizaciones"
+
+Desde el detalle del deal se pueden crear y gestionar cotizaciones:
+
+**Funcionalidades:**
+- ➕ **Crear cotización** a partir de los productos del deal
+- 📄 **Descargar PDF** profesional
+- 📧 **Enviar por email** con PDF adjunto
+- 📝 **Múltiples versiones** de cotización por deal
+- 🔄 **Estados** - Borrador, Enviada, Aceptada, Rechazada, Expirada
+
 ---
 
 ## Clientes
@@ -324,6 +387,117 @@ Cada cliente puede tener un **contacto principal** marcado:
 
 ---
 
+## Productos
+
+**Ubicación:** `/crm/products`
+
+### Catálogo de Productos
+
+El catálogo de productos permite gestionar todos los productos y servicios disponibles para cotizar.
+
+**Campos del producto:**
+
+| Campo | Requerido | Descripción |
+|-------|-----------|-------------|
+| `name` | ✅ | Nombre del producto |
+| `sku` | ❌ | Código único (Stock Keeping Unit) |
+| `description` | ❌ | Descripción detallada |
+| `price` | ✅ | Precio base |
+| `currency` | ✅ | Moneda (MXN, USD, EUR) |
+| `category` | ❌ | Categoría del producto |
+| `unit` | ❌ | Unidad de medida |
+| `taxRate` | ❌ | Tasa de IVA (default: 16%) |
+| `isActive` | ❌ | Si está disponible |
+
+**Categorías sugeridas:**
+- Software
+- Hardware
+- Servicios
+- Consultoría
+- Capacitación
+- Mantenimiento
+- Licencias
+- Suscripción
+
+### Niveles de Precio
+
+Los productos pueden tener **niveles de precio por volumen** (pricing tiers):
+
+```typescript
+interface IPricingTier {
+  minQuantity: number;  // Cantidad mínima para aplicar
+  price: number;        // Precio en esta tier
+}
+```
+
+**Ejemplo:**
+| Cantidad | Precio |
+|----------|--------|
+| 1-9 | $100 |
+| 10-49 | $90 |
+| 50+ | $80 |
+
+El sistema selecciona automáticamente el precio correcto según la cantidad solicitada.
+
+---
+
+## Cotizaciones
+
+**Ubicación:** `/crm/deals/[id]` → Tab "Cotizaciones"
+
+### Crear Cotización
+
+1. Ve al detalle del deal
+2. Asegúrate de tener productos agregados
+3. Ve a la pestaña "Cotizaciones"
+4. Click en "Crear Cotización"
+
+**Datos de la cotización:**
+- **Número automático** - Formato: `COT-2025-0001`
+- **Versión** - Incrementa automáticamente
+- **Datos del cliente** - Nombre, contacto, email
+- **Items** - Copia de los productos del deal
+- **Totales** - Subtotal, descuento, IVA, total
+- **Validez** - 30 días por defecto
+- **Notas y términos** - Personalizables
+
+### Generar PDF
+
+Click en el ícono de PDF para descargar una cotización profesional que incluye:
+
+- Encabezado con número de cotización y fecha
+- Información del cliente
+- Tabla de productos con cantidades, precios y totales
+- Resumen de subtotal, descuentos, IVA y total
+- Notas y términos y condiciones
+- Pie de página con número de página
+
+### Enviar por Email
+
+Click en el ícono de email para enviar la cotización:
+
+1. **Destinatario** - Email del contacto o personalizado
+2. **Asunto** - Generado automáticamente
+3. **Mensaje** - Texto personalizable
+4. **PDF adjunto** - Se genera y adjunta automáticamente
+
+**El email incluye:**
+- Saludo personalizado
+- Resumen de la cotización
+- Fecha de validez
+- PDF adjunto con el detalle completo
+
+**Estados de cotización:**
+| Estado | Descripción |
+|--------|-------------|
+| `draft` | Borrador, no enviada |
+| `sent` | Enviada al cliente |
+| `accepted` | Aceptada por el cliente |
+| `rejected` | Rechazada por el cliente |
+| `expired` | Fecha de validez vencida |
+
+---
+
 ## Actividades
 
 **Ubicación:** `/crm/activities`
@@ -370,6 +544,53 @@ Las actividades de tipo `task` tienen funcionalidad adicional:
 - 📅 **Fecha de vencimiento** - Alertas visuales para vencidas
 - 👤 **Asignación** - Puede asignarse a otro usuario
 - 📋 **Filtro "Solo pendientes"** - Ver solo tareas sin completar
+
+---
+
+## Importación de Datos
+
+**Ubicación:** `/crm/import`
+
+### Tipos de Importación
+
+| Tipo | Campos Requeridos | Campos Opcionales |
+|------|-------------------|-------------------|
+| **Clientes** | name | description, industry, website, phone, address, annualRevenue, employeeCount, source, tags |
+| **Contactos** | firstName, lastName, clientName* | email, phone, position, department, linkedInUrl, tags |
+| **Deals** | title, clientName*, value | contactName, stageName, currency, expectedCloseDate, probability, description, ownerEmail, tags |
+| **Productos** | name, price | sku, description, currency, category, unit, taxRate |
+
+*El cliente debe existir previamente en el sistema.
+
+### Flujo de Importación
+
+1. **Seleccionar tipo** - Clientes, Contactos, Deals o Productos
+2. **Subir archivo** - CSV o Excel (.xlsx, .xls)
+3. **Mapear columnas** - Asociar columnas del archivo con campos del sistema
+4. **Validar datos** - Revisar errores y advertencias
+5. **Ejecutar importación** - Procesar y crear/actualizar registros
+6. **Ver resultados** - Resumen de creados, actualizados, omitidos y errores
+
+### Mapeo de Columnas
+
+El sistema ofrece dos formas de mapear columnas:
+
+**1. Mapeo Automático:**
+- El sistema sugiere mapeos basados en nombres similares de columnas
+- Por ejemplo, "Nombre" se mapea automáticamente a "name"
+
+**2. Mapeo Manual:**
+- Arrastra campos a las columnas del archivo (drag & drop)
+- O usa el selector desplegable en cada campo
+
+**Opciones de importación:**
+- **Actualizar existentes** - Si se encuentra un registro existente (por nombre, SKU, etc.), se actualiza con los nuevos datos
+
+**Validaciones:**
+- Campos requeridos presentes
+- Formatos correctos (email, URL, números)
+- Referencias válidas (cliente existe para contactos)
+- Valores únicos (SKU de productos)
 
 ---
 
@@ -464,6 +685,104 @@ interface IDeal {
   createdBy: ObjectId;     // ref: User
   createdAt: Date;
   updatedAt: Date;
+}
+```
+
+### Product
+
+```typescript
+interface IProduct {
+  _id: ObjectId;
+  name: string;
+  sku?: string;
+  description?: string;
+  price: number;
+  currency: 'MXN' | 'USD' | 'EUR';
+  category?: string;
+  unit?: string;
+  taxRate?: number;        // Default: 16%
+  isActive: boolean;
+  pricingTiers?: IPricingTier[];
+  imageUrl?: string;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface IPricingTier {
+  minQuantity: number;
+  price: number;
+}
+```
+
+### DealProduct
+
+```typescript
+interface IDealProduct {
+  _id: ObjectId;
+  dealId: ObjectId;        // ref: Deal
+  productId: ObjectId;     // ref: Product
+  productName: string;
+  productSku?: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;        // Porcentaje
+  taxRate: number;
+  subtotal: number;        // Calculado
+  discountAmount: number;  // Calculado
+  taxAmount: number;       // Calculado
+  total: number;           // Calculado
+  notes?: string;
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Quote
+
+```typescript
+interface IQuote {
+  _id: ObjectId;
+  quoteNumber: string;     // Auto: COT-2025-0001
+  version: number;
+  dealId: ObjectId;        // ref: Deal
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientAddress?: string;
+  contactName?: string;
+  contactEmail?: string;
+  items: IQuoteItem[];
+  subtotal: number;
+  discountTotal: number;
+  taxTotal: number;
+  total: number;
+  currency: string;
+  validUntil: Date;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  sentAt?: Date;
+  sentTo?: string;
+  notes?: string;
+  terms?: string;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface IQuoteItem {
+  productId: ObjectId;
+  productName: string;
+  productSku?: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  taxRate: number;
+  subtotal: number;
+  discountAmount: number;
+  taxAmount: number;
+  total: number;
 }
 ```
 
@@ -579,6 +898,42 @@ interface IClient {
 - `clientId` - Filtrar por cliente
 - `isClosed` - true/false
 
+### Deal Products
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/deals/[id]/products` | Listar productos del deal |
+| POST | `/api/crm/deals/[id]/products` | Agregar producto al deal |
+| PUT | `/api/crm/deals/[id]/products` | Actualizar/reordenar productos |
+| DELETE | `/api/crm/deals/[id]/products` | Eliminar producto del deal |
+
+### Products
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/products` | Listar productos |
+| POST | `/api/crm/products` | Crear producto |
+| GET | `/api/crm/products/[id]` | Obtener producto |
+| PUT | `/api/crm/products/[id]` | Actualizar producto |
+| DELETE | `/api/crm/products/[id]` | Eliminar producto |
+
+**Parámetros de query:**
+- `activeOnly` - Solo productos activos
+- `category` - Filtrar por categoría
+- `search` - Buscar por nombre/SKU
+
+### Quotes
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/quotes` | Listar cotizaciones |
+| POST | `/api/crm/quotes` | Crear cotización |
+| GET | `/api/crm/quotes/[id]` | Obtener cotización |
+| PUT | `/api/crm/quotes/[id]` | Actualizar cotización |
+| DELETE | `/api/crm/quotes/[id]` | Eliminar cotización |
+| GET | `/api/crm/quotes/[id]/pdf` | Generar PDF |
+| POST | `/api/crm/quotes/[id]/send` | Enviar por email |
+
 ### Contacts
 
 | Método | Endpoint | Descripción |
@@ -623,6 +978,20 @@ interface IClient {
 **Parámetros de query:**
 - `activeOnly` - Solo etapas activas
 
+### Import
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/crm/import/parse` | Parsear archivo y obtener columnas |
+| POST | `/api/crm/import/validate` | Validar datos mapeados |
+| POST | `/api/crm/import/execute` | Ejecutar importación |
+
+**Body (FormData):**
+- `file` - Archivo CSV o Excel
+- `type` - Tipo: clients, contacts, deals, products
+- `mapping` - JSON con mapeo de columnas
+- `updateExisting` - Boolean para actualizar existentes
+
 ### Reports
 
 | Método | Endpoint | Descripción |
@@ -659,11 +1028,10 @@ El CRM se integra con el sistema de canales existente:
 ### Limitaciones Actuales
 
 1. **Sin multi-pipeline**: Solo hay un pipeline global
-2. **Sin productos/líneas**: Los deals no tienen desglose de productos
-3. **Sin automatizaciones**: No hay workflows automáticos
-4. **Sin importación masiva**: Los datos se ingresan manualmente
-5. **Sin integración email**: No hay tracking de emails automático
-6. **Sin cuotas de venta**: No hay gestión de metas por vendedor
+2. **Sin cuotas de venta**: No hay gestión de metas por vendedor
+3. **Sin automatizaciones**: No hay workflows automáticos al cambiar etapa
+4. **Sin integración email**: No hay tracking de emails automático
+5. **Sin duplicados**: No hay detección automática de duplicados
 
 ### Consideraciones Técnicas
 
@@ -671,6 +1039,7 @@ El CRM se integra con el sistema de canales existente:
 - **Charts vacíos**: Los gráficos de Recharts requieren datos válidos
 - **Etapa por defecto**: Siempre debe existir una etapa marcada como default
 - **Contacto principal**: Solo uno por cliente
+- **SKU único**: Los productos con SKU deben tener código único
 
 ### Validaciones Importantes
 
@@ -678,6 +1047,7 @@ El CRM se integra con el sistema de canales existente:
 - Una actividad requiere al menos una relación (cliente, deal o contacto)
 - No se puede eliminar una etapa con deals asociados
 - No se puede eliminar la etapa por defecto
+- No se puede eliminar un producto si está en uso en deals
 
 ---
 
@@ -685,12 +1055,10 @@ El CRM se integra con el sistema de canales existente:
 
 ### Próximas Funcionalidades Planificadas
 
+- [ ] **Cuotas de venta** - Metas mensuales/trimestrales/anuales por vendedor
 - [ ] **Multi-pipeline** - Pipelines separados por tipo de negocio
-- [ ] **Productos/Servicios** - Catálogo y líneas de cotización
 - [ ] **Automatizaciones** - Workflows al cambiar etapa
 - [ ] **Email tracking** - Integración con correo electrónico
-- [ ] **Cuotas de venta** - Metas mensuales/trimestrales
-- [ ] **Importación CSV** - Carga masiva de datos
 - [ ] **Duplicados** - Detección y merge de registros
 - [ ] **Campos calculados** - Fórmulas personalizadas
 - [ ] **API pública** - Endpoints para integraciones externas
@@ -717,7 +1085,11 @@ app/
 │   ├── deals/
 │   │   ├── page.tsx                # Pipeline Kanban
 │   │   └── [id]/
-│   │       └── page.tsx            # Detalle del deal
+│   │       └── page.tsx            # Detalle del deal (con tabs)
+│   ├── import/
+│   │   └── page.tsx                # Wizard de importación
+│   ├── products/
+│   │   └── page.tsx                # Catálogo de productos
 │   └── reports/
 │       └── page.tsx                # Reportes CRM
 ├── admin/
@@ -728,7 +1100,9 @@ app/
         ├── deals/
         │   ├── route.ts            # CRUD deals
         │   └── [id]/
-        │       └── route.ts        # Deal individual
+        │       ├── route.ts        # Deal individual
+        │       └── products/
+        │           └── route.ts    # Productos del deal
         ├── contacts/
         │   ├── route.ts            # CRUD contactos
         │   └── [id]/
@@ -737,6 +1111,25 @@ app/
         │   ├── route.ts            # CRUD actividades
         │   └── [id]/
         │       └── route.ts        # Actividad individual
+        ├── products/
+        │   ├── route.ts            # CRUD productos
+        │   └── [id]/
+        │       └── route.ts        # Producto individual
+        ├── quotes/
+        │   ├── route.ts            # CRUD cotizaciones
+        │   └── [id]/
+        │       ├── route.ts        # Cotización individual
+        │       ├── pdf/
+        │       │   └── route.ts    # Generar PDF
+        │       └── send/
+        │           └── route.ts    # Enviar por email
+        ├── import/
+        │   ├── parse/
+        │   │   └── route.ts        # Parsear archivo
+        │   ├── validate/
+        │   │   └── route.ts        # Validar datos
+        │   └── execute/
+        │       └── route.ts        # Ejecutar importación
         ├── pipeline-stages/
         │   ├── route.ts            # CRUD etapas
         │   └── [id]/
@@ -744,12 +1137,11 @@ app/
         └── reports/
             └── route.ts            # Reportes/métricas
 
-components/
-└── crm/
-    └── ActivityModal.tsx           # Modal para crear actividades
-
 models/
 ├── Deal.ts                         # Modelo de deals
+├── DealProduct.ts                  # Modelo de productos en deal
+├── Product.ts                      # Modelo de productos
+├── Quote.ts                        # Modelo de cotizaciones
 ├── Contact.ts                      # Modelo de contactos
 ├── Activity.ts                     # Modelo de actividades
 ├── PipelineStage.ts                # Modelo de etapas
