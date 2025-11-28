@@ -36,7 +36,8 @@ import {
   Hash,
   Handshake,
   UserCircle,
-  DollarSign
+  DollarSign,
+  Clock
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -628,6 +629,12 @@ export default function Navbar() {
                       label="Clientes"
                       active={pathname?.startsWith('/crm/clients') || false}
                       onClick={() => handleNavigation('/crm/clients')}
+                    />
+                    <NavButton
+                      icon={<Clock size={20} />}
+                      label="Actividades"
+                      active={pathname === '/crm/activities'}
+                      onClick={() => handleNavigation('/crm/activities')}
                     />
                   </>
                 )}

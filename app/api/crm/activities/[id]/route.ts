@@ -3,12 +3,13 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
-import mongoose from 'mongoose';
 import { hasPermission } from '@/lib/permissions';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,23 +17,20 @@ export async function GET(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para ver CRM
     if (!hasPermission(session, 'viewCRM')) {
       return NextResponse.json({ error: 'Sin permiso para ver CRM' }, { status: 403 });
     }
 
     await connectDB();
+    const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
-    }
-
-    const activity = await Activity.findById(params.id)
+    const activity = await Activity.findById(id)
       .populate('clientId', 'name')
-      .populate('contactId', 'firstName lastName email')
+      .populate('contactId', 'firstName lastName')
       .populate('dealId', 'title value')
       .populate('createdBy', 'name')
-      .populate('assignedTo', 'name');
+      .populate('assignedTo', 'name')
+      .lean();
 
     if (!activity) {
       return NextResponse.json({ error: 'Actividad no encontrada' }, { status: 404 });
@@ -47,7 +45,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -55,34 +53,30 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para usar CRM
     if (!hasPermission(session, 'viewCRM')) {
       return NextResponse.json({ error: 'Sin permiso para usar CRM' }, { status: 403 });
     }
 
     await connectDB();
-
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
-    }
-
+    const { id } = await params;
     const body = await request.json();
 
-    // Si se está completando, registrar fecha
+    // Si se marca como completado, agregar fecha de completado
     if (body.isCompleted && !body.completedAt) {
       body.completedAt = new Date();
     }
 
     const activity = await Activity.findByIdAndUpdate(
-      params.id,
-      body,
+      id,
+      { $set: body },
       { new: true, runValidators: true }
     )
       .populate('clientId', 'name')
       .populate('contactId', 'firstName lastName')
       .populate('dealId', 'title value')
       .populate('createdBy', 'name')
-      .populate('assignedTo', 'name');
+      .populate('assignedTo', 'name')
+      .lean();
 
     if (!activity) {
       return NextResponse.json({ error: 'Actividad no encontrada' }, { status: 404 });
@@ -97,7 +91,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -105,24 +99,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para usar CRM
     if (!hasPermission(session, 'viewCRM')) {
       return NextResponse.json({ error: 'Sin permiso para usar CRM' }, { status: 403 });
     }
 
     await connectDB();
+    const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
-    }
-
-    const activity = await Activity.findByIdAndDelete(params.id);
+    const activity = await Activity.findByIdAndDelete(id);
 
     if (!activity) {
       return NextResponse.json({ error: 'Actividad no encontrada' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Actividad eliminada correctamente' });
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error deleting activity:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
