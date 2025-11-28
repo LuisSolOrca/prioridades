@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import Navbar from '@/components/Navbar';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Plus, Search, Filter, DollarSign, Calendar, User, Building2, X, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, DollarSign, Calendar, User, Building2, X, Loader2, UserPlus } from 'lucide-react';
 
 interface PipelineStage {
   _id: string;
@@ -46,7 +46,7 @@ interface Deal {
 export default function DealsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { hasPermission } = usePermissions();
+  const { permissions } = usePermissions();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -67,18 +67,26 @@ export default function DealsPage() {
     description: '',
   });
 
+  // Estados para creación inline
+  const [showNewClientForm, setShowNewClientForm] = useState(false);
+  const [showNewContactForm, setShowNewContactForm] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newContact, setNewContact] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+  const [savingClient, setSavingClient] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
     if (status === 'authenticated') {
-      if (!hasPermission('viewCRM') || !hasPermission('canManageDeals')) {
+      if (!permissions.viewCRM || !permissions.canManageDeals) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, router, hasPermission]);
+  }, [status, router, permissions.viewCRM, permissions.canManageDeals]);
 
   const loadData = async () => {
     try {
@@ -114,6 +122,55 @@ export default function DealsPage() {
       setContacts(data);
     } catch (error) {
       console.error('Error loading contacts:', error);
+    }
+  };
+
+  const handleCreateClient = async () => {
+    if (!newClientName.trim()) return;
+    setSavingClient(true);
+    try {
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newClientName.trim() }),
+      });
+      if (!res.ok) throw new Error('Error al crear cliente');
+      const client = await res.json();
+      setClients([...clients, client]);
+      setNewDeal({ ...newDeal, clientId: client._id, contactId: '' });
+      setNewClientName('');
+      setShowNewClientForm(false);
+      loadContacts(client._id);
+    } catch (error: any) {
+      alert(error.message || 'Error al crear cliente');
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  const handleCreateContact = async () => {
+    if (!newContact.firstName.trim() || !newContact.lastName.trim()) return;
+    if (!newDeal.clientId) {
+      alert('Primero selecciona un cliente');
+      return;
+    }
+    setSavingContact(true);
+    try {
+      const res = await fetch('/api/crm/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...newContact, clientId: newDeal.clientId }),
+      });
+      if (!res.ok) throw new Error('Error al crear contacto');
+      const contact = await res.json();
+      setContacts([...contacts, contact]);
+      setNewDeal({ ...newDeal, contactId: contact._id });
+      setNewContact({ firstName: '', lastName: '', email: '', phone: '' });
+      setShowNewContactForm(false);
+    } catch (error: any) {
+      alert(error.message || 'Error al crear contacto');
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -419,39 +476,154 @@ export default function DealsPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Cliente *
                 </label>
-                <select
-                  required
-                  value={newDeal.clientId}
-                  onChange={(e) => {
-                    setNewDeal({ ...newDeal, clientId: e.target.value, contactId: '' });
-                    loadContacts(e.target.value);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="">Seleccionar cliente...</option>
-                  {clients.map(client => (
-                    <option key={client._id} value={client._id}>{client.name}</option>
-                  ))}
-                </select>
+                {!showNewClientForm ? (
+                  <div className="flex gap-2">
+                    <select
+                      required
+                      value={newDeal.clientId}
+                      onChange={(e) => {
+                        setNewDeal({ ...newDeal, clientId: e.target.value, contactId: '' });
+                        loadContacts(e.target.value);
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      <option value="">Seleccionar cliente...</option>
+                      {clients.map(client => (
+                        <option key={client._id} value={client._id}>{client.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewClientForm(true)}
+                      className="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800"
+                      title="Nuevo cliente"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400 font-medium mb-2">
+                      <Building2 size={16} />
+                      Nuevo Cliente
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Nombre del cliente"
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      autoFocus
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { setShowNewClientForm(false); setNewClientName(''); }}
+                        className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCreateClient}
+                        disabled={!newClientName.trim() || savingClient}
+                        className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {savingClient && <Loader2 size={14} className="animate-spin" />}
+                        Crear
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {contacts.length > 0 && (
+              {newDeal.clientId && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Contacto
                   </label>
-                  <select
-                    value={newDeal.contactId}
-                    onChange={(e) => setNewDeal({ ...newDeal, contactId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="">Seleccionar contacto...</option>
-                    {contacts.map(contact => (
-                      <option key={contact._id} value={contact._id}>
-                        {contact.firstName} {contact.lastName}
-                      </option>
-                    ))}
-                  </select>
+                  {!showNewContactForm ? (
+                    <div className="flex gap-2">
+                      <select
+                        value={newDeal.contactId}
+                        onChange={(e) => setNewDeal({ ...newDeal, contactId: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">Seleccionar contacto...</option>
+                        {contacts.map(contact => (
+                          <option key={contact._id} value={contact._id}>
+                            {contact.firstName} {contact.lastName}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowNewContactForm(true)}
+                        className="px-3 py-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-800"
+                        title="Nuevo contacto"
+                      >
+                        <UserPlus size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-400 font-medium mb-2">
+                        <UserPlus size={16} />
+                        Nuevo Contacto
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="Nombre *"
+                          value={newContact.firstName}
+                          onChange={(e) => setNewContact({ ...newContact, firstName: e.target.value })}
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                          autoFocus
+                        />
+                        <input
+                          type="text"
+                          placeholder="Apellido *"
+                          value={newContact.lastName}
+                          onChange={(e) => setNewContact({ ...newContact, lastName: e.target.value })}
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          value={newContact.email}
+                          onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Teléfono"
+                          value={newContact.phone}
+                          onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => { setShowNewContactForm(false); setNewContact({ firstName: '', lastName: '', email: '', phone: '' }); }}
+                          className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCreateContact}
+                          disabled={!newContact.firstName.trim() || !newContact.lastName.trim() || savingContact}
+                          className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
+                        >
+                          {savingContact && <Loader2 size={14} className="animate-spin" />}
+                          Crear
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

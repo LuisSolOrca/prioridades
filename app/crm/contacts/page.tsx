@@ -43,7 +43,7 @@ interface Contact {
 export default function ContactsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { hasPermission } = usePermissions();
+  const { permissions } = usePermissions();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,18 +65,23 @@ export default function ContactsPage() {
     clientId: '',
   });
 
+  // Estados para creación inline de cliente
+  const [showNewClientForm, setShowNewClientForm] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [savingClient, setSavingClient] = useState(false);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
     if (status === 'authenticated') {
-      if (!hasPermission('viewCRM') || !hasPermission('canManageContacts')) {
+      if (!permissions.viewCRM || !permissions.canManageContacts) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, router, hasPermission]);
+  }, [status, router, permissions.viewCRM, permissions.canManageContacts]);
 
   const loadData = async () => {
     try {
@@ -95,6 +100,28 @@ export default function ContactsPage() {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateClient = async () => {
+    if (!newClientName.trim()) return;
+    setSavingClient(true);
+    try {
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newClientName.trim() }),
+      });
+      if (!res.ok) throw new Error('Error al crear cliente');
+      const client = await res.json();
+      setClients([...clients, client]);
+      setFormData({ ...formData, clientId: client._id });
+      setNewClientName('');
+      setShowNewClientForm(false);
+    } catch (error: any) {
+      alert(error.message || 'Error al crear cliente');
+    } finally {
+      setSavingClient(false);
     }
   };
 
@@ -395,17 +422,62 @@ export default function ContactsPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Cliente *
                 </label>
-                <select
-                  required
-                  value={formData.clientId}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="">Seleccionar cliente...</option>
-                  {clients.map(client => (
-                    <option key={client._id} value={client._id}>{client.name}</option>
-                  ))}
-                </select>
+                {!showNewClientForm ? (
+                  <div className="flex gap-2">
+                    <select
+                      required
+                      value={formData.clientId}
+                      onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      <option value="">Seleccionar cliente...</option>
+                      {clients.map(client => (
+                        <option key={client._id} value={client._id}>{client.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewClientForm(true)}
+                      className="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800"
+                      title="Nuevo cliente"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400 font-medium mb-2">
+                      <Building2 size={16} />
+                      Nuevo Cliente
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Nombre del cliente"
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      autoFocus
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { setShowNewClientForm(false); setNewClientName(''); }}
+                        className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCreateClient}
+                        disabled={!newClientName.trim() || savingClient}
+                        className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {savingClient && <Loader2 size={14} className="animate-spin" />}
+                        Crear
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

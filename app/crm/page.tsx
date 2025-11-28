@@ -51,7 +51,7 @@ interface Activity {
 export default function CRMDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { hasPermission } = usePermissions();
+  const { permissions } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -64,13 +64,13 @@ export default function CRMDashboard() {
       router.push('/login');
     }
     if (status === 'authenticated') {
-      if (!hasPermission('viewCRM')) {
+      if (!permissions.viewCRM) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, router, hasPermission]);
+  }, [status, router, permissions.viewCRM]);
 
   const loadData = async () => {
     try {
