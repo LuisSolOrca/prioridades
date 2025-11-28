@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IPipelineStage {
   _id: mongoose.Types.ObjectId;
+  pipelineId?: mongoose.Types.ObjectId; // Pipeline al que pertenece (opcional para retrocompatibilidad)
   name: string;
   order: number;
   color: string;
@@ -15,6 +16,12 @@ export interface IPipelineStage {
 }
 
 const PipelineStageSchema = new Schema<IPipelineStage>({
+  pipelineId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Pipeline',
+    index: true,
+    // No required para retrocompatibilidad - la migración asignará el pipeline
+  },
   name: {
     type: String,
     required: [true, 'El nombre de la etapa es requerido'],
@@ -60,16 +67,19 @@ const PipelineStageSchema = new Schema<IPipelineStage>({
 });
 
 // Índices
-PipelineStageSchema.index({ order: 1 });
+PipelineStageSchema.index({ pipelineId: 1, order: 1 });
+PipelineStageSchema.index({ pipelineId: 1, isActive: 1 });
 PipelineStageSchema.index({ isActive: 1 });
 
-// Asegurar que solo haya una etapa por defecto
+// Asegurar que solo haya una etapa por defecto POR PIPELINE
 PipelineStageSchema.pre('save', async function(next) {
   if (this.isDefault && this.isModified('isDefault')) {
-    await mongoose.model('PipelineStage').updateMany(
-      { _id: { $ne: this._id } },
-      { isDefault: false }
-    );
+    const query: any = { _id: { $ne: this._id }, isDefault: true };
+    // Si tiene pipeline, solo quitar default de etapas del mismo pipeline
+    if (this.pipelineId) {
+      query.pipelineId = this.pipelineId;
+    }
+    await mongoose.model('PipelineStage').updateMany(query, { isDefault: false });
   }
   next();
 });

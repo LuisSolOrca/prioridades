@@ -6,9 +6,10 @@
 3. [Permisos y Acceso](#permisos-y-acceso)
 4. [Dashboard CRM](#dashboard-crm)
 5. [Pipeline de Ventas](#pipeline-de-ventas)
+   - [Multi-Pipeline](#multi-pipeline)
    - [Tablero Kanban](#tablero-kanban)
    - [Etapas del Pipeline](#etapas-del-pipeline)
-   - [Gestión de Pipeline (Admin)](#gestión-de-pipeline-admin)
+   - [Gestión de Pipelines (Admin)](#gestión-de-pipelines-admin)
 6. [Deals (Oportunidades)](#deals-oportunidades)
    - [Crear Deal](#crear-deal)
    - [Editar Deal](#editar-deal)
@@ -54,6 +55,7 @@
 22. [Cuotas y Metas de Ventas](#cuotas-y-metas-de-ventas)
 23. [Integración con Canales](#integración-con-canales)
 24. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+25. [Competidores](#competidores)
 
 ---
 
@@ -81,6 +83,7 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 
 - 📊 **Dashboard CRM** - Vista general con métricas clave
 - 🎯 **Pipeline Kanban** - Tablero visual drag & drop para gestión de deals
+- 📊 **Multi-Pipeline** - Múltiples pipelines para diferentes procesos de venta
 - 💰 **Gestión de Deals** - Crear, editar, mover entre etapas
 - 🏢 **Gestión de Clientes** - Perfil completo con información CRM
 - 👥 **Gestión de Contactos** - Contactos asociados a clientes con datos profesionales
@@ -95,6 +98,7 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - 👤 **Asignación de Vendedor** - Cada deal tiene un responsable asignado
 - 🏷️ **Tags y Campos Personalizados** - Categorización flexible
 - 📥 **Importación CSV/Excel** - Carga masiva de datos con mapeo de columnas
+- 🏆 **Tracking de Competidores** - Inteligencia competitiva con win rate analysis
 
 ---
 
@@ -168,6 +172,23 @@ El dashboard proporciona una vista general del estado del CRM:
 
 ## Pipeline de Ventas
 
+### Multi-Pipeline
+
+El sistema soporta múltiples pipelines para diferentes procesos de venta. Por ejemplo:
+- **Ventas Nuevas** - Pipeline para nuevos clientes
+- **Renovaciones** - Pipeline para renovación de contratos
+- **Enterprise** - Pipeline para ventas corporativas de alto valor
+- **Upselling** - Pipeline para venta cruzada a clientes existentes
+
+**Selector de Pipeline:**
+En la vista de deals (`/crm/deals`), un dropdown permite cambiar entre pipelines disponibles. Cada pipeline tiene su propio conjunto de etapas y métricas independientes.
+
+**Beneficios:**
+- 📊 Procesos de venta separados con etapas específicas
+- 📈 Métricas independientes por tipo de negocio
+- 🎯 Reportes y forecast por pipeline
+- 🔄 Etapas personalizables para cada proceso
+
 ### Tablero Kanban
 
 **Ubicación:** `/crm/deals`
@@ -180,6 +201,7 @@ El pipeline es un tablero Kanban interactivo donde cada columna representa una e
 - ✅ **Búsqueda** - Filtra deals por nombre o cliente
 - ✅ **Métricas por Etapa** - Cada columna muestra cantidad de deals y valor total
 - ✅ **Valor Total y Ponderado** - Header muestra totales del pipeline
+- ✅ **Selector de Pipeline** - Cambia entre diferentes pipelines activos
 
 **Información visible en cada card de deal:**
 - Título del deal
@@ -201,18 +223,41 @@ El sistema incluye etapas predefinidas que pueden ser personalizadas:
 | Cerrado Ganado | Verde | 100% | Cerrada (Won) |
 | Cerrado Perdido | Rojo | 0% | Cerrada (Lost) |
 
-### Gestión de Pipeline (Admin)
+### Gestión de Pipelines (Admin)
+
+**Ubicación:** `/admin/pipelines`
+
+Los administradores pueden crear y gestionar múltiples pipelines:
+
+**Funcionalidades de Pipelines:**
+- ➕ **Crear nuevos pipelines** con nombre, descripción y color
+- ✏️ **Editar pipelines** existentes
+- 🗑️ **Eliminar pipelines** (solo si no tienen deals)
+- ⭐ **Marcar pipeline por defecto** (para nuevos deals)
+- 📋 **Copiar etapas** de otro pipeline al crear uno nuevo
+
+**Campos de cada Pipeline:**
+
+| Campo | Descripción |
+|-------|-------------|
+| `name` | Nombre del pipeline |
+| `description` | Descripción del proceso de venta |
+| `color` | Color hex para identificación visual |
+| `isDefault` | Si es el pipeline predeterminado |
+| `isActive` | Si el pipeline está activo |
+
+### Gestión de Etapas (Admin)
 
 **Ubicación:** `/admin/pipeline`
 
-Los administradores pueden gestionar las etapas del pipeline:
+Los administradores pueden gestionar las etapas de cada pipeline:
 
 **Funcionalidades:**
-- ➕ **Crear nuevas etapas**
+- ➕ **Crear nuevas etapas** asociadas a un pipeline
 - ✏️ **Editar nombre, color, probabilidad**
 - 🔄 **Reordenar etapas** con drag & drop
 - 🗑️ **Eliminar etapas** (solo si no tienen deals)
-- ⭐ **Marcar etapa por defecto** (para nuevos deals)
+- ⭐ **Marcar etapa por defecto** (para nuevos deals del pipeline)
 - ✅ **Marcar como cerrada** (ganada o perdida)
 
 **Campos de cada etapa:**
@@ -220,6 +265,7 @@ Los administradores pueden gestionar las etapas del pipeline:
 | Campo | Descripción |
 |-------|-------------|
 | `name` | Nombre de la etapa |
+| `pipelineId` | Pipeline al que pertenece |
 | `order` | Posición en el pipeline |
 | `color` | Color hex para visualización |
 | `probability` | Probabilidad de cierre (0-100%) |
@@ -668,6 +714,22 @@ El botón "Exportar PDF" genera un documento profesional con:
 
 ## Modelos de Datos
 
+### Pipeline
+
+```typescript
+interface IPipeline {
+  _id: ObjectId;
+  name: string;
+  description?: string;
+  color?: string;           // Código hex
+  isDefault: boolean;       // Pipeline predeterminado
+  isActive: boolean;
+  createdBy: ObjectId;      // ref: User
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ### Deal
 
 ```typescript
@@ -676,6 +738,7 @@ interface IDeal {
   title: string;
   clientId: ObjectId;      // ref: Client
   contactId?: ObjectId;    // ref: Contact
+  pipelineId?: ObjectId;   // ref: Pipeline
   stageId: ObjectId;       // ref: PipelineStage
   value: number;
   currency: 'MXN' | 'USD' | 'EUR';
@@ -846,6 +909,7 @@ interface IActivity {
 ```typescript
 interface IPipelineStage {
   _id: ObjectId;
+  pipelineId?: ObjectId;   // ref: Pipeline (opcional para retrocompatibilidad)
   name: string;
   order: number;
   color: string;           // Código hex
@@ -899,6 +963,7 @@ interface IClient {
 | DELETE | `/api/crm/deals/[id]` | Eliminar deal |
 
 **Parámetros de query (GET /api/crm/deals):**
+- `pipelineId` - Filtrar por pipeline
 - `stageId` - Filtrar por etapa
 - `ownerId` - Filtrar por vendedor
 - `clientId` - Filtrar por cliente
@@ -971,6 +1036,31 @@ interface IClient {
 - `pendingOnly` - Solo pendientes
 - `limit` - Cantidad a retornar
 
+### Pipelines
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/pipelines` | Listar pipelines |
+| POST | `/api/crm/pipelines` | Crear pipeline (admin) |
+| GET | `/api/crm/pipelines/[id]` | Obtener pipeline con etapas y stats |
+| PUT | `/api/crm/pipelines/[id]` | Actualizar pipeline (admin) |
+| DELETE | `/api/crm/pipelines/[id]` | Eliminar pipeline (admin) |
+
+**Parámetros de query (GET /api/crm/pipelines):**
+- `includeInactive` - Incluir pipelines inactivos
+- `includeStats` - Incluir estadísticas (etapas, deals, valor)
+
+**Body POST:**
+```typescript
+{
+  name: string;           // Requerido
+  description?: string;
+  color?: string;         // Default: #3B82F6
+  isDefault?: boolean;
+  copyStagesFrom?: string; // ID de pipeline para copiar etapas
+}
+```
+
 ### Pipeline Stages
 
 | Método | Endpoint | Descripción |
@@ -983,6 +1073,7 @@ interface IClient {
 
 **Parámetros de query:**
 - `activeOnly` - Solo etapas activas
+- `pipelineId` - Filtrar por pipeline
 
 ### Import
 
@@ -1656,10 +1747,6 @@ El CRM se integra con el sistema de canales existente:
 
 ## Limitaciones y Consideraciones
 
-### Limitaciones Actuales
-
-1. **Sin multi-pipeline**: Solo hay un pipeline global
-
 ### Consideraciones Técnicas
 
 - **Permisos**: Verificar `permissionsLoading` antes de redirigir
@@ -1678,19 +1765,151 @@ El CRM se integra con el sistema de canales existente:
 
 ---
 
+## Competidores
+
+**Ubicación:** `/crm/competitors`
+
+El sistema de tracking de competidores permite capturar información sobre la competencia en cada deal para análisis de inteligencia de mercado.
+
+### Funcionalidades
+
+- 🏢 **Catálogo de Competidores** - Base de datos centralizada de competidores
+- 📊 **Tracking por Deal** - Asociar competidores a deals específicos
+- 📈 **Win Rate Analysis** - Estadísticas de victorias/derrotas por competidor
+- 💡 **Intelligence** - Fortalezas, debilidades, precios de la competencia
+
+### Catálogo de Competidores
+
+**Ubicación:** `/crm/competitors`
+
+El catálogo mantiene la información maestra de cada competidor:
+
+| Campo | Descripción |
+|-------|-------------|
+| `name` | Nombre del competidor |
+| `website` | Sitio web |
+| `description` | Descripción general |
+| `strengths` | Fortalezas generales (array) |
+| `weaknesses` | Debilidades generales (array) |
+| `pricing` | Información de precios |
+| `marketPosition` | Posición de mercado (leader, challenger, niche, unknown) |
+| `logo` | URL del logo |
+
+### Competidores en Deals
+
+**Ubicación:** `/crm/deals/[id]` → Tab "Competidores"
+
+En cada deal, se pueden registrar los competidores involucrados:
+
+**Campos de seguimiento:**
+
+| Campo | Descripción |
+|-------|-------------|
+| `competitorId` | Competidor del catálogo |
+| `status` | Estado: active, won_against, lost_to, no_decision |
+| `threatLevel` | Nivel de amenaza: low, medium, high |
+| `notes` | Notas específicas del deal |
+| `contactedBy` | Quién del cliente los contactó |
+| `theirPrice` | Precio que ofrece el competidor |
+| `theirStrengths` | Fortalezas específicas en este deal |
+| `theirWeaknesses` | Debilidades específicas en este deal |
+
+### Flujo de Trabajo
+
+1. **Agregar competidor al deal** - Seleccionar del catálogo o crear nuevo
+2. **Establecer nivel de amenaza** - Evaluar qué tan fuerte es la competencia
+3. **Registrar información** - Precio, fortalezas, debilidades específicas
+4. **Actualizar resultado** - Marcar si ganamos o perdimos contra ellos
+
+### Estadísticas de Competidores
+
+El sistema calcula automáticamente:
+
+| Métrica | Descripción |
+|---------|-------------|
+| **Win Rate** | % de deals ganados contra cada competidor |
+| **Value Won/Lost** | Valor monetario ganado y perdido |
+| **Tendencia Mensual** | Wins/losses por mes |
+| **Top Razones de Pérdida** | Análisis de notas de deals perdidos |
+
+### API Endpoints
+
+**Catálogo de Competidores:**
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/competitors` | Listar competidores |
+| POST | `/api/crm/competitors` | Crear competidor |
+| GET | `/api/crm/competitors/[id]` | Obtener competidor con stats |
+| PUT | `/api/crm/competitors/[id]` | Actualizar competidor |
+| DELETE | `/api/crm/competitors/[id]` | Eliminar competidor (admin) |
+| GET | `/api/crm/competitors/stats` | Estadísticas globales |
+
+**Competidores en Deals:**
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/deals/[id]/competitors` | Listar competidores del deal |
+| POST | `/api/crm/deals/[id]/competitors` | Agregar competidor al deal |
+| PUT | `/api/crm/deals/[id]/competitors` | Actualizar competidor en deal |
+| DELETE | `/api/crm/deals/[id]/competitors` | Remover competidor del deal |
+
+### Modelos de Datos
+
+**Competitor:**
+
+```typescript
+interface ICompetitor {
+  _id: ObjectId;
+  name: string;
+  website?: string;
+  description?: string;
+  strengths: string[];
+  weaknesses: string[];
+  pricing?: string;
+  marketPosition: 'leader' | 'challenger' | 'niche' | 'unknown';
+  logo?: string;
+  isActive: boolean;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**DealCompetitor:**
+
+```typescript
+interface IDealCompetitor {
+  _id: ObjectId;
+  dealId: ObjectId;           // ref: Deal
+  competitorId: ObjectId;     // ref: Competitor
+  status: 'active' | 'won_against' | 'lost_to' | 'no_decision';
+  threatLevel: 'low' | 'medium' | 'high';
+  notes?: string;
+  contactedBy?: string;
+  theirPrice?: number;
+  theirStrengths: string[];
+  theirWeaknesses: string[];
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+---
+
 ## Roadmap Futuro
 
 ### Próximas Funcionalidades Planificadas
 
-- [ ] **Multi-pipeline** - Pipelines separados por tipo de negocio
 - [ ] **Campos calculados** - Fórmulas personalizadas
 - [ ] **API pública** - Endpoints para integraciones externas
 - [ ] **Webhooks** - Notificaciones a sistemas externos
 - [ ] **Dashboard personalizable** - Widgets configurables
-- [ ] **Competidores** - Tracking de competencia en deals
 
 ### Funcionalidades Implementadas
 
+- [x] **Multi-pipeline** - Pipelines separados por tipo de negocio
 - [x] **Email tracking** - Tracking de aperturas, clicks y respuestas
 - [x] **Lead Scoring** - Calificación automática de leads (FIT + Engagement)
 - [x] **Workflows** - Automatizaciones basadas en triggers y condiciones
@@ -1698,6 +1917,7 @@ El CRM se integra con el sistema de canales existente:
 - [x] **Campos Personalizados** - Campos custom por entidad
 - [x] **Detección de Duplicados** - Fuzzy matching y fusión de registros
 - [x] **Cuotas de Venta** - Metas por vendedor y período
+- [x] **Competidores** - Tracking de competencia en deals con win rate analysis
 
 ---
 
@@ -1715,10 +1935,12 @@ app/
 │   │       └── page.tsx            # Perfil de cliente
 │   ├── contacts/
 │   │   └── page.tsx                # Lista de contactos
+│   ├── competitors/
+│   │   └── page.tsx                # Catálogo de competidores
 │   ├── deals/
 │   │   ├── page.tsx                # Pipeline Kanban
 │   │   └── [id]/
-│   │       └── page.tsx            # Detalle del deal (con tabs)
+│   │       └── page.tsx            # Detalle del deal (con tabs: actividades, productos, cotizaciones, competidores)
 │   ├── email-tracking/
 │   │   └── page.tsx                # Dashboard de email tracking
 │   ├── import/
@@ -1739,16 +1961,26 @@ app/
 │   └── workflows/
 │       └── page.tsx                # Gestión de workflows
 ├── admin/
-│   └── pipeline/
-│       └── page.tsx                # Gestión de etapas (admin)
+│   ├── pipeline/
+│   │   └── page.tsx                # Gestión de etapas (admin)
+│   └── pipelines/
+│       └── page.tsx                # Gestión de pipelines (admin)
 └── api/
     └── crm/
+        ├── competitors/
+        │   ├── route.ts            # CRUD competidores
+        │   ├── stats/
+        │   │   └── route.ts        # Estadísticas de competidores
+        │   └── [id]/
+        │       └── route.ts        # Competidor individual
         ├── deals/
         │   ├── route.ts            # CRUD deals
         │   └── [id]/
         │       ├── route.ts        # Deal individual
-        │       └── products/
-        │           └── route.ts    # Productos del deal
+        │       ├── products/
+        │       │   └── route.ts    # Productos del deal
+        │       └── competitors/
+        │           └── route.ts    # Competidores del deal
         ├── contacts/
         │   ├── route.ts            # CRUD contactos
         │   └── [id]/
@@ -1776,6 +2008,10 @@ app/
         │   │   └── route.ts        # Validar datos
         │   └── execute/
         │       └── route.ts        # Ejecutar importación
+        ├── pipelines/
+        │   ├── route.ts            # CRUD pipelines
+        │   └── [id]/
+        │       └── route.ts        # Pipeline individual
         ├── pipeline-stages/
         │   ├── route.ts            # CRUD etapas
         │   └── [id]/
@@ -1807,10 +2043,13 @@ app/
 models/
 ├── Deal.ts                         # Modelo de deals
 ├── DealProduct.ts                  # Modelo de productos en deal
+├── DealCompetitor.ts               # Modelo de competidores en deal
 ├── Product.ts                      # Modelo de productos
+├── Competitor.ts                   # Modelo de competidores
 ├── Quote.ts                        # Modelo de cotizaciones
 ├── Contact.ts                      # Modelo de contactos
 ├── Activity.ts                     # Modelo de actividades
+├── Pipeline.ts                     # Modelo de pipelines
 ├── PipelineStage.ts                # Modelo de etapas
 ├── Client.ts                       # Modelo de clientes (compartido)
 ├── CustomField.ts                  # Modelo de campos personalizados
@@ -1833,4 +2072,4 @@ lib/
 
 ---
 
-*Última actualización: Noviembre 2024*
+*Última actualización: Noviembre 2025*

@@ -6,7 +6,14 @@ import { useRouter } from 'next/navigation';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import Navbar from '@/components/Navbar';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Plus, Search, Filter, DollarSign, Calendar, User, Building2, X, Loader2, UserPlus } from 'lucide-react';
+import { Plus, Search, Filter, DollarSign, Calendar, User, Building2, X, Loader2, UserPlus, Layers, ChevronDown } from 'lucide-react';
+
+interface Pipeline {
+  _id: string;
+  name: string;
+  color: string;
+  isDefault: boolean;
+}
 
 interface PipelineStage {
   _id: string;
@@ -53,6 +60,8 @@ export default function DealsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { permissions, isLoading: permissionsLoading } = usePermissions();
+  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>('');
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -62,6 +71,7 @@ export default function DealsPage() {
   const [search, setSearch] = useState('');
   const [showNewDealModal, setShowNewDealModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showPipelineDropdown, setShowPipelineDropdown] = useState(false);
 
   const [newDeal, setNewDeal] = useState({
     title: '',
@@ -72,6 +82,7 @@ export default function DealsPage() {
     ownerId: '',
     expectedCloseDate: '',
     description: '',
+    pipelineId: '',
   });
 
   // Estados para creación inline
@@ -96,12 +107,31 @@ export default function DealsPage() {
     }
   }, [status, router, permissions.viewCRM, permissions.canManageDeals, permissionsLoading]);
 
-  const loadData = async () => {
+  const loadData = async (pipelineId?: string) => {
     try {
       setLoading(true);
+
+      // Fetch pipelines first
+      const pipelinesRes = await fetch('/api/crm/pipelines');
+      const pipelinesData = await pipelinesRes.json();
+      setPipelines(pipelinesData);
+
+      // Determine which pipeline to use
+      let activePipelineId = pipelineId || selectedPipelineId;
+      if (!activePipelineId && pipelinesData.length > 0) {
+        // Use default pipeline or first one
+        const defaultPipeline = pipelinesData.find((p: Pipeline) => p.isDefault) || pipelinesData[0];
+        activePipelineId = defaultPipeline._id;
+        setSelectedPipelineId(activePipelineId);
+      }
+
+      // Build query params
+      const stagesQuery = activePipelineId ? `?activeOnly=true&pipelineId=${activePipelineId}` : '?activeOnly=true';
+      const dealsQuery = activePipelineId ? `?pipelineId=${activePipelineId}` : '';
+
       const [stagesRes, dealsRes, clientsRes, usersRes] = await Promise.all([
-        fetch('/api/crm/pipeline-stages?activeOnly=true'),
-        fetch('/api/crm/deals'),
+        fetch(`/api/crm/pipeline-stages${stagesQuery}`),
+        fetch(`/api/crm/deals${dealsQuery}`),
         fetch('/api/clients?activeOnly=true'),
         fetch('/api/users'),
       ]);
@@ -121,6 +151,14 @@ export default function DealsPage() {
       setLoading(false);
     }
   };
+
+  const handlePipelineChange = (pipelineId: string) => {
+    setSelectedPipelineId(pipelineId);
+    setShowPipelineDropdown(false);
+    loadData(pipelineId);
+  };
+
+  const selectedPipeline = pipelines.find(p => p._id === selectedPipelineId);
 
   const loadContacts = async (clientId: string) => {
     if (!clientId) {
@@ -243,8 +281,9 @@ export default function DealsPage() {
         ownerId: '',
         expectedCloseDate: '',
         description: '',
+        pipelineId: selectedPipelineId,
       });
-      loadData();
+      loadData(selectedPipelineId);
     } catch (error: any) {
       alert(error.message || 'Error al crear el deal');
     } finally {
@@ -302,10 +341,56 @@ export default function DealsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-              <DollarSign className="text-emerald-500" />
-              Pipeline de Ventas
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <DollarSign className="text-emerald-500" />
+                Pipeline de Ventas
+              </h1>
+              {/* Pipeline Selector */}
+              {pipelines.length > 1 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowPipelineDropdown(!showPipelineDropdown)}
+                    className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    {selectedPipeline && (
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: selectedPipeline.color }}
+                      />
+                    )}
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      {selectedPipeline?.name || 'Seleccionar Pipeline'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  </button>
+                  {showPipelineDropdown && (
+                    <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                      {pipelines.map((pipeline) => (
+                        <button
+                          key={pipeline._id}
+                          onClick={() => handlePipelineChange(pipeline._id)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg ${
+                            selectedPipelineId === pipeline._id ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                          }`}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: pipeline.color }}
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-200 flex-1">
+                            {pipeline.name}
+                          </span>
+                          {pipeline.isDefault && (
+                            <span className="text-xs text-gray-400">Default</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
               <span>Total: <strong className="text-gray-800 dark:text-gray-200">{formatCurrency(totalPipelineValue, 'MXN')}</strong></span>
               <span>Ponderado: <strong className="text-emerald-600 dark:text-emerald-400">{formatCurrency(weightedPipelineValue, 'MXN')}</strong></span>

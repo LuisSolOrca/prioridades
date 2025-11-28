@@ -23,10 +23,14 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('activeOnly') === 'true';
+    const pipelineId = searchParams.get('pipelineId');
 
     const query: any = {};
     if (activeOnly) {
       query.isActive = true;
+    }
+    if (pipelineId) {
+      query.pipelineId = pipelineId;
     }
 
     let stages = await PipelineStage.find(query)

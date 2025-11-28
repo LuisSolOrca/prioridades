@@ -14,6 +14,7 @@ export interface IScoreBreakdown {
 export interface IDeal {
   _id: mongoose.Types.ObjectId;
   title: string;
+  pipelineId?: mongoose.Types.ObjectId; // Pipeline al que pertenece
   clientId: mongoose.Types.ObjectId;
   contactId?: mongoose.Types.ObjectId;
   stageId: mongoose.Types.ObjectId;
@@ -47,6 +48,12 @@ const DealSchema = new Schema<IDeal>({
     required: [true, 'El título del deal es requerido'],
     trim: true,
     maxlength: [200, 'El título no puede exceder 200 caracteres'],
+  },
+  pipelineId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Pipeline',
+    index: true,
+    // No required para retrocompatibilidad - la migración asignará el pipeline
   },
   clientId: {
     type: Schema.Types.ObjectId,

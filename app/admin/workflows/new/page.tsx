@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 
 interface User {
   _id: string;
@@ -145,7 +146,7 @@ export default function NewWorkflowPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -156,14 +157,15 @@ export default function NewWorkflowPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <div className="pt-16 main-content max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Nuevo Workflow</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nuevo Workflow</h1>
             <button
               onClick={() => router.push('/admin/workflows')}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             >
               <X size={24} />
             </button>
@@ -172,27 +174,27 @@ export default function NewWorkflowPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Información básica */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Nombre del Workflow *
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="Ej: Notificar riesgos prolongados"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Descripción
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 rows={3}
                 placeholder="Descripción opcional del workflow"
               />
@@ -200,13 +202,13 @@ export default function NewWorkflowPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Estado inicial
                 </label>
                 <select
                   value={isActive ? 'active' : 'inactive'}
                   onChange={(e) => setIsActive(e.target.value === 'active')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   <option value="active">Activo</option>
                   <option value="inactive">Inactivo</option>
@@ -214,14 +216,14 @@ export default function NewWorkflowPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Prioridad de ejecución
                 </label>
                 <input
                   type="number"
                   value={priority}
                   onChange={(e) => setPriority(parseInt(e.target.value))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   min="0"
                 />
               </div>
@@ -234,7 +236,7 @@ export default function NewWorkflowPage() {
                   onChange={(e) => setExecuteOnce(e.target.checked)}
                   className="mr-2"
                 />
-                <label htmlFor="executeOnce" className="text-sm text-gray-700">
+                <label htmlFor="executeOnce" className="text-sm text-gray-700 dark:text-gray-300">
                   Ejecutar solo una vez
                 </label>
               </div>
@@ -242,33 +244,33 @@ export default function NewWorkflowPage() {
 
             {/* Trigger */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Disparador *
               </label>
               <select
                 value={triggerType}
                 onChange={(e) => setTriggerType(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
-                <option value="priority_status_change">📊 Cambio de estado de prioridad</option>
-                <option value="priority_created">✨ Prioridad creada</option>
-                <option value="priority_overdue">⏰ Prioridad atrasada</option>
-                <option value="daily_check">📅 Revisión diaria (manual)</option>
-                <option value="weekly_check">📆 Revisión semanal (manual)</option>
-                <option value="completion_low">⚠️ % completado bajo</option>
+                <option value="priority_status_change">Cambio de estado de prioridad</option>
+                <option value="priority_created">Prioridad creada</option>
+                <option value="priority_overdue">Prioridad atrasada</option>
+                <option value="daily_check">Revisión diaria (manual)</option>
+                <option value="weekly_check">Revisión semanal (manual)</option>
+                <option value="completion_low">% completado bajo</option>
               </select>
             </div>
 
             {/* Conditions */}
             <div>
               <div className="flex justify-between items-center mb-3">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Condiciones (todas deben cumplirse)
                 </label>
                 <button
                   type="button"
                   onClick={addCondition}
-                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm"
+                  className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm"
                 >
                   <Plus size={16} />
                   <span>Agregar condición</span>
@@ -276,15 +278,15 @@ export default function NewWorkflowPage() {
               </div>
 
               {conditions.length === 0 ? (
-                <p className="text-sm text-gray-500 italic">Sin condiciones (siempre ejecuta)</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic">Sin condiciones (siempre ejecuta)</p>
               ) : (
                 <div className="space-y-3">
                   {conditions.map((condition, index) => (
-                    <div key={index} className="flex items-center space-x-2 bg-blue-50 p-3 rounded-lg">
+                    <div key={index} className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg">
                       <select
                         value={condition.type}
                         onChange={(e) => updateCondition(index, 'type', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       >
                         <option value="status_equals">Estado igual a</option>
                         <option value="status_for_days">Estado por N días</option>
@@ -301,7 +303,7 @@ export default function NewWorkflowPage() {
                         <select
                           value={condition.value}
                           onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                           <option value="EN_TIEMPO">EN_TIEMPO</option>
                           <option value="EN_RIESGO">EN_RIESGO</option>
@@ -315,7 +317,7 @@ export default function NewWorkflowPage() {
                           type="number"
                           value={condition.value || 0}
                           onChange={(e) => updateCondition(index, 'value', parseInt(e.target.value))}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           min="0"
                           max="100"
                           placeholder="%"
@@ -327,7 +329,7 @@ export default function NewWorkflowPage() {
                           <select
                             value={condition.value}
                             onChange={(e) => updateCondition(index, 'value', e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           >
                             <option value="EN_TIEMPO">EN_TIEMPO</option>
                             <option value="EN_RIESGO">EN_RIESGO</option>
@@ -337,7 +339,7 @@ export default function NewWorkflowPage() {
                             type="number"
                             value={condition.days || 1}
                             onChange={(e) => updateCondition(index, 'days', parseInt(e.target.value))}
-                            className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             min="1"
                             placeholder="días"
                           />
@@ -347,7 +349,7 @@ export default function NewWorkflowPage() {
                       <button
                         type="button"
                         onClick={() => removeCondition(index)}
-                        className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -360,13 +362,13 @@ export default function NewWorkflowPage() {
             {/* Actions */}
             <div>
               <div className="flex justify-between items-center mb-3">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Acciones * (al menos una)
                 </label>
                 <button
                   type="button"
                   onClick={addAction}
-                  className="flex items-center space-x-1 text-green-600 hover:text-green-700 text-sm"
+                  className="flex items-center space-x-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 text-sm"
                 >
                   <Plus size={16} />
                   <span>Agregar acción</span>
@@ -374,28 +376,28 @@ export default function NewWorkflowPage() {
               </div>
 
               {actions.length === 0 ? (
-                <p className="text-sm text-red-600">⚠️ Debes agregar al menos una acción</p>
+                <p className="text-sm text-red-600 dark:text-red-400">Debes agregar al menos una acción</p>
               ) : (
                 <div className="space-y-3">
                   {actions.map((action, index) => (
-                    <div key={index} className="bg-green-50 p-3 rounded-lg space-y-2">
+                    <div key={index} className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg space-y-2">
                       <div className="flex items-center space-x-2">
                         <select
                           value={action.type}
                           onChange={(e) => updateAction(index, 'type', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
-                          <option value="send_notification">🔔 Enviar notificación</option>
-                          <option value="send_email">📧 Enviar email</option>
-                          <option value="change_status">🔄 Cambiar estado</option>
-                          <option value="assign_to_user">👤 Reasignar usuario</option>
-                          <option value="add_comment">💬 Agregar comentario</option>
+                          <option value="send_notification">Enviar notificación</option>
+                          <option value="send_email">Enviar email</option>
+                          <option value="change_status">Cambiar estado</option>
+                          <option value="assign_to_user">Reasignar usuario</option>
+                          <option value="add_comment">Agregar comentario</option>
                         </select>
 
                         <button
                           type="button"
                           onClick={() => removeAction(index)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -407,7 +409,7 @@ export default function NewWorkflowPage() {
                           type="text"
                           value={action.message || ''}
                           onChange={(e) => updateAction(index, 'message', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           placeholder="Mensaje"
                         />
                       )}
@@ -418,14 +420,14 @@ export default function NewWorkflowPage() {
                             type="text"
                             value={action.emailSubject || ''}
                             onChange={(e) => updateAction(index, 'emailSubject', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="Asunto del email"
                           />
                           <input
                             type="text"
                             value={action.message || ''}
                             onChange={(e) => updateAction(index, 'message', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             placeholder="Mensaje"
                           />
                         </>
@@ -435,7 +437,7 @@ export default function NewWorkflowPage() {
                         <select
                           value={action.newStatus || 'EN_RIESGO'}
                           onChange={(e) => updateAction(index, 'newStatus', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                           <option value="EN_TIEMPO">EN_TIEMPO</option>
                           <option value="EN_RIESGO">EN_RIESGO</option>
@@ -448,7 +450,7 @@ export default function NewWorkflowPage() {
                         <select
                           value={action.targetUserId || ''}
                           onChange={(e) => updateAction(index, 'targetUserId', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                           <option value="">Seleccionar usuario</option>
                           {users.map(user => (
@@ -465,11 +467,11 @@ export default function NewWorkflowPage() {
             </div>
 
             {/* Submit */}
-            <div className="flex justify-end space-x-3 pt-6 border-t">
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 type="button"
                 onClick={() => router.push('/admin/workflows')}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancelar
               </button>

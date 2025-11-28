@@ -44,6 +44,9 @@ import {
   Search,
   Receipt,
   Eye,
+  Shield,
+  Swords,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface PipelineStage {
@@ -168,6 +171,28 @@ interface ProductTotals {
   itemCount: number;
 }
 
+interface Competitor {
+  _id: string;
+  name: string;
+  logo?: string;
+  website?: string;
+  marketPosition: string;
+}
+
+interface DealCompetitor {
+  _id: string;
+  competitorId: Competitor;
+  status: 'active' | 'won_against' | 'lost_to' | 'no_decision';
+  threatLevel: 'low' | 'medium' | 'high';
+  notes?: string;
+  contactedBy?: string;
+  theirPrice?: number;
+  theirStrengths: string[];
+  theirWeaknesses: string[];
+  createdBy: { name: string };
+  createdAt: string;
+}
+
 export default function DealDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -188,7 +213,22 @@ export default function DealDetailPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [productSearch, setProductSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'activities' | 'products' | 'quotes'>('activities');
+  const [activeTab, setActiveTab] = useState<'activities' | 'products' | 'quotes' | 'competitors'>('activities');
+
+  // Competitors state
+  const [dealCompetitors, setDealCompetitors] = useState<DealCompetitor[]>([]);
+  const [allCompetitors, setAllCompetitors] = useState<Competitor[]>([]);
+  const [showCompetitorModal, setShowCompetitorModal] = useState(false);
+  const [editingCompetitor, setEditingCompetitor] = useState<DealCompetitor | null>(null);
+  const [competitorForm, setCompetitorForm] = useState({
+    competitorId: '',
+    threatLevel: 'medium' as 'low' | 'medium' | 'high',
+    notes: '',
+    contactedBy: '',
+    theirPrice: '',
+    theirStrengths: '',
+    theirWeaknesses: '',
+  });
 
   // Modals
   const [showEditModal, setShowEditModal] = useState(false);
@@ -261,12 +301,14 @@ export default function DealDetailPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [dealRes, stagesRes, usersRes, productsRes, quotesRes] = await Promise.all([
+      const [dealRes, stagesRes, usersRes, productsRes, quotesRes, competitorsRes, allCompetitorsRes] = await Promise.all([
         fetch(`/api/crm/deals/${dealId}`),
         fetch('/api/crm/pipeline-stages?activeOnly=true'),
         fetch('/api/users'),
         fetch(`/api/crm/deals/${dealId}/products`),
         fetch(`/api/crm/quotes?dealId=${dealId}`),
+        fetch(`/api/crm/deals/${dealId}/competitors`),
+        fetch('/api/crm/competitors'),
       ]);
 
       if (!dealRes.ok) {
@@ -279,6 +321,8 @@ export default function DealDetailPage() {
       const usersData = await usersRes.json();
       const productsData = await productsRes.json();
       const quotesData = await quotesRes.json();
+      const competitorsData = await competitorsRes.json();
+      const allCompetitorsData = await allCompetitorsRes.json();
 
       setDeal(dealData);
       setActivities(dealData.activities || []);
@@ -287,6 +331,8 @@ export default function DealDetailPage() {
       setDealProducts(productsData.products || []);
       setProductTotals(productsData.totals || null);
       setQuotes(quotesData.quotes || []);
+      setDealCompetitors(competitorsData || []);
+      setAllCompetitors(allCompetitorsData || []);
 
       // Load contacts for the client
       if (dealData.clientId?._id) {
@@ -444,6 +490,112 @@ export default function DealDetailPage() {
       message: '',
     });
     setShowSendQuoteModal(true);
+  };
+
+  // Competitor handlers
+  const handleAddCompetitor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!competitorForm.competitorId) return;
+    setSaving(true);
+    try {
+      const body = {
+        competitorId: competitorForm.competitorId,
+        threatLevel: competitorForm.threatLevel,
+        notes: competitorForm.notes,
+        contactedBy: competitorForm.contactedBy,
+        theirPrice: competitorForm.theirPrice ? parseFloat(competitorForm.theirPrice) : undefined,
+        theirStrengths: competitorForm.theirStrengths.split('\n').filter(s => s.trim()),
+        theirWeaknesses: competitorForm.theirWeaknesses.split('\n').filter(s => s.trim()),
+      };
+
+      const res = await fetch(`/api/crm/deals/${dealId}/competitors`, {
+        method: editingCompetitor ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Error al guardar competidor');
+      }
+
+      setShowCompetitorModal(false);
+      setEditingCompetitor(null);
+      setCompetitorForm({
+        competitorId: '',
+        threatLevel: 'medium',
+        notes: '',
+        contactedBy: '',
+        theirPrice: '',
+        theirStrengths: '',
+        theirWeaknesses: '',
+      });
+      loadData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditCompetitor = (dc: DealCompetitor) => {
+    setEditingCompetitor(dc);
+    setCompetitorForm({
+      competitorId: dc.competitorId._id,
+      threatLevel: dc.threatLevel,
+      notes: dc.notes || '',
+      contactedBy: dc.contactedBy || '',
+      theirPrice: dc.theirPrice?.toString() || '',
+      theirStrengths: dc.theirStrengths.join('\n'),
+      theirWeaknesses: dc.theirWeaknesses.join('\n'),
+    });
+    setShowCompetitorModal(true);
+  };
+
+  const handleUpdateCompetitorStatus = async (competitorId: string, status: string) => {
+    try {
+      const res = await fetch(`/api/crm/deals/${dealId}/competitors`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ competitorId, status }),
+      });
+      if (!res.ok) throw new Error('Error al actualizar estado');
+      loadData();
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleRemoveCompetitor = async (competitorId: string) => {
+    if (!confirm('¿Eliminar este competidor del deal?')) return;
+    try {
+      const res = await fetch(`/api/crm/deals/${dealId}/competitors?competitorId=${competitorId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Error al eliminar competidor');
+      loadData();
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const getThreatLevelBadge = (level: string) => {
+    const badges: Record<string, { label: string; color: string }> = {
+      low: { label: 'Baja', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+      medium: { label: 'Media', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+      high: { label: 'Alta', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+    };
+    return badges[level] || badges.medium;
+  };
+
+  const getCompetitorStatusBadge = (status: string) => {
+    const badges: Record<string, { label: string; color: string }> = {
+      active: { label: 'Activo', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+      won_against: { label: 'Ganamos', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+      lost_to: { label: 'Perdimos', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+      no_decision: { label: 'Sin decision', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' },
+    };
+    return badges[status] || badges.active;
   };
 
   const getQuoteStatusLabel = (status: string) => {
@@ -786,6 +938,17 @@ export default function DealDetailPage() {
                   <FileSpreadsheet size={18} />
                   Cotizaciones ({quotes.length})
                 </button>
+                <button
+                  onClick={() => setActiveTab('competitors')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition ${
+                    activeTab === 'competitors'
+                      ? 'text-orange-600 dark:text-orange-400 border-b-2 border-orange-600'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <Swords size={18} />
+                  Competidores ({dealCompetitors.length})
+                </button>
               </div>
             </div>
 
@@ -1039,6 +1202,171 @@ export default function DealDetailPage() {
                               )}
                             </div>
                           </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Competitors Tab */}
+            {activeTab === 'competitors' && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <Swords size={20} className="text-orange-500" />
+                    Competidores
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setEditingCompetitor(null);
+                      setCompetitorForm({
+                        competitorId: '',
+                        threatLevel: 'medium',
+                        notes: '',
+                        contactedBy: '',
+                        theirPrice: '',
+                        theirStrengths: '',
+                        theirWeaknesses: '',
+                      });
+                      setShowCompetitorModal(true);
+                    }}
+                    className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 px-3 py-1.5 rounded-lg"
+                  >
+                    <Plus size={16} />
+                    Agregar
+                  </button>
+                </div>
+
+                {dealCompetitors.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Target size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">No hay competidores registrados</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                      Registra contra quien compites para analizar tus resultados
+                    </p>
+                    <button
+                      onClick={() => setShowCompetitorModal(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                    >
+                      <Plus size={16} />
+                      Agregar Competidor
+                    </button>
+                  </div>
+                ) : (
+                  <div className="divide-y dark:divide-gray-700">
+                    {dealCompetitors.map((dc) => {
+                      const threatBadge = getThreatLevelBadge(dc.threatLevel);
+                      const statusBadge = getCompetitorStatusBadge(dc.status);
+                      return (
+                        <div key={dc._id} className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              {dc.competitorId?.logo ? (
+                                <img src={dc.competitorId.logo} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                  <Target size={16} className="text-gray-500" />
+                                </div>
+                              )}
+                              <div>
+                                <span className="font-medium text-gray-800 dark:text-gray-100">
+                                  {dc.competitorId?.name || 'Competidor'}
+                                </span>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge.color}`}>
+                                    {statusBadge.label}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${threatBadge.color}`}>
+                                    Amenaza {threatBadge.label}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleEditCompetitor(dc)}
+                                className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                                title="Editar"
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleRemoveCompetitor(dc.competitorId._id)}
+                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {dc.theirPrice && (
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              <span className="font-medium">Su precio:</span> {formatCurrency(dc.theirPrice, deal?.currency || 'MXN')}
+                            </div>
+                          )}
+
+                          {dc.notes && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{dc.notes}</p>
+                          )}
+
+                          {(dc.theirStrengths?.length > 0 || dc.theirWeaknesses?.length > 0) && (
+                            <div className="grid grid-cols-2 gap-4 mt-3 text-xs">
+                              {dc.theirStrengths?.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-1 text-green-700 dark:text-green-400 font-medium mb-1">
+                                    <Shield size={12} />
+                                    Fortalezas
+                                  </div>
+                                  <ul className="text-gray-600 dark:text-gray-400 space-y-0.5">
+                                    {dc.theirStrengths.map((s, i) => (
+                                      <li key={i}>+ {s}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {dc.theirWeaknesses?.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-1 text-red-700 dark:text-red-400 font-medium mb-1">
+                                    <AlertTriangle size={12} />
+                                    Debilidades
+                                  </div>
+                                  <ul className="text-gray-600 dark:text-gray-400 space-y-0.5">
+                                    {dc.theirWeaknesses.map((w, i) => (
+                                      <li key={i}>- {w}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Status update buttons */}
+                          {dc.status === 'active' && (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">Resultado:</span>
+                              <button
+                                onClick={() => handleUpdateCompetitorStatus(dc.competitorId._id, 'won_against')}
+                                className="px-2 py-1 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50"
+                              >
+                                Ganamos
+                              </button>
+                              <button
+                                onClick={() => handleUpdateCompetitorStatus(dc.competitorId._id, 'lost_to')}
+                                className="px-2 py-1 text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/50"
+                              >
+                                Perdimos
+                              </button>
+                              <button
+                                onClick={() => handleUpdateCompetitorStatus(dc.competitorId._id, 'no_decision')}
+                                className="px-2 py-1 text-xs bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                              >
+                                Sin decision
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -1755,6 +2083,200 @@ export default function DealDetailPage() {
                   {saving && <Loader2 size={18} className="animate-spin" />}
                   <Send size={16} />
                   Enviar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Competitor Modal */}
+      {showCompetitorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Swords className="text-orange-500" />
+                {editingCompetitor ? 'Editar Competidor' : 'Agregar Competidor'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCompetitorModal(false);
+                  setEditingCompetitor(null);
+                  setCompetitorForm({
+                    competitorId: '',
+                    threatLevel: 'medium',
+                    notes: '',
+                    contactedBy: '',
+                    theirPrice: '',
+                    theirStrengths: '',
+                    theirWeaknesses: '',
+                  });
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCompetitor} className="p-4 space-y-4">
+              {/* Competitor Select */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Competidor *
+                </label>
+                {editingCompetitor ? (
+                  <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-800 dark:text-gray-200">
+                    {editingCompetitor.competitorId.name}
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={competitorForm.competitorId}
+                    onChange={(e) => setCompetitorForm({ ...competitorForm, competitorId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">Seleccionar competidor...</option>
+                    {allCompetitors
+                      .filter(c => !dealCompetitors.some(dc => dc.competitorId._id === c._id))
+                      .map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.name} {c.marketPosition !== 'unknown' ? `(${c.marketPosition})` : ''}
+                        </option>
+                      ))}
+                  </select>
+                )}
+                {allCompetitors.length === 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    No hay competidores registrados.{' '}
+                    <Link href="/crm/competitors" className="text-blue-600 dark:text-blue-400 hover:underline">
+                      Crear competidor
+                    </Link>
+                  </p>
+                )}
+              </div>
+
+              {/* Threat Level */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nivel de Amenaza
+                </label>
+                <select
+                  value={competitorForm.threatLevel}
+                  onChange={(e) => setCompetitorForm({ ...competitorForm, threatLevel: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="low">Baja - Poca probabilidad de ganar</option>
+                  <option value="medium">Media - Competencia pareja</option>
+                  <option value="high">Alta - Fuerte competidor</option>
+                </select>
+              </div>
+
+              {/* Their Price */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Su Precio (estimado)
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={competitorForm.theirPrice}
+                    onChange={(e) => setCompetitorForm({ ...competitorForm, theirPrice: e.target.value })}
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="Precio que ofrece el competidor"
+                  />
+                </div>
+              </div>
+
+              {/* Contacted By */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Contactado Por
+                </label>
+                <input
+                  type="text"
+                  value={competitorForm.contactedBy}
+                  onChange={(e) => setCompetitorForm({ ...competitorForm, contactedBy: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Quien del cliente los contactó"
+                />
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Notas
+                </label>
+                <textarea
+                  value={competitorForm.notes}
+                  onChange={(e) => setCompetitorForm({ ...competitorForm, notes: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Notas sobre la competencia en este deal..."
+                />
+              </div>
+
+              {/* Their Strengths */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Sus Fortalezas en este Deal
+                </label>
+                <textarea
+                  value={competitorForm.theirStrengths}
+                  onChange={(e) => setCompetitorForm({ ...competitorForm, theirStrengths: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Una fortaleza por línea..."
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Una fortaleza por línea</p>
+              </div>
+
+              {/* Their Weaknesses */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Sus Debilidades en este Deal
+                </label>
+                <textarea
+                  value={competitorForm.theirWeaknesses}
+                  onChange={(e) => setCompetitorForm({ ...competitorForm, theirWeaknesses: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Una debilidad por línea..."
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Una debilidad por línea</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCompetitorModal(false);
+                    setEditingCompetitor(null);
+                    setCompetitorForm({
+                      competitorId: '',
+                      threatLevel: 'medium',
+                      notes: '',
+                      contactedBy: '',
+                      theirPrice: '',
+                      theirStrengths: '',
+                      theirWeaknesses: '',
+                    });
+                  }}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || (!editingCompetitor && !competitorForm.competitorId)}
+                  className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                >
+                  {saving && <Loader2 size={18} className="animate-spin" />}
+                  {editingCompetitor ? 'Guardar Cambios' : 'Agregar Competidor'}
                 </button>
               </div>
             </form>

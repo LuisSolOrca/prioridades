@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const clientId = searchParams.get('clientId');
     const stageId = searchParams.get('stageId');
     const ownerId = searchParams.get('ownerId');
+    const pipelineId = searchParams.get('pipelineId');
     const search = searchParams.get('search');
     const closedOnly = searchParams.get('closedOnly') === 'true';
     const openOnly = searchParams.get('openOnly') === 'true';
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
     if (clientId) query.clientId = clientId;
     if (stageId) query.stageId = stageId;
     if (ownerId) query.ownerId = ownerId;
+    if (pipelineId) query.pipelineId = pipelineId;
     if (leadTemperature) query.leadTemperature = leadTemperature;
 
     if (search) {
@@ -87,16 +89,28 @@ export async function POST(request: NextRequest) {
     if (!body.contactId) delete body.contactId;
     if (!body.projectId) delete body.projectId;
 
-    // Si no se especifica etapa, usar la por defecto
+    // Si no se especifica etapa, usar la por defecto del pipeline
     if (!body.stageId) {
-      const defaultStage = await PipelineStage.findOne({ isDefault: true, isActive: true });
+      const stageQuery: any = { isActive: true };
+      if (body.pipelineId) {
+        stageQuery.pipelineId = body.pipelineId;
+      }
+
+      const defaultStage = await PipelineStage.findOne({ ...stageQuery, isDefault: true });
       if (defaultStage) {
         body.stageId = defaultStage._id;
+        // Asegurar que el pipelineId esté establecido
+        if (!body.pipelineId && defaultStage.pipelineId) {
+          body.pipelineId = defaultStage.pipelineId;
+        }
       } else {
-        // Si no hay etapa por defecto, usar la primera
-        const firstStage = await PipelineStage.findOne({ isActive: true }).sort({ order: 1 });
+        // Si no hay etapa por defecto, usar la primera del pipeline
+        const firstStage = await PipelineStage.findOne(stageQuery).sort({ order: 1 });
         if (firstStage) {
           body.stageId = firstStage._id;
+          if (!body.pipelineId && firstStage.pipelineId) {
+            body.pipelineId = firstStage.pipelineId;
+          }
         } else {
           return NextResponse.json({ error: 'No hay etapas de pipeline configuradas' }, { status: 400 });
         }
