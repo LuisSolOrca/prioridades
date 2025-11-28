@@ -50,8 +50,10 @@
 18. [Workflows y Automatizaciones](#workflows-y-automatizaciones)
 19. [Secuencias de Email](#secuencias-de-email)
 20. [Campos Personalizados](#campos-personalizados)
-21. [Integración con Canales](#integración-con-canales)
-22. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+21. [Detección de Duplicados](#detección-de-duplicados)
+22. [Cuotas y Metas de Ventas](#cuotas-y-metas-de-ventas)
+23. [Integración con Canales](#integración-con-canales)
+24. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
 
 ---
 
@@ -1410,6 +1412,231 @@ interface ICustomField {
 
 ---
 
+## Detección de Duplicados
+
+**Ubicación:** `/crm/duplicates`
+
+El sistema de detección de duplicados ayuda a mantener datos limpios identificando y fusionando registros duplicados.
+
+### Funcionalidades
+
+- 🔍 **Detección Automática** - Fuzzy matching con algoritmo Levenshtein
+- ⚠️ **Advertencias en Creación** - Modal de alerta al crear registros similares
+- 🔄 **Fusión de Registros** - Merge manual con selección de campos
+- 📊 **Dashboard de Duplicados** - Vista de todos los duplicados potenciales
+
+### Algoritmo de Detección
+
+El sistema utiliza múltiples técnicas para identificar duplicados:
+
+**1. Similitud de Nombres (Levenshtein Distance):**
+```typescript
+// Normalización: quita acentos, sufijos empresariales (S.A., S.C., etc.)
+// Umbral: 80% de similitud
+
+"Empresa ABC S.A. de C.V." → "empresa abc"
+"Empresa ABC, SA"          → "empresa abc"
+// Similitud: 100%
+```
+
+**2. Coincidencia de Email:**
+- Normalización de Gmail (ignorar +tags y puntos)
+- Detección exacta después de normalización
+
+**3. Coincidencia de Teléfono:**
+- Normalización: solo dígitos
+- Manejo de códigos de país
+
+### Campos de Verificación por Entidad
+
+| Entidad | Campos Verificados | Umbral |
+|---------|-------------------|--------|
+| Cliente | name, phone | 80% nombre |
+| Contacto | name, email, phone | Email exacto o 80% nombre |
+
+### Flujo de Detección
+
+```
+Usuario ingresa datos → API verifica duplicados →
+Si duplicados: Mostrar modal de advertencia →
+  - "Usar existente" → Seleccionar registro
+  - "Ignorar" → Crear de todos modos
+  - "Cancelar" → Volver al formulario
+```
+
+### Componente de Advertencia
+
+```tsx
+import DuplicateWarning from '@/components/crm/DuplicateWarning';
+
+// En formulario de creación
+<DuplicateWarning
+  type="client"
+  name={formData.name}
+  phone={formData.phone}
+  onSelect={(id) => router.push(`/crm/clients/${id}`)}
+  onIgnore={() => setDismissed(true)}
+/>
+```
+
+### Hook para Verificación Programática
+
+```tsx
+import { useDuplicateCheck } from '@/components/crm/DuplicateWarning';
+
+const { duplicates, loading, checkDuplicates, hasDuplicates } = useDuplicateCheck('client');
+
+// Verificar antes de guardar
+const handleSubmit = async () => {
+  const result = await checkDuplicates({ name, phone });
+  if (result.hasDuplicates) {
+    // Mostrar confirmación
+  } else {
+    // Proceder con guardado
+  }
+};
+```
+
+### Fusión de Registros (Admin)
+
+Los administradores pueden fusionar duplicados desde `/crm/duplicates`:
+
+1. **Seleccionar registro a conservar** - El registro "master"
+2. **Seleccionar campos a copiar** - Campos del registro eliminado
+3. **Confirmar fusión**:
+   - Deals, contactos y actividades se transfieren
+   - Registro eliminado se marca como `[FUSIONADO]`
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/duplicates/check` | Verificar duplicados antes de crear |
+| GET | `/api/crm/duplicates` | Listar todos los duplicados |
+| POST | `/api/crm/duplicates` | Fusionar dos registros |
+
+**Parámetros de /check:**
+- `type` - 'client' | 'contact'
+- `name` - Nombre a verificar
+- `email` - Email a verificar (contactos)
+- `phone` - Teléfono a verificar
+- `excludeId` - ID a excluir (para edición)
+
+**Respuesta:**
+```typescript
+interface DuplicateCheckResponse {
+  hasDuplicates: boolean;
+  duplicates: {
+    _id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    similarity: number;    // 0-1
+    matchedOn: string[];   // ['name', 'email', 'phone']
+  }[];
+}
+```
+
+---
+
+## Cuotas y Metas de Ventas
+
+**Ubicación:** `/crm/quotas`
+
+El sistema de cuotas permite establecer y dar seguimiento a metas de ventas por vendedor y período.
+
+### Funcionalidades
+
+- 🎯 **Metas por Vendedor** - Cuotas individuales
+- 📅 **Períodos Configurables** - Mensual, trimestral, anual
+- 📊 **Seguimiento de Progreso** - % de cumplimiento en tiempo real
+- 🏆 **Ranking de Vendedores** - Comparativo de rendimiento
+
+### Configuración de Cuotas (Admin)
+
+Los administradores pueden configurar cuotas en `/crm/quotas`:
+
+**Campos de Cuota:**
+
+| Campo | Descripción |
+|-------|-------------|
+| `userId` | Vendedor asignado |
+| `period` | Tipo de período (monthly, quarterly, yearly) |
+| `year` | Año fiscal |
+| `month/quarter` | Mes o trimestre (según período) |
+| `targetAmount` | Monto objetivo |
+| `currency` | Moneda (MXN, USD, EUR) |
+
+### Métricas de Cumplimiento
+
+El sistema calcula automáticamente:
+
+| Métrica | Descripción |
+|---------|-------------|
+| **Logrado** | Suma de deals ganados en el período |
+| **Pipeline** | Valor de deals abiertos |
+| **Proyectado** | Pipeline × probabilidad promedio |
+| **% Cumplimiento** | Logrado / Meta × 100 |
+| **Gap** | Meta - Logrado |
+
+### Estados de Cumplimiento
+
+| Estado | Condición | Color |
+|--------|-----------|-------|
+| Superado | > 100% | Verde |
+| En meta | 80-100% | Azul |
+| En riesgo | 50-80% | Amarillo |
+| Crítico | < 50% | Rojo |
+
+### Vista del Vendedor
+
+Cada vendedor puede ver su cuota actual y progreso en el dashboard:
+
+- 📊 Gráfico de progreso circular
+- 📈 Tendencia histórica
+- 🎯 Deals necesarios para alcanzar meta
+- 📅 Días restantes en el período
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/quotas` | Listar cuotas |
+| POST | `/api/crm/quotas` | Crear cuota (admin) |
+| PUT | `/api/crm/quotas/[id]` | Actualizar cuota (admin) |
+| DELETE | `/api/crm/quotas/[id]` | Eliminar cuota (admin) |
+| GET | `/api/crm/quotas/progress` | Obtener progreso del usuario actual |
+| GET | `/api/crm/quotas/ranking` | Ranking de cumplimiento |
+
+**Parámetros de query:**
+- `userId` - Filtrar por vendedor
+- `period` - Tipo de período
+- `year` - Año
+- `month` - Mes (para mensual)
+- `quarter` - Trimestre (para trimestral)
+
+### Modelo de Datos
+
+```typescript
+interface IQuota {
+  _id: ObjectId;
+  userId: ObjectId;       // ref: User
+  period: 'monthly' | 'quarterly' | 'yearly';
+  year: number;
+  month?: number;         // 1-12 para monthly
+  quarter?: number;       // 1-4 para quarterly
+  targetAmount: number;
+  currency: 'MXN' | 'USD' | 'EUR';
+  achievedAmount: number; // Calculado
+  isActive: boolean;
+  createdBy: ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+---
+
 ## Integración con Canales
 
 El CRM se integra con el sistema de canales existente:
@@ -1432,8 +1659,6 @@ El CRM se integra con el sistema de canales existente:
 ### Limitaciones Actuales
 
 1. **Sin multi-pipeline**: Solo hay un pipeline global
-2. **Sin cuotas de venta**: No hay gestión de metas por vendedor
-3. **Sin duplicados**: No hay detección automática de duplicados
 
 ### Consideraciones Técnicas
 
@@ -1457,9 +1682,7 @@ El CRM se integra con el sistema de canales existente:
 
 ### Próximas Funcionalidades Planificadas
 
-- [ ] **Cuotas de venta** - Metas mensuales/trimestrales/anuales por vendedor
 - [ ] **Multi-pipeline** - Pipelines separados por tipo de negocio
-- [ ] **Duplicados** - Detección y merge de registros
 - [ ] **Campos calculados** - Fórmulas personalizadas
 - [ ] **API pública** - Endpoints para integraciones externas
 - [ ] **Webhooks** - Notificaciones a sistemas externos
@@ -1473,6 +1696,8 @@ El CRM se integra con el sistema de canales existente:
 - [x] **Workflows** - Automatizaciones basadas en triggers y condiciones
 - [x] **Secuencias de Email** - Series de emails automatizados
 - [x] **Campos Personalizados** - Campos custom por entidad
+- [x] **Detección de Duplicados** - Fuzzy matching y fusión de registros
+- [x] **Cuotas de Venta** - Metas por vendedor y período
 
 ---
 
@@ -1506,6 +1731,8 @@ app/
 │   │   └── page.tsx                # Reportes CRM
 │   ├── sequences/
 │   │   └── page.tsx                # Secuencias de email
+│   ├── duplicates/
+│   │   └── page.tsx                # Gestión de duplicados
 │   ├── settings/
 │   │   └── custom-fields/
 │   │       └── page.tsx            # Gestión de campos personalizados
@@ -1559,6 +1786,10 @@ app/
         │   ├── route.ts            # CRUD campos personalizados
         │   └── [id]/
         │       └── route.ts        # Campo individual
+        ├── duplicates/
+        │   ├── route.ts            # Listar y fusionar duplicados
+        │   └── check/
+        │       └── route.ts        # Verificar duplicados
         ├── email-tracking/
         │   └── route.ts            # Estadísticas de tracking
         ├── lead-scoring/
@@ -1592,7 +1823,12 @@ hooks/
 
 components/
 └── crm/
-    └── CustomFieldsRenderer.tsx    # Componente para renderizar campos custom
+    ├── CustomFieldsRenderer.tsx    # Componente para renderizar campos custom
+    └── DuplicateWarning.tsx        # Componente de advertencia de duplicados
+
+lib/
+└── crm/
+    └── duplicateDetection.ts       # Utilidades de detección de duplicados
 ```
 
 ---

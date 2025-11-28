@@ -39,7 +39,8 @@ import {
   DollarSign,
   Clock,
   Package,
-  Send
+  Send,
+  Copy,
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -679,6 +680,12 @@ export default function Navbar() {
                       label="Reportes CRM"
                       active={pathname === '/crm/reports'}
                       onClick={() => handleNavigation('/crm/reports')}
+                    />
+                    <NavButton
+                      icon={<Copy size={20} />}
+                      label="Duplicados"
+                      active={pathname === '/crm/duplicates'}
+                      onClick={() => handleNavigation('/crm/duplicates')}
                     />
                     <NavButton
                       icon={<Settings size={20} />}
