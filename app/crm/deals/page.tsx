@@ -54,7 +54,6 @@ export default function DealsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showNewDealModal, setShowNewDealModal] = useState(false);
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [newDeal, setNewDeal] = useState({
@@ -365,7 +364,7 @@ export default function DealsPage() {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                onClick={() => setSelectedDeal(deal)}
+                                onClick={() => router.push(`/crm/deals/${deal._id}`)}
                                 className={`bg-white dark:bg-gray-700 rounded-lg p-4 mb-2 shadow-sm cursor-pointer hover:shadow-md transition ${
                                   snapshot.isDragging ? 'shadow-lg ring-2 ring-emerald-400' : ''
                                 }`}
@@ -674,78 +673,6 @@ export default function DealsPage() {
         </div>
       )}
 
-      {/* Deal Detail Modal */}
-      {selectedDeal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{selectedDeal.title}</h2>
-              <button
-                onClick={() => setSelectedDeal(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              <div className="flex items-center gap-4">
-                <div
-                  className="px-3 py-1 rounded-full text-white text-sm font-medium"
-                  style={{ backgroundColor: selectedDeal.stageId.color }}
-                >
-                  {selectedDeal.stageId.name}
-                </div>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(selectedDeal.value, selectedDeal.currency)}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Cliente:</span>
-                  <p className="font-medium text-gray-800 dark:text-gray-200">{selectedDeal.clientId?.name}</p>
-                </div>
-                {selectedDeal.contactId && (
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">Contacto:</span>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">
-                      {selectedDeal.contactId.firstName} {selectedDeal.contactId.lastName}
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Responsable:</span>
-                  <p className="font-medium text-gray-800 dark:text-gray-200">{selectedDeal.ownerId?.name}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Probabilidad:</span>
-                  <p className="font-medium text-gray-800 dark:text-gray-200">
-                    {selectedDeal.probability || selectedDeal.stageId.probability}%
-                  </p>
-                </div>
-                {selectedDeal.expectedCloseDate && (
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">Fecha esperada de cierre:</span>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">
-                      {new Date(selectedDeal.expectedCloseDate).toLocaleDateString('es-MX')}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
-                <button
-                  onClick={() => setSelectedDeal(null)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
