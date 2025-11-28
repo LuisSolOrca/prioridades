@@ -17,7 +17,9 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Settings
+  Settings,
+  Package,
+  Upload
 } from 'lucide-react';
 
 interface PipelineStage {
@@ -410,7 +412,7 @@ export default function CRMDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <button
             onClick={() => router.push('/crm/deals')}
             className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition"
@@ -449,6 +451,34 @@ export default function CRMDashboard() {
             <div className="text-left">
               <p className="font-medium text-gray-800 dark:text-gray-100">Clientes</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Gestionar empresas</p>
+            </div>
+            <ArrowRight className="ml-auto text-gray-400" size={20} />
+          </button>
+
+          <button
+            onClick={() => router.push('/crm/products')}
+            className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md transition"
+          >
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg">
+              <Package className="text-orange-600 dark:text-orange-400" size={20} />
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-gray-800 dark:text-gray-100">Productos</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Catálogo</p>
+            </div>
+            <ArrowRight className="ml-auto text-gray-400" size={20} />
+          </button>
+
+          <button
+            onClick={() => router.push('/crm/import')}
+            className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-cyan-300 dark:hover:border-cyan-700 hover:shadow-md transition"
+          >
+            <div className="p-2 bg-cyan-100 dark:bg-cyan-900/50 rounded-lg">
+              <Upload className="text-cyan-600 dark:text-cyan-400" size={20} />
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-gray-800 dark:text-gray-100">Importar</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">CSV/Excel</p>
             </div>
             <ArrowRight className="ml-auto text-gray-400" size={20} />
           </button>
