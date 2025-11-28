@@ -11,7 +11,12 @@ export type Permission =
   | 'viewHistory'
   | 'canReassignPriorities'
   | 'canCreateMilestones'
-  | 'canEditHistoricalPriorities';
+  | 'canEditHistoricalPriorities'
+  // CRM Permissions
+  | 'viewCRM'
+  | 'canManageDeals'
+  | 'canManageContacts'
+  | 'canManagePipelineStages';
 
 /**
  * Verifica si un usuario tiene un permiso específico
@@ -51,6 +56,11 @@ export function hasPermission(session: Session | null, permission: Permission): 
     canReassignPriorities: user.role === 'ADMIN',
     canCreateMilestones: true,
     canEditHistoricalPriorities: false,
+    // CRM Permissions
+    viewCRM: true,
+    canManageDeals: true,
+    canManageContacts: true,
+    canManagePipelineStages: user.role === 'ADMIN',
   };
 
   return defaultPermissions[permission] ?? false;

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import Navbar from '@/components/Navbar';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Plus, Search, Filter, DollarSign, Calendar, User, Building2, X, Loader2 } from 'lucide-react';
 
 interface PipelineStage {
@@ -45,6 +46,7 @@ interface Deal {
 export default function DealsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -70,9 +72,13 @@ export default function DealsPage() {
       router.push('/login');
     }
     if (status === 'authenticated') {
+      if (!hasPermission('viewCRM') || !hasPermission('canManageDeals')) {
+        router.push('/dashboard');
+        return;
+      }
       loadData();
     }
-  }, [status, router]);
+  }, [status, router, hasPermission]);
 
   const loadData = async () => {
     try {

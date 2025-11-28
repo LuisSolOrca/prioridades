@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import PipelineStage from '@/models/PipelineStage';
 import mongoose from 'mongoose';
+import { hasPermission } from '@/lib/permissions';
 
 export async function PUT(
   request: NextRequest,
@@ -15,8 +16,9 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    if ((session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Solo administradores pueden editar etapas' }, { status: 403 });
+    // Verificar permiso para gestionar pipeline stages
+    if (!hasPermission(session, 'canManagePipelineStages')) {
+      return NextResponse.json({ error: 'Sin permiso para editar etapas del pipeline' }, { status: 403 });
     }
 
     await connectDB();
@@ -54,8 +56,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    if ((session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Solo administradores pueden eliminar etapas' }, { status: 403 });
+    // Verificar permiso para gestionar pipeline stages
+    if (!hasPermission(session, 'canManagePipelineStages')) {
+      return NextResponse.json({ error: 'Sin permiso para eliminar etapas del pipeline' }, { status: 403 });
     }
 
     await connectDB();

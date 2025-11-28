@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Contact from '@/models/Contact';
 import Client from '@/models/Client';
+import { hasPermission } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,11 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar permiso para ver CRM
+    if (!hasPermission(session, 'viewCRM')) {
+      return NextResponse.json({ error: 'Sin permiso para ver CRM' }, { status: 403 });
     }
 
     await connectDB();
@@ -57,6 +63,11 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar permiso para gestionar contactos
+    if (!hasPermission(session, 'canManageContacts')) {
+      return NextResponse.json({ error: 'Sin permiso para gestionar contactos' }, { status: 403 });
     }
 
     await connectDB();

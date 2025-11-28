@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   Handshake,
   DollarSign,
@@ -50,6 +51,7 @@ interface Activity {
 export default function CRMDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -62,9 +64,13 @@ export default function CRMDashboard() {
       router.push('/login');
     }
     if (status === 'authenticated') {
+      if (!hasPermission('viewCRM')) {
+        router.push('/dashboard');
+        return;
+      }
       loadData();
     }
-  }, [status, router]);
+  }, [status, router, hasPermission]);
 
   const loadData = async () => {
     try {

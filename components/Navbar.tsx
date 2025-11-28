@@ -295,17 +295,19 @@ export default function Navbar() {
                 >
                   <Hash size={22} />
                 </button>
-                <button
-                  onClick={() => handleNavigation('/crm')}
-                  className={`w-full flex justify-center p-3 rounded-lg transition ${
-                    pathname?.startsWith('/crm')
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title="CRM"
-                >
-                  <Handshake size={22} />
-                </button>
+                {hasPermission('viewCRM') && (
+                  <button
+                    onClick={() => handleNavigation('/crm')}
+                    className={`w-full flex justify-center p-3 rounded-lg transition ${
+                      pathname?.startsWith('/crm')
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title="CRM"
+                  >
+                    <Handshake size={22} />
+                  </button>
+                )}
                 {hasPermission('viewAutomations') && (
                   <button
                     onClick={() => handleNavigation('/workflows')}
@@ -592,29 +594,37 @@ export default function Navbar() {
                 />
 
                 {/* CRM Section */}
-                <div className="pt-4 pb-2">
-                  <p className="text-xs font-semibold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider px-4">
-                    CRM
-                  </p>
-                </div>
-                <NavButton
-                  icon={<Handshake size={20} />}
-                  label="Dashboard CRM"
-                  active={pathname === '/crm'}
-                  onClick={() => handleNavigation('/crm')}
-                />
-                <NavButton
-                  icon={<DollarSign size={20} />}
-                  label="Pipeline de Ventas"
-                  active={pathname === '/crm/deals'}
-                  onClick={() => handleNavigation('/crm/deals')}
-                />
-                <NavButton
-                  icon={<UserCircle size={20} />}
-                  label="Contactos"
-                  active={pathname === '/crm/contacts'}
-                  onClick={() => handleNavigation('/crm/contacts')}
-                />
+                {hasPermission('viewCRM') && (
+                  <>
+                    <div className="pt-4 pb-2">
+                      <p className="text-xs font-semibold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider px-4">
+                        CRM
+                      </p>
+                    </div>
+                    <NavButton
+                      icon={<Handshake size={20} />}
+                      label="Dashboard CRM"
+                      active={pathname === '/crm'}
+                      onClick={() => handleNavigation('/crm')}
+                    />
+                    {hasPermission('canManageDeals') && (
+                      <NavButton
+                        icon={<DollarSign size={20} />}
+                        label="Pipeline de Ventas"
+                        active={pathname === '/crm/deals'}
+                        onClick={() => handleNavigation('/crm/deals')}
+                      />
+                    )}
+                    {hasPermission('canManageContacts') && (
+                      <NavButton
+                        icon={<UserCircle size={20} />}
+                        label="Contactos"
+                        active={pathname === '/crm/contacts'}
+                        onClick={() => handleNavigation('/crm/contacts')}
+                      />
+                    )}
+                  </>
+                )}
 
                 {hasPermission('viewAutomations') && (
                   <NavButton

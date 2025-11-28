@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
 import mongoose from 'mongoose';
+import { hasPermission } from '@/lib/permissions';
 
 export async function GET(
   request: NextRequest,
@@ -13,6 +14,11 @@ export async function GET(
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar permiso para ver CRM
+    if (!hasPermission(session, 'viewCRM')) {
+      return NextResponse.json({ error: 'Sin permiso para ver CRM' }, { status: 403 });
     }
 
     await connectDB();
@@ -47,6 +53,11 @@ export async function PUT(
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar permiso para usar CRM
+    if (!hasPermission(session, 'viewCRM')) {
+      return NextResponse.json({ error: 'Sin permiso para usar CRM' }, { status: 403 });
     }
 
     await connectDB();
@@ -92,6 +103,11 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar permiso para usar CRM
+    if (!hasPermission(session, 'viewCRM')) {
+      return NextResponse.json({ error: 'Sin permiso para usar CRM' }, { status: 403 });
     }
 
     await connectDB();

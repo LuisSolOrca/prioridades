@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { usePermissions } from '@/hooks/usePermissions';
 import {
   UserCircle,
   Plus,
@@ -42,6 +43,7 @@ interface Contact {
 export default function ContactsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermissions();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,9 +70,13 @@ export default function ContactsPage() {
       router.push('/login');
     }
     if (status === 'authenticated') {
+      if (!hasPermission('viewCRM') || !hasPermission('canManageContacts')) {
+        router.push('/dashboard');
+        return;
+      }
       loadData();
     }
-  }, [status, router]);
+  }, [status, router, hasPermission]);
 
   const loadData = async () => {
     try {

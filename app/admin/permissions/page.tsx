@@ -26,6 +26,11 @@ interface User {
     canEditHistoricalPriorities: boolean;
     canManageProjects: boolean;
     canManageKPIs: boolean;
+    // CRM Permissions
+    viewCRM: boolean;
+    canManageDeals: boolean;
+    canManageContacts: boolean;
+    canManagePipelineStages: boolean;
   };
 }
 
@@ -71,6 +76,11 @@ export default function PermissionsManagementPage() {
           canEditHistoricalPriorities: user.role === 'ADMIN',
           canManageProjects: user.role === 'ADMIN',
           canManageKPIs: user.role === 'ADMIN',
+          // CRM Permissions
+          viewCRM: true,
+          canManageDeals: true,
+          canManageContacts: true,
+          canManagePipelineStages: user.role === 'ADMIN',
         }
       }));
 
@@ -145,6 +155,11 @@ export default function PermissionsManagementPage() {
     canEditHistoricalPriorities: 'Editar Prioridades en Historial',
     canManageProjects: 'Gestionar Proyectos',
     canManageKPIs: 'Gestionar KPIs',
+    // CRM Permissions
+    viewCRM: 'Ver CRM',
+    canManageDeals: 'Gestionar Deals',
+    canManageContacts: 'Gestionar Contactos',
+    canManagePipelineStages: 'Configurar Pipeline',
   };
 
   return (
@@ -384,6 +399,82 @@ export default function PermissionsManagementPage() {
                         </span>
                         <span className="text-xs text-gray-600 dark:text-gray-400">
                           Permite al usuario acceder a la gestión de KPIs: crear, editar, revisar, aprobar y activar indicadores
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Permisos CRM */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                    🤝 CRM - Gestión de Clientes
+                  </h3>
+                  <div className="space-y-3">
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.viewCRM ?? true}
+                        onChange={(e) => handlePermissionChange('viewCRM', e.target.checked)}
+                        className="w-5 h-5 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.viewCRM}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite ver el Dashboard CRM y acceder al módulo de gestión de clientes
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canManageDeals ?? true}
+                        onChange={(e) => handlePermissionChange('canManageDeals', e.target.checked)}
+                        className="w-5 h-5 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canManageDeals}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite crear, editar y mover deals en el pipeline de ventas
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canManageContacts ?? true}
+                        onChange={(e) => handlePermissionChange('canManageContacts', e.target.checked)}
+                        className="w-5 h-5 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canManageContacts}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite crear, editar y eliminar contactos de clientes
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 cursor-pointer hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canManagePipelineStages ?? (selectedUser.role === 'ADMIN')}
+                        onChange={(e) => handlePermissionChange('canManagePipelineStages', e.target.checked)}
+                        className="w-5 h-5 text-yellow-600 rounded focus:ring-2 focus:ring-yellow-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canManagePipelineStages}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite crear, editar y eliminar etapas del pipeline (configuración avanzada)
                         </span>
                       </div>
                     </label>

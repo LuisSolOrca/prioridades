@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import PipelineStage, { DEFAULT_PIPELINE_STAGES } from '@/models/PipelineStage';
+import { hasPermission } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,11 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Verificar permiso para ver CRM
+    if (!hasPermission(session, 'viewCRM')) {
+      return NextResponse.json({ error: 'Sin permiso para ver CRM' }, { status: 403 });
     }
 
     await connectDB();
@@ -47,9 +53,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Solo admin puede crear etapas
-    if ((session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Solo administradores pueden crear etapas' }, { status: 403 });
+    // Verificar permiso para gestionar pipeline stages
+    if (!hasPermission(session, 'canManagePipelineStages')) {
+      return NextResponse.json({ error: 'Sin permiso para gestionar etapas del pipeline' }, { status: 403 });
     }
 
     await connectDB();
@@ -81,8 +87,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    if ((session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Solo administradores pueden reordenar etapas' }, { status: 403 });
+    // Verificar permiso para gestionar pipeline stages
+    if (!hasPermission(session, 'canManagePipelineStages')) {
+      return NextResponse.json({ error: 'Sin permiso para reordenar etapas del pipeline' }, { status: 403 });
     }
 
     await connectDB();
