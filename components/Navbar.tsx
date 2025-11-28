@@ -656,6 +656,12 @@ export default function Navbar() {
                       onClick={() => handleNavigation('/crm/workflows')}
                     />
                     <NavButton
+                      icon={<Mail size={20} />}
+                      label="Email Tracking"
+                      active={pathname?.startsWith('/crm/email-tracking') || false}
+                      onClick={() => handleNavigation('/crm/email-tracking')}
+                    />
+                    <NavButton
                       icon={<BarChart3 size={20} />}
                       label="Reportes CRM"
                       active={pathname === '/crm/reports'}
