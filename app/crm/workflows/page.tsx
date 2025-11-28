@@ -20,7 +20,7 @@ import {
   FileText,
   RefreshCw,
 } from 'lucide-react';
-import { TRIGGER_LABELS, ACTION_LABELS } from '@/models/CRMWorkflow';
+import { TRIGGER_LABELS, ACTION_LABELS } from '@/lib/crm/workflowConstants';
 
 interface Workflow {
   _id: string;

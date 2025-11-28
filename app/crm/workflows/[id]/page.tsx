@@ -46,7 +46,7 @@ import {
   OPERATOR_LABELS,
   CRMTriggerType,
   CRMActionType,
-} from '@/models/CRMWorkflow';
+} from '@/lib/crm/workflowConstants';
 
 interface Workflow {
   _id: string;
