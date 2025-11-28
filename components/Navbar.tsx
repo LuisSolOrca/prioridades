@@ -623,6 +623,12 @@ export default function Navbar() {
                         onClick={() => handleNavigation('/crm/contacts')}
                       />
                     )}
+                    <NavButton
+                      icon={<Building2 size={20} />}
+                      label="Clientes"
+                      active={pathname?.startsWith('/crm/clients') || false}
+                      onClick={() => handleNavigation('/crm/clients')}
+                    />
                   </>
                 )}
 
