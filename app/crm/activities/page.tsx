@@ -57,7 +57,7 @@ const ACTIVITY_CONFIG = {
 export default function ActivitiesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { permissions } = usePermissions();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -70,14 +70,15 @@ export default function ActivitiesPage() {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
-    if (status === 'authenticated') {
+    // Wait for permissions to load before checking access
+    if (status === 'authenticated' && !permissionsLoading) {
       if (!permissions.viewCRM) {
         router.push('/dashboard');
         return;
       }
       loadActivities();
     }
-  }, [status, router, permissions.viewCRM]);
+  }, [status, router, permissions.viewCRM, permissionsLoading]);
 
   const loadActivities = async () => {
     try {
@@ -149,7 +150,7 @@ export default function ActivitiesPage() {
     return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
   };
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || permissionsLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Loader2 className="animate-spin" size={40} />

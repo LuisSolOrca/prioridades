@@ -106,7 +106,7 @@ export default function DealDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
-  const { permissions } = usePermissions();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
   const dealId = params.id as string;
 
   const [deal, setDeal] = useState<Deal | null>(null);
@@ -148,14 +148,15 @@ export default function DealDetailPage() {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
-    if (status === 'authenticated') {
+    // Wait for permissions to load before checking access
+    if (status === 'authenticated' && !permissionsLoading) {
       if (!permissions.viewCRM || !permissions.canManageDeals) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, router, permissions.viewCRM, permissions.canManageDeals, dealId]);
+  }, [status, router, permissions.viewCRM, permissions.canManageDeals, permissionsLoading, dealId]);
 
   const loadData = async () => {
     try {
@@ -358,7 +359,7 @@ export default function DealDetailPage() {
   // Calculate weighted value
   const weightedValue = deal ? deal.value * ((deal.probability ?? deal.stageId?.probability ?? 0) / 100) : 0;
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || permissionsLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Loader2 className="animate-spin" size={40} />

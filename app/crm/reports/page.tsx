@@ -86,7 +86,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function CRMReportsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { permissions } = usePermissions();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [data, setData] = useState<ReportData | null>(null);
@@ -115,7 +115,8 @@ export default function CRMReportsPage() {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
-    if (status === 'authenticated') {
+    // Wait for permissions to load before checking access
+    if (status === 'authenticated' && !permissionsLoading) {
       if (!permissions.viewCRM) {
         router.push('/dashboard');
         return;
@@ -128,7 +129,7 @@ export default function CRMReportsPage() {
       setEndDate(end.toISOString().split('T')[0]);
       loadInitialData();
     }
-  }, [status, router, permissions.viewCRM]);
+  }, [status, router, permissions.viewCRM, permissionsLoading]);
 
   const loadInitialData = async () => {
     try {
@@ -168,7 +169,7 @@ export default function CRMReportsPage() {
     if (status === 'authenticated' && permissions.viewCRM && startDate && endDate) {
       loadReport();
     }
-  }, [status, permissions.viewCRM, loadReport, startDate, endDate]);
+  }, [status, permissions.viewCRM, loadReport, startDate, endDate, selectedOwner, selectedClient]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -407,7 +408,7 @@ export default function CRMReportsPage() {
     }
   };
 
-  if (status === 'loading' || (loading && !data)) {
+  if (status === 'loading' || permissionsLoading || (loading && !data)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Loader2 className="animate-spin" size={40} />
@@ -624,16 +625,22 @@ export default function CRMReportsPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Bar Chart */}
                     <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.dealsByStage.filter(s => !s.isClosed)} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis type="number" tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                          <YAxis type="category" dataKey="name" width={100} />
-                          <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                          <Bar dataKey="totalValue" name="Valor Total" fill="#3b82f6" />
-                          <Bar dataKey="weightedValue" name="Valor Ponderado" fill="#10b981" />
-                        </BarChart>
-                      </ResponsiveContainer>
+                      {data.dealsByStage.filter(s => !s.isClosed).length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={data.dealsByStage.filter(s => !s.isClosed)} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                            <YAxis type="category" dataKey="name" width={100} />
+                            <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                            <Bar dataKey="totalValue" name="Valor Total" fill="#3b82f6" />
+                            <Bar dataKey="weightedValue" name="Valor Ponderado" fill="#10b981" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                          No hay datos de pipeline abierto para mostrar
+                        </div>
+                      )}
                     </div>
 
                     {/* Table */}
@@ -689,21 +696,27 @@ export default function CRMReportsPage() {
               {sections.trend && (
                 <div className="p-4 pt-0">
                   <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={data.monthlyTrend}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis yAxisId="left" tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                        <YAxis yAxisId="right" orientation="right" />
-                        <Tooltip formatter={(value: any, name: string) =>
-                          name.includes('Value') ? formatCurrency(value) : value
-                        } />
-                        <Legend />
-                        <Area yAxisId="left" type="monotone" dataKey="wonValue" name="Valor Ganado" fill="#10b981" stroke="#10b981" fillOpacity={0.3} />
-                        <Line yAxisId="right" type="monotone" dataKey="won" name="Deals Ganados" stroke="#3b82f6" strokeWidth={2} />
-                        <Line yAxisId="right" type="monotone" dataKey="created" name="Deals Creados" stroke="#f59e0b" strokeWidth={2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    {data.monthlyTrend.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={data.monthlyTrend}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis yAxisId="left" tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                          <YAxis yAxisId="right" orientation="right" />
+                          <Tooltip formatter={(value: any, name: string) =>
+                            name.includes('Value') ? formatCurrency(value) : value
+                          } />
+                          <Legend />
+                          <Area yAxisId="left" type="monotone" dataKey="wonValue" name="Valor Ganado" fill="#10b981" stroke="#10b981" fillOpacity={0.3} />
+                          <Line yAxisId="right" type="monotone" dataKey="won" name="Deals Ganados" stroke="#3b82f6" strokeWidth={2} />
+                          <Line yAxisId="right" type="monotone" dataKey="created" name="Deals Creados" stroke="#f59e0b" strokeWidth={2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                        No hay datos de tendencia para mostrar
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -836,24 +849,30 @@ export default function CRMReportsPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Pie Chart */}
                     <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={data.dealsByClient.slice(0, 8)}
-                            dataKey="totalValue"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={100}
-                            label={({ name, percent }) => `${(name || '').substring(0, 10)}... (${((percent || 0) * 100).toFixed(0)}%)`}
-                          >
-                            {data.dealsByClient.slice(0, 8).map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      {data.dealsByClient.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={data.dealsByClient.slice(0, 8)}
+                              dataKey="totalValue"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={100}
+                              label={({ name, percent }) => `${(name || '').substring(0, 10)}... (${((percent || 0) * 100).toFixed(0)}%)`}
+                            >
+                              {data.dealsByClient.slice(0, 8).map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                          No hay datos de clientes para mostrar
+                        </div>
+                      )}
                     </div>
 
                     {/* Table */}

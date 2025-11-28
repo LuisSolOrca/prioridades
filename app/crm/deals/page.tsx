@@ -43,14 +43,21 @@ interface Deal {
   ownerId: { _id: string; name: string };
 }
 
+interface User {
+  _id: string;
+  name: string;
+  isActive: boolean;
+}
+
 export default function DealsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { permissions } = usePermissions();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showNewDealModal, setShowNewDealModal] = useState(false);
@@ -62,6 +69,7 @@ export default function DealsPage() {
     currency: 'MXN',
     clientId: '',
     contactId: '',
+    ownerId: '',
     expectedCloseDate: '',
     description: '',
   });
@@ -78,31 +86,35 @@ export default function DealsPage() {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
-    if (status === 'authenticated') {
+    // Wait for permissions to load before checking access
+    if (status === 'authenticated' && !permissionsLoading) {
       if (!permissions.viewCRM || !permissions.canManageDeals) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, router, permissions.viewCRM, permissions.canManageDeals]);
+  }, [status, router, permissions.viewCRM, permissions.canManageDeals, permissionsLoading]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [stagesRes, dealsRes, clientsRes] = await Promise.all([
+      const [stagesRes, dealsRes, clientsRes, usersRes] = await Promise.all([
         fetch('/api/crm/pipeline-stages?activeOnly=true'),
         fetch('/api/crm/deals'),
         fetch('/api/clients?activeOnly=true'),
+        fetch('/api/users'),
       ]);
 
       const stagesData = await stagesRes.json();
       const dealsData = await dealsRes.json();
       const clientsData = await clientsRes.json();
+      const usersData = await usersRes.json();
 
       setStages(stagesData.sort((a: PipelineStage, b: PipelineStage) => a.order - b.order));
       setDeals(dealsData);
       setClients(Array.isArray(clientsData) ? clientsData : []);
+      setUsers(Array.isArray(usersData) ? usersData.filter((u: User) => u.isActive) : []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -228,6 +240,7 @@ export default function DealsPage() {
         currency: 'MXN',
         clientId: '',
         contactId: '',
+        ownerId: '',
         expectedCloseDate: '',
         description: '',
       });
@@ -269,7 +282,7 @@ export default function DealsPage() {
     .filter(d => !d.stageId.isClosed)
     .reduce((sum, deal) => sum + (deal.value * (deal.probability || deal.stageId.probability) / 100), 0);
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || permissionsLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -625,6 +638,25 @@ export default function DealsPage() {
                   )}
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Vendedor/Responsable
+                </label>
+                <select
+                  value={newDeal.ownerId}
+                  onChange={(e) => setNewDeal({ ...newDeal, ownerId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Usuario actual (por defecto)</option>
+                  {users.map(user => (
+                    <option key={user._id} value={user._id}>{user.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Si no seleccionas uno, se asignará automáticamente al usuario que crea el deal
+                </p>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

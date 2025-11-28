@@ -43,7 +43,8 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
 };
 
 export function usePermissions() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const isLoading = status === 'loading';
   const user = session?.user as any;
 
   // Si es admin, tiene todos los permisos por defecto
@@ -72,5 +73,6 @@ export function usePermissions() {
     permissions,
     hasPermission,
     isAdmin,
+    isLoading,
   };
 }

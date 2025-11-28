@@ -52,7 +52,7 @@ interface Activity {
 export default function CRMDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { permissions } = usePermissions();
+  const { permissions, isLoading: permissionsLoading } = usePermissions();
   const [loading, setLoading] = useState(true);
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -64,14 +64,15 @@ export default function CRMDashboard() {
     if (status === 'unauthenticated') {
       router.push('/login');
     }
-    if (status === 'authenticated') {
+    // Wait for permissions to load before checking access
+    if (status === 'authenticated' && !permissionsLoading) {
       if (!permissions.viewCRM) {
         router.push('/dashboard');
         return;
       }
       loadData();
     }
-  }, [status, router, permissions.viewCRM]);
+  }, [status, router, permissions.viewCRM, permissionsLoading]);
 
   const loadData = async () => {
     try {
@@ -148,7 +149,7 @@ export default function CRMDashboard() {
     channel_message: '💬',
   };
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || permissionsLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
