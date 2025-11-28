@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import {
   Mail,
@@ -96,8 +96,9 @@ const LINKEDIN_ACTIONS = [
   { value: 'view_profile', label: 'Ver perfil' },
 ];
 
-export default function SequenceBuilderPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function SequenceBuilderPage() {
+  const params = useParams();
+  const id = params.id as string;
   const { data: session } = useSession();
   const router = useRouter();
   const isNew = id === 'new';

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import ReactFlow, {
   Node,
   Edge,
@@ -121,8 +121,9 @@ const nodeTypes = {
   action: ActionNode,
 };
 
-export default function WorkflowDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function WorkflowDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const { data: session } = useSession();
   const router = useRouter();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
