@@ -650,6 +650,12 @@ export default function Navbar() {
                       onClick={() => handleNavigation('/crm/quotas')}
                     />
                     <NavButton
+                      icon={<Zap size={20} />}
+                      label="Workflows"
+                      active={pathname?.startsWith('/crm/workflows') || false}
+                      onClick={() => handleNavigation('/crm/workflows')}
+                    />
+                    <NavButton
                       icon={<BarChart3 size={20} />}
                       label="Reportes CRM"
                       active={pathname === '/crm/reports'}

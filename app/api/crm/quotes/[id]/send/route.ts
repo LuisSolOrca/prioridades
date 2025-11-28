@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Quote from '@/models/Quote';
 import { hasPermission } from '@/lib/permissions';
 import nodemailer from 'nodemailer';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -194,10 +195,21 @@ export async function POST(
     const info = await transporter.sendMail(mailOptions);
 
     // Actualizar estado de la cotización
-    await Quote.findByIdAndUpdate(id, {
+    const updatedQuote = await Quote.findByIdAndUpdate(id, {
       status: 'sent',
       sentAt: new Date(),
       sentTo: toEmail,
+    }, { new: true });
+
+    // Disparar workflow de quote_sent
+    const userId = (session.user as any).id;
+    const quoteData = (updatedQuote?.toJSON?.() || updatedQuote || {}) as Record<string, any>;
+    triggerWorkflowsAsync('quote_sent', {
+      entityType: 'quote',
+      entityId: id,
+      entityName: quote.quoteNumber,
+      newData: quoteData,
+      userId,
     });
 
     return NextResponse.json({

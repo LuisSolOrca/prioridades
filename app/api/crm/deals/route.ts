@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Deal from '@/models/Deal';
 import PipelineStage from '@/models/PipelineStage';
 import { hasPermission } from '@/lib/permissions';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,6 +120,16 @@ export async function POST(request: NextRequest) {
       .populate('stageId', 'name color probability isClosed isWon order')
       .populate('ownerId', 'name email')
       .populate('createdBy', 'name');
+
+    // Disparar workflow de deal_created
+    const dealData = (populatedDeal?.toJSON?.() || populatedDeal || {}) as Record<string, any>;
+    triggerWorkflowsAsync('deal_created', {
+      entityType: 'deal',
+      entityId: deal._id,
+      entityName: deal.title,
+      newData: dealData,
+      userId: userId,
+    });
 
     return NextResponse.json(populatedDeal, { status: 201 });
   } catch (error: any) {

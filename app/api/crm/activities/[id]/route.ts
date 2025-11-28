@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
 import { hasPermission } from '@/lib/permissions';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,14 @@ export async function PUT(
     await connectDB();
     const { id } = await params;
     const body = await request.json();
+    const userId = (session.user as any).id;
+
+    // Obtener actividad actual para comparar cambios
+    const currentActivity = await Activity.findById(id);
+    if (!currentActivity) {
+      return NextResponse.json({ error: 'Actividad no encontrada' }, { status: 404 });
+    }
+    const wasCompleted = currentActivity.isCompleted;
 
     // Si se marca como completado, agregar fecha de completado
     if (body.isCompleted && !body.completedAt) {
@@ -80,6 +89,18 @@ export async function PUT(
 
     if (!activity) {
       return NextResponse.json({ error: 'Actividad no encontrada' }, { status: 404 });
+    }
+
+    // Si es una tarea y se acaba de completar, disparar task_completed
+    if (currentActivity.type === 'task' && !wasCompleted && body.isCompleted) {
+      triggerWorkflowsAsync('task_completed', {
+        entityType: 'activity',
+        entityId: id,
+        entityName: activity.title,
+        previousData: currentActivity.toObject(),
+        newData: activity,
+        userId,
+      });
     }
 
     return NextResponse.json(activity);

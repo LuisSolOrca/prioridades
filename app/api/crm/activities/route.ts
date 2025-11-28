@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
 import { hasPermission } from '@/lib/permissions';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,6 +97,27 @@ export async function POST(request: NextRequest) {
       .populate('dealId', 'title value')
       .populate('createdBy', 'name')
       .populate('assignedTo', 'name');
+
+    // Disparar workflow de activity_created
+    const activityData = populatedActivity?.toJSON?.() || populatedActivity || {};
+    triggerWorkflowsAsync('activity_created', {
+      entityType: 'activity',
+      entityId: activity._id,
+      entityName: activity.title,
+      newData: activityData as Record<string, any>,
+      userId,
+    });
+
+    // Si es una tarea, también disparar task_created
+    if (activity.type === 'task') {
+      triggerWorkflowsAsync('task_created', {
+        entityType: 'activity',
+        entityId: activity._id,
+        entityName: activity.title,
+        newData: activityData as Record<string, any>,
+        userId,
+      });
+    }
 
     return NextResponse.json(populatedActivity, { status: 201 });
   } catch (error: any) {

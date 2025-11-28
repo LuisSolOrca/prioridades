@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Contact from '@/models/Contact';
 import mongoose from 'mongoose';
 import { hasPermission } from '@/lib/permissions';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export async function GET(
   request: NextRequest,
@@ -64,6 +65,14 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const userId = (session.user as any).id;
+
+    // Obtener contacto actual para comparar cambios
+    const currentContact = await Contact.findById(params.id);
+    if (!currentContact) {
+      return NextResponse.json({ error: 'Contacto no encontrado' }, { status: 404 });
+    }
+    const previousData = currentContact.toObject();
 
     const contact = await Contact.findByIdAndUpdate(
       params.id,
@@ -76,6 +85,17 @@ export async function PUT(
     if (!contact) {
       return NextResponse.json({ error: 'Contacto no encontrado' }, { status: 404 });
     }
+
+    // Disparar workflow de contact_updated
+    triggerWorkflowsAsync('contact_updated', {
+      entityType: 'contact',
+      entityId: params.id,
+      entityName: `${contact.firstName} ${contact.lastName}`,
+      previousData,
+      newData: contact.toJSON?.() || contact,
+      changedFields: Object.keys(body),
+      userId,
+    });
 
     return NextResponse.json(contact);
   } catch (error: any) {

@@ -7,6 +7,7 @@ import PipelineStage from '@/models/PipelineStage';
 import Activity from '@/models/Activity';
 import mongoose from 'mongoose';
 import { hasPermission } from '@/lib/permissions';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export async function GET(
   request: NextRequest,
@@ -123,6 +124,78 @@ export async function PUT(
       .populate('stageId', 'name color probability isClosed isWon order')
       .populate('ownerId', 'name email')
       .populate('createdBy', 'name');
+
+    // Determinar qué triggers disparar
+    const changedFields: string[] = [];
+    const previousData = currentDeal.toObject();
+    const newData = (deal?.toJSON?.() || deal || {}) as Record<string, any>;
+
+    // Detectar cambios
+    if (body.stageId && body.stageId !== currentDeal.stageId._id.toString()) {
+      changedFields.push('stageId');
+
+      // Disparar deal_stage_changed
+      triggerWorkflowsAsync('deal_stage_changed', {
+        entityType: 'deal',
+        entityId: params.id,
+        entityName: deal?.title,
+        previousData,
+        newData,
+        changedFields,
+        userId,
+      });
+
+      // Si la nueva etapa es ganadora, disparar deal_won
+      const newStage = await PipelineStage.findById(body.stageId);
+      if (newStage?.isWon) {
+        triggerWorkflowsAsync('deal_won', {
+          entityType: 'deal',
+          entityId: params.id,
+          entityName: deal?.title,
+          previousData,
+          newData,
+          userId,
+        });
+      }
+      // Si la nueva etapa es cerrada pero no ganadora (perdido)
+      else if (newStage?.isClosed && !newStage?.isWon) {
+        triggerWorkflowsAsync('deal_lost', {
+          entityType: 'deal',
+          entityId: params.id,
+          entityName: deal?.title,
+          previousData,
+          newData,
+          userId,
+        });
+      }
+    }
+
+    // Detectar cambio de valor
+    if (body.value !== undefined && body.value !== currentDeal.value) {
+      changedFields.push('value');
+      triggerWorkflowsAsync('deal_value_changed', {
+        entityType: 'deal',
+        entityId: params.id,
+        entityName: deal?.title,
+        previousData,
+        newData,
+        changedFields,
+        userId,
+      });
+    }
+
+    // Siempre disparar deal_updated si hubo cambios
+    if (Object.keys(body).length > 0) {
+      triggerWorkflowsAsync('deal_updated', {
+        entityType: 'deal',
+        entityId: params.id,
+        entityName: deal?.title,
+        previousData,
+        newData,
+        changedFields,
+        userId,
+      });
+    }
 
     return NextResponse.json(deal);
   } catch (error: any) {

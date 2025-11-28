@@ -1,0 +1,608 @@
+import mongoose from 'mongoose';
+import CRMWorkflow, {
+  ICRMWorkflow,
+  ICRMWorkflowCondition,
+  ICRMWorkflowAction,
+  CRMTriggerType,
+  ConditionOperator
+} from '@/models/CRMWorkflow';
+import CRMWorkflowExecution, { IActionLog, ExecutionStatus } from '@/models/CRMWorkflowExecution';
+import Deal from '@/models/Deal';
+import Contact from '@/models/Contact';
+import Client from '@/models/Client';
+import Activity from '@/models/Activity';
+import Notification from '@/models/Notification';
+import User from '@/models/User';
+
+export interface TriggerContext {
+  entityType: 'deal' | 'contact' | 'client' | 'activity' | 'quote';
+  entityId: mongoose.Types.ObjectId | string;
+  entityName?: string;
+  previousData?: Record<string, any>;
+  newData?: Record<string, any>;
+  changedFields?: string[];
+  userId?: string;
+}
+
+// Evaluar una condición individual
+function evaluateCondition(
+  condition: ICRMWorkflowCondition,
+  data: Record<string, any>
+): boolean {
+  const fieldValue = getNestedValue(data, condition.field);
+  const conditionValue = condition.value;
+
+  switch (condition.operator) {
+    case 'equals':
+      return fieldValue === conditionValue;
+    case 'not_equals':
+      return fieldValue !== conditionValue;
+    case 'greater_than':
+      return Number(fieldValue) > Number(conditionValue);
+    case 'less_than':
+      return Number(fieldValue) < Number(conditionValue);
+    case 'greater_or_equal':
+      return Number(fieldValue) >= Number(conditionValue);
+    case 'less_or_equal':
+      return Number(fieldValue) <= Number(conditionValue);
+    case 'contains':
+      return String(fieldValue).toLowerCase().includes(String(conditionValue).toLowerCase());
+    case 'not_contains':
+      return !String(fieldValue).toLowerCase().includes(String(conditionValue).toLowerCase());
+    case 'starts_with':
+      return String(fieldValue).toLowerCase().startsWith(String(conditionValue).toLowerCase());
+    case 'ends_with':
+      return String(fieldValue).toLowerCase().endsWith(String(conditionValue).toLowerCase());
+    case 'is_empty':
+      return fieldValue === null || fieldValue === undefined || fieldValue === '';
+    case 'is_not_empty':
+      return fieldValue !== null && fieldValue !== undefined && fieldValue !== '';
+    case 'in_list':
+      return Array.isArray(conditionValue) && conditionValue.includes(fieldValue);
+    case 'not_in_list':
+      return Array.isArray(conditionValue) && !conditionValue.includes(fieldValue);
+    default:
+      return false;
+  }
+}
+
+// Obtener valor anidado de un objeto (ej: "deal.value")
+function getNestedValue(obj: Record<string, any>, path: string): any {
+  return path.split('.').reduce((current, key) => current?.[key], obj);
+}
+
+// Evaluar todas las condiciones de un workflow
+function evaluateConditions(
+  conditions: ICRMWorkflowCondition[],
+  data: Record<string, any>
+): boolean {
+  if (!conditions || conditions.length === 0) return true;
+
+  let result = evaluateCondition(conditions[0], data);
+
+  for (let i = 1; i < conditions.length; i++) {
+    const prevCondition = conditions[i - 1];
+    const currentResult = evaluateCondition(conditions[i], data);
+
+    if (prevCondition.logicalOperator === 'OR') {
+      result = result || currentResult;
+    } else {
+      result = result && currentResult;
+    }
+  }
+
+  return result;
+}
+
+// Reemplazar variables en texto ({{deal.title}}, etc.)
+function replaceVariables(text: string, context: Record<string, any>): string {
+  return text.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+    const value = getNestedValue(context, path.trim());
+    return value !== undefined ? String(value) : match;
+  });
+}
+
+// Ejecutar una acción individual
+async function executeAction(
+  action: ICRMWorkflowAction,
+  context: Record<string, any>,
+  workflowId: mongoose.Types.ObjectId
+): Promise<{ success: boolean; result?: any; error?: string }> {
+  const config = action.config;
+
+  try {
+    switch (action.type) {
+      case 'send_notification': {
+        let recipientIds: string[] = [];
+
+        if (config.recipientType === 'owner' && context.deal?.ownerId) {
+          recipientIds = [context.deal.ownerId.toString()];
+        } else if (config.recipientType === 'admin') {
+          const admins = await User.find({ role: 'ADMIN', isActive: true }).select('_id');
+          recipientIds = admins.map(a => a._id.toString());
+        } else if (config.recipientType === 'specific_user' && config.recipientId) {
+          recipientIds = [config.recipientId];
+        } else if (config.recipientType === 'all_sales') {
+          const salesUsers = await User.find({ isActive: true }).select('_id');
+          recipientIds = salesUsers.map(u => u._id.toString());
+        }
+
+        const message = replaceVariables(config.message || '', context);
+
+        for (const recipientId of recipientIds) {
+          await Notification.create({
+            userId: recipientId,
+            type: 'workflow_action',
+            title: 'Automatización ejecutada',
+            message,
+            priority: config.priority || 'medium',
+            relatedEntity: context.deal?._id || context.contact?._id || context.client?._id,
+            relatedEntityType: context.entityType,
+          });
+        }
+
+        return { success: true, result: { notificationsSent: recipientIds.length } };
+      }
+
+      case 'send_email': {
+        // Por ahora solo registramos que se enviaría el email
+        // La implementación real usaría nodemailer
+        const to = config.to;
+        const subject = replaceVariables(config.subject || '', context);
+        const body = replaceVariables(config.body || '', context);
+
+        let recipientEmail = '';
+        if (to === 'owner' && context.deal?.ownerId) {
+          const owner = await User.findById(context.deal.ownerId).select('email');
+          recipientEmail = owner?.email || '';
+        } else if (to === 'contact' && context.contact?.email) {
+          recipientEmail = context.contact.email;
+        } else if (to === 'client' && context.client?.email) {
+          recipientEmail = context.client.email;
+        } else if (to && to.includes('@')) {
+          recipientEmail = to;
+        }
+
+        // TODO: Implementar envío real con nodemailer
+        console.log(`[CRM Workflow] Email to ${recipientEmail}: ${subject}`);
+
+        return { success: true, result: { to: recipientEmail, subject, body } };
+      }
+
+      case 'create_task': {
+        const Activity = (await import('@/models/Activity')).default;
+
+        const title = replaceVariables(config.taskTitle || '', context);
+        const description = replaceVariables(config.taskDescription || '', context);
+
+        // Calcular fecha de vencimiento
+        let dueDate = new Date();
+        if (config.taskDueDate) {
+          const match = config.taskDueDate.match(/\+(\d+)\s*(days?|weeks?|months?)/i);
+          if (match) {
+            const amount = parseInt(match[1]);
+            const unit = match[2].toLowerCase();
+            if (unit.startsWith('day')) {
+              dueDate.setDate(dueDate.getDate() + amount);
+            } else if (unit.startsWith('week')) {
+              dueDate.setDate(dueDate.getDate() + amount * 7);
+            } else if (unit.startsWith('month')) {
+              dueDate.setMonth(dueDate.getMonth() + amount);
+            }
+          }
+        }
+
+        let assignToId = context.deal?.ownerId || context.userId;
+        if (config.taskAssignTo === 'specific_user' && config.taskAssignToId) {
+          assignToId = config.taskAssignToId;
+        }
+
+        const task = await Activity.create({
+          type: 'task',
+          title,
+          description,
+          dealId: context.deal?._id,
+          contactId: context.contact?._id,
+          clientId: context.client?._id || context.deal?.clientId,
+          userId: assignToId,
+          dueDate,
+          isCompleted: false,
+        });
+
+        return { success: true, result: { taskId: task._id } };
+      }
+
+      case 'create_activity': {
+        const Activity = (await import('@/models/Activity')).default;
+
+        const title = replaceVariables(config.activityTitle || '', context);
+        const description = replaceVariables(config.activityDescription || '', context);
+
+        const activity = await Activity.create({
+          type: config.activityType || 'note',
+          title,
+          description,
+          dealId: context.deal?._id,
+          contactId: context.contact?._id,
+          clientId: context.client?._id || context.deal?.clientId,
+          userId: context.deal?.ownerId || context.userId,
+        });
+
+        return { success: true, result: { activityId: activity._id } };
+      }
+
+      case 'update_field': {
+        const targetEntity = config.targetEntity || context.entityType;
+        const fieldName = config.fieldName;
+        const fieldValue = replaceVariables(String(config.fieldValue || ''), context);
+
+        if (!fieldName) {
+          return { success: false, error: 'Campo no especificado' };
+        }
+
+        switch (targetEntity) {
+          case 'deal': {
+            const entityId = context.deal?._id;
+            if (!entityId) return { success: false, error: 'ID de deal no encontrado' };
+            await Deal.findByIdAndUpdate(entityId, { [fieldName]: fieldValue });
+            break;
+          }
+          case 'contact': {
+            const entityId = context.contact?._id;
+            if (!entityId) return { success: false, error: 'ID de contacto no encontrado' };
+            await Contact.findByIdAndUpdate(entityId, { [fieldName]: fieldValue });
+            break;
+          }
+          case 'client': {
+            const entityId = context.client?._id || context.deal?.clientId;
+            if (!entityId) return { success: false, error: 'ID de cliente no encontrado' };
+            await Client.findByIdAndUpdate(entityId, { [fieldName]: fieldValue });
+            break;
+          }
+          default:
+            return { success: false, error: 'Entidad no soportada' };
+        }
+
+        return { success: true, result: { updated: { [fieldName]: fieldValue } } };
+      }
+
+      case 'move_stage': {
+        if (!context.deal?._id) {
+          return { success: false, error: 'No hay deal para mover de etapa' };
+        }
+
+        if (!config.stageId) {
+          return { success: false, error: 'Etapa no especificada' };
+        }
+
+        await Deal.findByIdAndUpdate(context.deal._id, { stageId: config.stageId });
+
+        return { success: true, result: { newStageId: config.stageId } };
+      }
+
+      case 'assign_owner': {
+        if (!context.deal?._id) {
+          return { success: false, error: 'No hay deal para asignar owner' };
+        }
+
+        let newOwnerId = config.newOwnerId;
+
+        if (config.assignmentType === 'round_robin') {
+          // Asignar al usuario con menos deals activos
+          const users = await User.find({ isActive: true }).select('_id');
+          const dealCounts = await Deal.aggregate([
+            { $match: { ownerId: { $in: users.map(u => u._id) } } },
+            { $group: { _id: '$ownerId', count: { $sum: 1 } } },
+            { $sort: { count: 1 } },
+          ]);
+
+          if (dealCounts.length > 0) {
+            newOwnerId = dealCounts[0]._id.toString();
+          } else if (users.length > 0) {
+            newOwnerId = users[0]._id.toString();
+          }
+        } else if (config.assignmentType === 'least_deals') {
+          // Similar al round robin
+          const users = await User.find({ isActive: true }).select('_id');
+          const dealCounts = await Deal.aggregate([
+            { $match: { ownerId: { $in: users.map(u => u._id) } } },
+            { $group: { _id: '$ownerId', count: { $sum: 1 } } },
+            { $sort: { count: 1 } },
+          ]);
+
+          if (dealCounts.length > 0) {
+            newOwnerId = dealCounts[0]._id.toString();
+          }
+        }
+
+        if (!newOwnerId) {
+          return { success: false, error: 'No se pudo determinar el nuevo owner' };
+        }
+
+        await Deal.findByIdAndUpdate(context.deal._id, { ownerId: newOwnerId });
+
+        return { success: true, result: { newOwnerId } };
+      }
+
+      case 'add_tag': {
+        if (!config.tag) {
+          return { success: false, error: 'Tag no especificado' };
+        }
+
+        if (context.deal?._id) {
+          await Deal.findByIdAndUpdate(context.deal._id, {
+            $addToSet: { tags: config.tag },
+          });
+        } else if (context.contact?._id) {
+          await Contact.findByIdAndUpdate(context.contact._id, {
+            $addToSet: { tags: config.tag },
+          });
+        }
+
+        return { success: true, result: { tagAdded: config.tag } };
+      }
+
+      case 'remove_tag': {
+        if (!config.tag) {
+          return { success: false, error: 'Tag no especificado' };
+        }
+
+        if (context.deal?._id) {
+          await Deal.findByIdAndUpdate(context.deal._id, {
+            $pull: { tags: config.tag },
+          });
+        } else if (context.contact?._id) {
+          await Contact.findByIdAndUpdate(context.contact._id, {
+            $pull: { tags: config.tag },
+          });
+        }
+
+        return { success: true, result: { tagRemoved: config.tag } };
+      }
+
+      case 'webhook': {
+        if (!config.url) {
+          return { success: false, error: 'URL no especificada' };
+        }
+
+        const url = replaceVariables(config.url, context);
+        const method = config.method || 'POST';
+        const headers: Record<string, string> = {};
+
+        if (config.headers) {
+          for (const [key, value] of Object.entries(config.headers)) {
+            headers[key] = replaceVariables(String(value), context);
+          }
+        }
+
+        let body: string | undefined;
+        if (config.payload && method !== 'GET') {
+          const payload: Record<string, any> = {};
+          for (const [key, value] of Object.entries(config.payload)) {
+            payload[key] = replaceVariables(String(value), context);
+          }
+          body = JSON.stringify(payload);
+        }
+
+        try {
+          const response = await fetch(url, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              ...headers,
+            },
+            body,
+          });
+
+          return {
+            success: response.ok,
+            result: {
+              status: response.status,
+              statusText: response.statusText,
+            },
+          };
+        } catch (fetchError: any) {
+          return { success: false, error: fetchError.message };
+        }
+      }
+
+      case 'delay': {
+        // Delays se manejan en el executor principal
+        const delayMs = (config.delayMinutes || 0) * 60 * 1000;
+        return { success: true, result: { delayMs } };
+      }
+
+      default:
+        return { success: false, error: `Tipo de acción no soportado: ${action.type}` };
+    }
+  } catch (error: any) {
+    console.error(`Error executing action ${action.type}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Disparar workflows para un evento específico
+export async function triggerWorkflows(
+  triggerType: CRMTriggerType,
+  context: TriggerContext
+): Promise<void> {
+  try {
+    // Buscar workflows activos con este trigger
+    const workflows = await CRMWorkflow.find({
+      isActive: true,
+      'trigger.type': triggerType,
+    }).lean();
+
+    if (workflows.length === 0) return;
+
+    // Construir datos completos del contexto
+    const fullContext: Record<string, any> = {
+      entityType: context.entityType,
+      entityId: context.entityId,
+      entityName: context.entityName,
+      previousData: context.previousData,
+      newData: context.newData,
+      changedFields: context.changedFields,
+      userId: context.userId,
+    };
+
+    // Cargar datos de la entidad
+    switch (context.entityType) {
+      case 'deal':
+        fullContext.deal = await Deal.findById(context.entityId)
+          .populate('clientId')
+          .populate('stageId')
+          .populate('ownerId', 'name email')
+          .lean();
+        if (fullContext.deal?.clientId) {
+          fullContext.client = fullContext.deal.clientId;
+        }
+        break;
+      case 'contact':
+        fullContext.contact = await Contact.findById(context.entityId)
+          .populate('clientId')
+          .lean();
+        if (fullContext.contact?.clientId) {
+          fullContext.client = fullContext.contact.clientId;
+        }
+        break;
+      case 'client':
+        fullContext.client = await Client.findById(context.entityId).lean();
+        break;
+      case 'activity':
+        fullContext.activity = await Activity.findById(context.entityId)
+          .populate('dealId')
+          .lean();
+        if (fullContext.activity?.dealId) {
+          fullContext.deal = fullContext.activity.dealId;
+        }
+        break;
+    }
+
+    // Procesar cada workflow
+    for (const workflow of workflows) {
+      // Evaluar condiciones
+      if (!evaluateConditions(workflow.trigger.conditions, fullContext)) {
+        continue;
+      }
+
+      // Crear registro de ejecución
+      const execution = await CRMWorkflowExecution.create({
+        workflowId: workflow._id,
+        workflowName: workflow.name,
+        triggerType,
+        triggerData: {
+          entityType: context.entityType,
+          entityId: context.entityId,
+          entityName: context.entityName,
+          previousData: context.previousData,
+          newData: context.newData,
+          changedFields: context.changedFields,
+        },
+        status: 'running',
+        startedAt: new Date(),
+        actionLogs: workflow.actions.map(a => ({
+          actionId: a.id,
+          actionType: a.type,
+          status: 'pending' as ExecutionStatus,
+        })),
+      });
+
+      const startTime = Date.now();
+
+      try {
+        // Ordenar acciones por order
+        const sortedActions = [...workflow.actions].sort((a, b) => a.order - b.order);
+
+        // Ejecutar acciones en orden
+        for (const action of sortedActions) {
+          // Aplicar delay si existe
+          const totalDelay = (action.delay || 0) * 60 * 1000;
+          if (totalDelay > 0) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(totalDelay, 5000))); // Max 5s para no bloquear
+          }
+
+          // Actualizar estado a running
+          await CRMWorkflowExecution.updateOne(
+            { _id: execution._id, 'actionLogs.actionId': action.id },
+            {
+              $set: {
+                'actionLogs.$.status': 'running',
+                'actionLogs.$.startedAt': new Date(),
+              },
+            }
+          );
+
+          // Ejecutar acción
+          const result = await executeAction(action, fullContext, workflow._id as mongoose.Types.ObjectId);
+
+          // Actualizar log de acción
+          await CRMWorkflowExecution.updateOne(
+            { _id: execution._id, 'actionLogs.actionId': action.id },
+            {
+              $set: {
+                'actionLogs.$.status': result.success ? 'completed' : 'failed',
+                'actionLogs.$.completedAt': new Date(),
+                'actionLogs.$.result': result.result,
+                'actionLogs.$.error': result.error,
+              },
+            }
+          );
+
+          // Si falla una acción, marcar workflow como failed y salir
+          if (!result.success) {
+            await CRMWorkflowExecution.findByIdAndUpdate(execution._id, {
+              status: 'failed',
+              completedAt: new Date(),
+              duration: Date.now() - startTime,
+              error: result.error,
+            });
+            break;
+          }
+        }
+
+        // Si llegamos aquí, todo fue exitoso
+        const finalExecution = await CRMWorkflowExecution.findById(execution._id);
+        const allCompleted = finalExecution?.actionLogs.every(l => l.status === 'completed');
+
+        if (allCompleted) {
+          await CRMWorkflowExecution.findByIdAndUpdate(execution._id, {
+            status: 'completed',
+            completedAt: new Date(),
+            duration: Date.now() - startTime,
+          });
+
+          // Actualizar contador del workflow
+          await CRMWorkflow.findByIdAndUpdate(workflow._id, {
+            $inc: { executionCount: 1 },
+            lastExecutedAt: new Date(),
+          });
+        }
+      } catch (execError: any) {
+        console.error(`Error executing workflow ${workflow.name}:`, execError);
+        await CRMWorkflowExecution.findByIdAndUpdate(execution._id, {
+          status: 'failed',
+          completedAt: new Date(),
+          duration: Date.now() - startTime,
+          error: execError.message,
+          errorStack: execError.stack,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error in triggerWorkflows:', error);
+  }
+}
+
+// Helper para disparar desde APIs de forma no bloqueante
+export function triggerWorkflowsAsync(
+  triggerType: CRMTriggerType,
+  context: TriggerContext
+): void {
+  // Ejecutar en background sin esperar
+  setImmediate(() => {
+    triggerWorkflows(triggerType, context).catch(err => {
+      console.error('Background workflow trigger error:', err);
+    });
+  });
+}

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Client from '@/models/Client';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,6 +51,15 @@ export async function POST(request: NextRequest) {
       name: body.name,
       description: body.description || '',
       isActive: body.isActive !== undefined ? body.isActive : true,
+    });
+
+    // Disparar workflow de client_created
+    triggerWorkflowsAsync('client_created', {
+      entityType: 'client',
+      entityId: client._id,
+      entityName: client.name,
+      newData: client.toJSON?.() || client,
+      userId: (session.user as any).id,
     });
 
     return NextResponse.json(client, { status: 201 });

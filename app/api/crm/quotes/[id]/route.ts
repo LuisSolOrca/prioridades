@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Quote from '@/models/Quote';
 import { hasPermission } from '@/lib/permissions';
+import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -109,6 +110,30 @@ export async function PUT(
       .populate('dealId', 'title stage value')
       .populate('createdBy', 'name')
       .lean();
+
+    const userId = (session.user as any).id;
+
+    // Disparar workflows según cambio de estado
+    const quoteData = (quote || {}) as Record<string, any>;
+    if (body.status === 'accepted' && existingQuote.status !== 'accepted') {
+      triggerWorkflowsAsync('quote_accepted', {
+        entityType: 'quote',
+        entityId: id,
+        entityName: quote?.quoteNumber,
+        previousData: existingQuote.toObject(),
+        newData: quoteData,
+        userId,
+      });
+    } else if (body.status === 'rejected' && existingQuote.status !== 'rejected') {
+      triggerWorkflowsAsync('quote_rejected', {
+        entityType: 'quote',
+        entityId: id,
+        entityName: quote?.quoteNumber,
+        previousData: existingQuote.toObject(),
+        newData: quoteData,
+        userId,
+      });
+    }
 
     return NextResponse.json(quote);
   } catch (error: any) {
