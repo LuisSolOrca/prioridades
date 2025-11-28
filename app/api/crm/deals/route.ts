@@ -79,6 +79,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const userId = (session.user as any).id;
 
+    // Limpiar campos vacíos que son ObjectId opcionales
+    if (!body.contactId) delete body.contactId;
+    if (!body.projectId) delete body.projectId;
+
     // Si no se especifica etapa, usar la por defecto
     if (!body.stageId) {
       const defaultStage = await PipelineStage.findOne({ isDefault: true, isActive: true });
