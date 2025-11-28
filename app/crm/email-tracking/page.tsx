@@ -21,7 +21,7 @@ import {
   TrendingUp,
   BarChart3,
 } from 'lucide-react';
-import { EMAIL_STATUS_LABELS, EMAIL_STATUS_COLORS } from '@/models/EmailTracking';
+import { EMAIL_STATUS_LABELS, EMAIL_STATUS_COLORS } from '@/lib/crm/emailTrackingConstants';
 
 interface EmailTrackingItem {
   _id: string;

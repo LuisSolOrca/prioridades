@@ -1,6 +1,10 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
-export type EmailTrackingStatus = 'sent' | 'delivered' | 'opened' | 'clicked' | 'replied' | 'bounced';
+// Re-export from shared constants file
+export type { EmailTrackingStatus } from '@/lib/crm/emailTrackingConstants';
+export { EMAIL_STATUS_LABELS, EMAIL_STATUS_COLORS } from '@/lib/crm/emailTrackingConstants';
+
+import type { EmailTrackingStatus } from '@/lib/crm/emailTrackingConstants';
 
 export interface IClickedLink {
   url: string;
@@ -192,22 +196,3 @@ const EmailTracking: Model<IEmailTracking> =
   mongoose.model<IEmailTracking>('EmailTracking', EmailTrackingSchema);
 
 export default EmailTracking;
-
-// Constantes para UI
-export const EMAIL_STATUS_LABELS: Record<EmailTrackingStatus, string> = {
-  sent: 'Enviado',
-  delivered: 'Entregado',
-  opened: 'Abierto',
-  clicked: 'Clic',
-  replied: 'Respondido',
-  bounced: 'Rebotado',
-};
-
-export const EMAIL_STATUS_COLORS: Record<EmailTrackingStatus, string> = {
-  sent: 'gray',
-  delivered: 'blue',
-  opened: 'green',
-  clicked: 'purple',
-  replied: 'teal',
-  bounced: 'red',
-};
