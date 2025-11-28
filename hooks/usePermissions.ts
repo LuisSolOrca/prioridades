@@ -35,10 +35,10 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   canEditHistoricalPriorities: false,
   canManageProjects: false,
   canManageKPIs: false,
-  // CRM Permissions - Por defecto todos pueden ver y gestionar CRM
-  viewCRM: true,
-  canManageDeals: true,
-  canManageContacts: true,
+  // CRM Permissions - Por defecto solo admins tienen acceso
+  viewCRM: false,
+  canManageDeals: false,
+  canManageContacts: false,
   canManagePipelineStages: false,
 };
 
@@ -57,7 +57,10 @@ export function usePermissions() {
     canReassignPriorities: isAdmin || user?.permissions?.canReassignPriorities || false,
     canManageProjects: isAdmin || user?.permissions?.canManageProjects || false,
     canManageKPIs: isAdmin || user?.permissions?.canManageKPIs || false,
-    // CRM - Admin siempre puede gestionar pipeline stages
+    // CRM - Admin siempre tiene acceso completo
+    viewCRM: isAdmin || user?.permissions?.viewCRM || false,
+    canManageDeals: isAdmin || user?.permissions?.canManageDeals || false,
+    canManageContacts: isAdmin || user?.permissions?.canManageContacts || false,
     canManagePipelineStages: isAdmin || user?.permissions?.canManagePipelineStages || false,
   };
 

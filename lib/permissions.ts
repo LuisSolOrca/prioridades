@@ -56,10 +56,10 @@ export function hasPermission(session: Session | null, permission: Permission): 
     canReassignPriorities: user.role === 'ADMIN',
     canCreateMilestones: true,
     canEditHistoricalPriorities: false,
-    // CRM Permissions
-    viewCRM: true,
-    canManageDeals: true,
-    canManageContacts: true,
+    // CRM Permissions - Solo admins por defecto
+    viewCRM: user.role === 'ADMIN',
+    canManageDeals: user.role === 'ADMIN',
+    canManageContacts: user.role === 'ADMIN',
     canManagePipelineStages: user.role === 'ADMIN',
   };
 
