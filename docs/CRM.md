@@ -59,6 +59,7 @@
 23. [Integración con Canales](#integración-con-canales)
 24. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
 25. [Competidores](#competidores)
+26. [Changelog](#changelog)
 
 ---
 
@@ -2203,6 +2204,62 @@ lib/
 └── crm/
     └── duplicateDetection.ts       # Utilidades de detección de duplicados
 ```
+
+---
+
+## Changelog
+
+### v2.5.0 - 29 de Noviembre 2025
+- ✨ **Editor Visual de Plantillas de Email** - Nuevo editor WYSIWYG para crear emails en secuencias
+  - Barra de herramientas de formato (negritas, cursivas, enlaces, listas)
+  - Inserción de variables con dropdown organizado por categorías
+  - Vista previa en tiempo real con sustitución de variables
+  - Biblioteca de plantillas integrada con búsqueda y filtros
+  - Guardar emails como plantillas reutilizables
+- 🧩 Nuevos componentes: `EmailTemplateEditor`, `SaveTemplateModal`
+
+### v2.4.0 - Noviembre 2025
+- ✨ **Tracking de Competidores** - Sistema completo de inteligencia competitiva
+  - Catálogo centralizado de competidores
+  - Tracking de competidores por deal
+  - Win rate analysis y estadísticas
+- ✨ **Multi-Pipeline** - Soporte para múltiples pipelines de venta
+  - Crear y gestionar pipelines independientes
+  - Etapas personalizables por pipeline
+  - Métricas y reportes por pipeline
+
+### v2.3.0 - Noviembre 2025
+- ✨ **Secuencias de Email** - Automatización de seguimientos
+  - Constructor visual de secuencias
+  - Pasos de email, tareas y LinkedIn
+  - Condiciones de salida configurables
+- ✨ **Workflows y Automatizaciones** - Motor de automatización basado en triggers
+
+### v2.2.0 - Noviembre 2025
+- ✨ **Lead Scoring** - Calificación automática de leads
+  - Reglas de FIT y Engagement configurables
+  - Temperatura visual del lead
+- ✨ **Email Tracking** - Monitoreo de engagement de emails
+  - Tracking de aperturas y clicks
+  - Detección de respuestas
+
+### v2.1.0 - Octubre 2025
+- ✨ **Campos Personalizados** - Sistema de custom fields por entidad
+- ✨ **Detección de Duplicados** - Fuzzy matching con algoritmo Levenshtein
+- ✨ **Cuotas de Venta** - Metas por vendedor y período
+
+### v2.0.0 - Octubre 2025
+- ✨ **Cotizaciones** - Generación de cotizaciones PDF profesionales
+- ✨ **Productos con Pricing Tiers** - Niveles de precio por volumen
+- ✨ **Importación CSV/Excel** - Carga masiva de datos
+
+### v1.0.0 - Septiembre 2025
+- 🎉 **Lanzamiento inicial del CRM**
+  - Dashboard con métricas clave
+  - Pipeline Kanban con drag & drop
+  - Gestión de deals, clientes y contactos
+  - Registro de actividades
+  - Reportes básicos con exportación PDF
 
 ---
 
