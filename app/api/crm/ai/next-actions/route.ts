@@ -29,9 +29,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const ownerId = searchParams.get('ownerId') || user.id;
 
-    // Get active deals for the user
+    // Get closed stage IDs to exclude
+    const closedStages = await PipelineStage.find({ isClosed: true }).select('_id').lean();
+    const closedStageIds = closedStages.map(s => s._id);
+
+    // Get active deals for the user (not in closed stages)
     const dealsQuery: any = {
-      status: 'open',
+      stageId: { $nin: closedStageIds },
     };
 
     // Only filter by owner if not admin or specific owner requested
@@ -104,10 +108,12 @@ export async function GET(request: NextRequest) {
 
     // Get won deals this month
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const wonStages = await PipelineStage.find({ isWon: true }).select('_id').lean();
+    const wonStageIds = wonStages.map(s => s._id);
     const wonThisMonth = await Deal.countDocuments({
       ownerId,
-      status: 'won',
-      closedAt: { $gte: startOfMonth },
+      stageId: { $in: wonStageIds },
+      updatedAt: { $gte: startOfMonth },
     });
     userContext.wonThisMonth = wonThisMonth;
 

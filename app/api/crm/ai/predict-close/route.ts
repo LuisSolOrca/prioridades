@@ -98,15 +98,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate historical data for this pipeline
+    const closedStages = await PipelineStage.find({ isClosed: true }).lean();
+    const closedStageIds = closedStages.map(s => s._id);
+    const wonStageIds = closedStages.filter(s => s.isWon).map(s => s._id);
+
     const pipelineDeals = await Deal.find({
       pipelineId: deal.pipelineId?._id,
-      status: { $in: ['won', 'lost'] },
-      closedAt: { $gte: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) }, // Last 6 months
-    }).lean() as any[];
+      stageId: { $in: closedStageIds },
+      updatedAt: { $gte: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) }, // Last 6 months
+    }).populate('stageId', 'isWon').lean() as any[];
 
     let historicalData: any = undefined;
     if (pipelineDeals.length >= 10) {
-      const wonDeals = pipelineDeals.filter((d: any) => d.status === 'won');
+      const wonDeals = pipelineDeals.filter((d: any) => d.stageId?.isWon);
       const avgDaysToClose = wonDeals.length > 0
         ? wonDeals.reduce((sum: number, d: any) => {
             const created = new Date(d.createdAt);
@@ -125,7 +129,7 @@ export async function POST(request: NextRequest) {
           sourceGroups[source] = { won: 0, total: 0 };
         }
         sourceGroups[source].total++;
-        if (d.status === 'won') {
+        if (d.stageId?.isWon) {
           sourceGroups[source].won++;
         }
       });
