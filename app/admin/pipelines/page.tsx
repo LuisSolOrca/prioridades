@@ -203,7 +203,7 @@ export default function PipelinesAdminPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="pt-16 p-8 flex items-center justify-center">
+        <div className="pt-16 main-content p-8 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function PipelinesAdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="pt-16 px-4 py-6">
+      <div className="pt-16 main-content px-4 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">

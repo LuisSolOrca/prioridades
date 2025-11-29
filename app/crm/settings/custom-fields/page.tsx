@@ -190,7 +190,7 @@ export default function CustomFieldsPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="pt-16 p-8 flex items-center justify-center">
+        <div className="pt-16 main-content p-8 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Acceso Denegado</h2>
@@ -204,7 +204,7 @@ export default function CustomFieldsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="pt-16 px-4 py-6">
+      <div className="pt-16 main-content px-4 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">

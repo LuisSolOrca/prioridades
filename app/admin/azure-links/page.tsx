@@ -106,8 +106,11 @@ export default function AzureLinksManagementPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content flex items-center justify-center h-[calc(100vh-4rem)]">
+          <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
+        </div>
       </div>
     );
   }
@@ -116,7 +119,7 @@ export default function AzureLinksManagementPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="pt-16 main-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

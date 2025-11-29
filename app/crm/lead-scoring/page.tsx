@@ -249,7 +249,7 @@ export default function LeadScoringPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="pt-16 p-8">
+        <div className="pt-16 main-content p-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-8"></div>
             <div className="grid grid-cols-3 gap-6 mb-8">
@@ -266,7 +266,7 @@ export default function LeadScoringPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="pt-16 p-8 max-w-7xl mx-auto">
+      <div className="pt-16 main-content p-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>

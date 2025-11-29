@@ -245,10 +245,10 @@ export default function AdminKPIsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center">Cargando...</div>
+        <div className="pt-16 main-content max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
     );
@@ -257,7 +257,7 @@ export default function AdminKPIsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="pt-16 main-content max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestión de KPIs</h1>

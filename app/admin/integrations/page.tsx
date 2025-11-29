@@ -123,7 +123,7 @@ function IntegrationsContent() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="max-w-4xl mx-auto p-8">
+      <div className="pt-16 main-content max-w-4xl mx-auto p-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Integraciones
         </h1>
@@ -239,7 +239,7 @@ export default function IntegrationsPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="max-w-4xl mx-auto p-8">
+        <div className="pt-16 main-content max-w-4xl mx-auto p-8">
           <div className="flex items-center justify-center">
             <Loader2 className="animate-spin" size={32} />
           </div>

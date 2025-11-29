@@ -407,7 +407,7 @@ export default function BulkAssignmentPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="pt-16 main-content container mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
             📋 Asignación Masiva de Cliente y Proyecto

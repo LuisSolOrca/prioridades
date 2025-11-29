@@ -298,7 +298,7 @@ export default function ProjectsPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+        <div className="pt-16 main-content flex items-center justify-center h-[calc(100vh-4rem)]">
           <div className="text-gray-600 dark:text-gray-400">Cargando...</div>
         </div>
       </div>
@@ -309,7 +309,7 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="pt-16 main-content container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>

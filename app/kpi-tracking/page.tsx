@@ -307,7 +307,7 @@ export default function KPITrackingPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="pt-16 main-content max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">Cargando...</div>
         </div>
       </div>
@@ -317,7 +317,7 @@ export default function KPITrackingPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="pt-16 main-content max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Seguimiento de KPIs</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
