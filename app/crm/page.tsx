@@ -22,6 +22,7 @@ import {
   Upload
 } from 'lucide-react';
 import CrmHelpCard from '@/components/crm/CrmHelpCard';
+import CrmAINextActions from '@/components/crm/CrmAINextActions';
 
 interface PipelineStage {
   _id: string;
@@ -216,6 +217,13 @@ export default function CRMDashboard() {
               description: 'Documenta llamadas, emails y reuniones para dar seguimiento',
             },
           ]}
+        />
+
+        {/* AI Next Actions */}
+        <CrmAINextActions
+          limit={5}
+          compact
+          className="mb-6"
         />
 
         {/* KPI Cards */}

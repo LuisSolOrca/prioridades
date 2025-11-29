@@ -48,6 +48,7 @@ import {
   Swords,
   AlertTriangle,
 } from 'lucide-react';
+import CrmAIPanel from '@/components/crm/CrmAIPanel';
 
 interface PipelineStage {
   _id: string;
@@ -1411,6 +1412,18 @@ export default function DealDetailPage() {
                   Agregar Nota
                 </button>
               </div>
+            </div>
+
+            {/* AI Panel */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+              <CrmAIPanel
+                dealId={deal._id}
+                contactId={deal.contactId?._id}
+                clientId={deal.clientId?._id}
+                showNextActions={false}
+                layout="vertical"
+                compact
+              />
             </div>
 
             {/* Contact Info */}

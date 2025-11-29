@@ -60,7 +60,13 @@
 24. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
 25. [Competidores](#competidores)
 26. [Webhooks Salientes](#webhooks-salientes)
-27. [Changelog](#changelog)
+27. [Funciones de Inteligencia Artificial](#funciones-de-inteligencia-artificial)
+    - [Asistente de Email](#asistente-de-email)
+    - [Resumen Inteligente](#resumen-inteligente)
+    - [Siguiente Mejor Acción](#siguiente-mejor-acción-next-best-action)
+    - [Predicción de Cierre](#predicción-de-cierre)
+    - [Panel Unificado de IA](#panel-unificado-de-ia)
+28. [Changelog](#changelog)
 
 ---
 
@@ -105,6 +111,10 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - 📥 **Importación CSV/Excel** - Carga masiva de datos con mapeo de columnas
 - 🏆 **Tracking de Competidores** - Inteligencia competitiva con win rate analysis
 - ✉️ **Editor Visual de Plantillas** - Editor WYSIWYG para emails con variables dinámicas
+- 🤖 **Asistente de Email IA** - Generación de emails personalizados con Groq AI
+- 📄 **Resumen Inteligente** - Análisis ejecutivo de deals, clientes y contactos
+- ⚡ **Siguiente Mejor Acción** - Recomendaciones priorizadas con IA
+- 🎯 **Predicción de Cierre** - Probabilidad de ganar deals con factores y recomendaciones
 
 ---
 
@@ -2401,7 +2411,259 @@ app/crm/settings/webhooks/
 
 ---
 
+## Funciones de Inteligencia Artificial
+
+El CRM incluye funciones potenciadas por IA utilizando la API de **Groq** con el modelo `llama-3.3-70b-versatile`. Estas funciones están diseñadas para aumentar la productividad del equipo de ventas.
+
+### Arquitectura
+
+```
+lib/crm/
+└── aiService.ts              # Servicio centralizado de IA
+
+app/api/crm/ai/
+├── email-assistant/route.ts  # POST - Generación de emails
+├── summary/route.ts          # POST - Resumen inteligente
+├── next-actions/route.ts     # GET - Siguiente mejor acción
+└── predict-close/route.ts    # POST - Predicción de cierre
+
+components/crm/
+├── CrmAIPanel.tsx            # Panel unificado de funciones IA
+├── CrmAIEmailAssistant.tsx   # Modal de asistente de email
+├── CrmAISummary.tsx          # Componente de resumen
+├── CrmAINextActions.tsx      # Recomendaciones de acciones
+└── CrmAIPrediction.tsx       # Predicción de probabilidad
+```
+
+### Asistente de Email
+
+Genera emails personalizados basados en el contexto del deal, cliente y contacto.
+
+**Endpoint:** `POST /api/crm/ai/email-assistant`
+
+**Parámetros:**
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `dealId` | string? | ID del deal para contexto |
+| `contactId` | string? | ID del contacto destinatario |
+| `clientId` | string? | ID del cliente |
+| `emailType` | string | Tipo: introduction, followup, proposal, closing, reactivation, custom |
+| `customInstructions` | string? | Instrucciones personalizadas |
+| `tone` | string | Tono: formal, casual, persuasive |
+
+**Respuesta:**
+```typescript
+{
+  success: boolean;
+  email: {
+    subject: string;    // Asunto del email
+    body: string;       // Cuerpo del email
+    callToAction: string; // CTA sugerido
+  };
+  context: {
+    dealTitle?: string;
+    clientName?: string;
+    contactName?: string;
+    contactEmail?: string;
+  };
+}
+```
+
+**Uso en la UI:**
+```tsx
+import { CrmAIQuickActions } from '@/components/crm/CrmAIPanel';
+
+<CrmAIQuickActions
+  dealId={deal._id}
+  contactId={contact._id}
+  clientId={client._id}
+/>
+```
+
+### Resumen Inteligente
+
+Genera un resumen ejecutivo de un deal, cliente o contacto analizando toda su información y actividades.
+
+**Endpoint:** `POST /api/crm/ai/summary`
+
+**Parámetros:**
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `entityType` | string | Tipo: deal, client, contact |
+| `entityId` | string | ID de la entidad |
+
+**Respuesta:**
+```typescript
+{
+  success: boolean;
+  summary: {
+    executiveSummary: string;     // Resumen ejecutivo (1-2 párrafos)
+    keyInsights: string[];        // Puntos clave (3-5)
+    risks: string[];              // Riesgos identificados
+    opportunities: string[];      // Oportunidades
+    recommendedActions: string[]; // Acciones recomendadas
+  };
+  entityType: string;
+  entityId: string;
+}
+```
+
+**Uso en la UI:**
+```tsx
+import CrmAISummary from '@/components/crm/CrmAISummary';
+
+<CrmAISummary
+  entityType="deal"
+  entityId={dealId}
+  autoLoad
+/>
+```
+
+### Siguiente Mejor Acción (Next Best Action)
+
+Analiza todos los deals activos y recomienda acciones priorizadas basadas en valor, tiempo en etapa y actividad reciente.
+
+**Endpoint:** `GET /api/crm/ai/next-actions`
+
+**Query Params:**
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `limit` | number | Máximo de deals a analizar (default: 10) |
+| `ownerId` | string | ID del propietario (admins pueden ver todos) |
+
+**Respuesta:**
+```typescript
+{
+  success: boolean;
+  actions: Array<{
+    dealId: string;       // ID del deal
+    dealTitle: string;    // Título del deal
+    action: string;       // Acción recomendada
+    reason: string;       // Justificación
+    priority: 'high' | 'medium' | 'low';
+    suggestedDate?: string; // Fecha sugerida
+  }>;
+  dealsAnalyzed: number;
+  userContext: {
+    name: string;
+    totalDeals: number;
+    wonThisMonth: number;
+    quota?: number;
+  };
+}
+```
+
+**Uso en la UI:**
+```tsx
+import CrmAINextActions from '@/components/crm/CrmAINextActions';
+
+<CrmAINextActions autoLoad />
+```
+
+### Predicción de Cierre
+
+Predice la probabilidad de ganar un deal basándose en datos históricos, actividades, competidores y más.
+
+**Endpoint:** `POST /api/crm/ai/predict-close`
+
+**Parámetros:**
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `dealId` | string | ID del deal a predecir |
+
+**Respuesta:**
+```typescript
+{
+  success: boolean;
+  prediction: {
+    probability: number;      // 0-100%
+    confidence: 'high' | 'medium' | 'low';
+    positiveFactors: string[]; // Factores a favor
+    negativeFactors: string[]; // Factores en contra
+    recommendations: string[]; // Acciones para mejorar
+    estimatedCloseDate?: string;
+  };
+  dealId: string;
+  dealTitle: string;
+}
+```
+
+**Uso en la UI:**
+```tsx
+import CrmAIPrediction from '@/components/crm/CrmAIPrediction';
+
+<CrmAIPrediction
+  dealId={dealId}
+  autoLoad
+/>
+```
+
+### Panel Unificado de IA
+
+El componente `CrmAIPanel` agrupa todas las funciones de IA en una interfaz unificada.
+
+```tsx
+import CrmAIPanel from '@/components/crm/CrmAIPanel';
+
+<CrmAIPanel
+  dealId={deal._id}
+  contactId={contact._id}
+  clientId={client._id}
+  showEmailAssistant={true}
+  showSummary={true}
+  showNextActions={true}
+  showPrediction={true}
+  layout="vertical" // 'horizontal' | 'vertical' | 'grid'
+  compact={false}
+/>
+```
+
+**Props:**
+| Prop | Tipo | Default | Descripción |
+|------|------|---------|-------------|
+| `dealId` | string? | - | ID del deal |
+| `contactId` | string? | - | ID del contacto |
+| `clientId` | string? | - | ID del cliente |
+| `showEmailAssistant` | boolean | true | Mostrar asistente de email |
+| `showSummary` | boolean | true | Mostrar resumen inteligente |
+| `showNextActions` | boolean | true | Mostrar siguiente mejor acción |
+| `showPrediction` | boolean | true | Mostrar predicción (solo con dealId) |
+| `layout` | string | 'vertical' | Layout de botones |
+| `compact` | boolean | false | Modo compacto |
+
+### Configuración
+
+Las funciones de IA requieren la variable de entorno `GROQ_API_KEY`:
+
+```bash
+# .env
+GROQ_API_KEY=gsk_your_api_key_here
+```
+
+### Integración en Páginas
+
+El panel de IA está integrado en:
+
+1. **Detalle de Deal** (`/crm/deals/[id]`) - Sidebar derecho
+   - Todas las funciones disponibles
+   - Contexto completo del deal
+
+2. **Dashboard CRM** (`/crm`) - Panel de acciones rápidas
+   - Next Best Action para todos los deals activos
+
+---
+
 ## Changelog
+
+### v2.8.0 - 29 de Noviembre 2025
+- ✨ **Funciones de Inteligencia Artificial** - Suite completa de IA para ventas
+  - **Asistente de Email**: Genera emails personalizados con múltiples tonos y tipos
+  - **Resumen Inteligente**: Análisis ejecutivo de deals, clientes y contactos
+  - **Siguiente Mejor Acción**: Recomendaciones priorizadas para deals activos
+  - **Predicción de Cierre**: Probabilidad de ganar con factores y recomendaciones
+  - Panel unificado `CrmAIPanel` para fácil integración
+  - Integración con Groq API (modelo llama-3.3-70b-versatile)
+  - APIs: `/api/crm/ai/email-assistant`, `/api/crm/ai/summary`, `/api/crm/ai/next-actions`, `/api/crm/ai/predict-close`
 
 ### v2.7.0 - 29 de Noviembre 2025
 - ✨ **Webhooks Salientes** - Notificaciones HTTP automáticas para eventos del CRM
