@@ -50,6 +50,9 @@
 17. [Lead Scoring](#lead-scoring)
 18. [Workflows y Automatizaciones](#workflows-y-automatizaciones)
 19. [Secuencias de Email](#secuencias-de-email)
+    - [Editor Visual de Plantillas](#editor-visual-de-plantillas-de-email)
+    - [Variables Disponibles](#variables-disponibles)
+    - [Biblioteca de Plantillas](#biblioteca-de-plantillas)
 20. [Campos Personalizados](#campos-personalizados)
 21. [Detección de Duplicados](#detección-de-duplicados)
 22. [Cuotas y Metas de Ventas](#cuotas-y-metas-de-ventas)
@@ -99,6 +102,7 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - 🏷️ **Tags y Campos Personalizados** - Categorización flexible
 - 📥 **Importación CSV/Excel** - Carga masiva de datos con mapeo de columnas
 - 🏆 **Tracking de Competidores** - Inteligencia competitiva con win rate analysis
+- ✉️ **Editor Visual de Plantillas** - Editor WYSIWYG para emails con variables dinámicas
 
 ---
 
@@ -1322,8 +1326,8 @@ Paso 1 (Día 0) → [Espera 3 días] → Paso 2 → [Espera 5 días] → Paso 3 
 ### Elementos de la Secuencia
 
 **Pasos (Steps):**
-- Cada paso es un email con asunto y contenido
-- Soporta variables dinámicas: `{{contacto.nombre}}`, `{{empresa}}`, etc.
+- Cada paso puede ser: Email, Tarea o Acción de LinkedIn
+- Soporta variables dinámicas: `{{contact.firstName}}`, `{{client.name}}`, etc.
 - Puede incluir tracking de apertura y clicks
 
 **Delays:**
@@ -1333,29 +1337,132 @@ Paso 1 (Día 0) → [Espera 3 días] → Paso 2 → [Espera 5 días] → Paso 3 
 
 **Condiciones de Salida:**
 - Si el contacto responde → Sale de la secuencia
-- Si el deal cambia de etapa → Sale de la secuencia
+- Si se agenda una reunión → Sale de la secuencia
+- Si el deal se gana/pierde → Sale de la secuencia
 - Manual: El vendedor puede pausar o remover
+
+### Tipos de Pasos
+
+| Tipo | Icono | Descripción |
+|------|-------|-------------|
+| `email` | 📧 | Email con editor visual completo |
+| `task` | ✅ | Tarea para el vendedor |
+| `linkedin` | 🔗 | Acción de LinkedIn (conectar, mensaje, ver perfil) |
 
 ### Crear una Secuencia
 
 1. Ve a `/crm/sequences`
 2. Click en "Nueva Secuencia"
 3. Configura nombre y descripción
-4. Agrega pasos con email templates
+4. Agrega pasos con el constructor visual
 5. Configura delays entre pasos
-6. Activa la secuencia
+6. Define condiciones de salida
+7. Activa la secuencia
+
+### Editor Visual de Plantillas de Email
+
+**Ubicación:** `/crm/sequences/[id]` → Al agregar/editar paso de email
+
+El editor visual permite crear emails profesionales sin conocimientos técnicos:
+
+**Características del Editor:**
+
+| Funcionalidad | Descripción |
+|---------------|-------------|
+| 🔤 **Formato de Texto** | Negritas, cursivas, enlaces, listas ordenadas y no ordenadas |
+| 📝 **Variables Dinámicas** | Inserción de variables con dropdown organizado por categorías |
+| 📚 **Biblioteca de Plantillas** | Acceso a plantillas guardadas con búsqueda y filtros |
+| 👁️ **Vista Previa** | Previsualización en tiempo real con datos de ejemplo |
+| 💾 **Guardar como Plantilla** | Guardar el email actual para reutilizar |
+
+**Barra de Herramientas:**
+- **B** - Texto en negritas (`**texto**`)
+- **I** - Texto en cursiva (`*texto*`)
+- **🔗** - Insertar enlace (`[texto](url)`)
+- **• Lista** - Lista con viñetas
+- **1. Lista** - Lista numerada
+- **{x}** - Insertar variable dinámica
 
 ### Variables Disponibles
 
-| Variable | Descripción |
-|----------|-------------|
-| `{{contacto.nombre}}` | Nombre del contacto |
-| `{{contacto.apellido}}` | Apellido del contacto |
-| `{{empresa.nombre}}` | Nombre de la empresa |
-| `{{deal.titulo}}` | Título del deal |
-| `{{deal.valor}}` | Valor del deal formateado |
-| `{{vendedor.nombre}}` | Nombre del vendedor |
-| `{{fecha}}` | Fecha actual |
+Las variables se insertan usando la sintaxis `{{categoria.campo}}`:
+
+**Contacto:**
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `{{contact.firstName}}` | Nombre | Juan |
+| `{{contact.lastName}}` | Apellido | Pérez |
+| `{{contact.fullName}}` | Nombre completo | Juan Pérez |
+| `{{contact.email}}` | Email | juan@empresa.com |
+| `{{contact.phone}}` | Teléfono | +52 55 1234 5678 |
+| `{{contact.position}}` | Cargo | Director de TI |
+
+**Empresa:**
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `{{client.name}}` | Nombre empresa | Empresa ABC |
+| `{{client.industry}}` | Industria | Tecnología |
+| `{{client.website}}` | Sitio web | www.empresa.com |
+
+**Oportunidad:**
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `{{deal.title}}` | Título del deal | Implementación CRM |
+| `{{deal.value}}` | Valor | $150,000 |
+| `{{deal.stage}}` | Etapa | Propuesta |
+
+**Remitente:**
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `{{user.name}}` | Tu nombre | María García |
+| `{{user.email}}` | Tu email | maria@miempresa.com |
+| `{{user.phone}}` | Tu teléfono | +52 55 9876 5432 |
+| `{{user.signature}}` | Tu firma | María García, Gerente de Ventas |
+
+**Fechas:**
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `{{date.today}}` | Fecha de hoy | 28 de noviembre, 2025 |
+| `{{date.tomorrow}}` | Fecha de mañana | 29 de noviembre, 2025 |
+| `{{date.nextWeek}}` | Próxima semana | 5 de diciembre, 2025 |
+
+### Biblioteca de Plantillas
+
+El editor incluye acceso a una biblioteca de plantillas reutilizables:
+
+**Funcionalidades:**
+- 🔍 **Búsqueda** - Buscar por nombre o contenido
+- 🏷️ **Categorías** - Filtrar por tipo de plantilla
+- 📊 **Uso** - Ver cuántas veces se ha usado cada plantilla
+- ⭐ **Recientes** - Acceso rápido a plantillas usadas recientemente
+
+**Categorías de Plantillas:**
+| Categoría | Descripción |
+|-----------|-------------|
+| `outreach` | Prospección - Primer contacto con prospectos |
+| `follow_up` | Seguimiento - Recordatorios y seguimientos |
+| `nurture` | Nutrición - Mantener relación a largo plazo |
+| `closing` | Cierre - Cerrar ventas y negociaciones |
+| `other` | Otros - Plantillas generales |
+
+### Guardar como Plantilla
+
+Al crear un email en una secuencia, se puede guardar como plantilla reutilizable:
+
+1. Click en "Guardar como Plantilla" en el editor
+2. Asignar nombre descriptivo
+3. Agregar descripción (opcional)
+4. Seleccionar categoría
+5. Marcar si es compartida con el equipo
+6. Guardar
+
+**Campos del Modal:**
+| Campo | Requerido | Descripción |
+|-------|-----------|-------------|
+| Nombre | ✅ | Nombre identificativo de la plantilla |
+| Descripción | ❌ | Cuándo usar esta plantilla |
+| Categoría | ✅ | Tipo de plantilla |
+| Compartir | ❌ | Si otros usuarios pueden usarla |
 
 ### Estados de Contacto en Secuencia
 
@@ -1379,6 +1486,21 @@ Paso 1 (Día 0) → [Espera 3 días] → Paso 2 → [Espera 5 días] → Paso 3 
 | POST | `/api/crm/sequences/[id]/enroll` | Agregar contacto a secuencia |
 | POST | `/api/crm/sequences/[id]/unenroll` | Remover contacto |
 | GET | `/api/crm/sequences/[id]/enrollments` | Ver contactos en secuencia |
+
+### Email Templates
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/email-templates` | Listar plantillas de email |
+| POST | `/api/crm/email-templates` | Crear nueva plantilla |
+| GET | `/api/crm/email-templates/[id]` | Obtener plantilla |
+| PUT | `/api/crm/email-templates/[id]` | Actualizar plantilla |
+| DELETE | `/api/crm/email-templates/[id]` | Eliminar plantilla |
+
+**Parámetros de query (GET):**
+- `category` - Filtrar por categoría
+- `search` - Buscar por nombre/contenido
+- `shared` - Solo plantillas compartidas
 
 ---
 
@@ -1914,6 +2036,7 @@ interface IDealCompetitor {
 - [x] **Lead Scoring** - Calificación automática de leads (FIT + Engagement)
 - [x] **Workflows** - Automatizaciones basadas en triggers y condiciones
 - [x] **Secuencias de Email** - Series de emails automatizados
+- [x] **Editor Visual de Plantillas** - Editor WYSIWYG con variables dinámicas y biblioteca de plantillas
 - [x] **Campos Personalizados** - Campos custom por entidad
 - [x] **Detección de Duplicados** - Fuzzy matching y fusión de registros
 - [x] **Cuotas de Venta** - Metas por vendedor y período
@@ -1952,7 +2075,9 @@ app/
 │   ├── reports/
 │   │   └── page.tsx                # Reportes CRM
 │   ├── sequences/
-│   │   └── page.tsx                # Secuencias de email
+│   │   ├── page.tsx                # Lista de secuencias
+│   │   └── [id]/
+│   │       └── page.tsx            # Constructor de secuencia con editor visual
 │   ├── duplicates/
 │   │   └── page.tsx                # Gestión de duplicados
 │   ├── settings/
@@ -2035,10 +2160,16 @@ app/
         │   ├── route.ts            # CRUD workflows
         │   └── [id]/
         │       └── route.ts        # Workflow individual
-        └── sequences/
-            ├── route.ts            # CRUD secuencias
+        ├── sequences/
+        │   ├── route.ts            # CRUD secuencias
+        │   └── [id]/
+        │       ├── route.ts        # Secuencia individual
+        │       └── enroll/
+        │           └── route.ts    # Enrollar/desenrollar contactos
+        └── email-templates/
+            ├── route.ts            # CRUD plantillas de email
             └── [id]/
-                └── route.ts        # Secuencia individual
+                └── route.ts        # Plantilla individual
 
 models/
 ├── Deal.ts                         # Modelo de deals
@@ -2055,7 +2186,8 @@ models/
 ├── CustomField.ts                  # Modelo de campos personalizados
 ├── LeadScoringRule.ts              # Modelo de reglas de scoring
 ├── Workflow.ts                     # Modelo de workflows
-└── EmailSequence.ts                # Modelo de secuencias
+├── EmailSequence.ts                # Modelo de secuencias
+└── EmailTemplate.ts                # Modelo de plantillas de email
 
 hooks/
 └── usePermissions.ts               # Hook de permisos (incluye CRM)
@@ -2063,7 +2195,9 @@ hooks/
 components/
 └── crm/
     ├── CustomFieldsRenderer.tsx    # Componente para renderizar campos custom
-    └── DuplicateWarning.tsx        # Componente de advertencia de duplicados
+    ├── DuplicateWarning.tsx        # Componente de advertencia de duplicados
+    ├── EmailTemplateEditor.tsx     # Editor visual de plantillas de email
+    └── SaveTemplateModal.tsx       # Modal para guardar email como plantilla
 
 lib/
 └── crm/
@@ -2072,4 +2206,4 @@ lib/
 
 ---
 
-*Última actualización: Noviembre 2025*
+*Última actualización: 29 de Noviembre 2025*
