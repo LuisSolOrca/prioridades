@@ -359,7 +359,7 @@ export default function WorkflowDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
-        <div className="pt-16 flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="pt-16 main-content flex items-center justify-center h-[calc(100vh-4rem)]">
           <Loader2 className="animate-spin text-blue-500" size={40} />
         </div>
       </div>
@@ -371,7 +371,7 @@ export default function WorkflowDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="pt-16 h-screen flex flex-col">
+      <div className="pt-16 main-content h-screen flex flex-col">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
