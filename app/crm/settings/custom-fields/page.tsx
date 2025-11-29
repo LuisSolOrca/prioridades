@@ -34,6 +34,7 @@ import {
   Calculator,
   HelpCircle,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 type FieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email' | 'phone' | 'currency' | 'formula';
 type EntityType = 'client' | 'contact' | 'deal' | 'product';
@@ -238,6 +239,20 @@ export default function CustomFieldsPage() {
               Nuevo Campo
             </button>
           </div>
+
+          {/* Help Card */}
+          <CrmHelpCard
+            id="crm-custom-fields-guide"
+            title="Personaliza tu CRM con campos adicionales"
+            variant="guide"
+            className="mb-6"
+            defaultCollapsed={true}
+            steps={[
+              { title: 'Selecciona la entidad', description: 'Elige dónde agregar el campo: Clientes, Contactos, Deals o Productos' },
+              { title: 'Define el tipo de campo', description: 'Texto, número, fecha, lista desplegable, moneda, fórmula, etc.' },
+              { title: 'Configura opciones', description: 'Campo requerido, valores por defecto, visibilidad en listados' },
+            ]}
+          />
 
           {/* Entity Tabs */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2">

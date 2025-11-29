@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 // Tipos
 type ImportType = 'clients' | 'contacts' | 'deals' | 'products';
@@ -312,6 +313,33 @@ export default function ImportPage() {
             Importa clientes, contactos, deals o productos desde archivos CSV o Excel
           </p>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-import-guide"
+          title="Guía de importación"
+          variant="guide"
+          className="mb-6"
+          defaultCollapsed={true}
+          steps={[
+            {
+              title: 'Prepara tu archivo',
+              description: 'Asegúrate de que la primera fila contenga los encabezados de columna',
+            },
+            {
+              title: 'Selecciona el tipo de datos',
+              description: 'Elige si importarás clientes, contactos, deals o productos',
+            },
+            {
+              title: 'Mapea las columnas',
+              description: 'Asocia cada columna de tu archivo con un campo del CRM',
+            },
+            {
+              title: 'Revisa y confirma',
+              description: 'Valida los datos antes de importar definitivamente',
+            },
+          ]}
+        />
 
         {/* Progress Steps */}
         <div className="mb-8">

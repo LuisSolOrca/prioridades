@@ -21,6 +21,7 @@ import {
   Box,
   Layers,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface PricingTier {
   minQuantity: number;
@@ -286,6 +287,21 @@ export default function ProductsPage() {
             Nuevo Producto
           </button>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-products-guide"
+          title="Catálogo de productos y servicios"
+          variant="feature"
+          className="mb-4"
+          defaultCollapsed={true}
+          tips={[
+            'Agrega productos y servicios que ofreces para usarlos en cotizaciones',
+            'Define niveles de precio (Pricing Tiers) para descuentos por volumen',
+            'Organiza los productos por categorías para encontrarlos fácilmente',
+            'Los productos inactivos no aparecerán al crear nuevas cotizaciones',
+          ]}
+        />
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">

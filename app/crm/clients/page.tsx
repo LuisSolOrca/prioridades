@@ -29,6 +29,7 @@ import {
   TrendingDown,
   Minus
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface Client {
   _id: string;
@@ -354,6 +355,21 @@ export default function ClientsListPage() {
             </button>
           </div>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-clients-guide"
+          title="Gestiona tus empresas clientes"
+          variant="info"
+          className="mb-4"
+          defaultCollapsed={true}
+          tips={[
+            'Los clientes representan empresas u organizaciones con las que haces negocios',
+            'Cada cliente puede tener múltiples contactos asociados',
+            'Haz clic en un cliente para ver su perfil completo con deals, contactos y actividades',
+            'Usa los filtros para segmentar por industria o estado',
+          ]}
+        />
 
         {/* Filters Panel */}
         {showFilters && (

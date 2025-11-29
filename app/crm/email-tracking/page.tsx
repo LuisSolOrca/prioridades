@@ -23,6 +23,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { EMAIL_STATUS_LABELS, EMAIL_STATUS_COLORS } from '@/lib/crm/emailTrackingConstants';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface EmailTrackingItem {
   _id: string;
@@ -187,7 +188,22 @@ export default function EmailTrackingPage() {
           </button>
         </div>
 
-      {/* Stats Cards */}
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-email-tracking-guide"
+          title="Monitorea el engagement de tus emails"
+          variant="info"
+          className="mb-6"
+          defaultCollapsed={true}
+          tips={[
+            'Revisa quién abrió tus emails y cuándo para dar seguimiento oportuno',
+            'Los clics te indican qué contenido genera más interés',
+            'Una tasa de apertura baja puede indicar problemas con el asunto del email',
+            'Usa los filtros para analizar el rendimiento por período o contacto',
+          ]}
+        />
+
+        {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">

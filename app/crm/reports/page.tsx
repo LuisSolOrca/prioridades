@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface ReportData {
   summary: {
@@ -453,6 +454,21 @@ export default function CRMReportsPage() {
             </button>
           </div>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-reports-guide"
+          title="Analiza el rendimiento de tu equipo comercial"
+          variant="info"
+          className="mb-6"
+          defaultCollapsed={true}
+          tips={[
+            'Filtra por fechas, vendedor y pipeline para obtener reportes específicos',
+            'Exporta los reportes a PDF para compartirlos con tu equipo',
+            'Revisa el pipeline chart para ver la distribución de deals por etapa',
+            'Monitorea las métricas clave: deals ganados, valor total y tasas de conversión',
+          ]}
+        />
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">

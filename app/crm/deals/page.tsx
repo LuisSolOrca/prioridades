@@ -7,6 +7,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import Navbar from '@/components/Navbar';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Plus, Search, Filter, DollarSign, Calendar, User, Building2, X, Loader2, UserPlus, Layers, ChevronDown } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface Pipeline {
   _id: string;
@@ -417,6 +418,21 @@ export default function DealsPage() {
             </button>
           </div>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-deals-guide"
+          title="Gestiona tu pipeline de ventas"
+          variant="tip"
+          className="mb-4"
+          defaultCollapsed={true}
+          tips={[
+            'Arrastra y suelta los deals entre columnas para cambiar su etapa',
+            'Haz clic en un deal para ver detalles, agregar productos y crear cotizaciones',
+            'El valor ponderado se calcula multiplicando el valor por la probabilidad de la etapa',
+            'Usa el buscador para filtrar deals por nombre o cliente',
+          ]}
+        />
 
         {/* Pipeline Board */}
         <DragDropContext onDragEnd={handleDragEnd}>

@@ -24,6 +24,7 @@ import {
   Info,
   Zap,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 // Constants (shared with server but safe for client)
 const ENGAGEMENT_ACTION_LABELS: Record<string, string> = {
@@ -300,6 +301,21 @@ export default function LeadScoringPage() {
             )}
           </div>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-lead-scoring-guide"
+          title="Prioriza tus oportunidades con Lead Scoring"
+          variant="feature"
+          className="mb-6"
+          defaultCollapsed={true}
+          tips={[
+            'El sistema asigna puntuación automática basada en criterios configurables',
+            'Los leads se clasifican en Hot, Warm y Cold según su puntuación',
+            'Configura reglas personalizadas: tamaño del deal, actividad reciente, etapa del pipeline',
+            'Enfoca tu tiempo en los leads con mayor probabilidad de cierre',
+          ]}
+        />
 
         {/* Stats Cards */}
         {stats && (

@@ -26,6 +26,7 @@ import {
   ArrowRight,
   MessageSquare
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface Activity {
   _id: string;
@@ -196,6 +197,21 @@ export default function ActivitiesPage() {
             </button>
           </div>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-activities-guide"
+          title="Registro de actividades comerciales"
+          variant="tip"
+          className="mb-4"
+          defaultCollapsed={true}
+          tips={[
+            'Registra notas, llamadas, emails y reuniones para documentar el seguimiento',
+            'Las tareas te ayudan a planificar y no olvidar pendientes importantes',
+            'Asocia actividades a clientes, contactos o deals para mantener el contexto',
+            'Usa los botones rápidos arriba para crear actividades de cada tipo',
+          ]}
+        />
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">

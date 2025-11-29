@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   RotateCcw,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface WebhookLog {
   _id: string;
@@ -312,6 +313,20 @@ export default function WebhooksPage() {
               Nuevo Webhook
             </button>
           </div>
+
+          {/* Help Card */}
+          <CrmHelpCard
+            id="crm-webhooks-guide"
+            title="Integra el CRM con sistemas externos"
+            variant="guide"
+            className="mb-6"
+            defaultCollapsed={true}
+            steps={[
+              { title: 'Configura el endpoint', description: 'Define la URL que recibirá las notificaciones HTTP' },
+              { title: 'Selecciona eventos', description: 'Elige qué acciones disparan el webhook: nuevo deal, cambio de etapa, etc.' },
+              { title: 'Valida con el secret', description: 'Usa la firma HMAC-SHA256 para verificar la autenticidad del webhook' },
+            ]}
+          />
 
           {/* Webhooks List */}
           {loading ? (

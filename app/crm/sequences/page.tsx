@@ -25,6 +25,7 @@ import {
   RefreshCw,
   Filter,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface Sequence {
   _id: string;
@@ -141,6 +142,29 @@ export default function SequencesPage() {
               </button>
             )}
           </div>
+
+          {/* Help Card */}
+          <CrmHelpCard
+            id="crm-sequences-guide"
+            title="Secuencias de email automatizadas"
+            variant="feature"
+            className="mb-6"
+            defaultCollapsed={true}
+            steps={[
+              {
+                title: 'Crea una secuencia',
+                description: 'Define los pasos de tu secuencia de seguimiento',
+              },
+              {
+                title: 'Agrega contactos',
+                description: 'Inscribe contactos para que reciban la secuencia automáticamente',
+              },
+              {
+                title: 'Monitorea resultados',
+                description: 'Revisa tasas de apertura, clics y respuestas',
+              },
+            ]}
+          />
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

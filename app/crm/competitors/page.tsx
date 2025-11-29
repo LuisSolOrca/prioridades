@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface Competitor {
   _id: string;
@@ -213,6 +214,21 @@ export default function CompetitorsPage() {
               <span>Nuevo Competidor</span>
             </button>
           </div>
+
+          {/* Help Card */}
+          <CrmHelpCard
+            id="crm-competitors-guide"
+            title="Inteligencia competitiva para cerrar más deals"
+            variant="tip"
+            className="mb-6"
+            defaultCollapsed={true}
+            tips={[
+              'Registra las fortalezas y debilidades de cada competidor',
+              'Asocia competidores a tus deals para analizar patrones de pérdida/ganancia',
+              'El Win Rate te muestra qué tan exitoso eres contra cada competidor',
+              'Usa esta información para ajustar tu estrategia de ventas',
+            ]}
+          />
 
           {/* Search */}
           <div className="mb-6">

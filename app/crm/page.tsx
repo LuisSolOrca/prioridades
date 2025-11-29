@@ -21,6 +21,7 @@ import {
   Package,
   Upload
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface PipelineStage {
   _id: string;
@@ -189,6 +190,33 @@ export default function CRMDashboard() {
             </button>
           )}
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-dashboard-guide"
+          title="Bienvenido al CRM"
+          description="Este es tu centro de control para gestionar ventas y clientes"
+          variant="guide"
+          className="mb-6"
+          steps={[
+            {
+              title: 'Registra tus clientes y contactos',
+              description: 'Comienza agregando las empresas y personas con las que trabajas',
+            },
+            {
+              title: 'Crea oportunidades de venta (Deals)',
+              description: 'Cada oportunidad representa un posible negocio en tu pipeline',
+            },
+            {
+              title: 'Mueve los deals por el pipeline',
+              description: 'Arrastra los deals entre etapas conforme avanzan las negociaciones',
+            },
+            {
+              title: 'Registra actividades',
+              description: 'Documenta llamadas, emails y reuniones para dar seguimiento',
+            },
+          ]}
+        />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

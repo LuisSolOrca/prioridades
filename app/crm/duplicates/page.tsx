@@ -23,6 +23,7 @@ import {
   Briefcase,
   Calendar,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface DuplicatePair {
   record1: any;
@@ -156,6 +157,21 @@ export default function DuplicatesPage() {
               Actualizar
             </button>
           </div>
+
+          {/* Help Card */}
+          <CrmHelpCard
+            id="crm-duplicates-guide"
+            title="Mantén tu base de datos limpia"
+            variant="tip"
+            className="mb-6"
+            defaultCollapsed={true}
+            tips={[
+              'El sistema detecta automáticamente registros con nombres o emails similares',
+              'Revisa cuidadosamente antes de fusionar: compara todos los campos',
+              'Al fusionar, selecciona el registro principal que conservará la información',
+              'Los deals y actividades del registro eliminado se transfieren automáticamente',
+            ]}
+          />
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4 mb-6">

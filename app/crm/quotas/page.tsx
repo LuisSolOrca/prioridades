@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Award
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface User {
   _id: string;
@@ -296,6 +297,21 @@ export default function QuotasPage() {
             </button>
           )}
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-quotas-guide"
+          title="Establece y monitorea metas de ventas"
+          variant="info"
+          className="mb-6"
+          defaultCollapsed={true}
+          tips={[
+            'Define metas mensuales o trimestrales para cada vendedor',
+            'Monitorea el progreso en tiempo real con los indicadores visuales',
+            'Usa los códigos de color: verde (en meta), amarillo (en riesgo), rojo (por debajo)',
+            'Compara el rendimiento entre diferentes períodos y vendedores',
+          ]}
+        />
 
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-6">

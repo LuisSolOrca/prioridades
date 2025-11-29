@@ -22,6 +22,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { TRIGGER_LABELS, ACTION_LABELS } from '@/lib/crm/workflowConstants';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface Workflow {
   _id: string;
@@ -191,6 +192,20 @@ export default function WorkflowsPage() {
             </div>
           )}
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-workflows-guide"
+          title="Automatiza tareas repetitivas"
+          variant="feature"
+          className="mb-6"
+          defaultCollapsed={true}
+          steps={[
+            { title: 'Define el trigger', description: 'Selecciona cuándo se activa: nuevo deal, cambio de etapa, inactividad, etc.' },
+            { title: 'Configura condiciones', description: 'Filtra por pipeline, valor mínimo, etapa específica u otros criterios' },
+            { title: 'Elige acciones', description: 'Enviar email, crear tarea, cambiar etapa, notificar al equipo' },
+          ]}
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

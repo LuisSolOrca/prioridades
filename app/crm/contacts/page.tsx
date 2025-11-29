@@ -33,6 +33,7 @@ import {
   Eye,
   SlidersHorizontal
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface Client {
   _id: string;
@@ -402,6 +403,21 @@ export default function ContactsPage() {
             </button>
           </div>
         </div>
+
+        {/* Help Card */}
+        <CrmHelpCard
+          id="crm-contacts-guide"
+          title="Directorio de Contactos"
+          variant="info"
+          className="mb-4"
+          defaultCollapsed={true}
+          tips={[
+            'Los contactos se asocian a clientes (empresas) para organizar tus relaciones comerciales',
+            'Marca un contacto como "Principal" para identificar al tomador de decisiones',
+            'Usa los filtros para encontrar contactos por cliente, departamento o rol',
+            'Cambia entre vista Kardex y Tabla según tu preferencia',
+          ]}
+        />
 
         {/* Filters Panel */}
         {showFilters && (
