@@ -8,6 +8,7 @@ import DealProduct from '@/models/DealProduct';
 import Client from '@/models/Client';
 import Contact from '@/models/Contact';
 import { hasPermission } from '@/lib/permissions';
+import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -164,6 +165,16 @@ export async function POST(request: NextRequest) {
       .populate('dealId', 'title stage value')
       .populate('createdBy', 'name')
       .lean();
+
+    // Webhook quote.created
+    triggerWebhooksAsync('quote.created', {
+      entityType: 'quote',
+      entityId: quote._id.toString(),
+      entityName: quote.quoteNumber,
+      current: populatedQuote as Record<string, any>,
+      userId: (session.user as any).id,
+      source: 'web',
+    });
 
     return NextResponse.json(populatedQuote, { status: 201 });
   } catch (error: any) {

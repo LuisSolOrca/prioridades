@@ -6,6 +6,7 @@ import Contact from '@/models/Contact';
 import Client from '@/models/Client';
 import { hasPermission } from '@/lib/permissions';
 import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,6 +99,16 @@ export async function POST(request: NextRequest) {
       entityName: `${contact.firstName} ${contact.lastName}`,
       newData: contactData as Record<string, any>,
       userId: (session.user as any).id,
+    });
+
+    // Webhook contact.created
+    triggerWebhooksAsync('contact.created', {
+      entityType: 'contact',
+      entityId: contact._id.toString(),
+      entityName: `${contact.firstName} ${contact.lastName}`,
+      current: contactData as Record<string, any>,
+      userId: (session.user as any).id,
+      source: 'web',
     });
 
     return NextResponse.json(populatedContact, { status: 201 });

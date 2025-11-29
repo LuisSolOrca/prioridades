@@ -6,6 +6,7 @@ import Quote from '@/models/Quote';
 import { hasPermission } from '@/lib/permissions';
 import nodemailer from 'nodemailer';
 import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -210,6 +211,16 @@ export async function POST(
       entityName: quote.quoteNumber,
       newData: quoteData,
       userId,
+    });
+
+    // Webhook quote.sent
+    triggerWebhooksAsync('quote.sent', {
+      entityType: 'quote',
+      entityId: id,
+      entityName: quote.quoteNumber,
+      current: quoteData,
+      userId,
+      source: 'web',
     });
 
     return NextResponse.json({

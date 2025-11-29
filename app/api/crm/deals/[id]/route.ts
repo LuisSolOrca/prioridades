@@ -8,6 +8,7 @@ import Activity from '@/models/Activity';
 import mongoose from 'mongoose';
 import { hasPermission } from '@/lib/permissions';
 import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export async function GET(
   request: NextRequest,
@@ -145,6 +146,18 @@ export async function PUT(
         userId,
       });
 
+      // Webhook deal.stage_changed
+      triggerWebhooksAsync('deal.stage_changed', {
+        entityType: 'deal',
+        entityId: params.id,
+        entityName: deal?.title,
+        current: newData,
+        previous: previousData,
+        changes: changedFields,
+        userId,
+        source: 'web',
+      });
+
       // Si la nueva etapa es ganadora, disparar deal_won
       const newStage = await PipelineStage.findById(body.stageId);
       if (newStage?.isWon) {
@@ -156,6 +169,17 @@ export async function PUT(
           newData,
           userId,
         });
+
+        // Webhook deal.won
+        triggerWebhooksAsync('deal.won', {
+          entityType: 'deal',
+          entityId: params.id,
+          entityName: deal?.title,
+          current: newData,
+          previous: previousData,
+          userId,
+          source: 'web',
+        });
       }
       // Si la nueva etapa es cerrada pero no ganadora (perdido)
       else if (newStage?.isClosed && !newStage?.isWon) {
@@ -166,6 +190,17 @@ export async function PUT(
           previousData,
           newData,
           userId,
+        });
+
+        // Webhook deal.lost
+        triggerWebhooksAsync('deal.lost', {
+          entityType: 'deal',
+          entityId: params.id,
+          entityName: deal?.title,
+          current: newData,
+          previous: previousData,
+          userId,
+          source: 'web',
         });
       }
     }
@@ -194,6 +229,18 @@ export async function PUT(
         newData,
         changedFields,
         userId,
+      });
+
+      // Webhook deal.updated
+      triggerWebhooksAsync('deal.updated', {
+        entityType: 'deal',
+        entityId: params.id,
+        entityName: deal?.title,
+        current: newData,
+        previous: previousData,
+        changes: changedFields,
+        userId,
+        source: 'web',
       });
     }
 
@@ -225,14 +272,29 @@ export async function DELETE(
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
-    // Eliminar actividades asociadas
-    await Activity.deleteMany({ dealId: params.id });
-
-    const deal = await Deal.findByIdAndDelete(params.id);
-
+    // Obtener deal antes de eliminar para el webhook
+    const deal = await Deal.findById(params.id);
     if (!deal) {
       return NextResponse.json({ error: 'Deal no encontrado' }, { status: 404 });
     }
+
+    const dealData = deal.toObject();
+    const userId = (session.user as any).id;
+
+    // Eliminar actividades asociadas
+    await Activity.deleteMany({ dealId: params.id });
+
+    await Deal.findByIdAndDelete(params.id);
+
+    // Webhook deal.deleted
+    triggerWebhooksAsync('deal.deleted', {
+      entityType: 'deal',
+      entityId: params.id,
+      entityName: dealData.title,
+      current: dealData,
+      userId,
+      source: 'web',
+    });
 
     return NextResponse.json({ message: 'Deal eliminado correctamente' });
   } catch (error: any) {

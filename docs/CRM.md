@@ -59,7 +59,8 @@
 23. [Integración con Canales](#integración-con-canales)
 24. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
 25. [Competidores](#competidores)
-26. [Changelog](#changelog)
+26. [Webhooks Salientes](#webhooks-salientes)
+27. [Changelog](#changelog)
 
 ---
 
@@ -2267,12 +2268,151 @@ components/
 
 lib/
 └── crm/
-    └── duplicateDetection.ts       # Utilidades de detección de duplicados
+    ├── duplicateDetection.ts       # Utilidades de detección de duplicados
+    └── webhookEngine.ts            # Motor de webhooks salientes
+```
+
+---
+
+## Webhooks Salientes
+
+Sistema de notificaciones HTTP para eventos del CRM. Permite integrar sistemas externos como Zapier, Make, n8n o tu propia API.
+
+### Ubicación
+
+- **Panel de Administración:** `/crm/settings/webhooks`
+- **Solo accesible por ADMIN**
+
+### Eventos Disponibles
+
+| Categoría | Eventos |
+|-----------|---------|
+| **Deals** | `deal.created`, `deal.updated`, `deal.stage_changed`, `deal.won`, `deal.lost`, `deal.deleted` |
+| **Contactos** | `contact.created`, `contact.updated`, `contact.deleted` |
+| **Clientes** | `client.created`, `client.updated`, `client.deleted` |
+| **Actividades** | `activity.created`, `task.completed` |
+| **Cotizaciones** | `quote.created`, `quote.sent`, `quote.accepted`, `quote.rejected` |
+
+### Payload del Webhook
+
+```json
+{
+  "event": "deal.won",
+  "timestamp": "2025-11-29T12:00:00.000Z",
+  "webhookId": "507f1f77bcf86cd799439011",
+  "data": {
+    "current": {
+      "_id": "507f1f77bcf86cd799439012",
+      "title": "Deal Ejemplo",
+      "value": 50000,
+      "stageId": { "_id": "...", "name": "Ganado" }
+    },
+    "previous": {
+      "stageId": { "_id": "...", "name": "Negociación" }
+    },
+    "changes": ["stageId"]
+  },
+  "meta": {
+    "triggeredBy": {
+      "userId": "507f1f77bcf86cd799439013",
+      "userName": "Juan Pérez"
+    },
+    "source": "web"
+  }
+}
+```
+
+### Seguridad (HMAC-SHA256)
+
+Cada webhook incluye una firma para verificar la autenticidad:
+
+**Headers incluidos:**
+- `X-Webhook-Id`: ID del webhook
+- `X-Webhook-Event`: Nombre del evento
+- `X-Webhook-Timestamp`: Timestamp Unix
+- `X-Webhook-Signature`: Firma HMAC-SHA256
+
+**Verificación (ejemplo en Node.js):**
+```javascript
+const crypto = require('crypto');
+
+function verifySignature(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+```
+
+### Filtros
+
+Los webhooks pueden filtrarse por:
+- **Pipeline:** Solo eventos de un pipeline específico
+- **Etapa:** Solo cuando el deal esté en cierta etapa
+- **Propietario:** Solo deals asignados a un usuario
+- **Valor mínimo/máximo:** Solo deals dentro de un rango de valor
+
+### Reintentos
+
+- **Máximo de reintentos:** Configurable (0-10, default: 3)
+- **Backoff exponencial:** 1min → 5min → 15min
+- **Timeout:** Configurable (1-30 segundos, default: 10s)
+- **Desactivación automática:** Después de 10 fallos consecutivos
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/webhooks` | Listar webhooks |
+| POST | `/api/crm/webhooks` | Crear webhook |
+| GET | `/api/crm/webhooks/:id` | Obtener webhook con stats |
+| PUT | `/api/crm/webhooks/:id` | Actualizar webhook |
+| DELETE | `/api/crm/webhooks/:id` | Eliminar webhook |
+| POST | `/api/crm/webhooks/:id/test` | Enviar webhook de prueba |
+| GET | `/api/crm/webhooks/:id/logs` | Obtener logs paginados |
+| DELETE | `/api/crm/webhooks/:id/logs` | Limpiar logs antiguos |
+| POST | `/api/crm/webhooks/:id/retry` | Reintentar webhooks fallidos |
+
+### Estructura de Archivos
+
+```
+models/
+├── CrmWebhook.ts              # Modelo de webhook
+└── CrmWebhookLog.ts           # Logs de ejecución
+
+lib/crm/
+└── webhookEngine.ts           # Motor de ejecución
+
+app/api/crm/webhooks/
+├── route.ts                   # GET list, POST create
+└── [id]/
+    ├── route.ts              # GET, PUT, DELETE
+    ├── test/route.ts         # POST test
+    ├── logs/route.ts         # GET, DELETE logs
+    └── retry/route.ts        # POST retry
+
+app/crm/settings/webhooks/
+└── page.tsx                  # Panel de administración
 ```
 
 ---
 
 ## Changelog
+
+### v2.7.0 - 29 de Noviembre 2025
+- ✨ **Webhooks Salientes** - Notificaciones HTTP automáticas para eventos del CRM
+  - 18 eventos soportados: deals, contactos, clientes, actividades, cotizaciones
+  - Firma HMAC-SHA256 para seguridad
+  - Filtros por pipeline, etapa, propietario y valor
+  - Headers personalizados
+  - Reintentos automáticos con backoff exponencial
+  - Logs detallados con request/response
+  - Panel de administración en `/crm/settings/webhooks`
+  - API completa: CRUD, test, logs, retry
 
 ### v2.6.0 - 29 de Noviembre 2025
 - ✨ **Campos de Fórmula** - Nuevo tipo de campo personalizado calculado

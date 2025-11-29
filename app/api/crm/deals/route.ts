@@ -7,6 +7,7 @@ import PipelineStage from '@/models/PipelineStage';
 import { hasPermission } from '@/lib/permissions';
 import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
 import { updateDealScore } from '@/lib/leadScoringEngine';
+import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -146,6 +147,16 @@ export async function POST(request: NextRequest) {
       entityName: deal.title,
       newData: dealData,
       userId: userId,
+    });
+
+    // Disparar webhook de deal.created
+    triggerWebhooksAsync('deal.created', {
+      entityType: 'deal',
+      entityId: deal._id.toString(),
+      entityName: deal.title,
+      current: dealData,
+      userId: userId,
+      source: 'web',
     });
 
     // Calcular lead score inicial (async)

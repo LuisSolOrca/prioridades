@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
 import { hasPermission } from '@/lib/permissions';
 import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,6 +101,17 @@ export async function PUT(
         previousData: currentActivity.toObject(),
         newData: activity,
         userId,
+      });
+
+      // Webhook task.completed
+      triggerWebhooksAsync('task.completed', {
+        entityType: 'activity',
+        entityId: id,
+        entityName: activity.title as string,
+        current: activity as Record<string, any>,
+        previous: currentActivity.toObject(),
+        userId,
+        source: 'web',
       });
     }
 

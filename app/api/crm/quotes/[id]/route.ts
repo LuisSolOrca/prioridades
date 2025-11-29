@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Quote from '@/models/Quote';
 import { hasPermission } from '@/lib/permissions';
 import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,6 +125,17 @@ export async function PUT(
         newData: quoteData,
         userId,
       });
+
+      // Webhook quote.accepted
+      triggerWebhooksAsync('quote.accepted', {
+        entityType: 'quote',
+        entityId: id,
+        entityName: quote?.quoteNumber as string,
+        current: quoteData,
+        previous: existingQuote.toObject(),
+        userId,
+        source: 'web',
+      });
     } else if (body.status === 'rejected' && existingQuote.status !== 'rejected') {
       triggerWorkflowsAsync('quote_rejected', {
         entityType: 'quote',
@@ -132,6 +144,17 @@ export async function PUT(
         previousData: existingQuote.toObject(),
         newData: quoteData,
         userId,
+      });
+
+      // Webhook quote.rejected
+      triggerWebhooksAsync('quote.rejected', {
+        entityType: 'quote',
+        entityId: id,
+        entityName: quote?.quoteNumber as string,
+        current: quoteData,
+        previous: existingQuote.toObject(),
+        userId,
+        source: 'web',
       });
     }
 
