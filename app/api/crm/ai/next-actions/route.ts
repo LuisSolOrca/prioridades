@@ -5,7 +5,15 @@ import connectDB from '@/lib/mongodb';
 import Deal from '@/models/Deal';
 import Activity from '@/models/Activity';
 import SalesQuota from '@/models/SalesQuota';
+import Client from '@/models/Client';
+import Contact from '@/models/Contact';
+import PipelineStage from '@/models/PipelineStage';
 import { generateNextBestAction } from '@/lib/crm/aiService';
+
+// Ensure models are registered for populate
+void Client;
+void Contact;
+void PipelineStage;
 
 export async function GET(request: NextRequest) {
   try {

@@ -7,7 +7,13 @@ import Contact from '@/models/Contact';
 import Client from '@/models/Client';
 import Activity from '@/models/Activity';
 import Product from '@/models/Product';
+import Pipeline from '@/models/Pipeline';
+import PipelineStage from '@/models/PipelineStage';
 import { generateSummary } from '@/lib/crm/aiService';
+
+// Ensure models are registered for populate
+void Pipeline;
+void PipelineStage;
 
 export async function POST(request: NextRequest) {
   try {

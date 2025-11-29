@@ -6,7 +6,11 @@ import Deal from '@/models/Deal';
 import Contact from '@/models/Contact';
 import Client from '@/models/Client';
 import Activity from '@/models/Activity';
+import PipelineStage from '@/models/PipelineStage';
 import { generateEmail } from '@/lib/crm/aiService';
+
+// Ensure models are registered for populate
+void PipelineStage;
 
 export async function POST(request: NextRequest) {
   try {

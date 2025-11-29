@@ -6,7 +6,13 @@ import Deal from '@/models/Deal';
 import Client from '@/models/Client';
 import Activity from '@/models/Activity';
 import Competitor from '@/models/Competitor';
+import Pipeline from '@/models/Pipeline';
+import PipelineStage from '@/models/PipelineStage';
 import { predictDealClose } from '@/lib/crm/aiService';
+
+// Ensure models are registered for populate
+void Pipeline;
+void PipelineStage;
 
 export async function POST(request: NextRequest) {
   try {
