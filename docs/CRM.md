@@ -1534,6 +1534,7 @@ El sistema de campos personalizados permite a los administradores crear campos a
 | `email` | Correo electrónico | formato email |
 | `phone` | Teléfono | - |
 | `currency` | Valor monetario | currencyCode, minValue, maxValue |
+| `formula` | Valor calculado | formula, decimalPlaces, prefix, suffix |
 
 ### Propiedades del Campo
 
@@ -1560,6 +1561,70 @@ interface SelectOption {
   color?: string;  // Color hex opcional
 }
 ```
+
+### Campos de Fórmula
+
+Los campos de fórmula permiten crear valores calculados automáticamente basados en otros campos del mismo registro.
+
+**Configuración:**
+
+| Propiedad | Descripción | Ejemplo |
+|-----------|-------------|---------|
+| `formula` | Expresión matemática | `value * 0.05` |
+| `decimalPlaces` | Decimales a mostrar | `2` |
+| `formulaPrefix` | Prefijo del resultado | `$` |
+| `formulaSuffix` | Sufijo del resultado | `%` |
+
+**Variables Disponibles:**
+
+| Variable | Entidad | Descripción |
+|----------|---------|-------------|
+| `value` | Deal | Valor del deal |
+| `probability` | Deal | Probabilidad de cierre |
+| `quantity` | Product | Cantidad del producto |
+| `price` | Product | Precio del producto |
+| `discount` | Deal/Product | Descuento aplicado |
+
+También puedes referenciar otros campos personalizados por su nombre.
+
+**Funciones Soportadas:**
+
+| Función | Descripción | Ejemplo |
+|---------|-------------|---------|
+| `SUM` | Suma | `SUM(a, b, c)` |
+| `AVERAGE` | Promedio | `AVERAGE(a, b, c)` |
+| `MAX` | Máximo | `MAX(a, b)` |
+| `MIN` | Mínimo | `MIN(a, b)` |
+| `IF` | Condicional | `IF(value > 10000, 0.1, 0.05)` |
+| `ROUND` | Redondear | `ROUND(value * 0.05, 2)` |
+| `ABS` | Valor absoluto | `ABS(value)` |
+| `SQRT` | Raíz cuadrada | `SQRT(value)` |
+| `POWER` | Potencia | `POWER(value, 2)` |
+
+**Ejemplos de Fórmulas:**
+
+```
+# Comisión del 5%
+value * 0.05
+
+# Subtotal de producto
+price * quantity
+
+# Comisión escalonada
+IF(value > 10000, value * 0.1, value * 0.05)
+
+# Precio con descuento
+price * quantity * (1 - discount / 100)
+
+# Valor ponderado del deal
+value * probability / 100
+```
+
+**Comportamiento:**
+- Los campos de fórmula se calculan en tiempo real
+- No se pueden editar manualmente (son de solo lectura)
+- No pueden ser marcados como "requeridos"
+- El valor se recalcula automáticamente cuando cambian los campos referenciados
 
 ### Uso en Formularios
 
@@ -2038,7 +2103,7 @@ interface IDealCompetitor {
 - [x] **Workflows** - Automatizaciones basadas en triggers y condiciones
 - [x] **Secuencias de Email** - Series de emails automatizados
 - [x] **Editor Visual de Plantillas** - Editor WYSIWYG con variables dinámicas y biblioteca de plantillas
-- [x] **Campos Personalizados** - Campos custom por entidad
+- [x] **Campos Personalizados** - Campos custom por entidad con soporte para fórmulas calculadas
 - [x] **Detección de Duplicados** - Fuzzy matching y fusión de registros
 - [x] **Cuotas de Venta** - Metas por vendedor y período
 - [x] **Competidores** - Tracking de competencia en deals con win rate analysis
@@ -2208,6 +2273,15 @@ lib/
 ---
 
 ## Changelog
+
+### v2.6.0 - 29 de Noviembre 2025
+- ✨ **Campos de Fórmula** - Nuevo tipo de campo personalizado calculado
+  - Fórmulas usando hot-formula-parser (380+ funciones)
+  - Variables: value, probability, quantity, price, discount
+  - Referencias a otros campos personalizados
+  - Cálculo en tiempo real
+  - Configuración de decimales, prefijo y sufijo
+  - Ejemplos: comisión = value * 0.05, subtotal = price * quantity
 
 ### v2.5.0 - 29 de Noviembre 2025
 - ✨ **Editor Visual de Plantillas de Email** - Nuevo editor WYSIWYG para crear emails en secuencias
