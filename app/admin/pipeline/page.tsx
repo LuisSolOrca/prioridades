@@ -22,8 +22,16 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+interface Pipeline {
+  _id: string;
+  name: string;
+  color: string;
+  isDefault: boolean;
+}
+
 interface PipelineStage {
   _id: string;
+  pipelineId?: string;
   name: string;
   order: number;
   color: string;
@@ -46,6 +54,8 @@ const PRESET_COLORS = [
 export default function PipelineAdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>('');
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,14 +82,38 @@ export default function PipelineAdminPage() {
         router.push('/dashboard');
         return;
       }
-      loadStages();
+      loadPipelines();
     }
   }, [status, router, session]);
 
-  const loadStages = async () => {
+  useEffect(() => {
+    if (selectedPipelineId) {
+      loadStages(selectedPipelineId);
+    }
+  }, [selectedPipelineId]);
+
+  const loadPipelines = async () => {
+    try {
+      const res = await fetch('/api/crm/pipelines');
+      const data = await res.json();
+      setPipelines(Array.isArray(data) ? data : []);
+      // Select default pipeline or first one
+      const defaultPipeline = data.find((p: Pipeline) => p.isDefault) || data[0];
+      if (defaultPipeline) {
+        setSelectedPipelineId(defaultPipeline._id);
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error loading pipelines:', error);
+      setLoading(false);
+    }
+  };
+
+  const loadStages = async (pipelineId: string) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/crm/pipeline-stages');
+      const res = await fetch(`/api/crm/pipeline-stages?pipelineId=${pipelineId}`);
       const data = await res.json();
       setStages(Array.isArray(data) ? data.sort((a: PipelineStage, b: PipelineStage) => a.order - b.order) : []);
     } catch (error) {
@@ -106,7 +140,7 @@ export default function PipelineAdminPage() {
       });
     } catch (error) {
       console.error('Error reordering stages:', error);
-      loadStages();
+      loadStages(selectedPipelineId);
     }
   };
 
@@ -145,10 +179,14 @@ export default function PipelineAdminPage() {
         ? '/api/crm/pipeline-stages/' + editingStage._id
         : '/api/crm/pipeline-stages';
 
+      const payload = editingStage
+        ? formData
+        : { ...formData, pipelineId: selectedPipelineId };
+
       const res = await fetch(url, {
         method: editingStage ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -157,7 +195,7 @@ export default function PipelineAdminPage() {
       }
 
       setShowModal(false);
-      loadStages();
+      loadStages(selectedPipelineId);
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -177,7 +215,7 @@ export default function PipelineAdminPage() {
       }
 
       setDeleteConfirm(null);
-      loadStages();
+      loadStages(selectedPipelineId);
     } catch (error: any) {
       alert(error.message);
     }
@@ -190,11 +228,13 @@ export default function PipelineAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !stage.isActive }),
       });
-      loadStages();
+      loadStages(selectedPipelineId);
     } catch (error) {
       console.error('Error toggling stage:', error);
     }
   };
+
+  const selectedPipeline = pipelines.find(p => p._id === selectedPipelineId);
 
   if (status === 'loading' || loading) {
     return (
@@ -226,14 +266,67 @@ export default function PipelineAdminPage() {
               Configura las etapas de tu embudo de ventas
             </p>
           </div>
+          <Link
+            href="/admin/pipelines"
+            className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
+          >
+            <Layers size={18} />
+            Gestionar Pipelines
+          </Link>
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+            disabled={!selectedPipelineId}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
           >
             <Plus size={20} />
             Nueva Etapa
           </button>
         </div>
+
+        {/* Pipeline Selector */}
+        {pipelines.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Pipeline:
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {pipelines.map((pipeline) => (
+                  <button
+                    key={pipeline._id}
+                    onClick={() => setSelectedPipelineId(pipeline._id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition ${
+                      selectedPipelineId === pipeline._id
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: pipeline.color || '#3B82F6' }}
+                    />
+                    {pipeline.name}
+                    {pipeline.isDefault && (
+                      <Star size={14} className="text-yellow-500" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {pipelines.length === 0 && !loading && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+            <p className="text-yellow-700 dark:text-yellow-300">
+              No hay pipelines creados.{' '}
+              <Link href="/admin/pipelines" className="underline font-medium">
+                Crea tu primer pipeline
+              </Link>
+              {' '}para comenzar a agregar etapas.
+            </p>
+          </div>
+        )}
 
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
           <p className="text-sm text-blue-700 dark:text-blue-300">
