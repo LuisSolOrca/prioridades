@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import EmailTemplateEditor from '@/components/crm/EmailTemplateEditor';
+import SaveTemplateModal from '@/components/crm/SaveTemplateModal';
 import {
   Mail,
   Plus,
@@ -123,6 +125,7 @@ export default function SequenceBuilderPage() {
   const [activeTab, setActiveTab] = useState<'builder' | 'settings' | 'enrollments'>('builder');
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [saveTemplateStep, setSaveTemplateStep] = useState<number | null>(null);
 
   const user = session?.user as any;
   const isAdmin = user?.role === 'ADMIN';
@@ -537,59 +540,22 @@ export default function SequenceBuilderPage() {
                                 </div>
                               </div>
 
-                              {/* Email fields */}
+                              {/* Email fields - Visual Editor */}
                               {step.type === 'email' && (
-                                <>
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                      Template (opcional)
-                                    </label>
-                                    <select
-                                      value={step.templateId || ''}
-                                      onChange={(e) => {
-                                        const template = templates.find(t => t._id === e.target.value);
-                                        updateStep(step.order, {
-                                          templateId: e.target.value || undefined,
-                                          subject: template?.subject || step.subject,
-                                          body: template?.body || step.body,
-                                        });
-                                      }}
-                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-                                    >
-                                      <option value="">Sin template</option>
-                                      {templates.map(t => (
-                                        <option key={t._id} value={t._id}>{t.name}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                      Asunto
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={step.subject || ''}
-                                      onChange={(e) => updateStep(step.order, { subject: e.target.value })}
-                                      placeholder="Asunto del email"
-                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                      Cuerpo
-                                    </label>
-                                    <textarea
-                                      value={step.body || ''}
-                                      onChange={(e) => updateStep(step.order, { body: e.target.value })}
-                                      placeholder="Escribe el contenido del email... Usa {{contact.firstName}} para variables"
-                                      rows={6}
-                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Variables: {'{{contact.firstName}}'}, {'{{contact.lastName}}'}, {'{{client.name}}'}, {'{{deal.title}}'}
-                                    </p>
-                                  </div>
-                                </>
+                                <EmailTemplateEditor
+                                  subject={step.subject || ''}
+                                  body={step.body || ''}
+                                  onSubjectChange={(value) => updateStep(step.order, { subject: value })}
+                                  onBodyChange={(value) => updateStep(step.order, { body: value })}
+                                  onSelectTemplate={(template) => {
+                                    updateStep(step.order, {
+                                      subject: template.subject,
+                                      body: template.body,
+                                    });
+                                  }}
+                                  onSaveAsTemplate={() => setSaveTemplateStep(step.order)}
+                                  showTemplateLibrary
+                                />
                               )}
 
                               {/* Task fields */}
@@ -872,6 +838,20 @@ export default function SequenceBuilderPage() {
           )}
         </div>
       </div>
+
+      {/* Save Template Modal */}
+      {saveTemplateStep !== null && (
+        <SaveTemplateModal
+          subject={sequence.steps.find(s => s.order === saveTemplateStep)?.subject || ''}
+          body={sequence.steps.find(s => s.order === saveTemplateStep)?.body || ''}
+          onClose={() => setSaveTemplateStep(null)}
+          onSaved={(templateId) => {
+            updateStep(saveTemplateStep, { templateId });
+            fetchTemplates();
+            setSaveTemplateStep(null);
+          }}
+        />
+      )}
     </div>
   );
 }
