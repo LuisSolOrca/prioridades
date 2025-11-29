@@ -9,8 +9,8 @@ import Activity from '@/models/Activity';
 import PipelineStage from '@/models/PipelineStage';
 import { generateEmail } from '@/lib/crm/aiService';
 
-// Ensure models are registered for populate
-void PipelineStage;
+// Force model registration for populate
+const _PipelineStage = PipelineStage;
 
 export async function POST(request: NextRequest) {
   try {

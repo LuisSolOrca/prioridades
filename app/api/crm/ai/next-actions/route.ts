@@ -10,10 +10,10 @@ import Contact from '@/models/Contact';
 import PipelineStage from '@/models/PipelineStage';
 import { generateNextBestAction } from '@/lib/crm/aiService';
 
-// Ensure models are registered for populate
-void Client;
-void Contact;
-void PipelineStage;
+// Force model registration for populate
+const _Client = Client;
+const _Contact = Contact;
+const _PipelineStage = PipelineStage;
 
 export async function GET(request: NextRequest) {
   try {

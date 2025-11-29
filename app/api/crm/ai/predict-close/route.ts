@@ -10,9 +10,9 @@ import Pipeline from '@/models/Pipeline';
 import PipelineStage from '@/models/PipelineStage';
 import { predictDealClose } from '@/lib/crm/aiService';
 
-// Ensure models are registered for populate
-void Pipeline;
-void PipelineStage;
+// Force model registration for populate
+const _Pipeline = Pipeline;
+const _PipelineStage = PipelineStage;
 
 export async function POST(request: NextRequest) {
   try {
