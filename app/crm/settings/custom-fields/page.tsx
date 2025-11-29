@@ -31,9 +31,11 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
+  Calculator,
+  HelpCircle,
 } from 'lucide-react';
 
-type FieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email' | 'phone' | 'currency';
+type FieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email' | 'phone' | 'currency' | 'formula';
 type EntityType = 'client' | 'contact' | 'deal' | 'product';
 
 interface SelectOption {
@@ -58,6 +60,13 @@ interface CustomField {
   minValue?: number;
   maxValue?: number;
   currencyCode?: string;
+  // Formula fields
+  formula?: string;
+  referencedFields?: string[];
+  decimalPlaces?: number;
+  formulaPrefix?: string;
+  formulaSuffix?: string;
+  // UI
   order: number;
   showInList: boolean;
   showInCard: boolean;
@@ -77,6 +86,7 @@ const FIELD_TYPE_CONFIG: Record<FieldType, { icon: any; label: string; color: st
   email: { icon: Mail, label: 'Email', color: 'red' },
   phone: { icon: Phone, label: 'Teléfono', color: 'teal' },
   currency: { icon: DollarSign, label: 'Moneda', color: 'emerald' },
+  formula: { icon: Calculator, label: 'Fórmula', color: 'violet' },
 };
 
 const ENTITY_CONFIG: Record<EntityType, { icon: any; label: string; color: string }> = {
@@ -377,6 +387,11 @@ function FieldRow({
           </div>
           <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
             <span>{typeConfig.label}</span>
+            {field.fieldType === 'formula' && field.formula && (
+              <code className="text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-1.5 py-0.5 rounded">
+                {field.formula.length > 30 ? field.formula.substring(0, 30) + '...' : field.formula}
+              </code>
+            )}
             {field.showInList && <span className="text-blue-500">• En listado</span>}
             {field.showInCard && <span className="text-green-500">• En tarjeta</span>}
           </div>
@@ -444,6 +459,12 @@ function FieldModal({
     minValue: field?.minValue || undefined,
     maxValue: field?.maxValue || undefined,
     currencyCode: field?.currencyCode || 'MXN',
+    // Formula fields
+    formula: field?.formula || '',
+    decimalPlaces: field?.decimalPlaces ?? 2,
+    formulaPrefix: field?.formulaPrefix || '',
+    formulaSuffix: field?.formulaSuffix || '',
+    // UI
     showInList: field?.showInList || false,
     showInCard: field?.showInCard ?? true,
     section: field?.section || '',
@@ -477,6 +498,17 @@ function FieldModal({
     if (!['number', 'currency'].includes(data.fieldType)) {
       data.minValue = undefined;
       data.maxValue = undefined;
+    }
+    // Limpiar campos de fórmula si no es tipo fórmula
+    if (data.fieldType !== 'formula') {
+      data.formula = undefined as any;
+      data.decimalPlaces = undefined as any;
+      data.formulaPrefix = undefined as any;
+      data.formulaSuffix = undefined as any;
+    }
+    // Los campos de fórmula no pueden ser requeridos (se calculan automáticamente)
+    if (data.fieldType === 'formula') {
+      data.required = false;
     }
 
     onSave(data);
@@ -635,17 +667,106 @@ function FieldModal({
             </div>
           )}
 
+          {/* Fórmula */}
+          {form.fieldType === 'formula' && (
+            <div className="space-y-4 p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+              <div className="flex items-center gap-2 text-violet-700 dark:text-violet-300">
+                <Calculator className="w-5 h-5" />
+                <h4 className="font-medium">Configuración de Fórmula</h4>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Fórmula *
+                </label>
+                <textarea
+                  value={form.formula}
+                  onChange={(e) => setForm({ ...form, formula: e.target.value })}
+                  placeholder="Ej: value * 0.05 o price * quantity * (1 - discount / 100)"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm"
+                />
+                <div className="mt-2 p-3 bg-white dark:bg-gray-800 rounded border border-violet-200 dark:border-violet-700">
+                  <div className="flex items-start gap-2">
+                    <HelpCircle className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                      <p><strong>Variables disponibles:</strong></p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">value</code> - Valor del deal</p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">probability</code> - Probabilidad del deal</p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">quantity</code> - Cantidad del producto</p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">price</code> - Precio del producto</p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">discount</code> - Descuento</p>
+                      <p>• También puedes usar otros campos personalizados por su nombre</p>
+                      <p className="mt-2"><strong>Funciones:</strong> SUM, AVERAGE, MAX, MIN, IF, ROUND, ABS, SQRT, POWER</p>
+                      <p><strong>Ejemplos:</strong></p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">value * 0.05</code> → Comisión del 5%</p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">price * quantity</code> → Subtotal</p>
+                      <p>• <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">IF(value &gt; 10000, value * 0.1, value * 0.05)</code> → Comisión escalonada</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Decimales
+                  </label>
+                  <input
+                    type="number"
+                    value={form.decimalPlaces}
+                    onChange={(e) => setForm({ ...form, decimalPlaces: parseInt(e.target.value) || 0 })}
+                    min="0"
+                    max="6"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Prefijo
+                  </label>
+                  <input
+                    type="text"
+                    value={form.formulaPrefix}
+                    onChange={(e) => setForm({ ...form, formulaPrefix: e.target.value })}
+                    placeholder="$"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Sufijo
+                  </label>
+                  <input
+                    type="text"
+                    value={form.formulaSuffix}
+                    onChange={(e) => setForm({ ...form, formulaSuffix: e.target.value })}
+                    placeholder="%"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Validación */}
           <div className="space-y-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.required}
-                onChange={(e) => setForm({ ...form, required: e.target.checked })}
-                className="rounded"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Campo requerido</span>
-            </label>
+            {form.fieldType !== 'formula' && (
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.required}
+                  onChange={(e) => setForm({ ...form, required: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Campo requerido</span>
+              </label>
+            )}
+            {form.fieldType === 'formula' && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                Los campos de fórmula se calculan automáticamente
+              </p>
+            )}
 
             {['text', 'url', 'email', 'phone'].includes(form.fieldType) && (
               <div className="grid grid-cols-2 gap-4">
@@ -752,7 +873,11 @@ function FieldModal({
             </button>
             <button
               type="submit"
-              disabled={saving || (['select', 'multiselect'].includes(form.fieldType) && form.options.length === 0)}
+              disabled={
+                saving ||
+                (['select', 'multiselect'].includes(form.fieldType) && form.options.length === 0) ||
+                (form.fieldType === 'formula' && !form.formula.trim())
+              }
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
             >
               {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

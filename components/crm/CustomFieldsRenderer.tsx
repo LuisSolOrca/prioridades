@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
-type CustomFieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email' | 'phone' | 'currency';
+type CustomFieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email' | 'phone' | 'currency' | 'formula';
 
 interface SelectOption {
   value: string;
@@ -27,6 +27,12 @@ interface CustomField {
   currencyCode?: string;
   showInList: boolean;
   showInCard: boolean;
+  // Formula fields
+  formula?: string;
+  referencedFields?: string[];
+  decimalPlaces?: number;
+  formulaPrefix?: string;
+  formulaSuffix?: string;
 }
 
 interface CustomFieldsRendererProps {
@@ -72,6 +78,79 @@ export default function CustomFieldsRenderer({
     });
   };
 
+  // Calcular valores de fórmulas
+  const calculateFormulaValue = (field: CustomField, allValues: Record<string, any>, allFields: CustomField[]): number | null => {
+    if (!field.formula) return null;
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { Parser } = require('hot-formula-parser');
+      const parser = new Parser();
+
+      // Asignar valores de otros campos a la fórmula
+      // La fórmula puede referenciar otros campos por su nombre
+      allFields.forEach((f) => {
+        if (f.name !== field.name) {
+          let val = allValues[f.name];
+
+          // Convertir según el tipo de campo
+          if (f.fieldType === 'number' || f.fieldType === 'currency') {
+            val = parseFloat(val) || 0;
+          } else if (f.fieldType === 'boolean') {
+            val = val ? 1 : 0;
+          } else if (f.fieldType === 'date') {
+            val = val ? new Date(val) : null;
+          } else if (typeof val === 'string') {
+            val = parseFloat(val) || 0;
+          }
+
+          parser.setVariable(f.name, val ?? 0);
+        }
+      });
+
+      // También agregar campos estándar de la entidad si están disponibles
+      // Por ejemplo, para deals: value, probability
+      if (allValues.value !== undefined) {
+        parser.setVariable('value', parseFloat(allValues.value) || 0);
+      }
+      if (allValues.probability !== undefined) {
+        parser.setVariable('probability', parseFloat(allValues.probability) || 0);
+      }
+      if (allValues.quantity !== undefined) {
+        parser.setVariable('quantity', parseFloat(allValues.quantity) || 0);
+      }
+      if (allValues.price !== undefined) {
+        parser.setVariable('price', parseFloat(allValues.price) || 0);
+      }
+      if (allValues.discount !== undefined) {
+        parser.setVariable('discount', parseFloat(allValues.discount) || 0);
+      }
+
+      const result = parser.parse(field.formula);
+
+      if (result.error) {
+        console.error('Formula error:', result.error);
+        return null;
+      }
+
+      return typeof result.result === 'number' ? result.result : null;
+    } catch (error) {
+      console.error('Error calculating formula:', error);
+      return null;
+    }
+  };
+
+  // Memoizar valores de fórmulas calculados
+  const calculatedFormulas = useMemo(() => {
+    const results: Record<string, number | null> = {};
+    fields.forEach((field) => {
+      if (field.fieldType === 'formula') {
+        results[field.name] = calculateFormulaValue(field, values, fields);
+      }
+    });
+    return results;
+  }, [fields, values]);
+
   const formatValue = (field: CustomField, value: any): string => {
     if (value === null || value === undefined || value === '') return '-';
 
@@ -98,6 +177,16 @@ export default function CustomFieldsRenderer({
         return value;
       case 'url':
         return value;
+      case 'formula':
+        // El valor de fórmula se calcula dinámicamente
+        const calculatedValue = calculatedFormulas[field.name];
+        if (calculatedValue === null || calculatedValue === undefined) return '-';
+        const decimals = field.decimalPlaces ?? 2;
+        const formattedNumber = calculatedValue.toLocaleString('es-MX', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        });
+        return `${field.formulaPrefix || ''}${formattedNumber}${field.formulaSuffix || ''}`;
       default:
         return String(value);
     }
@@ -150,16 +239,26 @@ export default function CustomFieldsRenderer({
         <div key={field._id}>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {field.label}
-            {field.required && <span className="text-red-500 ml-1">*</span>}
+            {field.required && field.fieldType !== 'formula' && <span className="text-red-500 ml-1">*</span>}
+            {field.fieldType === 'formula' && (
+              <span className="ml-2 text-xs font-normal text-purple-600 dark:text-purple-400">(Calculado)</span>
+            )}
           </label>
           {field.description && (
             <p className="text-xs text-gray-500 mb-1">{field.description}</p>
           )}
-          <FieldInput
-            field={field}
-            value={values[field.name]}
-            onChange={(value) => handleChange(field.name, value)}
-          />
+          {field.fieldType === 'formula' ? (
+            <FormulaDisplay
+              field={field}
+              calculatedValue={calculatedFormulas[field.name]}
+            />
+          ) : (
+            <FieldInput
+              field={field}
+              value={values[field.name]}
+              onChange={(value) => handleChange(field.name, value)}
+            />
+          )}
         </div>
       ))}
     </div>
@@ -299,6 +398,41 @@ function FieldInput({
         />
       );
   }
+}
+
+// Componente para mostrar campos de fórmula (solo lectura)
+function FormulaDisplay({
+  field,
+  calculatedValue,
+}: {
+  field: CustomField;
+  calculatedValue: number | null;
+}) {
+  const decimals = field.decimalPlaces ?? 2;
+
+  if (calculatedValue === null || calculatedValue === undefined) {
+    return (
+      <div className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 italic">
+        Ingresa valores en los campos requeridos
+      </div>
+    );
+  }
+
+  const formattedValue = calculatedValue.toLocaleString('es-MX', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+  return (
+    <div className="w-full px-3 py-2 border border-purple-200 dark:border-purple-700 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-900 dark:text-purple-100 font-medium">
+      <span className="flex items-center gap-2">
+        <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        {field.formulaPrefix || ''}{formattedValue}{field.formulaSuffix || ''}
+      </span>
+    </div>
+  );
 }
 
 // Hook para usar campos personalizados

@@ -1,6 +1,6 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
-export type CustomFieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email' | 'phone' | 'currency';
+export type CustomFieldType = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'url' | 'email' | 'phone' | 'currency' | 'formula';
 export type CustomFieldEntity = 'client' | 'contact' | 'deal' | 'product';
 
 export interface ISelectOption {
@@ -33,6 +33,13 @@ export interface ICustomField {
   // Formato de moneda
   currencyCode?: string; // MXN, USD, EUR
 
+  // Configuración de fórmula (solo para fieldType: 'formula')
+  formula?: string; // Fórmula usando hot-formula-parser, ej: "value * 0.05"
+  referencedFields?: string[]; // Nombres de campos que usa la fórmula
+  decimalPlaces?: number; // Decimales para el resultado (default: 2)
+  formulaPrefix?: string; // Prefijo para mostrar, ej: "$"
+  formulaSuffix?: string; // Sufijo para mostrar, ej: "%"
+
   // UI
   order: number;
   showInList: boolean; // Mostrar en listado
@@ -57,6 +64,7 @@ export const FIELD_TYPE_LABELS: Record<CustomFieldType, string> = {
   email: 'Email',
   phone: 'Teléfono',
   currency: 'Moneda',
+  formula: 'Fórmula calculada',
 };
 
 export const ENTITY_TYPE_LABELS: Record<CustomFieldEntity, string> = {
@@ -90,7 +98,7 @@ const CustomFieldSchema = new Schema<ICustomField>({
   },
   fieldType: {
     type: String,
-    enum: ['text', 'number', 'date', 'boolean', 'select', 'multiselect', 'url', 'email', 'phone', 'currency'],
+    enum: ['text', 'number', 'date', 'boolean', 'select', 'multiselect', 'url', 'email', 'phone', 'currency', 'formula'],
     required: true,
   },
   entityType: {
@@ -118,6 +126,13 @@ const CustomFieldSchema = new Schema<ICustomField>({
   // Currency
   currencyCode: { type: String },
 
+  // Formula configuration
+  formula: { type: String, maxlength: 1000 },
+  referencedFields: { type: [String], default: undefined },
+  decimalPlaces: { type: Number, default: 2 },
+  formulaPrefix: { type: String },
+  formulaSuffix: { type: String },
+
   // UI
   order: { type: Number, default: 0 },
   showInList: { type: Boolean, default: false },
@@ -139,11 +154,16 @@ const CustomFieldSchema = new Schema<ICustomField>({
 CustomFieldSchema.index({ entityType: 1, isActive: 1, order: 1 });
 CustomFieldSchema.index({ entityType: 1, name: 1 }, { unique: true }); // Nombre único por entidad
 
-// Validar que select/multiselect tengan opciones
+// Validar que select/multiselect tengan opciones y formula tenga fórmula
 CustomFieldSchema.pre('save', function(next) {
   if (['select', 'multiselect'].includes(this.fieldType)) {
     if (!this.options || this.options.length === 0) {
       return next(new Error('Los campos de tipo lista requieren al menos una opción'));
+    }
+  }
+  if (this.fieldType === 'formula') {
+    if (!this.formula || this.formula.trim() === '') {
+      return next(new Error('Los campos de tipo fórmula requieren una fórmula'));
     }
   }
   next();
@@ -233,6 +253,11 @@ CustomFieldSchema.methods.validateValue = function(value: any): { valid: boolean
           }
         }
       }
+      break;
+
+    case 'formula':
+      // Los campos de fórmula son calculados automáticamente, siempre válidos
+      // El valor se calcula en runtime, no se valida el input
       break;
   }
 
