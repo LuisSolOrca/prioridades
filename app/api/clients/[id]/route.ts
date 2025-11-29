@@ -5,9 +5,12 @@ import connectDB from '@/lib/mongodb';
 import Client from '@/models/Client';
 import mongoose from 'mongoose';
 
-export async function PUT(
+export const dynamic = 'force-dynamic';
+
+// GET /api/clients/[id] - Obtener un cliente por ID
+export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,14 +21,47 @@ export async function PUT(
 
     await connectDB();
 
+    const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
+    const client = await Client.findById(id);
+
+    if (!client) {
+      return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
+    }
+
+    return NextResponse.json(client);
+  } catch (error: any) {
+    console.error('Error fetching client:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const { id } = await params;
     const body = await request.json();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
     const client = await Client.findByIdAndUpdate(
-      params.id,
+      id,
       {
         name: body.name,
         description: body.description,
@@ -53,7 +89,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -64,13 +100,15 @@ export async function DELETE(
 
     await connectDB();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
     // Verificar si hay prioridades usando este cliente
     const Priority = mongoose.models.Priority || (await import('@/models/Priority')).default;
-    const prioritiesCount = await Priority.countDocuments({ clientId: params.id });
+    const prioritiesCount = await Priority.countDocuments({ clientId: id });
 
     if (prioritiesCount > 0) {
       return NextResponse.json({
@@ -78,7 +116,7 @@ export async function DELETE(
       }, { status: 400 });
     }
 
-    const client = await Client.findByIdAndDelete(params.id);
+    const client = await Client.findByIdAndDelete(id);
 
     if (!client) {
       return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
