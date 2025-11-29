@@ -27,16 +27,22 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '10');
-    const ownerId = searchParams.get('ownerId') || user.id;
+    const ownerIdParam = searchParams.get('ownerId');
 
     // Get all deals for the user (including won deals for follow-up recommendations)
     const dealsQuery: any = {};
 
-    // Only filter by owner if not admin or specific owner requested
-    if (user.role !== 'ADMIN' || ownerId === user.id) {
-      dealsQuery.ownerId = ownerId;
-    } else if (ownerId && ownerId !== 'all') {
-      dealsQuery.ownerId = ownerId;
+    // ADMIN sees all deals by default, unless specific owner is requested
+    // Regular users only see their own deals
+    if (user.role === 'ADMIN') {
+      // Admin can filter by owner if requested, otherwise sees all
+      if (ownerIdParam && ownerIdParam !== 'all') {
+        dealsQuery.ownerId = ownerIdParam;
+      }
+      // If no ownerIdParam or 'all', don't filter - admin sees all
+    } else {
+      // Regular users only see their own deals
+      dealsQuery.ownerId = user.id;
     }
 
     const deals = await Deal.find(dealsQuery)
@@ -105,18 +111,21 @@ export async function GET(request: NextRequest) {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const wonStages = await PipelineStage.find({ isWon: true }).select('_id').lean();
     const wonStageIds = wonStages.map(s => s._id);
-    const wonThisMonth = await Deal.countDocuments({
-      ownerId,
+    const wonQuery: any = {
       stageId: { $in: wonStageIds },
       updatedAt: { $gte: startOfMonth },
-    });
+    };
+    if (user.role !== 'ADMIN') {
+      wonQuery.ownerId = user.id;
+    }
+    const wonThisMonth = await Deal.countDocuments(wonQuery);
     userContext.wonThisMonth = wonThisMonth;
 
-    // Get quota if exists
+    // Get quota if exists (only for current user)
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
     const quota = await SalesQuota.findOne({
-      userId: ownerId,
+      userId: user.id,
       year: currentYear,
       $or: [
         { period: 'monthly', month: currentMonth },

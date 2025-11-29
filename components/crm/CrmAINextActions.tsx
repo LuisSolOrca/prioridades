@@ -77,6 +77,7 @@ export default function CrmAINextActions({
   const [actions, setActions] = useState<NextAction[]>([]);
   const [error, setError] = useState('');
   const [dealsAnalyzed, setDealsAnalyzed] = useState(0);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     if (autoLoad) {
@@ -102,8 +103,10 @@ export default function CrmAINextActions({
 
       setActions(data.actions || []);
       setDealsAnalyzed(data.dealsAnalyzed || 0);
+      setHasLoaded(true);
     } catch (err: any) {
       setError(err.message);
+      setHasLoaded(true);
     } finally {
       setLoading(false);
     }
@@ -118,7 +121,8 @@ export default function CrmAINextActions({
     return labels[priority] || priority;
   };
 
-  if (!actions.length && !loading && !error) {
+  // Show initial state only if never loaded
+  if (!hasLoaded && !loading) {
     return (
       <div className={`bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800 p-4 ${className}`}>
         <div className="flex items-center justify-between">
