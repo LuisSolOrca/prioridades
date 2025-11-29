@@ -29,14 +29,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const ownerId = searchParams.get('ownerId') || user.id;
 
-    // Get closed stage IDs to exclude
-    const closedStages = await PipelineStage.find({ isClosed: true }).select('_id').lean();
-    const closedStageIds = closedStages.map(s => s._id);
-
-    // Get active deals for the user (not in closed stages)
-    const dealsQuery: any = {
-      stageId: { $nin: closedStageIds },
-    };
+    // Get all deals for the user (including won deals for follow-up recommendations)
+    const dealsQuery: any = {};
 
     // Only filter by owner if not admin or specific owner requested
     if (user.role !== 'ADMIN' || ownerId === user.id) {
@@ -46,10 +40,10 @@ export async function GET(request: NextRequest) {
     }
 
     const deals = await Deal.find(dealsQuery)
-      .populate('stageId', 'name order')
+      .populate('stageId', 'name order isClosed isWon')
       .populate('clientId', 'name')
       .populate('contactId', 'firstName lastName')
-      .sort({ value: -1 })
+      .sort({ updatedAt: -1 })
       .limit(limit)
       .lean() as any[];
 
@@ -90,6 +84,7 @@ export async function GET(request: NextRequest) {
         title: deal.title,
         value: deal.value || 0,
         stage: deal.stageId?.name || 'Sin etapa',
+        status: deal.stageId?.isWon ? 'won' : deal.stageId?.isClosed ? 'lost' : 'open',
         probability: deal.probability,
         daysInStage: Math.floor((now.getTime() - stageChangedAt.getTime()) / (1000 * 60 * 60 * 24)),
         lastActivityDate: lastActivity?.createdAt?.toISOString(),

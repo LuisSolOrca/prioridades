@@ -305,6 +305,7 @@ export async function generateNextBestAction(params: {
     title: string;
     value: number;
     stage: string;
+    status?: 'open' | 'won' | 'lost';
     probability?: number;
     daysInStage: number;
     lastActivityDate?: string;
@@ -330,17 +331,33 @@ export async function generateNextBestAction(params: {
 }>> {
   const { deals, userContext } = params;
 
-  const systemPrompt = `Eres un coach de ventas experto en priorización y gestión de pipeline. Tu tarea es analizar los deals activos y recomendar la siguiente mejor acción para cada uno.
+  const systemPrompt = `Eres un coach de ventas experto en priorización y gestión de pipeline. Tu tarea es analizar los deals y recomendar la siguiente mejor acción para cada uno.
 
-Considera:
+IMPORTANTE: Los deals pueden estar en diferentes estados:
+- OPEN (abierto): Deals activos en el pipeline de ventas
+- WON (ganado): Deals cerrados exitosamente - recomendar seguimiento post-venta, upsells, solicitar referidos, check-ins de satisfacción
+- LOST (perdido): Deals perdidos - considerar reactivación si ha pasado tiempo
+
+Para deals ABIERTOS considera:
 - Deals estancados (muchos días sin actividad o en la misma etapa)
 - Deals de alto valor que necesitan atención
 - Deals próximos a su fecha de cierre esperada
 - Deals con baja actividad reciente
 - El contexto del vendedor (si está cerca de su cuota, priorizar cierres)
 
+Para deals GANADOS considera:
+- Seguimiento post-venta para asegurar satisfacción
+- Oportunidades de upsell o cross-sell
+- Solicitar referidos o testimonios
+- Renovaciones si aplica
+- Check-ins periódicos para mantener la relación
+
+Para deals PERDIDOS considera:
+- Si han pasado más de 30 días, considerar reactivación
+- Analizar si las circunstancias han cambiado
+
 Prioridades:
-- HIGH: Acción urgente requerida (deal en riesgo, fecha de cierre próxima, alto valor)
+- HIGH: Acción urgente requerida (deal en riesgo, fecha de cierre próxima, alto valor, cliente ganado sin seguimiento)
 - MEDIUM: Acción importante pero no urgente
 - LOW: Mantenimiento regular del pipeline
 
@@ -362,7 +379,9 @@ Responde SIEMPRE en formato JSON como array:
       ? Math.floor((Date.now() - new Date(d.lastActivityDate).getTime()) / (1000 * 60 * 60 * 24))
       : null;
 
-    return `- ${d.title} (${d.clientName || 'Sin cliente'})
+    const statusLabel = d.status === 'won' ? '✅ GANADO' : d.status === 'lost' ? '❌ PERDIDO' : '🔄 ABIERTO';
+
+    return `- ${d.title} (${d.clientName || 'Sin cliente'}) [${statusLabel}]
   Valor: $${d.value.toLocaleString()} | Etapa: ${d.stage} | Prob: ${d.probability || 'N/A'}%
   Días en etapa: ${d.daysInStage} | Última actividad: ${daysSinceActivity !== null ? `hace ${daysSinceActivity} días (${d.lastActivityType})` : 'Sin actividad'}
   Cierre esperado: ${d.expectedCloseDate ? new Date(d.expectedCloseDate).toLocaleDateString('es-MX') : 'No definido'}
