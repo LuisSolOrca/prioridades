@@ -29,20 +29,12 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const ownerIdParam = searchParams.get('ownerId');
 
-    // Get all deals for the user (including won deals for follow-up recommendations)
+    // Get all deals (all users can see all deals)
     const dealsQuery: any = {};
 
-    // ADMIN sees all deals by default, unless specific owner is requested
-    // Regular users only see their own deals
-    if (user.role === 'ADMIN') {
-      // Admin can filter by owner if requested, otherwise sees all
-      if (ownerIdParam && ownerIdParam !== 'all') {
-        dealsQuery.ownerId = ownerIdParam;
-      }
-      // If no ownerIdParam or 'all', don't filter - admin sees all
-    } else {
-      // Regular users only see their own deals
-      dealsQuery.ownerId = user.id;
+    // Optional filter by owner if requested
+    if (ownerIdParam && ownerIdParam !== 'all') {
+      dealsQuery.ownerId = ownerIdParam;
     }
 
     const deals = await Deal.find(dealsQuery)
@@ -107,18 +99,14 @@ export async function GET(request: NextRequest) {
       totalDeals: deals.length,
     };
 
-    // Get won deals this month
+    // Get won deals this month (all deals)
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const wonStages = await PipelineStage.find({ isWon: true }).select('_id').lean();
     const wonStageIds = wonStages.map(s => s._id);
-    const wonQuery: any = {
+    const wonThisMonth = await Deal.countDocuments({
       stageId: { $in: wonStageIds },
       updatedAt: { $gte: startOfMonth },
-    };
-    if (user.role !== 'ADMIN') {
-      wonQuery.ownerId = user.id;
-    }
-    const wonThisMonth = await Deal.countDocuments(wonQuery);
+    });
     userContext.wonThisMonth = wonThisMonth;
 
     // Get quota if exists (only for current user)
