@@ -285,19 +285,19 @@ export default function PipelinesAdminPage() {
                       <p className="text-lg font-bold text-gray-900 dark:text-white">
                         {pipeline.stagesCount || 0}
                       </p>
-                      <p className="text-xs text-gray-500">Etapas</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Etapas</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 text-center">
                       <p className="text-lg font-bold text-gray-900 dark:text-white">
                         {pipeline.dealsCount || 0}
                       </p>
-                      <p className="text-xs text-gray-500">Deals</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Deals</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2 text-center">
                       <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
                         {formatCurrency(pipeline.totalValue || 0)}
                       </p>
-                      <p className="text-xs text-gray-500">Valor</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Valor</p>
                     </div>
                   </div>
 
@@ -492,10 +492,10 @@ export default function PipelinesAdminPage() {
               </label>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 flex justify-end gap-3 rounded-b-xl">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-end gap-3 rounded-b-xl">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700"
               >
                 Cancelar
               </button>
