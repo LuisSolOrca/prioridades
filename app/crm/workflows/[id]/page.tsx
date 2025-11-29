@@ -16,6 +16,7 @@ import ReactFlow, {
   Panel,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import Navbar from '@/components/Navbar';
 import {
   Zap,
   Save,
@@ -39,6 +40,7 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Loader2,
 } from 'lucide-react';
 import {
   TRIGGER_LABELS,
@@ -78,17 +80,17 @@ const ACTION_ICONS: Record<string, any> = {
   delay: Clock,
 };
 
-// Custom node components
+// Custom node components with dark mode support
 function TriggerNode({ data }: { data: any }) {
   return (
-    <div className="bg-yellow-100 border-2 border-yellow-400 rounded-lg p-4 min-w-[200px]">
+    <div className="bg-yellow-100 dark:bg-yellow-900/50 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg p-4 min-w-[200px] shadow-lg">
       <div className="flex items-center gap-2 mb-2">
-        <Zap className="w-5 h-5 text-yellow-600" />
-        <span className="font-bold text-yellow-800">Trigger</span>
+        <Zap className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+        <span className="font-bold text-yellow-800 dark:text-yellow-200">Trigger</span>
       </div>
-      <p className="text-sm text-yellow-700">{data.label}</p>
+      <p className="text-sm text-yellow-700 dark:text-yellow-300">{data.label}</p>
       {data.conditions?.length > 0 && (
-        <p className="text-xs text-yellow-600 mt-1">
+        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
           {data.conditions.length} condición(es)
         </p>
       )}
@@ -99,16 +101,16 @@ function TriggerNode({ data }: { data: any }) {
 function ActionNode({ data }: { data: any }) {
   const Icon = ACTION_ICONS[data.actionType] || Settings;
   return (
-    <div className="bg-blue-100 border-2 border-blue-400 rounded-lg p-4 min-w-[200px]">
+    <div className="bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-400 dark:border-blue-600 rounded-lg p-4 min-w-[200px] shadow-lg">
       <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-5 h-5 text-blue-600" />
-        <span className="font-bold text-blue-800">
+        <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <span className="font-bold text-blue-800 dark:text-blue-200">
           {ACTION_LABELS[data.actionType as CRMActionType] || data.actionType}
         </span>
       </div>
-      <p className="text-sm text-blue-700">{data.label}</p>
+      <p className="text-sm text-blue-700 dark:text-blue-300">{data.label}</p>
       {data.delay > 0 && (
-        <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
+        <p className="text-xs text-blue-500 dark:text-blue-400 mt-1 flex items-center gap-1">
           <Clock className="w-3 h-3" /> Esperar {data.delay} min
         </p>
       )}
@@ -124,7 +126,7 @@ const nodeTypes = {
 export default function WorkflowDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,12 +151,17 @@ export default function WorkflowDetailPage() {
   const isNew = id === 'new';
 
   useEffect(() => {
-    if (!isNew) {
-      fetchWorkflow();
-    } else {
-      setLoading(false);
+    if (status === 'unauthenticated') {
+      router.push('/login');
     }
-  }, [id]);
+    if (status === 'authenticated') {
+      if (!isNew) {
+        fetchWorkflow();
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [status, id]);
 
   useEffect(() => {
     updateFlowFromFormData();
@@ -220,7 +227,7 @@ export default function WorkflowDetailPage() {
         target: nodeId,
         type: 'smoothstep',
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { stroke: '#6b7280' },
+        style: { stroke: '#6b7280', strokeWidth: 2 },
       });
     });
 
@@ -348,249 +355,257 @@ export default function WorkflowDetailPage() {
   const triggerTypes = Object.entries(TRIGGER_LABELS) as [CRMTriggerType, string][];
   const actionTypes = Object.entries(ACTION_LABELS) as [CRMActionType, string][];
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 flex items-center justify-center h-[calc(100vh-4rem)]">
+          <Loader2 className="animate-spin text-blue-500" size={40} />
+        </div>
       </div>
     );
   }
 
+  if (!session) return null;
+
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.push('/crm/workflows')}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Nombre del workflow"
-              className="text-xl font-bold border-none focus:outline-none focus:ring-0 w-96"
-              disabled={!isAdmin}
-            />
-            <input
-              type="text"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descripción (opcional)"
-              className="block text-sm text-gray-500 border-none focus:outline-none focus:ring-0 w-96"
-              disabled={!isAdmin}
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {!isNew && workflow && (
-            <>
-              <span className={`px-3 py-1 rounded-full text-sm ${
-                workflow.isActive
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-                {workflow.isActive ? 'Activo' : 'Inactivo'}
-              </span>
-              {isAdmin && (
-                <button
-                  onClick={toggleWorkflow}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                    workflow.isActive
-                      ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                      : 'bg-green-100 text-green-700 hover:bg-green-200'
-                  }`}
-                >
-                  {workflow.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  {workflow.isActive ? 'Desactivar' : 'Activar'}
-                </button>
-              )}
-            </>
-          )}
-          {isAdmin && (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <div className="pt-16 h-screen flex flex-col">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              onClick={() => router.push('/crm/workflows')}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400"
             >
-              <Save className="w-4 h-4" />
-              {saving ? 'Guardando...' : 'Guardar'}
+              <ArrowLeft className="w-5 h-5" />
             </button>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Sidebar */}
-        <div className="w-80 bg-gray-50 border-r overflow-y-auto">
-          {/* Trigger Section */}
-          <div className="p-4 border-b">
-            <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-yellow-500" />
-              Trigger (Evento)
-            </h3>
-            <select
-              value={formData.triggerType}
-              onChange={(e) => setFormData({ ...formData, triggerType: e.target.value as CRMTriggerType })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              disabled={!isAdmin}
-            >
-              <option value="">Seleccionar trigger...</option>
-              {triggerTypes.map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+            <div>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Nombre del workflow"
+                className="text-xl font-bold border-none focus:outline-none focus:ring-0 w-96 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                disabled={!isAdmin}
+              />
+              <input
+                type="text"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Descripción (opcional)"
+                className="block text-sm border-none focus:outline-none focus:ring-0 w-96 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500"
+                disabled={!isAdmin}
+              />
+            </div>
           </div>
-
-          {/* Actions Section */}
-          <div className="p-4">
-            <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-500" />
-              Acciones ({formData.actions.length})
-            </h3>
-
-            {/* Actions List */}
-            <div className="space-y-2 mb-4">
-              {formData.actions.map((action, index) => {
-                const Icon = ACTION_ICONS[action.type] || Settings;
-                return (
-                  <div
-                    key={action.id}
-                    className="bg-white border rounded-lg p-3 flex items-center justify-between"
+          <div className="flex items-center gap-3">
+            {!isNew && workflow && (
+              <>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  workflow.isActive
+                    ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                }`}>
+                  {workflow.isActive ? 'Activo' : 'Inactivo'}
+                </span>
+                {isAdmin && (
+                  <button
+                    onClick={toggleWorkflow}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                      workflow.isActive
+                        ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-900'
+                        : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900'
+                    }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 w-4">{index + 1}</span>
-                      <Icon className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm">{getActionLabel(action)}</span>
-                    </div>
-                    {isAdmin && (
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => {
-                            setEditingAction(action);
-                            setShowActionModal(true);
-                          }}
-                          className="p-1 text-gray-400 hover:text-blue-600"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => removeAction(action.id)}
-                          className="p-1 text-gray-400 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    {workflow.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    {workflow.isActive ? 'Desactivar' : 'Activar'}
+                  </button>
+                )}
+              </>
+            )}
+            {isAdmin && (
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar */}
+          <div className="w-80 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+            {/* Trigger Section */}
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-500" />
+                Trigger (Evento)
+              </h3>
+              <select
+                value={formData.triggerType}
+                onChange={(e) => setFormData({ ...formData, triggerType: e.target.value as CRMTriggerType })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                disabled={!isAdmin}
+              >
+                <option value="">Seleccionar trigger...</option>
+                {triggerTypes.map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Add Action Button */}
-            {isAdmin && (
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 mb-2">Agregar acción:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {actionTypes.map(([type, label]) => {
-                    const Icon = ACTION_ICONS[type] || Settings;
-                    return (
-                      <button
-                        key={type}
-                        onClick={() => addAction(type)}
-                        className="flex items-center gap-2 px-3 py-2 text-xs border rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                      >
-                        <Icon className="w-4 h-4" />
-                        {label}
-                      </button>
-                    );
-                  })}
+            {/* Actions Section */}
+            <div className="p-4">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-blue-500" />
+                Acciones ({formData.actions.length})
+              </h3>
+
+              {/* Actions List */}
+              <div className="space-y-2 mb-4">
+                {formData.actions.map((action, index) => {
+                  const Icon = ACTION_ICONS[action.type] || Settings;
+                  return (
+                    <div
+                      key={action.id}
+                      className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 w-4">{index + 1}</span>
+                        <Icon className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm text-gray-900 dark:text-gray-100">{getActionLabel(action)}</span>
+                      </div>
+                      {isAdmin && (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingAction(action);
+                              setShowActionModal(true);
+                            }}
+                            className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => removeAction(action.id)}
+                            className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add Action Button */}
+              {isAdmin && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Agregar acción:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {actionTypes.map(([type, label]) => {
+                      const Icon = ACTION_ICONS[type] || Settings;
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => addAction(type)}
+                          className="flex items-center gap-2 px-3 py-2 text-xs border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+                        >
+                          <Icon className="w-4 h-4" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+            </div>
+
+            {/* Executions Section */}
+            {!isNew && workflow?.recentExecutions && (
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setShowExecutions(!showExecutions)}
+                  className="w-full flex items-center justify-between text-gray-900 dark:text-gray-100 font-medium"
+                >
+                  <span className="flex items-center gap-2">
+                    <History className="w-4 h-4" />
+                    Ejecuciones Recientes
+                  </span>
+                  {showExecutions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                {showExecutions && (
+                  <div className="mt-3 space-y-2">
+                    {workflow.recentExecutions.length === 0 ? (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Sin ejecuciones aún</p>
+                    ) : (
+                      workflow.recentExecutions.map((exec: any) => (
+                        <div
+                          key={exec._id}
+                          className={`text-xs p-2 rounded-lg ${
+                            exec.status === 'completed'
+                              ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                              : exec.status === 'failed'
+                              ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                              : 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                          }`}
+                        >
+                          <div className="flex justify-between">
+                            <span>{exec.status}</span>
+                            <span>{new Date(exec.createdAt).toLocaleString()}</span>
+                          </div>
+                          {exec.error && (
+                            <p className="text-red-600 dark:text-red-400 mt-1">{exec.error}</p>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Executions Section */}
-          {!isNew && workflow?.recentExecutions && (
-            <div className="p-4 border-t">
-              <button
-                onClick={() => setShowExecutions(!showExecutions)}
-                className="w-full flex items-center justify-between text-gray-900 font-medium"
-              >
-                <span className="flex items-center gap-2">
-                  <History className="w-4 h-4" />
-                  Ejecuciones Recientes
-                </span>
-                {showExecutions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {showExecutions && (
-                <div className="mt-3 space-y-2">
-                  {workflow.recentExecutions.length === 0 ? (
-                    <p className="text-sm text-gray-500">Sin ejecuciones aún</p>
-                  ) : (
-                    workflow.recentExecutions.map((exec: any) => (
-                      <div
-                        key={exec._id}
-                        className={`text-xs p-2 rounded-lg ${
-                          exec.status === 'completed'
-                            ? 'bg-green-50 text-green-700'
-                            : exec.status === 'failed'
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-yellow-50 text-yellow-700'
-                        }`}
-                      >
-                        <div className="flex justify-between">
-                          <span>{exec.status}</span>
-                          <span>{new Date(exec.createdAt).toLocaleString()}</span>
-                        </div>
-                        {exec.error && (
-                          <p className="text-red-600 mt-1">{exec.error}</p>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          {/* Flow Canvas */}
+          <div className="flex-1">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              nodeTypes={nodeTypes}
+              fitView
+              className="bg-gray-200 dark:bg-gray-900"
+            >
+              <Background color="#9ca3af" gap={20} />
+              <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg" />
+              <Panel position="top-right" className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 text-xs text-gray-500 dark:text-gray-400">
+                Vista del flujo de trabajo
+              </Panel>
+            </ReactFlow>
+          </div>
         </div>
 
-        {/* Flow Canvas */}
-        <div className="flex-1">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            nodeTypes={nodeTypes}
-            fitView
-            className="bg-gray-100"
-          >
-            <Background />
-            <Controls />
-            <Panel position="top-right" className="bg-white rounded-lg shadow p-2 text-xs text-gray-500">
-              Vista del flujo de trabajo
-            </Panel>
-          </ReactFlow>
-        </div>
+        {/* Action Configuration Modal */}
+        {showActionModal && editingAction && (
+          <ActionConfigModal
+            action={editingAction}
+            onSave={saveAction}
+            onClose={() => {
+              setShowActionModal(false);
+              setEditingAction(null);
+            }}
+          />
+        )}
       </div>
-
-      {/* Action Configuration Modal */}
-      {showActionModal && editingAction && (
-        <ActionConfigModal
-          action={editingAction}
-          onSave={saveAction}
-          onClose={() => {
-            setShowActionModal(false);
-            setEditingAction(null);
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -616,17 +631,20 @@ function ActionConfigModal({
     });
   };
 
+  const inputClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent";
+  const labelClasses = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
+
   const renderConfigFields = () => {
     switch (action.type) {
       case 'send_email':
         return (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">Destinatario</label>
+              <label className={labelClasses}>Destinatario</label>
               <select
                 value={config.to || ''}
                 onChange={(e) => setConfig({ ...config, to: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               >
                 <option value="">Seleccionar...</option>
                 <option value="owner">Owner del deal</option>
@@ -635,21 +653,21 @@ function ActionConfigModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Asunto</label>
+              <label className={labelClasses}>Asunto</label>
               <input
                 type="text"
                 value={config.subject || ''}
                 onChange={(e) => setConfig({ ...config, subject: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
                 placeholder="Asunto del email"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Cuerpo</label>
+              <label className={labelClasses}>Cuerpo</label>
               <textarea
                 value={config.body || ''}
                 onChange={(e) => setConfig({ ...config, body: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
                 rows={4}
                 placeholder="Contenido del email. Usa {{deal.title}}, {{contact.name}}, etc."
               />
@@ -661,11 +679,11 @@ function ActionConfigModal({
         return (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">Tipo de destinatario</label>
+              <label className={labelClasses}>Tipo de destinatario</label>
               <select
                 value={config.recipientType || ''}
                 onChange={(e) => setConfig({ ...config, recipientType: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               >
                 <option value="">Seleccionar...</option>
                 <option value="owner">Owner del deal</option>
@@ -674,21 +692,21 @@ function ActionConfigModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Mensaje</label>
+              <label className={labelClasses}>Mensaje</label>
               <textarea
                 value={config.message || ''}
                 onChange={(e) => setConfig({ ...config, message: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
                 rows={3}
                 placeholder="Mensaje de notificación"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Prioridad</label>
+              <label className={labelClasses}>Prioridad</label>
               <select
                 value={config.priority || 'medium'}
                 onChange={(e) => setConfig({ ...config, priority: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               >
                 <option value="low">Baja</option>
                 <option value="medium">Media</option>
@@ -702,30 +720,30 @@ function ActionConfigModal({
         return (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">Título de la tarea</label>
+              <label className={labelClasses}>Título de la tarea</label>
               <input
                 type="text"
                 value={config.taskTitle || ''}
                 onChange={(e) => setConfig({ ...config, taskTitle: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
                 placeholder="Título de la tarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Descripción</label>
+              <label className={labelClasses}>Descripción</label>
               <textarea
                 value={config.taskDescription || ''}
                 onChange={(e) => setConfig({ ...config, taskDescription: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
                 rows={3}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Fecha de vencimiento</label>
+              <label className={labelClasses}>Fecha de vencimiento</label>
               <select
                 value={config.taskDueDate || ''}
                 onChange={(e) => setConfig({ ...config, taskDueDate: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               >
                 <option value="">Seleccionar...</option>
                 <option value="+1 days">En 1 día</option>
@@ -736,11 +754,11 @@ function ActionConfigModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Asignar a</label>
+              <label className={labelClasses}>Asignar a</label>
               <select
                 value={config.taskAssignTo || ''}
                 onChange={(e) => setConfig({ ...config, taskAssignTo: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               >
                 <option value="owner">Owner del deal</option>
                 <option value="specific_user">Usuario específico</option>
@@ -753,11 +771,11 @@ function ActionConfigModal({
         return (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">Tipo de actividad</label>
+              <label className={labelClasses}>Tipo de actividad</label>
               <select
                 value={config.activityType || ''}
                 onChange={(e) => setConfig({ ...config, activityType: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               >
                 <option value="note">Nota</option>
                 <option value="call">Llamada</option>
@@ -766,20 +784,20 @@ function ActionConfigModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Título</label>
+              <label className={labelClasses}>Título</label>
               <input
                 type="text"
                 value={config.activityTitle || ''}
                 onChange={(e) => setConfig({ ...config, activityTitle: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Descripción</label>
+              <label className={labelClasses}>Descripción</label>
               <textarea
                 value={config.activityDescription || ''}
                 onChange={(e) => setConfig({ ...config, activityDescription: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
                 rows={3}
               />
             </div>
@@ -790,21 +808,21 @@ function ActionConfigModal({
         return (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">URL</label>
+              <label className={labelClasses}>URL</label>
               <input
                 type="url"
                 value={config.url || ''}
                 onChange={(e) => setConfig({ ...config, url: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
                 placeholder="https://ejemplo.com/webhook"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Método</label>
+              <label className={labelClasses}>Método</label>
               <select
                 value={config.method || 'POST'}
                 onChange={(e) => setConfig({ ...config, method: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className={inputClasses}
               >
                 <option value="GET">GET</option>
                 <option value="POST">POST</option>
@@ -818,12 +836,12 @@ function ActionConfigModal({
       case 'remove_tag':
         return (
           <div>
-            <label className="block text-sm font-medium mb-1">Tag</label>
+            <label className={labelClasses}>Tag</label>
             <input
               type="text"
               value={config.tag || ''}
               onChange={(e) => setConfig({ ...config, tag: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg"
+              className={inputClasses}
               placeholder="Nombre del tag"
             />
           </div>
@@ -832,62 +850,62 @@ function ActionConfigModal({
       case 'delay':
         return (
           <div>
-            <label className="block text-sm font-medium mb-1">Minutos de espera</label>
+            <label className={labelClasses}>Minutos de espera</label>
             <input
               type="number"
               value={config.delayMinutes || 0}
               onChange={(e) => setConfig({ ...config, delayMinutes: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 border rounded-lg"
+              className={inputClasses}
               min={0}
             />
           </div>
         );
 
       default:
-        return <p className="text-gray-500">Configuración no disponible para este tipo de acción</p>;
+        return <p className="text-gray-500 dark:text-gray-400">Configuración no disponible para este tipo de acción</p>;
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h3 className="font-bold text-lg">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">
             Configurar: {ACTION_LABELS[action.type as CRMActionType] || action.type}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           {renderConfigFields()}
 
-          <div className="pt-4 border-t">
-            <label className="block text-sm font-medium mb-1">
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <label className={labelClasses}>
               Delay antes de ejecutar (minutos)
             </label>
             <input
               type="number"
               value={delay}
               onChange={(e) => setDelay(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border rounded-lg"
+              className={inputClasses}
               min={0}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Tiempo de espera antes de ejecutar esta acción
             </p>
           </div>
         </div>
-        <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-end gap-3 rounded-b-xl">
           <button
             onClick={onClose}
-            className="px-4 py-2 border rounded-lg hover:bg-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             Guardar
           </button>
