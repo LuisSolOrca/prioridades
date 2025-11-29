@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
         title: deal.title,
         value: deal.value || 0,
         stage: deal.stageId?.name || 'Sin etapa',
-        status: deal.stageId?.isWon ? 'won' : deal.stageId?.isClosed ? 'lost' : 'open',
+        status: (deal.stageId?.isWon ? 'won' : deal.stageId?.isClosed ? 'lost' : 'open') as 'open' | 'won' | 'lost',
         probability: deal.probability,
         daysInStage: Math.floor((now.getTime() - stageChangedAt.getTime()) / (1000 * 60 * 60 * 24)),
         lastActivityDate: lastActivity?.createdAt?.toISOString(),
