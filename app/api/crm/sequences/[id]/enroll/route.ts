@@ -6,6 +6,7 @@ import EmailSequence from '@/models/EmailSequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 import Contact from '@/models/Contact';
 import { hasPermission } from '@/lib/permissions';
+import mongoose from 'mongoose';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,12 @@ export async function GET(
     await connectDB();
 
     const { id } = await params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -79,6 +86,12 @@ export async function POST(
     await connectDB();
 
     const { id } = await params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
     const body = await request.json();
     const userId = (session.user as any).id;
 
