@@ -5,7 +5,7 @@ export interface IWebFormField {
   id: string;
   name: string;
   label: string;
-  type: 'text' | 'email' | 'phone' | 'select' | 'textarea' | 'checkbox' | 'number' | 'date' | 'url';
+  type: 'text' | 'email' | 'phone' | 'company' | 'select' | 'textarea' | 'checkbox' | 'number' | 'date' | 'url';
   required: boolean;
   placeholder?: string;
   options?: string[];       // Para select
@@ -99,7 +99,7 @@ const WebFormFieldSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['text', 'email', 'phone', 'select', 'textarea', 'checkbox', 'number', 'date', 'url'],
+    enum: ['text', 'email', 'phone', 'company', 'select', 'textarea', 'checkbox', 'number', 'date', 'url'],
     required: true,
   },
   required: {
