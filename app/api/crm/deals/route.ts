@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('clientId');
+    const contactId = searchParams.get('contactId');
     const stageId = searchParams.get('stageId');
     const ownerId = searchParams.get('ownerId');
     const pipelineId = searchParams.get('pipelineId');
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
     const query: any = {};
 
     if (clientId) query.clientId = clientId;
+    if (contactId) query.contactId = contactId;
     if (stageId) query.stageId = stageId;
     if (ownerId) query.ownerId = ownerId;
     if (pipelineId) query.pipelineId = pipelineId;
