@@ -204,15 +204,27 @@ async function processSubmission(
     let clientId: mongoose.Types.ObjectId | undefined;
     let dealId: mongoose.Types.ObjectId | undefined;
 
-    // Mapear datos del formulario a campos de contacto
+    // Mapear datos del formulario a campos de contacto, cliente y deal
     const contactData: any = {};
+    const clientData: any = {};
+    const dealData: any = {};
+
     for (const field of form.fields) {
       if (field.mapTo && data[field.name]) {
         const [entity, fieldName] = field.mapTo.split('.');
         if (entity === 'contact') {
           contactData[fieldName] = data[field.name];
+        } else if (entity === 'client') {
+          clientData[fieldName] = data[field.name];
+        } else if (entity === 'deal') {
+          dealData[fieldName] = data[field.name];
         }
       }
+    }
+
+    // Si hay empresa en clientData, usarla también para contactData.company
+    if (clientData.name && !contactData.company) {
+      contactData.company = clientData.name;
     }
 
     // Crear o actualizar contacto si está habilitado
@@ -255,14 +267,23 @@ async function processSubmission(
         }
 
         // Crear cliente primero si no existe
-        if (contactData.company) {
-          let client = await Client.findOne({ name: contactData.company });
+        const companyName = clientData.name || contactData.company;
+        if (companyName) {
+          let client = await Client.findOne({ name: companyName });
           if (!client) {
             client = await Client.create({
-              name: contactData.company,
+              name: companyName,
+              industry: clientData.industry,
+              website: clientData.website,
               type: 'LEAD',
               status: 'ACTIVO',
               createdBy: assignToUserId || form.createdBy,
+            });
+          } else if (clientData.industry || clientData.website) {
+            // Actualizar cliente existente si hay datos nuevos
+            await Client.findByIdAndUpdate(client._id, {
+              ...(clientData.industry && { industry: clientData.industry }),
+              ...(clientData.website && { website: clientData.website }),
             });
           }
           clientId = client._id;
@@ -286,11 +307,20 @@ async function processSubmission(
 
     // Crear deal si está habilitado
     if (form.createDeal && contactId) {
-      const dealTitle = `Lead: ${contactData.firstName || 'Nuevo'} ${contactData.lastName || 'Lead'} (${form.name})`;
+      // Usar título del formulario o generar uno automático
+      const companyName = clientData.name || contactData.company;
+      const dealTitle = dealData.title ||
+        (companyName
+          ? `Lead: ${companyName} (${form.name})`
+          : `Lead: ${contactData.firstName || 'Nuevo'} ${contactData.lastName || 'Lead'} (${form.name})`
+        );
+
+      // Usar valor del formulario o el default
+      const dealValue = dealData.value ? parseFloat(dealData.value) : (form.defaultDealValue || 0);
 
       const deal = await Deal.create({
         title: dealTitle,
-        value: form.defaultDealValue || 0,
+        value: dealValue,
         currency: 'MXN',
         pipelineId: form.defaultPipelineId,
         stageId: form.defaultStageId,
@@ -298,6 +328,7 @@ async function processSubmission(
         clientId,
         ownerId: form.assignToUserId || form.createdBy,
         source: 'webform',
+        notes: dealData.notes,
         tags: form.addTags || [],
         createdBy: form.createdBy,
       });

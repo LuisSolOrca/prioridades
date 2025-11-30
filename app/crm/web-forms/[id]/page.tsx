@@ -41,7 +41,7 @@ interface FormField {
   id: string;
   name: string;
   label: string;
-  type: 'text' | 'email' | 'phone' | 'select' | 'textarea' | 'checkbox' | 'number' | 'date' | 'url';
+  type: 'text' | 'email' | 'phone' | 'company' | 'select' | 'textarea' | 'checkbox' | 'number' | 'date' | 'url';
   required: boolean;
   placeholder?: string;
   options?: string[];
@@ -100,6 +100,7 @@ const FIELD_TYPES = [
   { type: 'text', label: 'Texto', icon: Type },
   { type: 'email', label: 'Email', icon: Mail },
   { type: 'phone', label: 'Teléfono', icon: Phone },
+  { type: 'company', label: 'Empresa', icon: Users },
   { type: 'select', label: 'Selección', icon: List },
   { type: 'textarea', label: 'Área de texto', icon: AlignLeft },
   { type: 'checkbox', label: 'Checkbox', icon: CheckSquare },
@@ -117,6 +118,12 @@ const MAP_TO_OPTIONS = [
   { value: 'contact.position', label: 'Contacto - Cargo' },
   { value: 'contact.company', label: 'Contacto - Empresa' },
   { value: 'contact.notes', label: 'Contacto - Notas' },
+  { value: 'client.name', label: 'Cliente - Nombre' },
+  { value: 'client.industry', label: 'Cliente - Industria' },
+  { value: 'client.website', label: 'Cliente - Sitio Web' },
+  { value: 'deal.title', label: 'Deal - Título' },
+  { value: 'deal.value', label: 'Deal - Valor' },
+  { value: 'deal.notes', label: 'Deal - Notas' },
 ];
 
 export default function WebFormBuilderPage() {
