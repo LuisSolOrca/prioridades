@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import EmailTracking from '@/models/EmailTracking';
+import Deal from '@/models/Deal';
+import Contact from '@/models/Contact';
+import Client from '@/models/Client';
+import User from '@/models/User';
 import { hasPermission } from '@/lib/permissions';
 import { getTrackingStats, getUnopenedEmails } from '@/lib/emailTracking';
 
