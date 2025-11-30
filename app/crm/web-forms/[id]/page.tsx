@@ -82,7 +82,7 @@ interface WebForm {
   defaultPipelineId?: string;
   defaultStageId?: string;
   defaultDealValue?: number;
-  assignToUserId?: string;
+  assignToUserId?: string | { _id: string; name: string; email: string };
   assignmentType: 'specific' | 'round_robin';
   roundRobinUserIds?: string[];
   addTags: string[];
@@ -1176,7 +1176,7 @@ export default function WebFormBuilderPage() {
                         Asignar a
                       </label>
                       <select
-                        value={form.assignToUserId?._id || form.assignToUserId || ''}
+                        value={typeof form.assignToUserId === 'object' ? form.assignToUserId._id : (form.assignToUserId || '')}
                         onChange={(e) => updateForm({ assignToUserId: e.target.value || null })}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                       >
