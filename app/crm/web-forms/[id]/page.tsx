@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import {
   ArrowLeft,
   Save,
@@ -323,9 +324,10 @@ export default function WebFormBuilderPage() {
   const selectedFieldData = form.fields.find(f => f.id === selectedField);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-20">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Navbar />
+      {/* Builder Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-20">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-4">
@@ -412,7 +414,7 @@ export default function WebFormBuilderPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden pt-16 main-content">
         {activeTab === 'fields' && (
           <>
             {/* Left Panel - Field Types */}

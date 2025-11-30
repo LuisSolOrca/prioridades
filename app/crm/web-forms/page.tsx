@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 import {
   Plus,
   Search,
@@ -21,6 +23,7 @@ import {
   Globe,
   Users,
   TrendingUp,
+  FileInput,
 } from 'lucide-react';
 
 interface WebForm {
@@ -151,21 +154,20 @@ export default function WebFormsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link href="/crm" className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
-                CRM
-              </Link>
-              <span className="text-gray-300 dark:text-gray-600">/</span>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <FileText size={24} />
+      <Navbar />
+      <div className="pt-16 main-content px-4 py-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <FileInput className="w-7 h-7 text-blue-600" />
                 Formularios Web
               </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Captura leads con formularios personalizables para tu sitio web
+              </p>
             </div>
-
             <button
               onClick={() => setShowNewModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -174,11 +176,31 @@ export default function WebFormsPage() {
               Nuevo Formulario
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Help Card */}
+          <CrmHelpCard
+            id="crm-webforms-guide"
+            title="Formularios Web para captura de leads"
+            variant="feature"
+            className="mb-6"
+            defaultCollapsed={true}
+            steps={[
+              {
+                title: 'Crea un formulario',
+                description: 'Diseña formularios con campos personalizados y estilos a tu medida',
+              },
+              {
+                title: 'Publica y embebe',
+                description: 'Obtén el código para insertar en tu web o comparte el enlace directo',
+              },
+              {
+                title: 'Captura leads automáticamente',
+                description: 'Los submissions crean contactos y deals en tu CRM automáticamente',
+              },
+            ]}
+          />
+
+          {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
@@ -432,6 +454,7 @@ export default function WebFormsPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* New Form Modal */}
