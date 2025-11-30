@@ -20,7 +20,9 @@ import {
   Lock,
   Calendar,
   ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
+import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 interface EmailTemplate {
   _id: string;
@@ -178,8 +180,36 @@ export default function EmailTemplatesPage() {
             </button>
           </div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+          {/* Help Card */}
+          <CrmHelpCard
+            id="crm-email-templates-guide"
+            title="Biblioteca de Plantillas de Email"
+            variant="feature"
+            className="mb-6"
+            defaultCollapsed={true}
+            steps={[
+              {
+                title: 'Crea plantillas reutilizables',
+                description: 'Diseña emails profesionales que puedes usar en secuencias y workflows',
+              },
+              {
+                title: 'Usa variables dinámicas',
+                description: 'Personaliza con {{contact.firstName}}, {{deal.title}} y más',
+              },
+              {
+                title: 'Genera con IA',
+                description: 'Describe lo que necesitas y la IA creará el contenido automáticamente',
+                icon: <Sparkles size={16} className="text-purple-500" />,
+              },
+              {
+                title: 'Organiza por categorías',
+                description: 'Clasifica tus plantillas por tipo: Prospección, Seguimiento, Cierre, etc.',
+              },
+            ]}
+          />
+
+          {/* Filters */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -363,6 +393,7 @@ export default function EmailTemplatesPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}
