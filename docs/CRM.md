@@ -53,6 +53,7 @@
     - [Editor Visual de Plantillas](#editor-visual-de-plantillas-de-email)
     - [Variables Disponibles](#variables-disponibles)
     - [Biblioteca de Plantillas](#biblioteca-de-plantillas)
+    - [Generación con IA](#generación-de-plantillas-con-ia)
 20. [Campos Personalizados](#campos-personalizados)
 21. [Detección de Duplicados](#detección-de-duplicados)
 22. [Cuotas y Metas de Ventas](#cuotas-y-metas-de-ventas)
@@ -111,6 +112,7 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - 📥 **Importación CSV/Excel** - Carga masiva de datos con mapeo de columnas
 - 🏆 **Tracking de Competidores** - Inteligencia competitiva con win rate analysis
 - ✉️ **Editor Visual de Plantillas** - Editor WYSIWYG para emails con variables dinámicas
+- 🤖 **Generación de Plantillas con IA** - Crea emails automáticamente describiendo lo que necesitas
 - 🤖 **Asistente de Email IA** - Generación de emails personalizados con Groq AI
 - 📄 **Resumen Inteligente** - Análisis ejecutivo de deals, clientes y contactos
 - ⚡ **Siguiente Mejor Acción** - Recomendaciones priorizadas con IA
@@ -1548,6 +1550,62 @@ El editor muestra automáticamente las variables disponibles según el scope sel
 - **Scope "Workflows":** Variables comunes + variables de prioridad
 - **Scope "Ambos":** Variables comunes (las de prioridad no estarán disponibles en secuencias)
 
+### Generación de Plantillas con IA
+
+El sistema incluye generación automática de plantillas usando inteligencia artificial (Groq/Llama 3.3).
+
+**Cómo funciona:**
+
+1. Expande el panel "Generar con IA" en el formulario de nueva plantilla
+2. Describe en texto libre qué tipo de email necesitas
+3. Selecciona el tono del mensaje
+4. La IA genera automáticamente el asunto y contenido con variables apropiadas
+
+**Tonos disponibles:**
+| Tono | Descripción |
+|------|-------------|
+| Profesional | Formal y corporativo |
+| Amigable | Cercano pero profesional |
+| Persuasivo | Enfocado en beneficios |
+| Urgente | Con sentido de urgencia |
+
+**Características:**
+- La IA considera la categoría y scope seleccionados
+- Incluye automáticamente variables de personalización relevantes
+- Genera contenido HTML listo para usar
+- Muestra las variables utilizadas después de generar
+
+**Ejemplo de descripción:**
+```
+Un email de seguimiento para prospectos que no han respondido
+en 2 semanas, recordándoles los beneficios de nuestro servicio
+y proponiendo una llamada breve de 15 minutos.
+```
+
+**API Endpoint:**
+```
+POST /api/crm/email-templates/generate
+```
+
+**Body:**
+```json
+{
+  "description": "Descripción del email que necesitas",
+  "scope": "both",
+  "category": "follow_up",
+  "tone": "professional"
+}
+```
+
+**Respuesta:**
+```json
+{
+  "subject": "Asunto generado con {{variables}}",
+  "body": "<p>Contenido HTML generado...</p>",
+  "variablesUsed": ["{{contact.firstName}}", "{{deal.title}}"]
+}
+```
+
 ### Estados de Contacto en Secuencia
 
 | Estado | Descripción |
@@ -1580,6 +1638,7 @@ El editor muestra automáticamente las variables disponibles según el scope sel
 | GET | `/api/crm/email-templates/[id]` | Obtener plantilla |
 | PUT | `/api/crm/email-templates/[id]` | Actualizar plantilla |
 | DELETE | `/api/crm/email-templates/[id]` | Eliminar plantilla |
+| POST | `/api/crm/email-templates/generate` | **Generar plantilla con IA** |
 
 **Parámetros de query (GET):**
 | Parámetro | Tipo | Descripción |
