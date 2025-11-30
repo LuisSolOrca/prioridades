@@ -397,17 +397,22 @@ export default function WebFormRenderer({
         </button>
 
         {showPoweredBy && (
-          <p className="text-center text-xs text-gray-400 mt-4">
-            Powered by{' '}
+          <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-100">
+            <span className="text-xs text-gray-400">Powered by</span>
             <a
               href="https://orcacrm.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-gray-600"
+              className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors"
             >
-              OrcaCRM
+              <img
+                src="/orca-logo.png"
+                alt="Orca GRC"
+                className="h-5 w-5 object-contain"
+              />
+              <span>Orca GRC</span>
             </a>
-          </p>
+          </div>
         )}
       </form>
     </div>

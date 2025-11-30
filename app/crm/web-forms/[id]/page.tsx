@@ -333,6 +333,7 @@ export default function WebFormBuilderPage() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Navbar />
+      <div className="pt-16 main-content">
       {/* Builder Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-16 z-20">
         <div className="px-4 sm:px-6 lg:px-8">
@@ -421,7 +422,7 @@ export default function WebFormBuilderPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex overflow-hidden pt-16 main-content">
+      <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 64px - 100px)' }}>
         {activeTab === 'fields' && (
           <>
             {/* Left Panel - Field Types */}
@@ -576,9 +577,17 @@ export default function WebFormBuilderPage() {
                   </button>
 
                   {form.showPoweredBy && (
-                    <p className="text-center text-xs text-gray-400 mt-4">
-                      Powered by OrcaCRM
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-100">
+                      <span className="text-xs text-gray-400">Powered by</span>
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                        <img
+                          src="/orca-logo.png"
+                          alt="Orca GRC"
+                          className="h-5 w-5 object-contain"
+                        />
+                        <span>Orca GRC</span>
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1013,9 +1022,17 @@ export default function WebFormBuilderPage() {
                   </button>
 
                   {form.showPoweredBy && (
-                    <p className="text-center text-xs text-gray-400 mt-4">
-                      Powered by OrcaCRM
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-100">
+                      <span className="text-xs text-gray-400">Powered by</span>
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                        <img
+                          src="/orca-logo.png"
+                          alt="Orca GRC"
+                          className="h-5 w-5 object-contain"
+                        />
+                        <span>Orca GRC</span>
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1429,6 +1446,7 @@ export default function WebFormBuilderPage() {
             <SubmissionsPanel formId={formId} />
           </div>
         )}
+      </div>
       </div>
     </div>
   );
