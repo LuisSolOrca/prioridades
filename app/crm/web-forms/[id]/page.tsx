@@ -1641,17 +1641,24 @@ function SubmissionsPanel({ formId }: { formId: string }) {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                        sub.status === 'processed'
-                          ? 'bg-green-100 text-green-700'
-                          : sub.status === 'failed'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}
-                    >
-                      {sub.status}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium w-fit ${
+                          sub.status === 'processed'
+                            ? 'bg-green-100 text-green-700'
+                            : sub.status === 'failed'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}
+                      >
+                        {sub.status}
+                      </span>
+                      {sub.status === 'failed' && sub.errorMessage && (
+                        <span className="text-xs text-red-500 max-w-[200px] truncate" title={sub.errorMessage}>
+                          {sub.errorMessage}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {sub.contactId ? (
