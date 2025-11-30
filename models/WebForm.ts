@@ -56,6 +56,7 @@ export interface IWebForm {
   defaultDealValue?: number;
   assignToUserId?: mongoose.Types.ObjectId;
   assignmentType?: 'specific' | 'round_robin';
+  roundRobinUserIds?: mongoose.Types.ObjectId[];  // Vendedores para round robin
   addTags?: string[];
   triggerWorkflow?: boolean;
 
@@ -223,6 +224,10 @@ const WebFormSchema = new mongoose.Schema({
     enum: ['specific', 'round_robin'],
     default: 'specific',
   },
+  roundRobinUserIds: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
   addTags: [String],
   triggerWorkflow: {
     type: Boolean,

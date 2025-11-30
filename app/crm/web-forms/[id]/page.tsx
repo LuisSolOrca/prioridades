@@ -84,6 +84,7 @@ interface WebForm {
   defaultDealValue?: number;
   assignToUserId?: string;
   assignmentType: 'specific' | 'round_robin';
+  roundRobinUserIds?: string[];
   addTags: string[];
   triggerWorkflow: boolean;
   notifyOnSubmission: boolean;
@@ -1186,6 +1187,64 @@ export default function WebFormBuilderPage() {
                           </option>
                         ))}
                       </select>
+                    </div>
+                  )}
+
+                  {form.assignmentType === 'round_robin' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Vendedores para Round Robin
+                      </label>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Selecciona los vendedores que recibirán leads de forma rotativa
+                      </p>
+                      <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                        {users.map((u: any) => (
+                          <label
+                            key={u._id}
+                            className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={form.roundRobinUserIds?.includes(u._id) || false}
+                              onChange={(e) => {
+                                const currentIds = form.roundRobinUserIds || [];
+                                if (e.target.checked) {
+                                  updateForm({ roundRobinUserIds: [...currentIds, u._id] });
+                                } else {
+                                  updateForm({
+                                    roundRobinUserIds: currentIds.filter((id: string) => id !== u._id),
+                                  });
+                                }
+                              }}
+                              className="rounded text-blue-600"
+                            />
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                  {u.name?.charAt(0)?.toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {u.name}
+                                </p>
+                                <p className="text-xs text-gray-500">{u.email}</p>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                      {(form.roundRobinUserIds?.length || 0) === 0 && (
+                        <p className="text-xs text-amber-600 mt-2">
+                          ⚠️ Selecciona al menos un vendedor para el round robin
+                        </p>
+                      )}
+                      {(form.roundRobinUserIds?.length || 0) > 0 && (
+                        <p className="text-xs text-green-600 mt-2">
+                          ✓ {form.roundRobinUserIds?.length} vendedor(es) seleccionado(s)
+                        </p>
+                      )}
                     </div>
                   )}
 

@@ -249,19 +249,34 @@ async function processSubmission(
         let assignToUserId = form.assignToUserId;
 
         if (form.assignmentType === 'round_robin') {
-          // Obtener usuario con menos leads recientes
-          const users = await User.find({ isActive: true }).select('_id');
-          if (users.length > 0) {
+          // Usar solo los vendedores seleccionados para round robin
+          const roundRobinUsers = form.roundRobinUserIds && form.roundRobinUserIds.length > 0
+            ? form.roundRobinUserIds
+            : null;
+
+          if (roundRobinUsers && roundRobinUsers.length > 0) {
+            // Obtener usuario con menos leads recientes entre los seleccionados
             const userCounts = await Contact.aggregate([
-              { $match: { createdBy: { $in: users.map(u => u._id) } } },
+              { $match: { createdBy: { $in: roundRobinUsers } } },
               { $group: { _id: '$createdBy', count: { $sum: 1 } } },
               { $sort: { count: 1 } },
             ]);
 
-            if (userCounts.length > 0) {
+            // Encontrar usuarios sin leads asignados
+            const usersWithLeads = userCounts.map(u => u._id.toString());
+            const usersWithoutLeads = roundRobinUsers.filter(
+              (id: any) => !usersWithLeads.includes(id.toString())
+            );
+
+            if (usersWithoutLeads.length > 0) {
+              // Asignar a un usuario sin leads
+              assignToUserId = usersWithoutLeads[0];
+            } else if (userCounts.length > 0) {
+              // Asignar al usuario con menos leads
               assignToUserId = userCounts[0]._id;
             } else {
-              assignToUserId = users[0]._id;
+              // Fallback al primer usuario de la lista
+              assignToUserId = roundRobinUsers[0];
             }
           }
         }

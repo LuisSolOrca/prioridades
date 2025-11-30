@@ -89,6 +89,7 @@ export async function PUT(
       'defaultDealValue',
       'assignToUserId',
       'assignmentType',
+      'roundRobinUserIds',
       'addTags',
       'triggerWorkflow',
       'notifyOnSubmission',
