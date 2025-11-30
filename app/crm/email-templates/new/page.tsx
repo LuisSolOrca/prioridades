@@ -8,6 +8,10 @@ import {
   Save,
   Loader2,
   FileText,
+  ChevronDown,
+  Info,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 const RichTextEditor = dynamic(() => import('@/components/crm/RichTextEditor'), {
@@ -28,9 +32,46 @@ const CATEGORY_OPTIONS = [
   { value: 'other', label: 'Otro' },
 ];
 
+const AVAILABLE_VARIABLES = [
+  { category: 'Contacto', variables: [
+    { name: '{{contact.firstName}}', description: 'Nombre del contacto' },
+    { name: '{{contact.lastName}}', description: 'Apellido del contacto' },
+    { name: '{{contact.fullName}}', description: 'Nombre completo del contacto' },
+    { name: '{{contact.email}}', description: 'Email del contacto' },
+    { name: '{{contact.phone}}', description: 'Teléfono del contacto' },
+    { name: '{{contact.position}}', description: 'Cargo del contacto' },
+  ]},
+  { category: 'Cliente/Empresa', variables: [
+    { name: '{{client.name}}', description: 'Nombre de la empresa' },
+    { name: '{{client.industry}}', description: 'Industria de la empresa' },
+    { name: '{{client.website}}', description: 'Sitio web de la empresa' },
+  ]},
+  { category: 'Negocio', variables: [
+    { name: '{{deal.title}}', description: 'Título del negocio' },
+    { name: '{{deal.value}}', description: 'Valor del negocio' },
+    { name: '{{deal.stage}}', description: 'Etapa del negocio' },
+  ]},
+  { category: 'Usuario', variables: [
+    { name: '{{user.name}}', description: 'Tu nombre' },
+    { name: '{{user.email}}', description: 'Tu email' },
+  ]},
+  { category: 'Fecha', variables: [
+    { name: '{{today}}', description: 'Fecha de hoy' },
+    { name: '{{tomorrow}}', description: 'Fecha de mañana' },
+  ]},
+];
+
 export default function NewEmailTemplatePage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [showVariablesHelp, setShowVariablesHelp] = useState(false);
+  const [copiedVariable, setCopiedVariable] = useState<string | null>(null);
+
+  const copyVariable = (variable: string) => {
+    navigator.clipboard.writeText(variable);
+    setCopiedVariable(variable);
+    setTimeout(() => setCopiedVariable(null), 2000);
+  };
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -174,9 +215,64 @@ export default function NewEmailTemplatePage() {
               placeholder="Escribe el contenido de tu correo aquí..."
               minHeight="300px"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Variables disponibles: {"{{contact.firstName}}"}, {"{{contact.lastName}}"}, {"{{contact.fullName}}"}, {"{{client.name}}"}, {"{{deal.title}}"}, {"{{user.name}}"}, {"{{today}}"}
-            </p>
+          </div>
+
+          {/* Variables Help Section */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowVariablesHelp(!showVariablesHelp)}
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+            >
+              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                <Info size={18} />
+                <span className="font-medium">Variables disponibles para personalización</span>
+              </div>
+              <ChevronDown
+                size={18}
+                className={`text-blue-600 dark:text-blue-400 transition-transform ${showVariablesHelp ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {showVariablesHelp && (
+              <div className="p-4 border-t border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Haz clic en una variable para copiarla. Luego pégala en el asunto o contenido del correo.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {AVAILABLE_VARIABLES.map((group) => (
+                    <div key={group.category}>
+                      <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                        {group.category}
+                      </h4>
+                      <div className="space-y-1">
+                        {group.variables.map((v) => (
+                          <button
+                            key={v.name}
+                            type="button"
+                            onClick={() => copyVariable(v.name)}
+                            className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition group"
+                          >
+                            <div className="min-w-0">
+                              <code className="text-xs font-mono text-emerald-600 dark:text-emerald-400 block truncate">
+                                {v.name}
+                              </code>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 truncate block">
+                                {v.description}
+                              </span>
+                            </div>
+                            {copiedVariable === v.name ? (
+                              <Check size={14} className="text-green-500 flex-shrink-0" />
+                            ) : (
+                              <Copy size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 flex-shrink-0" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sharing option */}
