@@ -104,30 +104,32 @@ export const OPERATOR_LABELS: Record<ConditionOperator, string> = {
 };
 
 // Campos disponibles para condiciones por tipo de trigger
-export const CONDITION_FIELDS: Record<string, { label: string; type: 'string' | 'number' | 'date' | 'boolean' | 'select'; options?: { value: string; label: string }[] }[]> = {
+// field: nombre del campo en la base de datos
+// label: nombre para mostrar en la UI
+export const CONDITION_FIELDS: Record<string, { field: string; label: string; type: 'string' | 'number' | 'date' | 'boolean' | 'select'; options?: { value: string; label: string }[] }[]> = {
   deal: [
-    { label: 'Valor', type: 'number' },
-    { label: 'Moneda', type: 'select', options: [{ value: 'MXN', label: 'MXN' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }] },
-    { label: 'Etapa', type: 'select' },
-    { label: 'Probabilidad', type: 'number' },
-    { label: 'Título', type: 'string' },
-    { label: 'Descripción', type: 'string' },
+    { field: 'value', label: 'Valor', type: 'number' },
+    { field: 'currency', label: 'Moneda', type: 'select', options: [{ value: 'MXN', label: 'MXN' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }] },
+    { field: 'stageId', label: 'Etapa', type: 'select' },
+    { field: 'probability', label: 'Probabilidad', type: 'number' },
+    { field: 'title', label: 'Título', type: 'string' },
+    { field: 'description', label: 'Descripción', type: 'string' },
   ],
   contact: [
-    { label: 'Email', type: 'string' },
-    { label: 'Nombre', type: 'string' },
-    { label: 'Apellido', type: 'string' },
-    { label: 'Cargo', type: 'string' },
-    { label: 'Es principal', type: 'boolean' },
+    { field: 'email', label: 'Email', type: 'string' },
+    { field: 'firstName', label: 'Nombre', type: 'string' },
+    { field: 'lastName', label: 'Apellido', type: 'string' },
+    { field: 'position', label: 'Cargo', type: 'string' },
+    { field: 'isPrimary', label: 'Es principal', type: 'boolean' },
   ],
   activity: [
-    { label: 'Tipo', type: 'select', options: [
+    { field: 'type', label: 'Tipo', type: 'select', options: [
       { value: 'note', label: 'Nota' },
       { value: 'call', label: 'Llamada' },
       { value: 'email', label: 'Email' },
       { value: 'meeting', label: 'Reunión' },
       { value: 'task', label: 'Tarea' },
     ]},
-    { label: 'Título', type: 'string' },
+    { field: 'title', label: 'Título', type: 'string' },
   ],
 };

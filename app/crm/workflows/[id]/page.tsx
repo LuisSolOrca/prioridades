@@ -580,18 +580,18 @@ export default function WorkflowDetailPage() {
     const fields: { value: string; label: string; type: string }[] = [];
 
     if (triggerType?.startsWith('deal_')) {
-      CONDITION_FIELDS.deal?.forEach(field => {
-        fields.push({ value: `deal.${field.label.toLowerCase()}`, label: `Deal - ${field.label}`, type: field.type });
+      CONDITION_FIELDS.deal?.forEach(f => {
+        fields.push({ value: `deal.${f.field}`, label: `Deal - ${f.label}`, type: f.type });
       });
     }
     if (triggerType?.startsWith('contact_')) {
-      CONDITION_FIELDS.contact?.forEach(field => {
-        fields.push({ value: `contact.${field.label.toLowerCase()}`, label: `Contacto - ${field.label}`, type: field.type });
+      CONDITION_FIELDS.contact?.forEach(f => {
+        fields.push({ value: `contact.${f.field}`, label: `Contacto - ${f.label}`, type: f.type });
       });
     }
     if (triggerType?.startsWith('activity_')) {
-      CONDITION_FIELDS.activity?.forEach(field => {
-        fields.push({ value: `activity.${field.label.toLowerCase()}`, label: `Actividad - ${field.label}`, type: field.type });
+      CONDITION_FIELDS.activity?.forEach(f => {
+        fields.push({ value: `activity.${f.field}`, label: `Actividad - ${f.label}`, type: f.type });
       });
     }
     if (triggerType?.startsWith('task_')) {
@@ -609,8 +609,8 @@ export default function WorkflowDetailPage() {
     }
     // Add deal fields for most triggers (as deals are common context)
     if (!triggerType?.startsWith('deal_') && !triggerType?.startsWith('contact_')) {
-      CONDITION_FIELDS.deal?.forEach(field => {
-        fields.push({ value: `deal.${field.label.toLowerCase()}`, label: `Deal - ${field.label}`, type: field.type });
+      CONDITION_FIELDS.deal?.forEach(f => {
+        fields.push({ value: `deal.${f.field}`, label: `Deal - ${f.label}`, type: f.type });
       });
     }
 
