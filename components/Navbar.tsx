@@ -43,6 +43,7 @@ import {
   Send,
   Copy,
   FileText,
+  FileInput,
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -760,6 +761,12 @@ export default function Navbar() {
                         label="Campos Personalizados"
                         active={pathname?.startsWith('/crm/settings/custom-fields') || false}
                         onClick={() => handleNavigation('/crm/settings/custom-fields')}
+                      />
+                      <NavButton
+                        icon={<FileInput size={20} />}
+                        label="Formularios Web"
+                        active={pathname?.startsWith('/crm/web-forms') || false}
+                        onClick={() => handleNavigation('/crm/web-forms')}
                       />
                     </div>
                   </div>
