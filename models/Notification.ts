@@ -20,7 +20,8 @@ export interface INotification extends Document {
     | 'COMMENT_REPLY'
     | 'WORKFLOW_NOTIFICATION'
     | 'CHANNEL_MENTION'
-    | 'CHANNEL_REPLY';
+    | 'CHANNEL_REPLY'
+    | 'WEBFORM_SUBMISSION';
   title: string;
   message: string;
   priorityId?: mongoose.Types.ObjectId;
@@ -59,7 +60,8 @@ const NotificationSchema = new Schema<INotification>({
       'COMMENT_REPLY',
       'WORKFLOW_NOTIFICATION',
       'CHANNEL_MENTION',
-      'CHANNEL_REPLY'
+      'CHANNEL_REPLY',
+      'WEBFORM_SUBMISSION'
     ],
     required: true
   },
