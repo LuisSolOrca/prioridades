@@ -69,7 +69,14 @@
     - [Siguiente Mejor Acción](#siguiente-mejor-acción-next-best-action)
     - [Predicción de Cierre](#predicción-de-cierre)
     - [Panel Unificado de IA](#panel-unificado-de-ia)
-28. [Changelog](#changelog)
+28. [Formularios WebToLead](#formularios-webtolead)
+    - [Crear Formulario](#crear-formulario)
+    - [Builder de Campos](#builder-de-campos)
+    - [Personalización de Estilos](#personalización-de-estilos)
+    - [Acciones Post-Submit](#acciones-post-submit)
+    - [Códigos de Embed](#códigos-de-embed)
+    - [Submissions y Conversiones](#submissions-y-conversiones)
+29. [Changelog](#changelog)
 
 ---
 
@@ -119,6 +126,7 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - 📄 **Resumen Inteligente** - Análisis ejecutivo de deals, clientes y contactos
 - ⚡ **Siguiente Mejor Acción** - Recomendaciones priorizadas con IA
 - 🎯 **Predicción de Cierre** - Probabilidad de ganar deals con factores y recomendaciones
+- 📝 **Formularios WebToLead** - Captura de leads desde sitios externos con builder visual y embed
 
 ---
 
@@ -2895,7 +2903,268 @@ El panel de IA está integrado en:
 
 ---
 
+## Formularios WebToLead
+
+Los **Formularios WebToLead** permiten capturar leads desde sitios web externos e integrarlos automáticamente en el CRM.
+
+**Ubicación:** `/crm/web-forms`
+
+### Características
+
+- **Builder visual** de formularios sin código
+- **Preview en vivo** mientras diseñas
+- **Múltiples tipos de campo**: texto, email, teléfono, select, textarea, checkbox, número, fecha, URL
+- **Personalización completa** de estilos (colores, bordes, tipografía)
+- **Acciones automáticas** post-submit (crear contacto, deal, workflows)
+- **Múltiples opciones de embed**: iframe, widget JS, botón popup
+- **Tracking UTM** y analytics de conversión
+- **Rate limiting** y restricción por dominio
+- **Notificaciones** al recibir submissions
+
+### Crear Formulario
+
+1. Ir a `/crm/web-forms`
+2. Click en "Nuevo Formulario"
+3. Asignar nombre descriptivo
+4. El formulario se crea con campos por defecto:
+   - Nombre completo (mapeado a contacto)
+   - Email (mapeado a contacto)
+   - Teléfono (mapeado a contacto)
+   - Mensaje
+
+### Builder de Campos
+
+El builder tiene tres paneles:
+
+1. **Panel izquierdo** - Tipos de campo disponibles:
+   - Texto
+   - Email
+   - Teléfono
+   - Selección (dropdown)
+   - Área de texto
+   - Checkbox
+   - Número
+   - Fecha
+   - URL
+
+2. **Panel central** - Preview en vivo del formulario
+
+3. **Panel derecho** - Configuración del campo seleccionado:
+   - **Etiqueta**: Texto visible para el usuario
+   - **Nombre (ID)**: Identificador único para los datos
+   - **Placeholder**: Texto de ayuda
+   - **Mapear a**: Campo de contacto al que se asigna el valor
+     - `contact.firstName` - Nombre
+     - `contact.lastName` - Apellido
+     - `contact.email` - Email
+     - `contact.phone` - Teléfono
+     - `contact.position` - Cargo
+     - `contact.company` - Empresa
+   - **Requerido**: Si el campo es obligatorio
+   - **Ancho**: Completo (100%) o mitad (50%)
+   - **Opciones**: Para campos tipo select
+
+### Personalización de Estilos
+
+En la pestaña "Estilos" se puede personalizar:
+
+| Opción | Descripción |
+|--------|-------------|
+| Color Principal | Color del botón y acentos |
+| Color de Fondo | Fondo del formulario |
+| Color de Texto | Color de etiquetas y texto |
+| Radio de Bordes | Curvatura de los bordes (0-24px) |
+| Padding | Espaciado interno (12-48px) |
+| Estilo de Botón | Relleno sólido o contorno |
+| Texto del Botón | Texto del botón de envío |
+| Mensaje de Éxito | Mensaje después de enviar |
+| URL de Redirección | Página a donde redirigir después |
+| Mostrar "Powered by" | Crédito a OrcaCRM |
+
+### Acciones Post-Submit
+
+En la pestaña "Configuración" se definen las acciones automáticas:
+
+#### Crear Contacto
+- Crea o actualiza contacto con los datos mapeados
+- Si el email ya existe, actualiza los campos
+
+#### Crear Deal
+- Crea un deal asociado al contacto
+- Configuración:
+  - Pipeline por defecto
+  - Etapa inicial
+  - Valor por defecto
+
+#### Asignación
+- **Usuario específico**: Siempre al mismo usuario
+- **Round Robin**: Distribuye entre usuarios activos
+
+#### Tags
+- Tags que se agregan automáticamente a los contactos creados
+
+#### Workflows
+- Dispara workflows configurados para "contacto creado"
+
+#### Notificaciones
+- Notifica al usuario asignado
+- Emails adicionales para notificar
+
+### Códigos de Embed
+
+En la pestaña "Código Embed" hay 4 opciones:
+
+#### 1. URL Directa
+```
+https://tu-dominio.com/forms/{formKey}
+```
+Enlace para compartir o usar en botones.
+
+#### 2. Iframe (Recomendado)
+```html
+<iframe
+  src="https://tu-dominio.com/embed/forms/{formKey}"
+  width="100%"
+  height="500"
+  frameborder="0"
+></iframe>
+```
+Embebe el formulario en cualquier página.
+
+#### 3. Widget JavaScript
+```html
+<div id="orca-form-{formKey}"></div>
+<script>
+(function() {
+  var script = document.createElement('script');
+  script.src = 'https://tu-dominio.com/embed/forms/{formKey}/widget.js';
+  script.async = true;
+  document.head.appendChild(script);
+})();
+</script>
+```
+Carga dinámica que se adapta al contenedor.
+
+#### 4. Botón Popup
+Agrega un botón flotante que abre el formulario en un modal.
+
+### Submissions y Conversiones
+
+En la pestaña "Submissions" se muestra:
+
+#### Estadísticas
+- **Total Submissions**: Todas las respuestas recibidas
+- **Últimos 30 días**: Submissions recientes
+- **Contactos Creados**: Cuántos se convirtieron
+- **Tasa de Conversión**: Porcentaje de éxito
+
+#### Lista de Submissions
+Tabla con:
+- Fecha de envío
+- Datos enviados (resumen)
+- Estado (pending, processed, failed)
+- Contacto creado (enlace)
+- Fuente UTM o referrer
+
+### API Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/crm/web-forms` | Lista formularios |
+| POST | `/api/crm/web-forms` | Crear formulario |
+| GET | `/api/crm/web-forms/[id]` | Obtener formulario |
+| PUT | `/api/crm/web-forms/[id]` | Actualizar formulario |
+| DELETE | `/api/crm/web-forms/[id]` | Eliminar formulario |
+| GET | `/api/crm/web-forms/[id]/submissions` | Lista submissions |
+| GET | `/api/crm/web-forms/[id]/stats` | Estadísticas |
+| GET | `/api/crm/web-forms/[id]/embed` | Códigos de embed |
+| GET | `/api/public/forms/[formKey]` | Formulario público |
+| POST | `/api/public/forms/[formKey]/submit` | Enviar submission |
+
+### Modelos de Datos
+
+#### WebForm
+```typescript
+interface WebForm {
+  _id: ObjectId;
+  name: string;
+  description?: string;
+  fields: WebFormField[];
+  style?: WebFormStyle;
+  submitButtonText: string;
+  successMessage: string;
+  redirectUrl?: string;
+  createContact: boolean;
+  createDeal: boolean;
+  defaultPipelineId?: ObjectId;
+  defaultStageId?: ObjectId;
+  assignToUserId?: ObjectId;
+  assignmentType: 'specific' | 'round_robin';
+  addTags: string[];
+  triggerWorkflow: boolean;
+  notifyOnSubmission: boolean;
+  notifyEmails: string[];
+  allowedDomains: string[];
+  formKey: string;  // Identificador único público
+  isActive: boolean;
+  isPublished: boolean;
+  submissions: number;
+  createdBy: ObjectId;
+}
+```
+
+#### WebFormSubmission
+```typescript
+interface WebFormSubmission {
+  _id: ObjectId;
+  formId: ObjectId;
+  formName: string;
+  data: Record<string, any>;
+  contactId?: ObjectId;
+  clientId?: ObjectId;
+  dealId?: ObjectId;
+  status: 'pending' | 'processed' | 'failed';
+  ipAddress?: string;
+  userAgent?: string;
+  referrer?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  submittedAt: Date;
+}
+```
+
+### Seguridad
+
+- **Rate Limiting**: Máximo de submissions por hora (configurable)
+- **Dominios Permitidos**: Restringe desde qué dominios se puede enviar
+- **CORS**: Headers configurados para embeds cross-origin
+- **Validación**: Campos requeridos y formatos en cliente y servidor
+
+---
+
 ## Changelog
+
+### v2.9.0 - 30 de Noviembre 2025
+- ✨ **Formularios WebToLead** - Captura de leads desde sitios externos
+  - Builder visual de formularios sin código
+  - 9 tipos de campo: texto, email, teléfono, select, textarea, checkbox, número, fecha, URL
+  - Personalización completa de estilos (colores, bordes, tipografía)
+  - Preview en vivo mientras diseñas
+  - Mapeo de campos a propiedades de contacto
+  - Acciones post-submit: crear contacto, crear deal, disparar workflows
+  - Asignación específica o round-robin de leads
+  - Tags automáticos en contactos creados
+  - Múltiples opciones de embed: iframe, widget JS, botón popup
+  - URL directa para compartir
+  - Tracking completo de UTM parameters
+  - Dashboard de conversiones con estadísticas
+  - Lista de submissions con filtros y paginación
+  - Rate limiting configurable por formulario
+  - Restricción por dominios permitidos
+  - Notificaciones al recibir submissions
+  - APIs: CRUD en `/api/crm/web-forms`, público en `/api/public/forms`
+  - Páginas: `/crm/web-forms`, `/forms/{formKey}`, `/embed/forms/{formKey}`
 
 ### v2.8.0 - 29 de Noviembre 2025
 - ✨ **Funciones de Inteligencia Artificial** - Suite completa de IA para ventas
@@ -2981,4 +3250,4 @@ El panel de IA está integrado en:
 
 ---
 
-*Última actualización: 29 de Noviembre 2025*
+*Última actualización: 30 de Noviembre 2025*
