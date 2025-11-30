@@ -305,11 +305,7 @@ export default function WorkflowDetailPage() {
       const res = await fetch('/api/channels');
       if (res.ok) {
         const data = await res.json();
-        console.log('[Workflows] Channels loaded:', data.length, 'channels');
-        console.log('[Workflows] Sample channel:', data[0]);
         setChannels(data);
-      } else {
-        console.error('[Workflows] Error fetching channels:', res.status, await res.text());
       }
     } catch (error) {
       console.error('Error fetching channels:', error);
@@ -1510,14 +1506,6 @@ function ActionConfigModal({
         const selectedProject = projects.find(p => p._id === config.channelProjectId);
         const projectChannels = channels.filter(c => c.projectId === config.channelProjectId);
         const parentChannels = projectChannels.filter(c => !c.parentId);
-
-        // Debug logging
-        if (config.channelProjectId) {
-          console.log('[Modal] Selected projectId:', config.channelProjectId);
-          console.log('[Modal] All channels:', channels.length);
-          console.log('[Modal] Channel projectIds sample:', channels.slice(0, 3).map(c => ({ name: c.name, projectId: c.projectId })));
-          console.log('[Modal] Filtered projectChannels:', projectChannels.length);
-        }
         const subChannels = config.channelId
           ? projectChannels.filter(c => c.parentId === config.channelId)
           : [];
