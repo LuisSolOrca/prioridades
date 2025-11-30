@@ -661,14 +661,28 @@ export async function triggerWorkflows(
 }
 
 // Helper para disparar desde APIs de forma no bloqueante
+// IMPORTANTE: En Vercel serverless, setImmediate puede no ejecutarse después de enviar la respuesta
+// Usamos Promise.resolve().then() que es más confiable en estos entornos
 export function triggerWorkflowsAsync(
   triggerType: CRMTriggerType,
   context: TriggerContext
 ): void {
-  // Ejecutar en background sin esperar
-  setImmediate(() => {
+  // Ejecutar en el mismo tick pero sin bloquear
+  Promise.resolve().then(() => {
     triggerWorkflows(triggerType, context).catch(err => {
       console.error('Background workflow trigger error:', err);
     });
   });
+}
+
+// Helper para ejecutar workflows de forma síncrona (recomendado para serverless)
+export async function triggerWorkflowsSync(
+  triggerType: CRMTriggerType,
+  context: TriggerContext
+): Promise<void> {
+  try {
+    await triggerWorkflows(triggerType, context);
+  } catch (err) {
+    console.error('Workflow trigger error:', err);
+  }
 }

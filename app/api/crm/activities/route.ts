@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
 import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
@@ -99,9 +99,11 @@ export async function POST(request: NextRequest) {
       .populate('createdBy', 'name')
       .populate('assignedTo', 'name');
 
-    // Disparar workflow de activity_created
+    // Disparar workflow de activity_created (síncrono para serverless)
     const activityData = populatedActivity?.toJSON?.() || populatedActivity || {};
-    triggerWorkflowsAsync('activity_created', {
+
+    console.log('[Activities API] Triggering activity_created workflow for:', activity._id);
+    await triggerWorkflowsSync('activity_created', {
       entityType: 'activity',
       entityId: activity._id,
       entityName: activity.title,
@@ -109,7 +111,7 @@ export async function POST(request: NextRequest) {
       userId,
     });
 
-    // Webhook activity.created
+    // Webhook activity.created (async está ok porque no es crítico)
     triggerWebhooksAsync('activity.created', {
       entityType: 'activity',
       entityId: activity._id.toString(),
@@ -121,7 +123,8 @@ export async function POST(request: NextRequest) {
 
     // Si es una tarea, también disparar task_created
     if (activity.type === 'task') {
-      triggerWorkflowsAsync('task_created', {
+      console.log('[Activities API] Triggering task_created workflow for:', activity._id);
+      await triggerWorkflowsSync('task_created', {
         entityType: 'activity',
         entityId: activity._id,
         entityName: activity.title,

@@ -5,7 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Deal from '@/models/Deal';
 import PipelineStage from '@/models/PipelineStage';
 import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { updateDealScore } from '@/lib/leadScoringEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     // Disparar workflow de deal_created
     const dealData = (populatedDeal?.toJSON?.() || populatedDeal || {}) as Record<string, any>;
-    triggerWorkflowsAsync('deal_created', {
+    await triggerWorkflowsSync('deal_created', {
       entityType: 'deal',
       entityId: deal._id,
       entityName: deal.title,

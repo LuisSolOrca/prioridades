@@ -7,7 +7,7 @@ import PipelineStage from '@/models/PipelineStage';
 import Activity from '@/models/Activity';
 import mongoose from 'mongoose';
 import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export async function GET(
@@ -136,7 +136,7 @@ export async function PUT(
       changedFields.push('stageId');
 
       // Disparar deal_stage_changed
-      triggerWorkflowsAsync('deal_stage_changed', {
+      await triggerWorkflowsSync('deal_stage_changed', {
         entityType: 'deal',
         entityId: params.id,
         entityName: deal?.title,
@@ -161,7 +161,7 @@ export async function PUT(
       // Si la nueva etapa es ganadora, disparar deal_won
       const newStage = await PipelineStage.findById(body.stageId);
       if (newStage?.isWon) {
-        triggerWorkflowsAsync('deal_won', {
+        await triggerWorkflowsSync('deal_won', {
           entityType: 'deal',
           entityId: params.id,
           entityName: deal?.title,
@@ -183,7 +183,7 @@ export async function PUT(
       }
       // Si la nueva etapa es cerrada pero no ganadora (perdido)
       else if (newStage?.isClosed && !newStage?.isWon) {
-        triggerWorkflowsAsync('deal_lost', {
+        await triggerWorkflowsSync('deal_lost', {
           entityType: 'deal',
           entityId: params.id,
           entityName: deal?.title,
@@ -208,7 +208,7 @@ export async function PUT(
     // Detectar cambio de valor
     if (body.value !== undefined && body.value !== currentDeal.value) {
       changedFields.push('value');
-      triggerWorkflowsAsync('deal_value_changed', {
+      await triggerWorkflowsSync('deal_value_changed', {
         entityType: 'deal',
         entityId: params.id,
         entityName: deal?.title,
@@ -221,7 +221,7 @@ export async function PUT(
 
     // Siempre disparar deal_updated si hubo cambios
     if (Object.keys(body).length > 0) {
-      triggerWorkflowsAsync('deal_updated', {
+      await triggerWorkflowsSync('deal_updated', {
         entityType: 'deal',
         entityId: params.id,
         entityName: deal?.title,

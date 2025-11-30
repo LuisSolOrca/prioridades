@@ -5,7 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Contact from '@/models/Contact';
 import mongoose from 'mongoose';
 import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export async function GET(
@@ -89,7 +89,7 @@ export async function PUT(
 
     // Disparar workflow de contact_updated
     const contactData = contact.toJSON?.() || contact;
-    triggerWorkflowsAsync('contact_updated', {
+    await triggerWorkflowsSync('contact_updated', {
       entityType: 'contact',
       entityId: params.id,
       entityName: `${contact.firstName} ${contact.lastName}`,

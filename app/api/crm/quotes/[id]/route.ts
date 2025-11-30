@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Quote from '@/models/Quote';
 import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
@@ -117,7 +117,7 @@ export async function PUT(
     // Disparar workflows según cambio de estado
     const quoteData = (quote || {}) as Record<string, any>;
     if (body.status === 'accepted' && existingQuote.status !== 'accepted') {
-      triggerWorkflowsAsync('quote_accepted', {
+      await triggerWorkflowsSync('quote_accepted', {
         entityType: 'quote',
         entityId: id,
         entityName: quote?.quoteNumber,
@@ -137,7 +137,7 @@ export async function PUT(
         source: 'web',
       });
     } else if (body.status === 'rejected' && existingQuote.status !== 'rejected') {
-      triggerWorkflowsAsync('quote_rejected', {
+      await triggerWorkflowsSync('quote_rejected', {
         entityType: 'quote',
         entityId: id,
         entityName: quote?.quoteNumber,

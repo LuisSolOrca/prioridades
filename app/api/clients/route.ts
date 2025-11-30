@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Client from '@/models/Client';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Disparar workflow de client_created
-    triggerWorkflowsAsync('client_created', {
+    await triggerWorkflowsSync('client_created', {
       entityType: 'client',
       entityId: client._id,
       entityName: client.name,

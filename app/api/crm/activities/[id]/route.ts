@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
 import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
@@ -94,7 +94,7 @@ export async function PUT(
 
     // Si es una tarea y se acaba de completar, disparar task_completed
     if (currentActivity.type === 'task' && !wasCompleted && body.isCompleted) {
-      triggerWorkflowsAsync('task_completed', {
+      await triggerWorkflowsSync('task_completed', {
         entityType: 'activity',
         entityId: id,
         entityName: activity.title,

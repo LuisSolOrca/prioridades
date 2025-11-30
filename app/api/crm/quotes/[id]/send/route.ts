@@ -5,7 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Quote from '@/models/Quote';
 import { hasPermission } from '@/lib/permissions';
 import nodemailer from 'nodemailer';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
@@ -205,7 +205,7 @@ export async function POST(
     // Disparar workflow de quote_sent
     const userId = (session.user as any).id;
     const quoteData = (updatedQuote?.toJSON?.() || updatedQuote || {}) as Record<string, any>;
-    triggerWorkflowsAsync('quote_sent', {
+    await triggerWorkflowsSync('quote_sent', {
       entityType: 'quote',
       entityId: id,
       entityName: quote.quoteNumber,

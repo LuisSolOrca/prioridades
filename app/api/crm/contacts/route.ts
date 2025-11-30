@@ -5,7 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Contact from '@/models/Contact';
 import Client from '@/models/Client';
 import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsAsync } from '@/lib/crmWorkflowEngine';
+import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
 
 export const dynamic = 'force-dynamic';
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Disparar workflow de contact_created
     const contactData = populatedContact?.toJSON?.() || populatedContact || {};
-    triggerWorkflowsAsync('contact_created', {
+    await triggerWorkflowsSync('contact_created', {
       entityType: 'contact',
       entityId: contact._id,
       entityName: `${contact.firstName} ${contact.lastName}`,
