@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import EmailSequence from '@/models/EmailSequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
+import User from '@/models/User';
+import EmailTemplate from '@/models/EmailTemplate';
 import { hasPermission } from '@/lib/permissions';
 import mongoose from 'mongoose';
 
