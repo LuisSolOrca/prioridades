@@ -6,7 +6,7 @@ import WebForm from '@/models/WebForm';
 import WebFormSubmission from '@/models/WebFormSubmission';
 import mongoose from 'mongoose';
 import '@/models/User';
-import '@/models/CRMPipeline';
+import '@/models/Pipeline';
 
 /**
  * GET /api/crm/web-forms/[id]
