@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import connectDB from '@/lib/mongodb';
 import CRMWorkflow, {
   ICRMWorkflow,
   ICRMWorkflowCondition,
@@ -129,16 +130,32 @@ async function executeAction(
 
         const message = replaceVariables(config.message || '', context);
 
+        // Construir título con información del contexto
+        let title = 'Automatización CRM';
+        if (context.activity) {
+          title = `Nueva actividad: ${context.activity.type || 'actividad'}`;
+        } else if (context.deal) {
+          title = `Deal: ${context.deal.title || 'sin título'}`;
+        } else if (context.contact) {
+          title = `Contacto: ${context.contact.firstName || ''} ${context.contact.lastName || ''}`;
+        } else if (context.client) {
+          title = `Cliente: ${context.client.name || 'sin nombre'}`;
+        }
+
+        console.log(`[CRM Workflow] Sending notification to ${recipientIds.length} recipients: ${message}`);
+
         for (const recipientId of recipientIds) {
-          await Notification.create({
-            userId: recipientId,
-            type: 'workflow_action',
-            title: 'Automatización ejecutada',
-            message,
-            priority: config.priority || 'medium',
-            relatedEntity: context.deal?._id || context.contact?._id || context.client?._id,
-            relatedEntityType: context.entityType,
-          });
+          try {
+            await Notification.create({
+              userId: recipientId,
+              type: 'WORKFLOW_NOTIFICATION',
+              title,
+              message: message || 'Se ejecutó una automatización del CRM',
+            });
+            console.log(`[CRM Workflow] Notification created for user ${recipientId}`);
+          } catch (notifError: any) {
+            console.error(`[CRM Workflow] Error creating notification for user ${recipientId}:`, notifError.message);
+          }
         }
 
         return { success: true, result: { notificationsSent: recipientIds.length } };
@@ -427,11 +444,18 @@ export async function triggerWorkflows(
   context: TriggerContext
 ): Promise<void> {
   try {
+    // Asegurar conexión a la base de datos
+    await connectDB();
+
+    console.log(`[CRM Workflow] Trigger received: ${triggerType} for ${context.entityType} ${context.entityId}`);
+
     // Buscar workflows activos con este trigger
     const workflows = await CRMWorkflow.find({
       isActive: true,
       'trigger.type': triggerType,
     }).lean();
+
+    console.log(`[CRM Workflow] Found ${workflows.length} active workflows for trigger ${triggerType}`);
 
     if (workflows.length === 0) return;
 
@@ -481,10 +505,20 @@ export async function triggerWorkflows(
 
     // Procesar cada workflow
     for (const workflow of workflows) {
+      console.log(`[CRM Workflow] Evaluating workflow: ${workflow.name} (${workflow._id})`);
+      console.log(`[CRM Workflow] Conditions: ${JSON.stringify(workflow.trigger.conditions)}`);
+
       // Evaluar condiciones
-      if (!evaluateConditions(workflow.trigger.conditions, fullContext)) {
+      const conditionsMet = evaluateConditions(workflow.trigger.conditions, fullContext);
+      console.log(`[CRM Workflow] Conditions met: ${conditionsMet}`);
+
+      if (!conditionsMet) {
+        console.log(`[CRM Workflow] Skipping workflow ${workflow.name} - conditions not met`);
         continue;
       }
+
+      console.log(`[CRM Workflow] Executing workflow: ${workflow.name}`);
+      console.log(`[CRM Workflow] Actions to execute: ${workflow.actions.length}`);
 
       // Crear registro de ejecución
       const execution = await CRMWorkflowExecution.create({
