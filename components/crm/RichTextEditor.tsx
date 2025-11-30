@@ -209,7 +209,7 @@ export default function RichTextEditor({
     if (!editor || !imageUrl) return;
 
     const url = imageUrl.startsWith('http') ? imageUrl : `https://${imageUrl}`;
-    editor.chain().focus().setImage({ src: url, width: imageWidth, align: imageAlign }).run();
+    editor.chain().focus().setImage({ src: url, width: imageWidth, align: imageAlign } as any).run();
     setShowImageModal(false);
     setImageUrl('');
     setImageWidth('100%');
@@ -268,7 +268,7 @@ export default function RichTextEditor({
 
       if (res.ok) {
         const { url } = await res.json();
-        editor.chain().focus().setImage({ src: url, width: imageWidth, align: imageAlign }).run();
+        editor.chain().focus().setImage({ src: url, width: imageWidth, align: imageAlign } as any).run();
       } else {
         const error = await res.json();
         alert(error.error || 'Error al subir la imagen');

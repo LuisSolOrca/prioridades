@@ -42,6 +42,7 @@ import {
   Package,
   Send,
   Copy,
+  FileText,
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -735,6 +736,12 @@ export default function Navbar() {
                         label="Secuencias"
                         active={pathname?.startsWith('/crm/sequences') || false}
                         onClick={() => handleNavigation('/crm/sequences')}
+                      />
+                      <NavButton
+                        icon={<FileText size={20} />}
+                        label="Plantillas de Correo"
+                        active={pathname?.startsWith('/crm/email-templates') || false}
+                        onClick={() => handleNavigation('/crm/email-templates')}
                       />
                       <NavButton
                         icon={<BarChart3 size={20} />}
