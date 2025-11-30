@@ -4,6 +4,9 @@ import Deal from '@/models/Deal';
 import Contact from '@/models/Contact';
 import mongoose from 'mongoose';
 
+// Force model registration - prevents tree-shaking
+const _dependencies = { Deal, Contact };
+
 // Base URL para tracking - usar variable de entorno en producción
 const getBaseUrl = () => process.env.NEXTAUTH_URL || 'http://localhost:3000';
 

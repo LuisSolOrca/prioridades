@@ -10,6 +10,9 @@ import User from '@/models/User';
 import { hasPermission } from '@/lib/permissions';
 import { getTrackingStats, getUnopenedEmails } from '@/lib/emailTracking';
 
+// Force model registration - prevents tree-shaking
+const _dependencies = { Deal, Contact, Client, User };
+
 export const dynamic = 'force-dynamic';
 
 // GET - Obtener lista de emails con tracking

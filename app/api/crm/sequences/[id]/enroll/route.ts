@@ -11,6 +11,9 @@ import Deal from '@/models/Deal';
 import { hasPermission } from '@/lib/permissions';
 import mongoose from 'mongoose';
 
+// Force model registration - prevents tree-shaking
+const _dependencies = { Contact, Client, User, Deal };
+
 export const dynamic = 'force-dynamic';
 
 // Get enrollments for a sequence

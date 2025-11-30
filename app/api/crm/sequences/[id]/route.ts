@@ -9,6 +9,9 @@ import EmailTemplate from '@/models/EmailTemplate';
 import { hasPermission } from '@/lib/permissions';
 import mongoose from 'mongoose';
 
+// Force model registration - prevents tree-shaking
+const _dependencies = { User, EmailTemplate };
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(
