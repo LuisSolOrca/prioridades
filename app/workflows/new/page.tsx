@@ -17,21 +17,12 @@ interface Initiative {
   name: string;
 }
 
-interface EmailTemplate {
-  _id: string;
-  name: string;
-  subject: string;
-  body: string;
-  category: string;
-}
-
 export default function NewWorkflowPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
-  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
 
   // Form state
   const [name, setName] = useState('');
@@ -70,7 +61,6 @@ export default function NewWorkflowPage() {
     if (session?.user) {
       loadUsers();
       loadInitiatives();
-      loadEmailTemplates();
     }
   }, [session]);
 
@@ -95,18 +85,6 @@ export default function NewWorkflowPage() {
       }
     } catch (err) {
       console.error('Error cargando iniciativas:', err);
-    }
-  };
-
-  const loadEmailTemplates = async () => {
-    try {
-      const res = await fetch('/api/crm/email-templates');
-      if (res.ok) {
-        const data = await res.json();
-        setEmailTemplates(data);
-      }
-    } catch (err) {
-      console.error('Error cargando plantillas de email:', err);
     }
   };
 
@@ -640,91 +618,30 @@ export default function NewWorkflowPage() {
                                 </select>
                               )}
 
-                              {/* Template Selection */}
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Contenido del email</label>
-                                <div className="flex gap-2 mb-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => updateAction(index, 'useTemplate', false)}
-                                    className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition ${
-                                      !action.useTemplate
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                    }`}
-                                  >
-                                    Escribir manualmente
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateAction(index, 'useTemplate', true)}
-                                    className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition ${
-                                      action.useTemplate
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                    }`}
-                                  >
-                                    Usar plantilla
-                                  </button>
-                                </div>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asunto</label>
+                                <input
+                                  type="text"
+                                  value={action.emailSubject || ''}
+                                  onChange={(e) => updateAction(index, 'emailSubject', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                  placeholder="Alerta: Tu prioridad {{title}} necesita atención"
+                                />
                               </div>
 
-                              {action.useTemplate ? (
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Plantilla de email</label>
-                                  <select
-                                    value={action.emailTemplateId || ''}
-                                    onChange={(e) => {
-                                      updateAction(index, 'emailTemplateId', e.target.value);
-                                      // Pre-fill subject from template for preview
-                                      const template = emailTemplates.find(t => t._id === e.target.value);
-                                      if (template) {
-                                        updateAction(index, 'emailSubject', template.subject);
-                                      }
-                                    }}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                  >
-                                    <option value="">Seleccionar plantilla...</option>
-                                    {emailTemplates.map(template => (
-                                      <option key={template._id} value={template._id}>
-                                        {template.name} ({template.category})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  {action.emailTemplateId && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                      📧 El email incluirá tracking de aperturas y clicks
-                                    </p>
-                                  )}
-                                </div>
-                              ) : (
-                                <>
-                                  <div>
-                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asunto</label>
-                                    <input
-                                      type="text"
-                                      value={action.emailSubject || ''}
-                                      onChange={(e) => updateAction(index, 'emailSubject', e.target.value)}
-                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                      placeholder="Alerta: Tu prioridad {{title}} necesita atención"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje</label>
-                                    <textarea
-                                      value={action.message || ''}
-                                      onChange={(e) => updateAction(index, 'message', e.target.value)}
-                                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                      rows={2}
-                                      placeholder="La prioridad {{title}} está {{status}}..."
-                                    />
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                      💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
-                                    </p>
-                                  </div>
-                                </>
-                              )}
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje</label>
+                                <textarea
+                                  value={action.message || ''}
+                                  onChange={(e) => updateAction(index, 'message', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                  rows={2}
+                                  placeholder="La prioridad {{title}} está {{status}}..."
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  💡 Puedes usar: {'{{title}}'}, {'{{status}}'}, {'{{completion}}'}, {'{{owner}}'}
+                                </p>
+                              </div>
                             </>
                           )}
 

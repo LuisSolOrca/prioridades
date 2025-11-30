@@ -14,6 +14,9 @@ import Client from '@/models/Client';
 import Activity from '@/models/Activity';
 import Notification from '@/models/Notification';
 import User from '@/models/User';
+import EmailTemplate from '@/models/EmailTemplate';
+import { sendEmail } from '@/lib/email';
+import { createTrackedEmail } from '@/lib/emailTracking';
 
 export interface TriggerContext {
   entityType: 'deal' | 'contact' | 'client' | 'activity' | 'quote';
@@ -162,28 +165,96 @@ async function executeAction(
       }
 
       case 'send_email': {
-        // Por ahora solo registramos que se enviaría el email
-        // La implementación real usaría nodemailer
         const to = config.to;
-        const subject = replaceVariables(config.subject || '', context);
-        const body = replaceVariables(config.body || '', context);
+        let subject: string;
+        let bodyHtml: string;
+        let templateUsed: string | null = null;
 
+        // Determinar contenido del email (plantilla o manual)
+        if (config.useTemplate && config.emailTemplateId) {
+          const template = await EmailTemplate.findById(config.emailTemplateId);
+          if (!template) {
+            return { success: false, error: `Plantilla de email ${config.emailTemplateId} no encontrada` };
+          }
+          subject = replaceVariables(template.subject, context);
+          bodyHtml = replaceVariables(template.body, context);
+          templateUsed = template.name;
+          console.log(`[CRM Workflow] Using template "${template.name}"`);
+        } else {
+          subject = replaceVariables(config.subject || '', context);
+          const bodyText = replaceVariables(config.body || '', context);
+          bodyHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <p>${bodyText.replace(/\n/g, '<br>')}</p>
+            </div>
+          `;
+        }
+
+        // Determinar destinatario
         let recipientEmail = '';
+        let recipientName = '';
         if (to === 'owner' && context.deal?.ownerId) {
-          const owner = await User.findById(context.deal.ownerId).select('email');
+          const owner = await User.findById(context.deal.ownerId).select('email name');
           recipientEmail = owner?.email || '';
+          recipientName = owner?.name || '';
         } else if (to === 'contact' && context.contact?.email) {
           recipientEmail = context.contact.email;
+          recipientName = `${context.contact.firstName || ''} ${context.contact.lastName || ''}`.trim();
         } else if (to === 'client' && context.client?.email) {
           recipientEmail = context.client.email;
+          recipientName = context.client.name || '';
         } else if (to && to.includes('@')) {
           recipientEmail = to;
         }
 
-        // TODO: Implementar envío real con nodemailer
-        console.log(`[CRM Workflow] Email to ${recipientEmail}: ${subject}`);
+        if (!recipientEmail) {
+          return { success: false, error: 'No se pudo determinar el destinatario del email' };
+        }
 
-        return { success: true, result: { to: recipientEmail, subject, body } };
+        try {
+          // Obtener userId del contexto
+          const userId = context.userId || context.deal?.ownerId?.toString() || context.deal?.createdBy?.toString();
+
+          if (!userId) {
+            return { success: false, error: 'No se pudo determinar el userId para el tracking' };
+          }
+
+          // Crear email con tracking
+          const trackedEmail = await createTrackedEmail({
+            userId,
+            dealId: context.deal?._id,
+            contactId: context.contact?._id,
+            clientId: context.client?._id,
+            subject,
+            recipientEmail,
+            recipientName,
+            bodyHtml
+          });
+
+          // Enviar el email
+          const result = await sendEmail({
+            to: recipientEmail,
+            subject,
+            html: trackedEmail.html,
+            text: bodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+          });
+
+          console.log(`[CRM Workflow] Email sent to ${recipientEmail}: ${subject} (tracking: ${trackedEmail.trackingId})`);
+
+          return {
+            success: true,
+            result: {
+              to: recipientEmail,
+              subject,
+              templateUsed,
+              messageId: result.messageId,
+              trackingId: trackedEmail.trackingId
+            }
+          };
+        } catch (emailError: any) {
+          console.error(`[CRM Workflow] Error sending email:`, emailError);
+          return { success: false, error: emailError.message };
+        }
       }
 
       case 'create_task': {

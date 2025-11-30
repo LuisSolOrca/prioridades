@@ -33,6 +33,8 @@ export interface ICRMWorkflowAction {
     subject?: string;
     body?: string;
     templateId?: string;
+    useTemplate?: boolean;    // Si se usa plantilla o contenido manual
+    emailTemplateId?: string; // ID de la plantilla de email
 
     // Para send_notification
     recipientType?: 'owner' | 'admin' | 'specific_user' | 'all_sales';

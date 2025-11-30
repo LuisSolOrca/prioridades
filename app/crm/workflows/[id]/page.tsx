@@ -66,6 +66,14 @@ interface Workflow {
   recentExecutions?: any[];
 }
 
+interface EmailTemplate {
+  _id: string;
+  name: string;
+  subject: string;
+  body: string;
+  category: string;
+}
+
 const ACTION_ICONS: Record<string, any> = {
   send_email: Mail,
   send_notification: Bell,
@@ -134,6 +142,7 @@ export default function WorkflowDetailPage() {
   const [showActionModal, setShowActionModal] = useState(false);
   const [editingAction, setEditingAction] = useState<any>(null);
   const [showExecutions, setShowExecutions] = useState(false);
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -155,6 +164,7 @@ export default function WorkflowDetailPage() {
       router.push('/login');
     }
     if (status === 'authenticated') {
+      fetchEmailTemplates();
       if (!isNew) {
         fetchWorkflow();
       } else {
@@ -162,6 +172,18 @@ export default function WorkflowDetailPage() {
       }
     }
   }, [status, id]);
+
+  const fetchEmailTemplates = async () => {
+    try {
+      const res = await fetch('/api/crm/email-templates');
+      if (res.ok) {
+        const data = await res.json();
+        setEmailTemplates(data);
+      }
+    } catch (error) {
+      console.error('Error fetching email templates:', error);
+    }
+  };
 
   useEffect(() => {
     updateFlowFromFormData();
@@ -603,6 +625,7 @@ export default function WorkflowDetailPage() {
               setShowActionModal(false);
               setEditingAction(null);
             }}
+            emailTemplates={emailTemplates}
           />
         )}
       </div>
@@ -615,18 +638,21 @@ function ActionConfigModal({
   action,
   onSave,
   onClose,
+  emailTemplates = [],
 }: {
   action: any;
   onSave: (action: any) => void;
   onClose: () => void;
+  emailTemplates?: EmailTemplate[];
 }) {
   const [config, setConfig] = useState(action.config || {});
   const [delay, setDelay] = useState(action.delay || 0);
+  const [useTemplate, setUseTemplate] = useState(action.config?.useTemplate || false);
 
   const handleSave = () => {
     onSave({
       ...action,
-      config,
+      config: { ...config, useTemplate },
       delay,
     });
   };
@@ -652,26 +678,90 @@ function ActionConfigModal({
                 <option value="client">Cliente</option>
               </select>
             </div>
+
+            {/* Selector de contenido: Manual o Plantilla */}
             <div>
-              <label className={labelClasses}>Asunto</label>
-              <input
-                type="text"
-                value={config.subject || ''}
-                onChange={(e) => setConfig({ ...config, subject: e.target.value })}
-                className={inputClasses}
-                placeholder="Asunto del email"
-              />
+              <label className={labelClasses}>Contenido del email</label>
+              <div className="flex space-x-4 mt-1">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="emailContentType"
+                    checked={!useTemplate}
+                    onChange={() => {
+                      setUseTemplate(false);
+                      setConfig({ ...config, emailTemplateId: undefined });
+                    }}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Escribir manualmente</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="emailContentType"
+                    checked={useTemplate}
+                    onChange={() => {
+                      setUseTemplate(true);
+                      setConfig({ ...config, subject: undefined, body: undefined });
+                    }}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Usar plantilla</span>
+                </label>
+              </div>
             </div>
-            <div>
-              <label className={labelClasses}>Cuerpo</label>
-              <textarea
-                value={config.body || ''}
-                onChange={(e) => setConfig({ ...config, body: e.target.value })}
-                className={inputClasses}
-                rows={4}
-                placeholder="Contenido del email. Usa {{deal.title}}, {{contact.name}}, etc."
-              />
-            </div>
+
+            {useTemplate ? (
+              <div>
+                <label className={labelClasses}>Plantilla de email</label>
+                <select
+                  value={config.emailTemplateId || ''}
+                  onChange={(e) => setConfig({ ...config, emailTemplateId: e.target.value || undefined })}
+                  className={inputClasses}
+                >
+                  <option value="">Seleccionar plantilla...</option>
+                  {emailTemplates.map(template => (
+                    <option key={template._id} value={template._id}>
+                      {template.name} ({template.category})
+                    </option>
+                  ))}
+                </select>
+                {config.emailTemplateId && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    Se usará el asunto y contenido de la plantilla. Las variables se reemplazarán automáticamente.
+                  </p>
+                )}
+                {emailTemplates.length === 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    No hay plantillas disponibles. <a href="/crm/email-templates" className="underline">Crear una plantilla</a>
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className={labelClasses}>Asunto</label>
+                  <input
+                    type="text"
+                    value={config.subject || ''}
+                    onChange={(e) => setConfig({ ...config, subject: e.target.value })}
+                    className={inputClasses}
+                    placeholder="Asunto del email"
+                  />
+                </div>
+                <div>
+                  <label className={labelClasses}>Cuerpo</label>
+                  <textarea
+                    value={config.body || ''}
+                    onChange={(e) => setConfig({ ...config, body: e.target.value })}
+                    className={inputClasses}
+                    rows={4}
+                    placeholder="Contenido del email. Usa {{deal.title}}, {{contact.name}}, etc."
+                  />
+                </div>
+              </>
+            )}
           </>
         );
 
