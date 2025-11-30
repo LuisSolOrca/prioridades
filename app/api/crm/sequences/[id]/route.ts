@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import EmailSequence from '@/models/EmailSequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 import { hasPermission } from '@/lib/permissions';
+import mongoose from 'mongoose';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,15 @@ export async function GET(
     await connectDB();
 
     const { id } = await params;
-    const sequence = await EmailSequence.findById(id)
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
+    const objectId = new mongoose.Types.ObjectId(id);
+
+    const sequence = await EmailSequence.findById(objectId)
       .populate('createdBy', 'name email')
       .populate('steps.templateId', 'name subject');
 
@@ -35,15 +44,15 @@ export async function GET(
 
     // Get stats
     const [activeCount, completedCount, exitedCount, totalCount] = await Promise.all([
-      SequenceEnrollment.countDocuments({ sequenceId: id, status: 'active' }),
-      SequenceEnrollment.countDocuments({ sequenceId: id, status: 'completed' }),
-      SequenceEnrollment.countDocuments({ sequenceId: id, status: 'exited' }),
-      SequenceEnrollment.countDocuments({ sequenceId: id }),
+      SequenceEnrollment.countDocuments({ sequenceId: objectId, status: 'active' }),
+      SequenceEnrollment.countDocuments({ sequenceId: objectId, status: 'completed' }),
+      SequenceEnrollment.countDocuments({ sequenceId: objectId, status: 'exited' }),
+      SequenceEnrollment.countDocuments({ sequenceId: objectId }),
     ]);
 
     // Get aggregate stats
     const enrollmentStats = await SequenceEnrollment.aggregate([
-      { $match: { sequenceId: sequence._id } },
+      { $match: { sequenceId: objectId } },
       {
         $group: {
           _id: null,
@@ -102,6 +111,12 @@ export async function PUT(
     await connectDB();
 
     const { id } = await params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
     const body = await request.json();
 
     // Ensure steps have correct order
@@ -147,6 +162,11 @@ export async function DELETE(
     await connectDB();
 
     const { id } = await params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
 
     // Check for active enrollments
     const activeEnrollments = await SequenceEnrollment.countDocuments({
