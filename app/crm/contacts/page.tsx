@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -731,9 +732,12 @@ export default function ContactsPage() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-900 dark:text-white">
+                              <Link
+                                href={`/crm/contacts/${contact._id}`}
+                                className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+                              >
                                 {contact.firstName} {contact.lastName}
-                              </span>
+                              </Link>
                               {contact.isPrimary && (
                                 <Star size={14} className="text-yellow-500 fill-yellow-500" />
                               )}
