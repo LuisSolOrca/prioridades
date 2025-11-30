@@ -42,10 +42,12 @@ interface Client {
   website?: string;
   phone?: string;
   address?: string;
+  logo?: string;
   annualRevenue?: number;
   employeeCount?: number;
   source?: string;
   tags?: string[];
+  customFields?: Record<string, any>;
   crmNotes?: string;
   isActive: boolean;
   createdAt: string;
@@ -333,9 +335,17 @@ export default function ClientDetailPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center text-2xl font-bold">
-                {client.name.substring(0, 2).toUpperCase()}
-              </div>
+              {client.logo ? (
+                <img
+                  src={client.logo}
+                  alt={client.name}
+                  className="w-16 h-16 rounded-xl object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center text-2xl font-bold">
+                  {client.name.substring(0, 2).toUpperCase()}
+                </div>
+              )}
               <div>
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{client.name}</h1>
                 {client.industry && (
@@ -638,6 +648,25 @@ export default function ClientDetailPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Custom Fields */}
+              {client.customFields && Object.keys(client.customFields).length > 0 && (
+                <div className="mt-4 pt-4 border-t dark:border-gray-700">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Campos Personalizados</h3>
+                  <div className="space-y-2">
+                    {Object.entries(client.customFields).map(([key, value]) => (
+                      <div key={key} className="flex justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400 capitalize">
+                          {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}
+                        </span>
+                        <span className="text-gray-800 dark:text-gray-200">
+                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {client.crmNotes && (
                 <div className="mt-4 pt-4 border-t dark:border-gray-700">
