@@ -5,6 +5,9 @@ import connectDB from '@/lib/mongodb';
 import EmailSequence from '@/models/EmailSequence';
 import SequenceEnrollment from '@/models/SequenceEnrollment';
 import Contact from '@/models/Contact';
+import Client from '@/models/Client';
+import User from '@/models/User';
+import Deal from '@/models/Deal';
 import { hasPermission } from '@/lib/permissions';
 import mongoose from 'mongoose';
 
@@ -45,12 +48,6 @@ export async function GET(
       query.status = status;
     }
 
-    console.log('[Enrollments API] Query:', JSON.stringify(query));
-
-    // Debug: check all enrollments for this sequence
-    const allEnrollments = await SequenceEnrollment.find({}).select('sequenceId').lean();
-    console.log('[Enrollments API] All enrollments sequenceIds:', allEnrollments.map(e => e.sequenceId?.toString()));
-
     const [enrollments, total] = await Promise.all([
       SequenceEnrollment.find(query)
         .populate('contactId', 'firstName lastName email phone')
@@ -63,8 +60,6 @@ export async function GET(
         .lean(),
       SequenceEnrollment.countDocuments(query),
     ]);
-
-    console.log('[Enrollments API] Found:', enrollments.length, 'Total:', total);
 
     return NextResponse.json({
       enrollments,
