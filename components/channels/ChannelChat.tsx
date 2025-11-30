@@ -132,6 +132,7 @@ import AnchorMappingCommand from '../slashCommands/AnchorMappingCommand';
 import MetamodelBoardCommand from '../slashCommands/MetamodelBoardCommand';
 import MetaphorCanvasCommand from '../slashCommands/MetaphorCanvasCommand';
 import WebhookMessageCard from '../slashCommands/WebhookMessageCard';
+import WorkflowMessageCard from '../slashCommands/WorkflowMessageCard';
 import PriorityFormModal from '../PriorityFormModal';
 import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
@@ -434,11 +435,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
 
     // Evento: nuevo mensaje
     channel.bind('new-message', (newMsg: Message) => {
-      // Siempre agregar mensajes de webhook, o si no es del usuario actual
-      const isWebhookMessage = newMsg.commandType === 'webhook-incoming';
+      // Siempre agregar mensajes de webhook/workflow, o si no es del usuario actual
+      const isSystemMessage = newMsg.commandType === 'webhook-incoming' || newMsg.commandType === 'workflow';
       const isFromCurrentUser = newMsg.userId._id === session?.user.id;
 
-      if (isWebhookMessage || !isFromCurrentUser) {
+      if (isSystemMessage || !isFromCurrentUser) {
         setMessages((prev) => {
           // Evitar duplicados
           if (prev.some((m) => m._id === newMsg._id)) return prev;
@@ -7649,6 +7650,36 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
                               onClick={() => handleDeleteMessage(message._id)}
                               className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
                               title="Eliminar mensaje de webhook"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.commandType === 'workflow' && message.commandData ? (
+                    /* Render Workflow Message Card */
+                    <div className="relative group">
+                      <WorkflowMessageCard
+                        content={message.content}
+                        workflowName={message.commandData.workflowName || 'Automatización CRM'}
+                        username={message.commandData.username || 'CRM Workflow'}
+                        createdAt={message.createdAt}
+                      />
+                      {!message.isDeleted && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition z-10 flex gap-1">
+                          <button
+                            onClick={() => handleCreatePriorityFromMessage(message)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 shadow-lg"
+                            title="Crear prioridad desde este mensaje"
+                          >
+                            <Target size={14} />
+                          </button>
+                          {(message.userId._id === session?.user.id || session?.user?.role === 'ADMIN') && (
+                            <button
+                              onClick={() => handleDeleteMessage(message._id)}
+                              className="p-1 bg-red-500 text-white rounded hover:bg-red-600 shadow-lg"
+                              title="Eliminar mensaje de workflow"
                             >
                               <Trash2 size={14} />
                             </button>

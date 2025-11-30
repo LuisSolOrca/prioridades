@@ -20,6 +20,7 @@ import ChannelMessage from '@/models/ChannelMessage';
 import { sendEmail } from '@/lib/email';
 import { createTrackedEmail } from '@/lib/emailTracking';
 import { replaceTemplateVariables } from '@/lib/templateVariables';
+import { triggerPusherEvent } from '@/lib/pusher-server';
 
 export interface TriggerContext {
   entityType: 'deal' | 'contact' | 'client' | 'activity' | 'quote';
@@ -662,7 +663,30 @@ async function executeAction(
             isPinned: false,
             isEdited: false,
             isDeleted: false,
+            commandType: 'workflow',
+            commandData: {
+              workflowId: workflowId.toString(),
+              workflowName: context.workflowName || 'Automatización CRM',
+              username: 'CRM Workflow',
+            },
           });
+
+          // Poblar el mensaje para enviarlo via Pusher
+          const populatedMessage = await ChannelMessage.findById(message._id)
+            .populate('userId', 'name email')
+            .lean();
+
+          // Trigger evento de Pusher para tiempo real
+          try {
+            await triggerPusherEvent(
+              `presence-channel-${config.channelId}`,
+              'new-message',
+              populatedMessage
+            );
+          } catch (pusherError) {
+            console.error('[CRM Workflow] Error triggering Pusher event:', pusherError);
+            // No fallar la creación del mensaje si Pusher falla
+          }
 
           console.log(`[CRM Workflow] Channel message created: ${message._id} in channel ${config.channelId}`);
           return {
@@ -785,6 +809,9 @@ export async function triggerWorkflows(
 
       console.log(`[CRM Workflow] Executing workflow: ${workflow.name}`);
       console.log(`[CRM Workflow] Actions to execute: ${workflow.actions.length}`);
+
+      // Agregar nombre del workflow al contexto para las acciones
+      fullContext.workflowName = workflow.name;
 
       // Crear registro de ejecución
       const execution = await CRMWorkflowExecution.create({
