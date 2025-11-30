@@ -4,10 +4,13 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Contact from '@/models/Contact';
 import mongoose from 'mongoose';
-import { hasPermission } from '@/lib/permissions';
-import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
-import { triggerWebhooksAsync } from '@/lib/crm/webhookEngine';
+import '@/models/Client';
+import '@/models/User';
 
+/**
+ * GET /api/crm/contacts/[id]
+ * Obtiene un contacto específico
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -18,11 +21,6 @@ export async function GET(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para ver CRM
-    if (!hasPermission(session, 'viewCRM')) {
-      return NextResponse.json({ error: 'Sin permiso para ver CRM' }, { status: 403 });
-    }
-
     await connectDB();
 
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
@@ -31,7 +29,8 @@ export async function GET(
 
     const contact = await Contact.findById(params.id)
       .populate('clientId', 'name')
-      .populate('createdBy', 'name');
+      .populate('createdBy', 'name email')
+      .lean();
 
     if (!contact) {
       return NextResponse.json({ error: 'Contacto no encontrado' }, { status: 404 });
@@ -40,10 +39,17 @@ export async function GET(
     return NextResponse.json(contact);
   } catch (error: any) {
     console.error('Error fetching contact:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Error obteniendo contacto' },
+      { status: 500 }
+    );
   }
 }
 
+/**
+ * PUT /api/crm/contacts/[id]
+ * Actualiza un contacto
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -54,11 +60,6 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para gestionar contactos
-    if (!hasPermission(session, 'canManageContacts')) {
-      return NextResponse.json({ error: 'Sin permiso para editar contactos' }, { status: 403 });
-    }
-
     await connectDB();
 
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
@@ -66,58 +67,54 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const userId = (session.user as any).id;
 
-    // Obtener contacto actual para comparar cambios
-    const currentContact = await Contact.findById(params.id);
-    if (!currentContact) {
-      return NextResponse.json({ error: 'Contacto no encontrado' }, { status: 404 });
+    const allowedFields = [
+      'firstName',
+      'lastName',
+      'email',
+      'phone',
+      'position',
+      'company',
+      'clientId',
+      'source',
+      'tags',
+      'notes',
+    ];
+
+    const updateData: any = {};
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        updateData[field] = body[field];
+      }
     }
-    const previousData = currentContact.toObject();
 
     const contact = await Contact.findByIdAndUpdate(
       params.id,
-      body,
+      { $set: updateData },
       { new: true, runValidators: true }
     )
       .populate('clientId', 'name')
-      .populate('createdBy', 'name');
+      .populate('createdBy', 'name email')
+      .lean();
 
     if (!contact) {
       return NextResponse.json({ error: 'Contacto no encontrado' }, { status: 404 });
     }
 
-    // Disparar workflow de contact_updated
-    const contactData = contact.toJSON?.() || contact;
-    await triggerWorkflowsSync('contact_updated', {
-      entityType: 'contact',
-      entityId: params.id,
-      entityName: `${contact.firstName} ${contact.lastName}`,
-      previousData,
-      newData: contactData,
-      changedFields: Object.keys(body),
-      userId,
-    });
-
-    // Webhook contact.updated
-    triggerWebhooksAsync('contact.updated', {
-      entityType: 'contact',
-      entityId: params.id,
-      entityName: `${contact.firstName} ${contact.lastName}`,
-      current: contactData as Record<string, any>,
-      previous: previousData,
-      changes: Object.keys(body),
-      userId,
-      source: 'web',
-    });
-
     return NextResponse.json(contact);
   } catch (error: any) {
     console.error('Error updating contact:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Error actualizando contacto' },
+      { status: 500 }
+    );
   }
 }
 
+/**
+ * DELETE /api/crm/contacts/[id]
+ * Elimina un contacto
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -128,51 +125,24 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar permiso para gestionar contactos
-    if (!hasPermission(session, 'canManageContacts')) {
-      return NextResponse.json({ error: 'Sin permiso para eliminar contactos' }, { status: 403 });
-    }
-
     await connectDB();
 
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
-    // Verificar si hay deals asociados
-    const Deal = mongoose.models.Deal || (await import('@/models/Deal')).default;
-    const dealsCount = await Deal.countDocuments({ contactId: params.id });
+    const contact = await Contact.findByIdAndDelete(params.id);
 
-    if (dealsCount > 0) {
-      return NextResponse.json({
-        error: `No se puede eliminar el contacto porque tiene ${dealsCount} deal(s) asociado(s).`
-      }, { status: 400 });
-    }
-
-    // Obtener contacto antes de eliminar
-    const contact = await Contact.findById(params.id);
     if (!contact) {
       return NextResponse.json({ error: 'Contacto no encontrado' }, { status: 404 });
     }
 
-    const contactData = contact.toObject();
-    const userId = (session.user as any).id;
-
-    await Contact.findByIdAndDelete(params.id);
-
-    // Webhook contact.deleted
-    triggerWebhooksAsync('contact.deleted', {
-      entityType: 'contact',
-      entityId: params.id,
-      entityName: `${contactData.firstName} ${contactData.lastName}`,
-      current: contactData,
-      userId,
-      source: 'web',
-    });
-
     return NextResponse.json({ message: 'Contacto eliminado correctamente' });
   } catch (error: any) {
     console.error('Error deleting contact:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Error eliminando contacto' },
+      { status: 500 }
+    );
   }
 }
