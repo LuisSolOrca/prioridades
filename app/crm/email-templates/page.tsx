@@ -242,9 +242,9 @@ export default function EmailTemplatesPage() {
                         {CATEGORY_LABELS[template.category]}
                       </span>
                       {template.isShared ? (
-                        <Users size={14} className="text-blue-500" title="Compartida" />
+                        <span title="Compartida"><Users size={14} className="text-blue-500" /></span>
                       ) : (
-                        <Lock size={14} className="text-gray-400" title="Privada" />
+                        <span title="Privada"><Lock size={14} className="text-gray-400" /></span>
                       )}
                     </div>
                     <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1">
