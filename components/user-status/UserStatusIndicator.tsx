@@ -1,6 +1,6 @@
 'use client';
 
-import { STATUS_COLORS } from '@/models/UserStatus';
+import { STATUS_COLORS } from '@/lib/user-status-constants';
 
 type StatusType = 'online' | 'away' | 'dnd' | 'invisible' | 'offline';
 

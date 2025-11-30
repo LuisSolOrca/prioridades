@@ -1,6 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
-
-export type PresenceStatus = 'online' | 'away' | 'dnd' | 'invisible';
+import type { PresenceStatus } from '@/lib/user-status-constants';
 
 export interface IUserStatus {
   _id: mongoose.Types.ObjectId;
@@ -180,31 +179,6 @@ const UserStatus: IUserStatusModel =
 
 export default UserStatus;
 
-// Status display labels
-export const STATUS_LABELS: Record<PresenceStatus, string> = {
-  online: 'En línea',
-  away: 'Ausente',
-  dnd: 'No molestar',
-  invisible: 'Invisible',
-};
-
-// Status colors for UI
-export const STATUS_COLORS: Record<PresenceStatus | 'offline', string> = {
-  online: '#22c55e',    // green-500
-  away: '#f59e0b',      // amber-500
-  dnd: '#ef4444',       // red-500
-  invisible: '#6b7280', // gray-500
-  offline: '#6b7280',   // gray-500
-};
-
-// Default custom status presets
-export const STATUS_PRESETS = [
-  { emoji: '📅', text: 'En reunión' },
-  { emoji: '🏖️', text: 'De vacaciones' },
-  { emoji: '🏠', text: 'Trabajando desde casa' },
-  { emoji: '🍽️', text: 'Almorzando' },
-  { emoji: '🚗', text: 'En tránsito' },
-  { emoji: '🎯', text: 'Enfocado' },
-  { emoji: '🤒', text: 'Enfermo' },
-  { emoji: '📵', text: 'Desconectado' },
-];
+// Re-export constants from shared file for server-side usage
+export { STATUS_LABELS, STATUS_COLORS, STATUS_PRESETS } from '@/lib/user-status-constants';
+export type { PresenceStatus } from '@/lib/user-status-constants';

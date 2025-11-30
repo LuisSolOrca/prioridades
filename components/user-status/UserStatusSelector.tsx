@@ -11,7 +11,7 @@ import {
   X,
   Check,
 } from 'lucide-react';
-import { STATUS_COLORS, STATUS_PRESETS } from '@/models/UserStatus';
+import { STATUS_COLORS, STATUS_PRESETS } from '@/lib/user-status-constants';
 import UserStatusIndicator from './UserStatusIndicator';
 import { useUserStatus } from '@/hooks/useUserStatus';
 
