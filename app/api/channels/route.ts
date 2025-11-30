@@ -21,35 +21,54 @@ export async function GET(request: NextRequest) {
 
     const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    // Build query conditions
+    const queryConditions: any[] = [
+      { isPrivate: { $ne: true } }, // Canales públicos
+    ];
+
+    // Add private channel access for authenticated users
+    if (userId) {
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      queryConditions.push({ isPrivate: true, members: userObjectId });
+      queryConditions.push({ isPrivate: true, createdBy: userObjectId });
+    }
+
+    // Admins can see all private channels
+    if (userRole === 'ADMIN') {
+      queryConditions.push({ isPrivate: true });
+    }
 
     // Obtener todos los canales activos
-    // Filtrar: canales públicos O canales privados donde el usuario es miembro o creador
     const channels = await Channel.find({
       isActive: true,
-      $or: [
-        { isPrivate: { $ne: true } }, // Canales públicos
-        { isPrivate: true, members: userObjectId }, // Canales privados donde es miembro
-        { isPrivate: true, createdBy: userObjectId }, // Canales privados que creó
-        ...(userRole === 'ADMIN' ? [{ isPrivate: true }] : []) // Admins ven todos
-      ]
+      $or: queryConditions
     })
       .sort({ projectId: 1, order: 1 })
       .populate('projectId', 'name')
       .lean();
 
+    console.log(`[API /api/channels] Found ${channels.length} channels`);
+
     // Formatear para que projectId sea string y parentId sea string o null
-    const formattedChannels = channels.map((channel: any) => ({
-      _id: channel._id.toString(),
-      name: channel.name,
-      description: channel.description,
-      projectId: channel.projectId?._id?.toString() || channel.projectId?.toString(),
-      projectName: channel.projectId?.name || '',
-      parentId: channel.parentId?.toString() || null,
-      icon: channel.icon,
-      isPrivate: channel.isPrivate,
-      order: channel.order,
-    }));
+    const formattedChannels = channels.map((channel: any) => {
+      const projectIdStr = channel.projectId?._id?.toString() ||
+                          (channel.projectId && typeof channel.projectId === 'object' ? channel.projectId.toString() : null);
+
+      return {
+        _id: channel._id.toString(),
+        name: channel.name,
+        description: channel.description,
+        projectId: projectIdStr,
+        projectName: channel.projectId?.name || '',
+        parentId: channel.parentId?.toString() || null,
+        icon: channel.icon,
+        isPrivate: channel.isPrivate,
+        order: channel.order,
+      };
+    });
+
+    console.log(`[API /api/channels] Returning ${formattedChannels.length} formatted channels`);
 
     return NextResponse.json(formattedChannels);
   } catch (error: any) {
