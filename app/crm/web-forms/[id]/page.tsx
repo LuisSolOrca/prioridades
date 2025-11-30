@@ -496,20 +496,24 @@ export default function WebFormBuilderPage() {
                           {field.type === 'textarea' ? (
                             <textarea
                               placeholder={field.placeholder}
-                              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                               style={{
                                 borderRadius: form.style?.borderRadius || 8,
                                 fontSize: form.style?.fontSize || 14,
+                                backgroundColor: '#FFFFFF',
+                                color: '#1F2937',
                               }}
                               rows={3}
                               disabled
                             />
                           ) : field.type === 'select' ? (
                             <select
-                              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                               style={{
                                 borderRadius: form.style?.borderRadius || 8,
                                 fontSize: form.style?.fontSize || 14,
+                                backgroundColor: '#FFFFFF',
+                                color: '#1F2937',
                               }}
                               disabled
                             >
@@ -529,10 +533,12 @@ export default function WebFormBuilderPage() {
                             <input
                               type={field.type}
                               placeholder={field.placeholder}
-                              className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                               style={{
                                 borderRadius: form.style?.borderRadius || 8,
                                 fontSize: form.style?.fontSize || 14,
+                                backgroundColor: '#FFFFFF',
+                                color: '#1F2937',
                               }}
                               disabled
                             />
@@ -597,7 +603,7 @@ export default function WebFormBuilderPage() {
                       onChange={(e) =>
                         updateField(selectedFieldData.id, { label: e.target.value })
                       }
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     />
                   </div>
 
@@ -613,7 +619,7 @@ export default function WebFormBuilderPage() {
                           name: e.target.value.replace(/\s/g, '_'),
                         })
                       }
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     />
                   </div>
 
@@ -627,7 +633,7 @@ export default function WebFormBuilderPage() {
                       onChange={(e) =>
                         updateField(selectedFieldData.id, { placeholder: e.target.value })
                       }
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     />
                   </div>
 
@@ -640,7 +646,7 @@ export default function WebFormBuilderPage() {
                       onChange={(e) =>
                         updateField(selectedFieldData.id, { mapTo: e.target.value })
                       }
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     >
                       {MAP_TO_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -662,7 +668,7 @@ export default function WebFormBuilderPage() {
                             options: e.target.value.split('\n').filter(Boolean),
                           })
                         }
-                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         rows={4}
                       />
                     </div>
@@ -763,7 +769,7 @@ export default function WebFormBuilderPage() {
                         style: { ...form.style, primaryColor: e.target.value },
                       })
                     }
-                    className="flex-1 px-3 py-2 border rounded-lg dark:bg-gray-900"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -791,7 +797,7 @@ export default function WebFormBuilderPage() {
                         style: { ...form.style, backgroundColor: e.target.value },
                       })
                     }
-                    className="flex-1 px-3 py-2 border rounded-lg dark:bg-gray-900"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -819,7 +825,7 @@ export default function WebFormBuilderPage() {
                         style: { ...form.style, textColor: e.target.value },
                       })
                     }
-                    className="flex-1 px-3 py-2 border rounded-lg dark:bg-gray-900"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -895,7 +901,7 @@ export default function WebFormBuilderPage() {
                   type="text"
                   value={form.submitButtonText}
                   onChange={(e) => updateForm({ submitButtonText: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -906,7 +912,7 @@ export default function WebFormBuilderPage() {
                 <textarea
                   value={form.successMessage}
                   onChange={(e) => updateForm({ successMessage: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                   rows={3}
                 />
               </div>
@@ -920,7 +926,7 @@ export default function WebFormBuilderPage() {
                   value={form.redirectUrl || ''}
                   onChange={(e) => updateForm({ redirectUrl: e.target.value })}
                   placeholder="https://..."
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -966,8 +972,12 @@ export default function WebFormBuilderPage() {
                         <input
                           type="text"
                           placeholder={field.placeholder}
-                          className="w-full px-3 py-2 border rounded-lg"
-                          style={{ borderRadius: form.style?.borderRadius || 8 }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          style={{
+                            borderRadius: form.style?.borderRadius || 8,
+                            backgroundColor: '#FFFFFF',
+                            color: '#1F2937',
+                          }}
                           disabled
                         />
                       </div>
@@ -1062,7 +1072,7 @@ export default function WebFormBuilderPage() {
                           onChange={(e) =>
                             updateForm({ defaultPipelineId: e.target.value })
                           }
-                          className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         >
                           <option value="">Seleccionar pipeline...</option>
                           {pipelines.map((p: any) => (
@@ -1084,7 +1094,7 @@ export default function WebFormBuilderPage() {
                             updateForm({ defaultDealValue: parseFloat(e.target.value) })
                           }
                           placeholder="0"
-                          className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                         />
                       </div>
                     </div>
@@ -1128,7 +1138,7 @@ export default function WebFormBuilderPage() {
                           assignmentType: e.target.value as 'specific' | 'round_robin',
                         })
                       }
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     >
                       <option value="specific">Usuario específico</option>
                       <option value="round_robin">Round Robin (distribuir)</option>
@@ -1143,7 +1153,7 @@ export default function WebFormBuilderPage() {
                       <select
                         value={form.assignToUserId || ''}
                         onChange={(e) => updateForm({ assignToUserId: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                       >
                         <option value="">Sin asignar</option>
                         {users.map((u: any) => (
@@ -1171,7 +1181,7 @@ export default function WebFormBuilderPage() {
                         })
                       }
                       placeholder="lead, webform, marketing"
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -1216,7 +1226,7 @@ export default function WebFormBuilderPage() {
                         })
                       }
                       placeholder="ventas@empresa.com"
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                       rows={3}
                     />
                   </div>
@@ -1243,7 +1253,7 @@ export default function WebFormBuilderPage() {
                         })
                       }
                       placeholder="miempresa.com&#10;*.miempresa.com"
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                       rows={3}
                     />
                   </div>

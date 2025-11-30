@@ -282,7 +282,7 @@ export default function WebFormRenderer({
                   required={field.required}
                   value={formData[field.name] || ''}
                   onChange={(e) => handleChange(field.name, e.target.value)}
-                  className={`w-full px-3 py-2 border bg-white transition ${
+                  className={`w-full px-3 py-2 border transition outline-none ${
                     validationErrors[field.name]
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -290,6 +290,8 @@ export default function WebFormRenderer({
                   style={{
                     borderRadius: style?.borderRadius || 8,
                     fontSize: style?.fontSize || 14,
+                    backgroundColor: '#FFFFFF',
+                    color: '#1F2937',
                   }}
                   rows={4}
                 />
@@ -299,7 +301,7 @@ export default function WebFormRenderer({
                   required={field.required}
                   value={formData[field.name] || ''}
                   onChange={(e) => handleChange(field.name, e.target.value)}
-                  className={`w-full px-3 py-2 border bg-white transition ${
+                  className={`w-full px-3 py-2 border transition outline-none ${
                     validationErrors[field.name]
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -307,6 +309,8 @@ export default function WebFormRenderer({
                   style={{
                     borderRadius: style?.borderRadius || 8,
                     fontSize: style?.fontSize || 14,
+                    backgroundColor: '#FFFFFF',
+                    color: '#1F2937',
                   }}
                 >
                   <option value="">Seleccionar...</option>
@@ -345,7 +349,7 @@ export default function WebFormRenderer({
                   required={field.required}
                   value={formData[field.name] || ''}
                   onChange={(e) => handleChange(field.name, e.target.value)}
-                  className={`w-full px-3 py-2 border bg-white transition ${
+                  className={`w-full px-3 py-2 border transition outline-none ${
                     validationErrors[field.name]
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -353,6 +357,8 @@ export default function WebFormRenderer({
                   style={{
                     borderRadius: style?.borderRadius || 8,
                     fontSize: style?.fontSize || 14,
+                    backgroundColor: '#FFFFFF',
+                    color: '#1F2937',
                   }}
                 />
               )}
