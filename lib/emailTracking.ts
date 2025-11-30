@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import EmailTracking, { IEmailTracking } from '@/models/EmailTracking';
+import Deal from '@/models/Deal';
+import Contact from '@/models/Contact';
 import mongoose from 'mongoose';
 
 // Base URL para tracking - usar variable de entorno en producción
