@@ -169,15 +169,14 @@ export default function EmailTemplatesPage() {
                 Gestiona tus plantillas de email para secuencias y comunicaciones
               </p>
             </div>
+            <button
+              onClick={() => router.push('/crm/email-templates/new')}
+              className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
+            >
+              <Plus size={20} />
+              Nueva Plantilla
+            </button>
           </div>
-          <button
-            onClick={() => router.push('/crm/email-templates/new')}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
-          >
-            <Plus size={20} />
-            Nueva Plantilla
-          </button>
-        </div>
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
