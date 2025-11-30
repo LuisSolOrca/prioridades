@@ -1177,7 +1177,7 @@ export default function WebFormBuilderPage() {
                       </label>
                       <select
                         value={typeof form.assignToUserId === 'object' ? form.assignToUserId._id : (form.assignToUserId || '')}
-                        onChange={(e) => updateForm({ assignToUserId: e.target.value || null })}
+                        onChange={(e) => updateForm({ assignToUserId: e.target.value || undefined })}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                       >
                         <option value="">Sin asignar</option>
