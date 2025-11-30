@@ -315,9 +315,13 @@ async function processSubmission(
         }
 
         // Crear nuevo contacto
+        const nameParts = contactData.name?.split(' ') || [];
+        const firstName = contactData.firstName || nameParts[0] || 'Sin nombre';
+        const lastName = contactData.lastName || nameParts.slice(1).join(' ') || '-';
+
         contact = await Contact.create({
-          firstName: contactData.firstName || contactData.name?.split(' ')[0] || 'Sin nombre',
-          lastName: contactData.lastName || contactData.name?.split(' ').slice(1).join(' ') || '',
+          firstName,
+          lastName,
           email: contactData.email,
           phone: contactData.phone,
           position: contactData.position,
