@@ -1,6 +1,6 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, NodeViewWrapper, NodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
@@ -11,6 +11,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import { useCallback, useEffect, useState, useRef } from 'react';
+import { mergeAttributes } from '@tiptap/core';
 import {
   Bold,
   Italic,
@@ -54,6 +55,52 @@ const HIGHLIGHT_COLORS = [
   '#FEF08A', '#BBF7D0', '#A5F3FC', '#DDD6FE', '#FECACA', '#FED7AA',
 ];
 
+const IMAGE_SIZES = [
+  { label: '25%', value: '25%' },
+  { label: '50%', value: '50%' },
+  { label: '75%', value: '75%' },
+  { label: '100%', value: '100%' },
+  { label: 'Original', value: 'auto' },
+];
+
+// Custom Image extension with width support
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: '100%',
+        parseHTML: element => element.getAttribute('width') || element.style.width || '100%',
+        renderHTML: attributes => {
+          if (!attributes.width) {
+            return {};
+          }
+          return {
+            width: attributes.width,
+            style: `width: ${attributes.width}`,
+          };
+        },
+      },
+      align: {
+        default: 'center',
+        parseHTML: element => element.getAttribute('data-align') || 'center',
+        renderHTML: attributes => {
+          return {
+            'data-align': attributes.align,
+          };
+        },
+      },
+    };
+  },
+  renderHTML({ HTMLAttributes }) {
+    const align = HTMLAttributes['data-align'] || 'center';
+    const wrapperStyle = align === 'center' ? 'text-align: center;' :
+                         align === 'right' ? 'text-align: right;' : 'text-align: left;';
+
+    return ['div', { style: wrapperStyle }, ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)]];
+  },
+});
+
 export default function RichTextEditor({
   content,
   onChange,
@@ -64,8 +111,12 @@ export default function RichTextEditor({
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showImageEditModal, setShowImageEditModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageWidth, setImageWidth] = useState('100%');
+  const [imageAlign, setImageAlign] = useState('center');
+  const [selectedImageNode, setSelectedImageNode] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,9 +133,9 @@ export default function RichTextEditor({
           class: 'text-blue-600 underline hover:text-blue-800',
         },
       }),
-      Image.configure({
+      ResizableImage.configure({
         HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg my-4',
+          class: 'max-w-full h-auto rounded-lg my-4 cursor-pointer',
         },
       }),
       Placeholder.configure({
@@ -108,6 +159,20 @@ export default function RichTextEditor({
       attributes: {
         class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none',
         style: `min-height: ${minHeight}`,
+      },
+      handleClick: (view, pos, event) => {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'IMG') {
+          const node = view.state.doc.nodeAt(pos);
+          if (node?.type.name === 'image') {
+            setSelectedImageNode({ pos, node });
+            setImageWidth(node.attrs.width || '100%');
+            setImageAlign(node.attrs.align || 'center');
+            setShowImageEditModal(true);
+            return true;
+          }
+        }
+        return false;
       },
     },
   });
@@ -136,10 +201,35 @@ export default function RichTextEditor({
     if (!editor || !imageUrl) return;
 
     const url = imageUrl.startsWith('http') ? imageUrl : `https://${imageUrl}`;
-    editor.chain().focus().setImage({ src: url }).run();
+    editor.chain().focus().setImage({ src: url, width: imageWidth, align: imageAlign }).run();
     setShowImageModal(false);
     setImageUrl('');
-  }, [editor, imageUrl]);
+    setImageWidth('100%');
+    setImageAlign('center');
+  }, [editor, imageUrl, imageWidth, imageAlign]);
+
+  const updateSelectedImage = useCallback(() => {
+    if (!editor || !selectedImageNode) return;
+
+    const { pos, node } = selectedImageNode;
+    editor.chain().focus().setNodeSelection(pos).updateAttributes('image', {
+      width: imageWidth,
+      align: imageAlign,
+    }).run();
+
+    setShowImageEditModal(false);
+    setSelectedImageNode(null);
+  }, [editor, selectedImageNode, imageWidth, imageAlign]);
+
+  const deleteSelectedImage = useCallback(() => {
+    if (!editor || !selectedImageNode) return;
+
+    const { pos } = selectedImageNode;
+    editor.chain().focus().setNodeSelection(pos).deleteSelection().run();
+
+    setShowImageEditModal(false);
+    setSelectedImageNode(null);
+  }, [editor, selectedImageNode]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -170,7 +260,7 @@ export default function RichTextEditor({
 
       if (res.ok) {
         const { url } = await res.json();
-        editor.chain().focus().setImage({ src: url }).run();
+        editor.chain().focus().setImage({ src: url, width: imageWidth, align: imageAlign }).run();
       } else {
         const error = await res.json();
         alert(error.error || 'Error al subir la imagen');
@@ -181,6 +271,8 @@ export default function RichTextEditor({
     } finally {
       setUploading(false);
       setShowImageModal(false);
+      setImageWidth('100%');
+      setImageAlign('center');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -591,6 +683,71 @@ export default function RichTextEditor({
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4"
             />
 
+            {/* Size options */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Tamaño de imagen
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {IMAGE_SIZES.map((size) => (
+                  <button
+                    key={size.value}
+                    type="button"
+                    onClick={() => setImageWidth(size.value)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                      imageWidth === size.value
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {size.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Alignment options */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Alineación
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setImageAlign('left')}
+                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    imageAlign === 'left'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <AlignLeft size={16} className="inline mr-1" /> Izquierda
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageAlign('center')}
+                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    imageAlign === 'center'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <AlignCenter size={16} className="inline mr-1" /> Centro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageAlign('right')}
+                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    imageAlign === 'right'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <AlignRight size={16} className="inline mr-1" /> Derecha
+                </button>
+              </div>
+            </div>
+
             <div className="flex justify-end gap-3">
               <button
                 type="button"
@@ -610,6 +767,121 @@ export default function RichTextEditor({
               >
                 Insertar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Edit Modal */}
+      {showImageEditModal && selectedImageNode && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Editar imagen
+            </h3>
+
+            {/* Preview */}
+            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg text-center">
+              <img
+                src={selectedImageNode.node.attrs.src}
+                alt="Preview"
+                style={{ width: imageWidth === 'auto' ? 'auto' : imageWidth, maxWidth: '100%' }}
+                className="inline-block rounded"
+              />
+            </div>
+
+            {/* Size options */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Tamaño de imagen
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {IMAGE_SIZES.map((size) => (
+                  <button
+                    key={size.value}
+                    type="button"
+                    onClick={() => setImageWidth(size.value)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                      imageWidth === size.value
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {size.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Alignment options */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Alineación
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setImageAlign('left')}
+                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    imageAlign === 'left'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <AlignLeft size={16} className="inline mr-1" /> Izquierda
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageAlign('center')}
+                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    imageAlign === 'center'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <AlignCenter size={16} className="inline mr-1" /> Centro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageAlign('right')}
+                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    imageAlign === 'right'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <AlignRight size={16} className="inline mr-1" /> Derecha
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <button
+                type="button"
+                onClick={deleteSelectedImage}
+                className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+              >
+                Eliminar
+              </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImageEditModal(false);
+                    setSelectedImageNode(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={updateSelectedImage}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  Aplicar
+                </button>
+              </div>
             </div>
           </div>
         </div>
