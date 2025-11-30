@@ -4,7 +4,9 @@ import { authOptions } from '@/lib/auth';
 import {
   uploadFileToR2,
   getDownloadUrl,
+  getPublicUrl,
   isR2Configured,
+  hasPublicUrl,
   validateFileSize,
   validateFileType,
 } from '@/lib/r2-client';
@@ -73,12 +75,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate signed URL with maximum allowed expiration (7 days for S3 signature v4)
-    // Note: For permanent email images, consider using R2 public bucket
-    const url = await getDownloadUrl({
-      key,
-      expiresIn: 7 * 24 * 60 * 60, // 7 days (max allowed)
-    });
+    // Use public URL if configured, otherwise fall back to signed URL
+    let url: string;
+    let isPublic = false;
+
+    if (hasPublicUrl()) {
+      // URL pública permanente
+      url = getPublicUrl(key)!;
+      isPublic = true;
+    } else {
+      // URL firmada con expiración de 7 días (máximo permitido)
+      url = await getDownloadUrl({
+        key,
+        expiresIn: 7 * 24 * 60 * 60,
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -86,6 +97,7 @@ export async function POST(request: NextRequest) {
       key,
       contentType: file.type,
       size: file.size,
+      isPublic,
     });
   } catch (error: any) {
     console.error('Error uploading image:', error);

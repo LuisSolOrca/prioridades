@@ -15,6 +15,7 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // URL pública del bucket (ej: https://pub-xxx.r2.dev o dominio personalizado)
 
 if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_NAME) {
   console.warn('⚠️ R2 configuration missing. File uploads will not work.');
@@ -104,6 +105,27 @@ export async function listFilesInR2(prefix?: string): Promise<string[]> {
  */
 export function isR2Configured(): boolean {
   return !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME);
+}
+
+/**
+ * Verifica si hay una URL pública configurada
+ */
+export function hasPublicUrl(): boolean {
+  return !!R2_PUBLIC_URL;
+}
+
+/**
+ * Obtiene la URL pública de un archivo
+ * Retorna null si no hay URL pública configurada
+ */
+export function getPublicUrl(key: string): string | null {
+  if (!R2_PUBLIC_URL) return null;
+
+  // Asegurar que la URL no tenga slash al final y el key no tenga slash al inicio
+  const baseUrl = R2_PUBLIC_URL.replace(/\/$/, '');
+  const cleanKey = key.replace(/^\//, '');
+
+  return `${baseUrl}/${cleanKey}`;
 }
 
 /**
