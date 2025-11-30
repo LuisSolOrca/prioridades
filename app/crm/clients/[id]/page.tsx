@@ -118,11 +118,14 @@ export default function ClientDetailPage() {
     website: '',
     phone: '',
     address: '',
+    logo: '',
     annualRevenue: 0,
     employeeCount: 0,
     source: '',
+    tags: [] as string[],
     crmNotes: '',
   });
+  const [newTag, setNewTag] = useState('');
 
   const [newDeal, setNewDeal] = useState({
     title: '',
@@ -192,9 +195,11 @@ export default function ClientDetailPage() {
         website: clientData.website || '',
         phone: clientData.phone || '',
         address: clientData.address || '',
+        logo: clientData.logo || '',
         annualRevenue: clientData.annualRevenue || 0,
         employeeCount: clientData.employeeCount || 0,
         source: clientData.source || '',
+        tags: clientData.tags || [],
         crmNotes: clientData.crmNotes || '',
       });
     } catch (error) {
@@ -775,6 +780,69 @@ export default function ClientDetailPage() {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Ej: Referido, Web, Evento..."
                   />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Logo (URL)</label>
+                  <input
+                    type="url"
+                    value={editForm.logo}
+                    onChange={(e) => setEditForm({ ...editForm, logo: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="https://ejemplo.com/logo.png"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Etiquetas</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {editForm.tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-sm flex items-center gap-1"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => setEditForm({
+                            ...editForm,
+                            tags: editForm.tags.filter((_, i) => i !== idx)
+                          })}
+                          className="hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newTag.trim() && !editForm.tags.includes(newTag.trim())) {
+                            setEditForm({ ...editForm, tags: [...editForm.tags, newTag.trim()] });
+                            setNewTag('');
+                          }
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="Agregar etiqueta..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newTag.trim() && !editForm.tags.includes(newTag.trim())) {
+                          setEditForm({ ...editForm, tags: [...editForm.tags, newTag.trim()] });
+                          setNewTag('');
+                        }
+                      }}
+                      className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+                    >
+                      Agregar
+                    </button>
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas CRM</label>
