@@ -10,7 +10,9 @@ import Priority from '@/models/Priority';
 import User from '@/models/User';
 import Notification from '@/models/Notification';
 import Comment from '@/models/Comment';
+import EmailTemplate from '@/models/EmailTemplate';
 import { sendEmail } from '@/lib/email';
+import { createTrackedEmail } from '@/lib/emailTracking';
 import connectDB from '@/lib/mongodb';
 
 interface WorkflowContext {
@@ -247,53 +249,104 @@ async function executeAction(
         };
 
       case 'send_email':
-        const emailSubject = replacePlaceholders(action.emailSubject || '', context);
-        const emailMessage = replacePlaceholders(action.message || '', context);
-        console.log(`[Email] ${emailSubject}: ${emailMessage}`);
+        // Determinar contenido del email (plantilla o manual)
+        let emailSubject: string;
+        let emailBodyHtml: string;
+        let emailBodyText: string;
+        let templateUsed: string | null = null;
+
+        if (action.useTemplate && action.emailTemplateId) {
+          // Cargar plantilla de email
+          const template = await EmailTemplate.findById(action.emailTemplateId);
+          if (!template) {
+            throw new Error(`Plantilla de email ${action.emailTemplateId} no encontrada`);
+          }
+
+          // Usar contenido de la plantilla con reemplazo de placeholders
+          emailSubject = replacePlaceholders(template.subject, context);
+          emailBodyHtml = replacePlaceholders(template.body, context);
+          emailBodyText = emailBodyHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+          templateUsed = template.name;
+
+          console.log(`[Email] Usando plantilla "${template.name}": ${emailSubject}`);
+        } else {
+          // Contenido manual
+          emailSubject = replacePlaceholders(action.emailSubject || '', context);
+          const emailMessage = replacePlaceholders(action.message || '', context);
+          emailBodyHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">Notificación de Workflow</h2>
+              <p>${emailMessage.replace(/\n/g, '<br>')}</p>
+              <hr style="border: 1px solid #e5e7eb; margin: 20px 0;">
+              <p style="color: #6b7280; font-size: 14px;">
+                Esta es una notificación automática generada por el sistema de workflows.
+              </p>
+            </div>
+          `;
+          emailBodyText = emailMessage;
+
+          console.log(`[Email] ${emailSubject}: ${emailMessage}`);
+        }
 
         // Determinar destinatarios de email
-        let emailRecipients: string[] = [];
+        let emailRecipients: { email: string; name?: string }[] = [];
 
         if (action.targetRole === 'OWNER') {
           // Enviar al dueño de la prioridad
           if (priority.userId?.email) {
-            emailRecipients.push(priority.userId.email);
+            emailRecipients.push({
+              email: priority.userId.email,
+              name: priority.userId.name
+            });
           }
         } else if (action.targetRole === 'ADMIN') {
           // Enviar a todos los administradores
           const admins = await User.find({ role: 'ADMIN', isActive: true });
-          emailRecipients = admins.map(admin => admin.email).filter(email => email);
+          emailRecipients = admins
+            .filter(admin => admin.email)
+            .map(admin => ({ email: admin.email, name: admin.name }));
         } else if (action.targetRole === 'USER' && action.targetUserId) {
           // Enviar a un usuario específico
           const targetUser = await User.findById(action.targetUserId);
           if (targetUser?.email) {
-            emailRecipients.push(targetUser.email);
+            emailRecipients.push({
+              email: targetUser.email,
+              name: targetUser.name
+            });
           }
         }
 
-        // Enviar emails
+        // Enviar emails con tracking
         const emailResults = [];
         for (const recipient of emailRecipients) {
           try {
-            const result = await sendEmail({
-              to: recipient,
+            // Crear email con tracking
+            const trackedEmail = await createTrackedEmail({
+              userId: workflow.createdBy,
+              priorityId: priority._id,
               subject: emailSubject,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h2 style="color: #2563eb;">Notificación de Workflow</h2>
-                  <p>${emailMessage.replace(/\n/g, '<br>')}</p>
-                  <hr style="border: 1px solid #e5e7eb; margin: 20px 0;">
-                  <p style="color: #6b7280; font-size: 14px;">
-                    Esta es una notificación automática generada por el sistema de workflows.
-                  </p>
-                </div>
-              `,
-              text: emailMessage
+              recipientEmail: recipient.email,
+              recipientName: recipient.name,
+              bodyHtml: emailBodyHtml
             });
-            emailResults.push({ recipient, success: true, messageId: result.messageId });
+
+            // Enviar el email con el HTML trackeado
+            const result = await sendEmail({
+              to: recipient.email,
+              subject: emailSubject,
+              html: trackedEmail.html,
+              text: emailBodyText
+            });
+
+            emailResults.push({
+              recipient: recipient.email,
+              success: true,
+              messageId: result.messageId,
+              trackingId: trackedEmail.trackingId
+            });
           } catch (error: any) {
-            console.error(`Error enviando email a ${recipient}:`, error);
-            emailResults.push({ recipient, success: false, error: error.message });
+            console.error(`Error enviando email a ${recipient.email}:`, error);
+            emailResults.push({ recipient: recipient.email, success: false, error: error.message });
           }
         }
 
@@ -302,7 +355,7 @@ async function executeAction(
           details: {
             type: 'email',
             subject: emailSubject,
-            message: emailMessage,
+            templateUsed,
             targetRole: action.targetRole,
             recipientsCount: emailRecipients.length,
             emailResults

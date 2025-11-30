@@ -15,12 +15,14 @@ export interface IEmailTracking {
   _id: mongoose.Types.ObjectId;
 
   // Relaciones
-  activityId: mongoose.Types.ObjectId;  // Actividad de tipo 'email'
+  activityId?: mongoose.Types.ObjectId;  // Actividad de tipo 'email' (opcional para workflows)
   dealId?: mongoose.Types.ObjectId;
   contactId?: mongoose.Types.ObjectId;
   clientId?: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;      // Usuario que envió el email
   sequenceEnrollmentId?: mongoose.Types.ObjectId; // Enrollment de secuencia (opcional)
+  workflowExecutionId?: mongoose.Types.ObjectId; // Ejecución de workflow (opcional)
+  priorityId?: mongoose.Types.ObjectId; // Prioridad relacionada (para workflows)
 
   // Contenido
   subject: string;
@@ -65,7 +67,6 @@ const EmailTrackingSchema = new Schema<IEmailTracking>({
   activityId: {
     type: Schema.Types.ObjectId,
     ref: 'Activity',
-    required: true,
     index: true,
   },
   dealId: {
@@ -92,6 +93,16 @@ const EmailTrackingSchema = new Schema<IEmailTracking>({
   sequenceEnrollmentId: {
     type: Schema.Types.ObjectId,
     ref: 'SequenceEnrollment',
+    index: true,
+  },
+  workflowExecutionId: {
+    type: Schema.Types.ObjectId,
+    ref: 'WorkflowExecution',
+    index: true,
+  },
+  priorityId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Priority',
     index: true,
   },
 

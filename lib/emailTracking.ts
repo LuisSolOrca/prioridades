@@ -11,12 +11,14 @@ const _dependencies = { Deal, Contact };
 const getBaseUrl = () => process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
 export interface EmailTrackingOptions {
-  activityId: string | mongoose.Types.ObjectId;
+  activityId?: string | mongoose.Types.ObjectId;
   dealId?: string | mongoose.Types.ObjectId;
   contactId?: string | mongoose.Types.ObjectId;
   clientId?: string | mongoose.Types.ObjectId;
   userId: string | mongoose.Types.ObjectId;
   sequenceEnrollmentId?: string | mongoose.Types.ObjectId;
+  workflowExecutionId?: string | mongoose.Types.ObjectId;
+  priorityId?: string | mongoose.Types.ObjectId;
   subject: string;
   recipientEmail: string;
   recipientName?: string;
@@ -84,6 +86,8 @@ export async function createTrackedEmail(options: EmailTrackingOptions): Promise
     clientId: options.clientId,
     userId: options.userId,
     sequenceEnrollmentId: options.sequenceEnrollmentId,
+    workflowExecutionId: options.workflowExecutionId,
+    priorityId: options.priorityId,
     subject: options.subject,
     bodyPreview,
     recipientEmail: options.recipientEmail,

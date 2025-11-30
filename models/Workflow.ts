@@ -47,6 +47,8 @@ export interface IAction {
   message?: string;              // Mensaje de notificación/email/comentario
   newStatus?: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO' | 'COMPLETADO';
   emailSubject?: string;         // Para emails
+  emailTemplateId?: mongoose.Types.ObjectId; // Plantilla de email (opcional)
+  useTemplate?: boolean;         // Si se usa plantilla o contenido manual
 }
 
 export interface IWorkflow extends Document {
@@ -129,7 +131,15 @@ const ActionSchema = new Schema({
     type: String,
     enum: ['EN_TIEMPO', 'EN_RIESGO', 'BLOQUEADO', 'COMPLETADO']
   },
-  emailSubject: String
+  emailSubject: String,
+  emailTemplateId: {
+    type: Schema.Types.ObjectId,
+    ref: 'EmailTemplate'
+  },
+  useTemplate: {
+    type: Boolean,
+    default: false
+  }
 }, { _id: false });
 
 const WorkflowSchema = new Schema<IWorkflow>({
