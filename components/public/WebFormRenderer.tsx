@@ -343,7 +343,7 @@ export default function WebFormRenderer({
                 </label>
               ) : (
                 <input
-                  type={field.type}
+                  type={['text', 'email', 'phone', 'number', 'date', 'url'].includes(field.type) ? field.type : 'text'}
                   name={field.name}
                   placeholder={field.placeholder}
                   required={field.required}

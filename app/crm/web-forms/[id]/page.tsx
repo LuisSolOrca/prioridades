@@ -540,7 +540,7 @@ export default function WebFormBuilderPage() {
                             </label>
                           ) : (
                             <input
-                              type={field.type}
+                              type={['text', 'email', 'phone', 'number', 'date', 'url'].includes(field.type) ? field.type : 'text'}
                               placeholder={field.placeholder}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                               style={{
