@@ -364,6 +364,7 @@ export default function EmailTemplatesPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -436,7 +437,6 @@ export default function EmailTemplatesPage() {
           </div>
         </div>
       )}
-      </div>
 
       {/* Click outside to close menu */}
       {openMenuId && (
