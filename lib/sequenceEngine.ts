@@ -9,6 +9,7 @@ import Activity from '@/models/Activity';
 import User from '@/models/User';
 import connectDB from '@/lib/mongodb';
 import { sendEmail } from '@/lib/email';
+import { createTrackedEmail } from '@/lib/emailTracking';
 
 interface ProcessResult {
   processed: number;
@@ -177,21 +178,6 @@ async function processEnrollmentStep(
         return { success: false, message: 'El contacto no tiene email configurado' };
       }
 
-      // Enviar el email real
-      const emailResult = await sendEmail({
-        to: contact.email,
-        subject: subject,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            ${body.replace(/\n/g, '<br>')}
-          </div>
-        `,
-      });
-
-      if (!emailResult.success) {
-        return { success: false, message: 'Error al enviar email: ' + (emailResult.error || 'Error desconocido') };
-      }
-
       // Crear actividad para tracking
       const activity = await Activity.create({
         type: 'email',
@@ -204,6 +190,39 @@ async function processEnrollmentStep(
         isCompleted: true,
         completedAt: new Date(),
       });
+
+      // Preparar el HTML del email
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          ${body.replace(/\n/g, '<br>')}
+        </div>
+      `;
+
+      // Crear email con tracking (pixel de apertura y tracking de links)
+      const trackedEmail = await createTrackedEmail({
+        activityId: activity._id,
+        dealId: enrollment.dealId,
+        contactId: contact._id,
+        clientId: enrollment.clientId,
+        userId: userId,
+        subject: subject,
+        recipientEmail: contact.email,
+        recipientName: `${contact.firstName || ''} ${contact.lastName || ''}`.trim(),
+        bodyHtml: emailHtml,
+      });
+
+      // Enviar el email con tracking
+      const emailResult = await sendEmail({
+        to: contact.email,
+        subject: subject,
+        html: trackedEmail.html, // HTML con pixel de tracking incluido
+      });
+
+      if (!emailResult.success) {
+        // Si falla el envío, eliminar la actividad creada
+        await Activity.findByIdAndDelete(activity._id);
+        return { success: false, message: 'Error al enviar email: ' + (emailResult.error || 'Error desconocido') };
+      }
 
       // Update enrollment metrics
       await SequenceEnrollment.findByIdAndUpdate(enrollment._id, {
@@ -219,7 +238,7 @@ async function processEnrollmentStep(
         },
       });
 
-      return { success: true, message: `Email enviado a ${contact.email}` };
+      return { success: true, message: `Email enviado a ${contact.email} (tracking: ${trackedEmail.trackingId})` };
     }
 
     case 'task': {
