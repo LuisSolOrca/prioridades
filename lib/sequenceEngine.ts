@@ -10,6 +10,7 @@ import User from '@/models/User';
 import connectDB from '@/lib/mongodb';
 import { sendEmail } from '@/lib/email';
 import { createTrackedEmail } from '@/lib/emailTracking';
+import { replaceTemplateVariables } from '@/lib/templateVariables';
 
 interface ProcessResult {
   processed: number;
@@ -63,9 +64,9 @@ function calculateNextStepTime(
 }
 
 /**
- * Replace template variables with actual data
+ * Replace template variables with actual data (uses shared utility)
  */
-async function replaceVariables(
+function replaceVariables(
   text: string,
   data: {
     contact?: any;
@@ -73,62 +74,8 @@ async function replaceVariables(
     deal?: any;
     user?: any;
   }
-): Promise<string> {
-  let result = text;
-
-  // Contact variables
-  if (data.contact) {
-    result = result.replace(/\{\{contact\.firstName\}\}/g, data.contact.firstName || '');
-    result = result.replace(/\{\{contact\.lastName\}\}/g, data.contact.lastName || '');
-    result = result.replace(/\{\{contact\.fullName\}\}/g,
-      `${data.contact.firstName || ''} ${data.contact.lastName || ''}`.trim());
-    result = result.replace(/\{\{contact\.email\}\}/g, data.contact.email || '');
-    result = result.replace(/\{\{contact\.phone\}\}/g, data.contact.phone || '');
-    result = result.replace(/\{\{contact\.position\}\}/g, data.contact.position || '');
-  }
-
-  // Client variables
-  if (data.client) {
-    result = result.replace(/\{\{client\.name\}\}/g, data.client.name || '');
-    result = result.replace(/\{\{client\.industry\}\}/g, data.client.industry || '');
-    result = result.replace(/\{\{client\.website\}\}/g, data.client.website || '');
-  }
-
-  // Deal variables
-  if (data.deal) {
-    result = result.replace(/\{\{deal\.title\}\}/g, data.deal.title || '');
-    result = result.replace(/\{\{deal\.value\}\}/g,
-      data.deal.value
-        ? new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: data.deal.currency || 'MXN',
-          }).format(data.deal.value)
-        : ''
-    );
-    result = result.replace(/\{\{deal\.stage\}\}/g, data.deal.stageId?.name || '');
-  }
-
-  // User variables
-  if (data.user) {
-    result = result.replace(/\{\{user\.name\}\}/g, data.user.name || '');
-    result = result.replace(/\{\{user\.email\}\}/g, data.user.email || '');
-    result = result.replace(/\{\{user\.phone\}\}/g, data.user.phone || '');
-    result = result.replace(/\{\{user\.signature\}\}/g, data.user.signature || '');
-  }
-
-  // Date variables
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const nextWeek = new Date(today);
-  nextWeek.setDate(nextWeek.getDate() + 7);
-
-  const dateFormat = new Intl.DateTimeFormat('es-MX', { dateStyle: 'long' });
-  result = result.replace(/\{\{today\}\}/g, dateFormat.format(today));
-  result = result.replace(/\{\{tomorrow\}\}/g, dateFormat.format(tomorrow));
-  result = result.replace(/\{\{nextWeek\}\}/g, dateFormat.format(nextWeek));
-
-  return result;
+): string {
+  return replaceTemplateVariables(text, data);
 }
 
 /**
@@ -170,8 +117,8 @@ async function processEnrollmentStep(
       }
 
       // Replace variables
-      subject = await replaceVariables(subject, templateData);
-      body = await replaceVariables(body, templateData);
+      subject = replaceVariables(subject, templateData);
+      body = replaceVariables(body, templateData);
 
       // Verificar que el contacto tenga email
       if (!contact.email) {
@@ -243,8 +190,8 @@ async function processEnrollmentStep(
     }
 
     case 'task': {
-      const taskTitle = await replaceVariables(step.taskTitle || 'Tarea de secuencia', templateData);
-      const taskDescription = await replaceVariables(step.taskDescription || '', templateData);
+      const taskTitle = replaceVariables(step.taskTitle || 'Tarea de secuencia', templateData);
+      const taskDescription = replaceVariables(step.taskDescription || '', templateData);
 
       const activity = await Activity.create({
         type: 'task',

@@ -34,34 +34,53 @@ const CATEGORY_OPTIONS = [
   { value: 'other', label: 'Otro' },
 ];
 
-const AVAILABLE_VARIABLES = [
-  { category: 'Contacto', variables: [
-    { name: '{{contact.firstName}}', description: 'Nombre del contacto' },
-    { name: '{{contact.lastName}}', description: 'Apellido del contacto' },
-    { name: '{{contact.fullName}}', description: 'Nombre completo del contacto' },
-    { name: '{{contact.email}}', description: 'Email del contacto' },
-    { name: '{{contact.phone}}', description: 'Teléfono del contacto' },
-    { name: '{{contact.position}}', description: 'Cargo del contacto' },
-  ]},
-  { category: 'Cliente/Empresa', variables: [
-    { name: '{{client.name}}', description: 'Nombre de la empresa' },
-    { name: '{{client.industry}}', description: 'Industria de la empresa' },
-    { name: '{{client.website}}', description: 'Sitio web de la empresa' },
-  ]},
-  { category: 'Negocio', variables: [
-    { name: '{{deal.title}}', description: 'Título del negocio' },
-    { name: '{{deal.value}}', description: 'Valor del negocio' },
-    { name: '{{deal.stage}}', description: 'Etapa del negocio' },
-  ]},
-  { category: 'Usuario', variables: [
-    { name: '{{user.name}}', description: 'Tu nombre' },
-    { name: '{{user.email}}', description: 'Tu email' },
-  ]},
-  { category: 'Fecha', variables: [
-    { name: '{{today}}', description: 'Fecha de hoy' },
-    { name: '{{tomorrow}}', description: 'Fecha de mañana' },
-  ]},
+const SCOPE_OPTIONS = [
+  { value: 'both', label: 'Ambos (Secuencias y Workflows)', description: 'Disponible en secuencias de email y workflows CRM' },
+  { value: 'sequences', label: 'Solo Secuencias', description: 'Solo para secuencias de email automatizadas' },
+  { value: 'workflows', label: 'Solo Workflows', description: 'Solo para automatizaciones de workflows CRM' },
 ];
+
+const AVAILABLE_VARIABLES = {
+  common: [
+    { category: 'Contacto', variables: [
+      { name: '{{contact.firstName}}', description: 'Nombre del contacto' },
+      { name: '{{contact.lastName}}', description: 'Apellido del contacto' },
+      { name: '{{contact.fullName}}', description: 'Nombre completo del contacto' },
+      { name: '{{contact.email}}', description: 'Email del contacto' },
+      { name: '{{contact.phone}}', description: 'Teléfono del contacto' },
+      { name: '{{contact.position}}', description: 'Cargo del contacto' },
+    ]},
+    { category: 'Cliente/Empresa', variables: [
+      { name: '{{client.name}}', description: 'Nombre de la empresa' },
+      { name: '{{client.industry}}', description: 'Industria de la empresa' },
+      { name: '{{client.website}}', description: 'Sitio web de la empresa' },
+    ]},
+    { category: 'Negocio', variables: [
+      { name: '{{deal.title}}', description: 'Título del negocio' },
+      { name: '{{deal.value}}', description: 'Valor del negocio (formateado)' },
+      { name: '{{deal.stage}}', description: 'Etapa del negocio' },
+    ]},
+    { category: 'Usuario', variables: [
+      { name: '{{user.name}}', description: 'Tu nombre' },
+      { name: '{{user.email}}', description: 'Tu email' },
+      { name: '{{user.phone}}', description: 'Tu teléfono' },
+      { name: '{{user.signature}}', description: 'Tu firma personalizada' },
+    ]},
+    { category: 'Fecha', variables: [
+      { name: '{{today}}', description: 'Fecha de hoy' },
+      { name: '{{tomorrow}}', description: 'Fecha de mañana' },
+      { name: '{{nextWeek}}', description: 'Fecha en 7 días' },
+    ]},
+  ],
+  workflows: [
+    { category: 'Prioridad (Solo Workflows)', variables: [
+      { name: '{{priority.title}}', description: 'Título de la prioridad' },
+      { name: '{{priority.status}}', description: 'Estado (EN_TIEMPO, EN_RIESGO, etc.)' },
+      { name: '{{priority.completion}}', description: '% de completado' },
+      { name: '{{priority.owner}}', description: 'Responsable de la prioridad' },
+    ]},
+  ],
+};
 
 export default function NewEmailTemplatePage() {
   const { data: session } = useSession();
@@ -79,10 +98,20 @@ export default function NewEmailTemplatePage() {
     name: '',
     description: '',
     category: 'other',
+    scope: 'both',
     subject: '',
     body: '',
     isShared: false,
   });
+
+  // Obtener variables según el scope seleccionado
+  const getVisibleVariables = () => {
+    const vars = [...AVAILABLE_VARIABLES.common];
+    if (form.scope === 'workflows' || form.scope === 'both') {
+      vars.push(...AVAILABLE_VARIABLES.workflows);
+    }
+    return vars;
+  };
 
   const handleSave = async () => {
     if (!form.name || !form.subject || !form.body) {
@@ -151,7 +180,7 @@ export default function NewEmailTemplatePage() {
         {/* Form */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
           {/* Name and Category */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Nombre de la plantilla *
@@ -177,6 +206,23 @@ export default function NewEmailTemplatePage() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Uso de la plantilla
+              </label>
+              <select
+                value={form.scope}
+                onChange={(e) => setForm({ ...form, scope: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                {SCOPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {SCOPE_OPTIONS.find(o => o.value === form.scope)?.description}
+              </p>
             </div>
           </div>
 
@@ -246,7 +292,7 @@ export default function NewEmailTemplatePage() {
                   Haz clic en una variable para copiarla. Luego pégala en el asunto o contenido del correo.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {AVAILABLE_VARIABLES.map((group) => (
+                  {getVisibleVariables().map((group) => (
                     <div key={group.category}>
                       <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                         {group.category}

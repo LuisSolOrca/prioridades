@@ -183,7 +183,8 @@ export default function SequenceBuilderPage() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch('/api/crm/email-templates');
+      // Filtrar solo plantillas válidas para secuencias
+      const res = await fetch('/api/crm/email-templates?scope=sequences');
       if (res.ok) {
         const data = await res.json();
         setTemplates(data);

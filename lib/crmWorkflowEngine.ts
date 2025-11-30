@@ -17,6 +17,7 @@ import User from '@/models/User';
 import EmailTemplate from '@/models/EmailTemplate';
 import { sendEmail } from '@/lib/email';
 import { createTrackedEmail } from '@/lib/emailTracking';
+import { replaceTemplateVariables } from '@/lib/templateVariables';
 
 export interface TriggerContext {
   entityType: 'deal' | 'contact' | 'client' | 'activity' | 'quote';
@@ -98,12 +99,9 @@ function evaluateConditions(
   return result;
 }
 
-// Reemplazar variables en texto ({{deal.title}}, etc.)
+// Reemplazar variables en texto (usa utilidad compartida)
 function replaceVariables(text: string, context: Record<string, any>): string {
-  return text.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-    const value = getNestedValue(context, path.trim());
-    return value !== undefined ? String(value) : match;
-  });
+  return replaceTemplateVariables(text, context);
 }
 
 // Ejecutar una acción individual

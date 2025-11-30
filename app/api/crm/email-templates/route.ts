@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
+    const scope = searchParams.get('scope'); // 'sequences' | 'workflows' | 'both'
     const includeShared = searchParams.get('includeShared') !== 'false';
 
     const query: any = {
@@ -36,6 +37,11 @@ export async function GET(request: NextRequest) {
 
     if (category) {
       query.category = category;
+    }
+
+    // Filtrar por scope - incluir plantillas del scope específico o 'both'
+    if (scope && scope !== 'both') {
+      query.scope = { $in: [scope, 'both'] };
     }
 
     if (search) {
