@@ -46,7 +46,9 @@ export type CRMActionType =
   | 'add_tag'
   | 'remove_tag'
   | 'webhook'
-  | 'delay';
+  | 'delay'
+  | 'create_priority'
+  | 'send_channel_message';
 
 // Constantes para UI
 export const TRIGGER_LABELS: Record<CRMTriggerType, string> = {
@@ -80,6 +82,8 @@ export const ACTION_LABELS: Record<CRMActionType, string> = {
   remove_tag: 'Quitar etiqueta',
   webhook: 'Llamar webhook',
   delay: 'Esperar',
+  create_priority: 'Crear prioridad',
+  send_channel_message: 'Enviar mensaje a canal',
 };
 
 export const OPERATOR_LABELS: Record<ConditionOperator, string> = {

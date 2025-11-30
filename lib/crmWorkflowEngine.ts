@@ -15,6 +15,8 @@ import Activity from '@/models/Activity';
 import Notification from '@/models/Notification';
 import User from '@/models/User';
 import EmailTemplate from '@/models/EmailTemplate';
+import Priority from '@/models/Priority';
+import ChannelMessage from '@/models/ChannelMessage';
 import { sendEmail } from '@/lib/email';
 import { createTrackedEmail } from '@/lib/emailTracking';
 import { replaceTemplateVariables } from '@/lib/templateVariables';
@@ -512,6 +514,150 @@ async function executeAction(
         // Delays se manejan en el executor principal
         const delayMs = (config.delayMinutes || 0) * 60 * 1000;
         return { success: true, result: { delayMs } };
+      }
+
+      case 'create_priority': {
+        const title = replaceVariables(config.priorityTitle || '', context);
+        const description = replaceVariables(config.priorityDescription || '', context);
+
+        // Calcular weekStart y weekEnd según el offset
+        const weekOffset = config.priorityWeekOffset || 0;
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Ajustar al lunes
+
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() + mondayOffset + (weekOffset * 7));
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 4); // Viernes
+        weekEnd.setHours(23, 59, 59, 999);
+
+        // Determinar usuario asignado
+        let assignedUserId: string | undefined;
+        if (config.priorityAssignTo === 'deal_owner' && context.deal?.ownerId) {
+          assignedUserId = context.deal.ownerId.toString();
+        } else if (config.priorityAssignTo === 'specific_user' && config.priorityAssignToId) {
+          assignedUserId = config.priorityAssignToId;
+        } else if (config.priorityAssignTo === 'trigger_user' && context.userId) {
+          assignedUserId = context.userId;
+        }
+
+        if (!assignedUserId) {
+          return { success: false, error: 'No se pudo determinar el usuario para la prioridad' };
+        }
+
+        // Determinar cliente
+        let clientId: string | undefined;
+        if (config.priorityClientSource === 'deal_client' && context.deal?.clientId) {
+          clientId = typeof context.deal.clientId === 'object'
+            ? context.deal.clientId._id?.toString()
+            : context.deal.clientId?.toString();
+        } else if (config.priorityClientSource === 'specific_client' && config.priorityClientId) {
+          clientId = config.priorityClientId;
+        } else if (context.client?._id) {
+          clientId = context.client._id.toString();
+        }
+
+        if (!clientId) {
+          return { success: false, error: 'No se pudo determinar el cliente para la prioridad' };
+        }
+
+        // Determinar iniciativas (requerido)
+        const initiativeIds = config.priorityInitiativeIds || [];
+        if (initiativeIds.length === 0) {
+          return { success: false, error: 'Se requiere al menos una iniciativa estratégica' };
+        }
+
+        try {
+          const priority = await Priority.create({
+            title: title || 'Prioridad de workflow',
+            description,
+            weekStart,
+            weekEnd,
+            status: config.priorityStatus || 'EN_TIEMPO',
+            type: config.priorityType || 'OPERATIVA',
+            completionPercentage: 0,
+            userId: assignedUserId,
+            clientId,
+            projectId: config.priorityProjectId || undefined,
+            initiativeIds: initiativeIds.map(id => new mongoose.Types.ObjectId(id)),
+            checklist: [],
+            evidenceLinks: [],
+          });
+
+          console.log(`[CRM Workflow] Priority created: ${priority._id}`);
+          return { success: true, result: { priorityId: priority._id, title: priority.title } };
+        } catch (priorityError: any) {
+          console.error(`[CRM Workflow] Error creating priority:`, priorityError);
+          return { success: false, error: priorityError.message };
+        }
+      }
+
+      case 'send_channel_message': {
+        const content = replaceVariables(config.channelMessageContent || '', context);
+
+        if (!config.channelProjectId) {
+          return { success: false, error: 'Proyecto no especificado para el mensaje de canal' };
+        }
+
+        if (!config.channelId) {
+          return { success: false, error: 'Canal no especificado para el mensaje' };
+        }
+
+        if (!content.trim()) {
+          return { success: false, error: 'El contenido del mensaje no puede estar vacío' };
+        }
+
+        // Determinar el usuario que envía (bot/sistema o usuario del trigger)
+        const senderId = context.userId || context.deal?.ownerId?.toString() || context.deal?.createdBy?.toString();
+
+        if (!senderId) {
+          return { success: false, error: 'No se pudo determinar el remitente del mensaje' };
+        }
+
+        try {
+          // Extraer tags del contenido si existen
+          const extractedTags: string[] = [];
+          const tagMatches = content.match(/#\w+/g);
+          if (tagMatches) {
+            tagMatches.forEach(tag => extractedTags.push(tag.slice(1).toLowerCase()));
+          }
+
+          // Combinar tags configurados con los extraídos
+          const allTags = [...new Set([...(config.channelMessageTags || []), ...extractedTags])];
+
+          const message = await ChannelMessage.create({
+            projectId: config.channelProjectId,
+            channelId: config.channelId,
+            userId: senderId,
+            content,
+            tags: allTags,
+            mentions: [],
+            priorityMentions: [],
+            attachments: [],
+            reactions: [],
+            threadDepth: 0,
+            replyCount: 0,
+            isPinned: false,
+            isEdited: false,
+            isDeleted: false,
+          });
+
+          console.log(`[CRM Workflow] Channel message created: ${message._id} in channel ${config.channelId}`);
+          return {
+            success: true,
+            result: {
+              messageId: message._id,
+              channelId: config.channelId,
+              projectId: config.channelProjectId
+            }
+          };
+        } catch (messageError: any) {
+          console.error(`[CRM Workflow] Error creating channel message:`, messageError);
+          return { success: false, error: messageError.message };
+        }
       }
 
       default:

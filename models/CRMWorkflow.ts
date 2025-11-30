@@ -77,6 +77,25 @@ export interface ICRMWorkflowAction {
 
     // Para delay
     delayMinutes?: number;
+
+    // Para create_priority
+    priorityTitle?: string;
+    priorityDescription?: string;
+    priorityType?: 'ESTRATEGICA' | 'OPERATIVA';
+    priorityStatus?: 'EN_TIEMPO' | 'EN_RIESGO' | 'BLOQUEADO';
+    priorityWeekOffset?: number;       // 0 = semana actual, 1 = próxima semana, etc.
+    priorityAssignTo?: 'deal_owner' | 'specific_user' | 'trigger_user';
+    priorityAssignToId?: string;
+    priorityClientSource?: 'deal_client' | 'specific_client';
+    priorityClientId?: string;
+    priorityProjectId?: string;
+    priorityInitiativeIds?: string[];
+
+    // Para send_channel_message
+    channelProjectId?: string;         // Proyecto donde está el canal
+    channelId?: string;                // Canal donde enviar el mensaje
+    channelMessageContent?: string;    // Contenido del mensaje (soporta variables)
+    channelMessageTags?: string[];     // Tags opcionales para el mensaje
   };
   delay?: number;             // Minutos de espera antes de ejecutar esta acción
   order: number;              // Orden de ejecución
@@ -127,7 +146,7 @@ const WorkflowActionSchema = new Schema<ICRMWorkflowAction>({
     required: true,
     enum: ['send_email', 'send_notification', 'create_task', 'create_activity',
       'update_field', 'move_stage', 'assign_owner', 'add_tag', 'remove_tag',
-      'webhook', 'delay'],
+      'webhook', 'delay', 'create_priority', 'send_channel_message'],
   },
   config: { type: Schema.Types.Mixed, default: {} },
   delay: { type: Number, default: 0 },

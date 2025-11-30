@@ -41,6 +41,9 @@ import {
   ChevronUp,
   X,
   Loader2,
+  Target,
+  MessageSquare,
+  Hash,
 } from 'lucide-react';
 import {
   TRIGGER_LABELS,
@@ -74,6 +77,30 @@ interface EmailTemplate {
   category: string;
 }
 
+interface Initiative {
+  _id: string;
+  name: string;
+  color: string;
+}
+
+interface Project {
+  _id: string;
+  name: string;
+  clientId: { _id: string; name: string };
+}
+
+interface Client {
+  _id: string;
+  name: string;
+}
+
+interface Channel {
+  _id: string;
+  name: string;
+  projectId: string;
+  parentId?: string;
+}
+
 const ACTION_ICONS: Record<string, any> = {
   send_email: Mail,
   send_notification: Bell,
@@ -86,6 +113,8 @@ const ACTION_ICONS: Record<string, any> = {
   remove_tag: Tag,
   webhook: Link,
   delay: Clock,
+  create_priority: Target,
+  send_channel_message: MessageSquare,
 };
 
 // Custom node components with dark mode support
@@ -143,6 +172,10 @@ export default function WorkflowDetailPage() {
   const [editingAction, setEditingAction] = useState<any>(null);
   const [showExecutions, setShowExecutions] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -165,6 +198,10 @@ export default function WorkflowDetailPage() {
     }
     if (status === 'authenticated') {
       fetchEmailTemplates();
+      fetchInitiatives();
+      fetchProjects();
+      fetchClients();
+      fetchChannels();
       if (!isNew) {
         fetchWorkflow();
       } else {
@@ -183,6 +220,54 @@ export default function WorkflowDetailPage() {
       }
     } catch (error) {
       console.error('Error fetching email templates:', error);
+    }
+  };
+
+  const fetchInitiatives = async () => {
+    try {
+      const res = await fetch('/api/initiatives');
+      if (res.ok) {
+        const data = await res.json();
+        setInitiatives(data);
+      }
+    } catch (error) {
+      console.error('Error fetching initiatives:', error);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch('/api/projects');
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const res = await fetch('/api/crm/clients?limit=100');
+      if (res.ok) {
+        const data = await res.json();
+        setClients(data.clients || data);
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
+  const fetchChannels = async () => {
+    try {
+      const res = await fetch('/api/channels');
+      if (res.ok) {
+        const data = await res.json();
+        setChannels(data);
+      }
+    } catch (error) {
+      console.error('Error fetching channels:', error);
     }
   };
 
@@ -282,6 +367,10 @@ export default function WorkflowDetailPage() {
         return action.config?.url?.substring(0, 30) + '...' || 'Llamar webhook';
       case 'delay':
         return `Esperar ${action.config?.delayMinutes || 0} minutos`;
+      case 'create_priority':
+        return action.config?.priorityTitle || 'Crear prioridad';
+      case 'send_channel_message':
+        return action.config?.channelMessageContent?.substring(0, 30) + '...' || 'Mensaje a canal';
       default:
         return action.type;
     }
@@ -627,6 +716,10 @@ export default function WorkflowDetailPage() {
               setEditingAction(null);
             }}
             emailTemplates={emailTemplates}
+            initiatives={initiatives}
+            projects={projects}
+            clients={clients}
+            channels={channels}
           />
         )}
       </div>
@@ -640,11 +733,19 @@ function ActionConfigModal({
   onSave,
   onClose,
   emailTemplates = [],
+  initiatives = [],
+  projects = [],
+  clients = [],
+  channels = [],
 }: {
   action: any;
   onSave: (action: any) => void;
   onClose: () => void;
   emailTemplates?: EmailTemplate[];
+  initiatives?: Initiative[];
+  projects?: Project[];
+  clients?: Client[];
+  channels?: Channel[];
 }) {
   const [config, setConfig] = useState(action.config || {});
   const [delay, setDelay] = useState(action.delay || 0);
@@ -950,6 +1051,248 @@ function ActionConfigModal({
               min={0}
             />
           </div>
+        );
+
+      case 'create_priority':
+        return (
+          <>
+            <div>
+              <label className={labelClasses}>Título de la prioridad *</label>
+              <input
+                type="text"
+                value={config.priorityTitle || ''}
+                onChange={(e) => setConfig({ ...config, priorityTitle: e.target.value })}
+                className={inputClasses}
+                placeholder="Ej: Seguimiento del deal {{deal.title}}"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Puedes usar variables como {"{{deal.title}}"}, {"{{contact.name}}"}, etc.
+              </p>
+            </div>
+            <div>
+              <label className={labelClasses}>Descripción</label>
+              <textarea
+                value={config.priorityDescription || ''}
+                onChange={(e) => setConfig({ ...config, priorityDescription: e.target.value })}
+                className={inputClasses}
+                rows={3}
+                placeholder="Descripción de la prioridad..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClasses}>Tipo</label>
+                <select
+                  value={config.priorityType || 'OPERATIVA'}
+                  onChange={(e) => setConfig({ ...config, priorityType: e.target.value })}
+                  className={inputClasses}
+                >
+                  <option value="ESTRATEGICA">Estratégica</option>
+                  <option value="OPERATIVA">Operativa</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClasses}>Estado inicial</label>
+                <select
+                  value={config.priorityStatus || 'EN_TIEMPO'}
+                  onChange={(e) => setConfig({ ...config, priorityStatus: e.target.value })}
+                  className={inputClasses}
+                >
+                  <option value="EN_TIEMPO">En tiempo</option>
+                  <option value="EN_RIESGO">En riesgo</option>
+                  <option value="BLOQUEADO">Bloqueado</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className={labelClasses}>Semana</label>
+              <select
+                value={config.priorityWeekOffset || 0}
+                onChange={(e) => setConfig({ ...config, priorityWeekOffset: parseInt(e.target.value) })}
+                className={inputClasses}
+              >
+                <option value={0}>Semana actual</option>
+                <option value={1}>Próxima semana</option>
+                <option value={2}>En 2 semanas</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClasses}>Asignar a *</label>
+              <select
+                value={config.priorityAssignTo || ''}
+                onChange={(e) => setConfig({ ...config, priorityAssignTo: e.target.value })}
+                className={inputClasses}
+              >
+                <option value="">Seleccionar...</option>
+                <option value="deal_owner">Owner del deal</option>
+                <option value="trigger_user">Usuario que activó el trigger</option>
+                <option value="specific_user">Usuario específico</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClasses}>Cliente *</label>
+              <select
+                value={config.priorityClientSource || ''}
+                onChange={(e) => setConfig({ ...config, priorityClientSource: e.target.value })}
+                className={inputClasses}
+              >
+                <option value="">Seleccionar...</option>
+                <option value="deal_client">Cliente del deal</option>
+                <option value="specific_client">Cliente específico</option>
+              </select>
+            </div>
+            {config.priorityClientSource === 'specific_client' && (
+              <div>
+                <label className={labelClasses}>Seleccionar cliente</label>
+                <select
+                  value={config.priorityClientId || ''}
+                  onChange={(e) => setConfig({ ...config, priorityClientId: e.target.value })}
+                  className={inputClasses}
+                >
+                  <option value="">Seleccionar...</option>
+                  {clients.map(client => (
+                    <option key={client._id} value={client._id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div>
+              <label className={labelClasses}>Proyecto (opcional)</label>
+              <select
+                value={config.priorityProjectId || ''}
+                onChange={(e) => setConfig({ ...config, priorityProjectId: e.target.value || undefined })}
+                className={inputClasses}
+              >
+                <option value="">Sin proyecto</option>
+                {projects.map(project => (
+                  <option key={project._id} value={project._id}>
+                    {project.name} ({project.clientId?.name || 'Sin cliente'})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClasses}>Iniciativas estratégicas *</label>
+              <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2">
+                {initiatives.map(initiative => (
+                  <label key={initiative._id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(config.priorityInitiativeIds || []).includes(initiative._id)}
+                      onChange={(e) => {
+                        const currentIds = config.priorityInitiativeIds || [];
+                        if (e.target.checked) {
+                          setConfig({ ...config, priorityInitiativeIds: [...currentIds, initiative._id] });
+                        } else {
+                          setConfig({ ...config, priorityInitiativeIds: currentIds.filter((id: string) => id !== initiative._id) });
+                        }
+                      }}
+                      className="text-blue-600 focus:ring-blue-500 rounded"
+                    />
+                    <span
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: initiative.color }}
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{initiative.name}</span>
+                  </label>
+                ))}
+              </div>
+              {initiatives.length === 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  No hay iniciativas disponibles
+                </p>
+              )}
+            </div>
+          </>
+        );
+
+      case 'send_channel_message':
+        const selectedProject = projects.find(p => p._id === config.channelProjectId);
+        const projectChannels = channels.filter(c => c.projectId === config.channelProjectId);
+        const parentChannels = projectChannels.filter(c => !c.parentId);
+        const subChannels = config.channelId
+          ? projectChannels.filter(c => c.parentId === config.channelId)
+          : [];
+
+        return (
+          <>
+            <div>
+              <label className={labelClasses}>Proyecto *</label>
+              <select
+                value={config.channelProjectId || ''}
+                onChange={(e) => setConfig({ ...config, channelProjectId: e.target.value, channelId: '' })}
+                className={inputClasses}
+              >
+                <option value="">Seleccionar proyecto...</option>
+                {projects.map(project => (
+                  <option key={project._id} value={project._id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {config.channelProjectId && (
+              <div>
+                <label className={labelClasses}>Canal *</label>
+                <select
+                  value={config.channelId || ''}
+                  onChange={(e) => setConfig({ ...config, channelId: e.target.value })}
+                  className={inputClasses}
+                >
+                  <option value="">Seleccionar canal...</option>
+                  {parentChannels.map(channel => (
+                    <optgroup key={channel._id} label={channel.name}>
+                      <option value={channel._id}>#{channel.name}</option>
+                      {projectChannels
+                        .filter(c => c.parentId === channel._id)
+                        .map(subChannel => (
+                          <option key={subChannel._id} value={subChannel._id}>
+                            &nbsp;&nbsp;#{subChannel.name}
+                          </option>
+                        ))}
+                    </optgroup>
+                  ))}
+                </select>
+                {projectChannels.length === 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    Este proyecto no tiene canales configurados
+                  </p>
+                )}
+              </div>
+            )}
+            <div>
+              <label className={labelClasses}>Contenido del mensaje *</label>
+              <textarea
+                value={config.channelMessageContent || ''}
+                onChange={(e) => setConfig({ ...config, channelMessageContent: e.target.value })}
+                className={inputClasses}
+                rows={4}
+                placeholder="Escribe el mensaje... Puedes usar variables como {{deal.title}}, {{contact.name}}, etc."
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Variables disponibles: {"{{deal.title}}"}, {"{{deal.value}}"}, {"{{contact.name}}"}, {"{{client.name}}"}
+              </p>
+            </div>
+            <div>
+              <label className={labelClasses}>Tags adicionales (opcional)</label>
+              <input
+                type="text"
+                value={(config.channelMessageTags || []).join(', ')}
+                onChange={(e) => setConfig({
+                  ...config,
+                  channelMessageTags: e.target.value
+                    .split(',')
+                    .map((t: string) => t.trim().toLowerCase())
+                    .filter((t: string) => t)
+                })}
+                className={inputClasses}
+                placeholder="Ej: urgente, crm, automatizado"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Separados por comas. Los hashtags en el mensaje se agregan automáticamente.
+              </p>
+            </div>
+          </>
         );
 
       default:
