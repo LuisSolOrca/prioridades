@@ -44,13 +44,17 @@ import {
   Target,
   MessageSquare,
   Hash,
+  Filter,
+  Edit2,
 } from 'lucide-react';
 import {
   TRIGGER_LABELS,
   ACTION_LABELS,
   OPERATOR_LABELS,
+  CONDITION_FIELDS,
   CRMTriggerType,
   CRMActionType,
+  ConditionOperator,
 } from '@/lib/crm/workflowConstants';
 
 interface Workflow {
@@ -101,6 +105,14 @@ interface Channel {
   parentId?: string;
 }
 
+interface WorkflowCondition {
+  id: string;
+  field: string;
+  operator: ConditionOperator;
+  value: any;
+  logicalOperator?: 'AND' | 'OR';
+}
+
 const ACTION_ICONS: Record<string, any> = {
   send_email: Mail,
   send_notification: Bell,
@@ -127,10 +139,36 @@ function TriggerNode({ data }: { data: any }) {
       </div>
       <p className="text-sm text-yellow-700 dark:text-yellow-300">{data.label}</p>
       {data.conditions?.length > 0 && (
-        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-          {data.conditions.length} condición(es)
-        </p>
+        <div className="mt-2 pt-2 border-t border-yellow-300 dark:border-yellow-700">
+          <div className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400">
+            <Filter className="w-3 h-3" />
+            <span>{data.conditions.length} condición(es)</span>
+          </div>
+        </div>
       )}
+    </div>
+  );
+}
+
+function ConditionNode({ data }: { data: any }) {
+  return (
+    <div className="bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-400 dark:border-purple-600 rounded-lg p-3 min-w-[180px] shadow-lg">
+      <div className="flex items-center gap-2 mb-1">
+        <Filter className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+        <span className="font-bold text-xs text-purple-800 dark:text-purple-200">Condiciones</span>
+      </div>
+      <div className="space-y-1">
+        {data.conditions?.map((cond: any, idx: number) => (
+          <div key={idx} className="text-xs text-purple-700 dark:text-purple-300">
+            {idx > 0 && cond.logicalOperator && (
+              <span className={`font-medium ${cond.logicalOperator === 'AND' ? 'text-purple-600' : 'text-orange-600'}`}>
+                {cond.logicalOperator === 'AND' ? 'Y ' : 'O '}
+              </span>
+            )}
+            <span className="truncate">{cond.fieldLabel || cond.field}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -157,6 +195,7 @@ function ActionNode({ data }: { data: any }) {
 
 const nodeTypes = {
   trigger: TriggerNode,
+  condition: ConditionNode,
   action: ActionNode,
 };
 
@@ -170,6 +209,8 @@ export default function WorkflowDetailPage() {
   const [saving, setSaving] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
   const [editingAction, setEditingAction] = useState<any>(null);
+  const [showConditionModal, setShowConditionModal] = useState(false);
+  const [editingCondition, setEditingCondition] = useState<WorkflowCondition | null>(null);
   const [showExecutions, setShowExecutions] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
@@ -273,7 +314,7 @@ export default function WorkflowDetailPage() {
 
   useEffect(() => {
     updateFlowFromFormData();
-  }, [formData.triggerType, formData.actions]);
+  }, [formData.triggerType, formData.conditions, formData.actions]);
 
   const fetchWorkflow = async () => {
     try {
@@ -299,18 +340,52 @@ export default function WorkflowDetailPage() {
   const updateFlowFromFormData = () => {
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
+    let yOffset = 50;
+    let lastNodeId = '';
 
     // Trigger node
     if (formData.triggerType) {
       newNodes.push({
         id: 'trigger',
         type: 'trigger',
-        position: { x: 250, y: 50 },
+        position: { x: 250, y: yOffset },
         data: {
           label: TRIGGER_LABELS[formData.triggerType as CRMTriggerType] || formData.triggerType,
           conditions: formData.conditions,
         },
       });
+      lastNodeId = 'trigger';
+      yOffset += 100;
+    }
+
+    // Condition node (if there are conditions)
+    if (formData.conditions.length > 0 && formData.triggerType) {
+      const conditionsWithLabels = formData.conditions.map(cond => ({
+        ...cond,
+        fieldLabel: getConditionFieldLabel(cond.field),
+      }));
+      newNodes.push({
+        id: 'conditions',
+        type: 'condition',
+        position: { x: 250, y: yOffset },
+        data: {
+          conditions: conditionsWithLabels,
+        },
+      });
+      // Connect trigger to conditions
+      newEdges.push({
+        id: 'edge_trigger_conditions',
+        source: 'trigger',
+        target: 'conditions',
+        type: 'smoothstep',
+        markerEnd: { type: MarkerType.ArrowClosed },
+        style: { stroke: '#9333ea', strokeWidth: 2 },
+        label: 'Si cumple',
+        labelStyle: { fontSize: 10, fill: '#9333ea' },
+        labelBgStyle: { fill: 'white', fillOpacity: 0.8 },
+      });
+      lastNodeId = 'conditions';
+      yOffset += 80 + (formData.conditions.length * 20);
     }
 
     // Action nodes
@@ -319,7 +394,7 @@ export default function WorkflowDetailPage() {
       newNodes.push({
         id: nodeId,
         type: 'action',
-        position: { x: 250, y: 150 + index * 120 },
+        position: { x: 250, y: yOffset + index * 120 },
         data: {
           label: getActionLabel(action),
           actionType: action.type,
@@ -328,7 +403,7 @@ export default function WorkflowDetailPage() {
       });
 
       // Connect to previous node
-      const prevNodeId = index === 0 ? 'trigger' : `action_${index - 1}`;
+      const prevNodeId = index === 0 ? lastNodeId : `action_${index - 1}`;
       newEdges.push({
         id: `edge_${index}`,
         source: prevNodeId,
@@ -464,6 +539,90 @@ export default function WorkflowDetailPage() {
     });
   };
 
+  // Condition management functions
+  const addCondition = () => {
+    const newCondition: WorkflowCondition = {
+      id: `condition_${Date.now()}`,
+      field: '',
+      operator: 'equals',
+      value: '',
+      logicalOperator: formData.conditions.length > 0 ? 'AND' : undefined,
+    };
+    setEditingCondition(newCondition);
+    setShowConditionModal(true);
+  };
+
+  const saveCondition = (condition: WorkflowCondition) => {
+    const existingIndex = formData.conditions.findIndex(c => c.id === condition.id);
+    if (existingIndex >= 0) {
+      const newConditions = [...formData.conditions];
+      newConditions[existingIndex] = condition;
+      setFormData({ ...formData, conditions: newConditions });
+    } else {
+      setFormData({ ...formData, conditions: [...formData.conditions, condition] });
+    }
+    setShowConditionModal(false);
+    setEditingCondition(null);
+  };
+
+  const removeCondition = (conditionId: string) => {
+    const newConditions = formData.conditions.filter(c => c.id !== conditionId);
+    // Adjust logical operators: first condition should not have one
+    if (newConditions.length > 0 && newConditions[0].logicalOperator) {
+      newConditions[0] = { ...newConditions[0], logicalOperator: undefined };
+    }
+    setFormData({ ...formData, conditions: newConditions });
+  };
+
+  // Get available fields based on trigger type
+  const getConditionFieldsForTrigger = (): { value: string; label: string; type: string }[] => {
+    const triggerType = formData.triggerType;
+    const fields: { value: string; label: string; type: string }[] = [];
+
+    if (triggerType?.startsWith('deal_')) {
+      CONDITION_FIELDS.deal?.forEach(field => {
+        fields.push({ value: `deal.${field.label.toLowerCase()}`, label: `Deal - ${field.label}`, type: field.type });
+      });
+    }
+    if (triggerType?.startsWith('contact_')) {
+      CONDITION_FIELDS.contact?.forEach(field => {
+        fields.push({ value: `contact.${field.label.toLowerCase()}`, label: `Contacto - ${field.label}`, type: field.type });
+      });
+    }
+    if (triggerType?.startsWith('activity_')) {
+      CONDITION_FIELDS.activity?.forEach(field => {
+        fields.push({ value: `activity.${field.label.toLowerCase()}`, label: `Actividad - ${field.label}`, type: field.type });
+      });
+    }
+    if (triggerType?.startsWith('task_')) {
+      fields.push(
+        { value: 'task.title', label: 'Tarea - Título', type: 'string' },
+        { value: 'task.status', label: 'Tarea - Estado', type: 'select' },
+        { value: 'task.priority', label: 'Tarea - Prioridad', type: 'select' },
+      );
+    }
+    if (triggerType?.startsWith('quote_')) {
+      fields.push(
+        { value: 'quote.total', label: 'Cotización - Total', type: 'number' },
+        { value: 'quote.status', label: 'Cotización - Estado', type: 'select' },
+      );
+    }
+    // Add deal fields for most triggers (as deals are common context)
+    if (!triggerType?.startsWith('deal_') && !triggerType?.startsWith('contact_')) {
+      CONDITION_FIELDS.deal?.forEach(field => {
+        fields.push({ value: `deal.${field.label.toLowerCase()}`, label: `Deal - ${field.label}`, type: field.type });
+      });
+    }
+
+    return fields;
+  };
+
+  const getConditionFieldLabel = (fieldValue: string): string => {
+    const fields = getConditionFieldsForTrigger();
+    const field = fields.find(f => f.value === fieldValue);
+    return field?.label || fieldValue;
+  };
+
   const triggerTypes = Object.entries(TRIGGER_LABELS) as [CRMTriggerType, string][];
   const actionTypes = Object.entries(ACTION_LABELS) as [CRMActionType, string][];
 
@@ -562,7 +721,7 @@ export default function WorkflowDetailPage() {
               </h3>
               <select
                 value={formData.triggerType}
-                onChange={(e) => setFormData({ ...formData, triggerType: e.target.value as CRMTriggerType })}
+                onChange={(e) => setFormData({ ...formData, triggerType: e.target.value as CRMTriggerType, conditions: [] })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 disabled={!isAdmin}
               >
@@ -572,6 +731,85 @@ export default function WorkflowDetailPage() {
                 ))}
               </select>
             </div>
+
+            {/* Conditions Section */}
+            {formData.triggerType && (
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-purple-500" />
+                  Condiciones ({formData.conditions.length})
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  El workflow solo se ejecutará si se cumplen todas las condiciones
+                </p>
+
+                {/* Conditions List */}
+                {formData.conditions.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    {formData.conditions.map((condition, index) => (
+                      <div key={condition.id}>
+                        {index > 0 && condition.logicalOperator && (
+                          <div className="flex justify-center py-1">
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                              condition.logicalOperator === 'AND'
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                            }`}>
+                              {condition.logicalOperator === 'AND' ? 'Y' : 'O'}
+                            </span>
+                          </div>
+                        )}
+                        <div className="bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 rounded-lg p-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                                {getConditionFieldLabel(condition.field)}
+                              </p>
+                              <p className="text-xs text-purple-600 dark:text-purple-400">
+                                {OPERATOR_LABELS[condition.operator as ConditionOperator] || condition.operator}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {condition.value?.toString() || '(vacío)'}
+                              </p>
+                            </div>
+                            {isAdmin && (
+                              <div className="flex gap-1 shrink-0">
+                                <button
+                                  onClick={() => {
+                                    setEditingCondition(condition);
+                                    setShowConditionModal(true);
+                                  }}
+                                  className="p-1 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => removeCondition(condition.id)}
+                                  className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add Condition Button */}
+                {isAdmin && (
+                  <button
+                    onClick={addCondition}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar condición
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Actions Section */}
             <div className="p-4">
@@ -720,6 +958,20 @@ export default function WorkflowDetailPage() {
             projects={projects}
             clients={clients}
             channels={channels}
+          />
+        )}
+
+        {/* Condition Configuration Modal */}
+        {showConditionModal && editingCondition && (
+          <ConditionConfigModal
+            condition={editingCondition}
+            isFirst={formData.conditions.length === 0 || formData.conditions[0]?.id === editingCondition.id}
+            availableFields={getConditionFieldsForTrigger()}
+            onSave={saveCondition}
+            onClose={() => {
+              setShowConditionModal(false);
+              setEditingCondition(null);
+            }}
           />
         )}
       </div>
@@ -1386,6 +1638,225 @@ function ActionConfigModal({
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Condition Configuration Modal Component
+function ConditionConfigModal({
+  condition,
+  isFirst,
+  availableFields,
+  onSave,
+  onClose,
+}: {
+  condition: WorkflowCondition;
+  isFirst: boolean;
+  availableFields: { value: string; label: string; type: string }[];
+  onSave: (condition: WorkflowCondition) => void;
+  onClose: () => void;
+}) {
+  const [field, setField] = useState(condition.field || '');
+  const [operator, setOperator] = useState<ConditionOperator>(condition.operator || 'equals');
+  const [value, setValue] = useState(condition.value?.toString() || '');
+  const [logicalOperator, setLogicalOperator] = useState<'AND' | 'OR'>(condition.logicalOperator || 'AND');
+
+  const selectedField = availableFields.find(f => f.value === field);
+
+  // Get applicable operators based on field type
+  const getOperatorsForFieldType = (type: string): ConditionOperator[] => {
+    switch (type) {
+      case 'number':
+        return ['equals', 'not_equals', 'greater_than', 'less_than', 'greater_or_equal', 'less_or_equal', 'is_empty', 'is_not_empty'];
+      case 'boolean':
+        return ['equals', 'not_equals'];
+      case 'select':
+        return ['equals', 'not_equals', 'in_list', 'not_in_list', 'is_empty', 'is_not_empty'];
+      default: // string
+        return ['equals', 'not_equals', 'contains', 'not_contains', 'starts_with', 'ends_with', 'is_empty', 'is_not_empty'];
+    }
+  };
+
+  const applicableOperators = selectedField
+    ? getOperatorsForFieldType(selectedField.type)
+    : Object.keys(OPERATOR_LABELS) as ConditionOperator[];
+
+  const handleSave = () => {
+    if (!field || !operator) {
+      alert('Selecciona un campo y operador');
+      return;
+    }
+    // For is_empty and is_not_empty, value is not required
+    const needsValue = !['is_empty', 'is_not_empty'].includes(operator);
+    if (needsValue && !value) {
+      alert('Ingresa un valor para la condición');
+      return;
+    }
+
+    onSave({
+      ...condition,
+      field,
+      operator,
+      value: selectedField?.type === 'number' ? parseFloat(value) || 0 : value,
+      logicalOperator: isFirst ? undefined : logicalOperator,
+    });
+  };
+
+  const inputClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent";
+  const labelClasses = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Filter className="w-5 h-5 text-purple-500" />
+            Configurar Condición
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Logical Operator (for non-first conditions) */}
+          {!isFirst && (
+            <div>
+              <label className={labelClasses}>Conectar con la condición anterior</label>
+              <div className="flex gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="logicalOp"
+                    checked={logicalOperator === 'AND'}
+                    onChange={() => setLogicalOperator('AND')}
+                    className="text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Y (AND)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="logicalOp"
+                    checked={logicalOperator === 'OR'}
+                    onChange={() => setLogicalOperator('OR')}
+                    className="text-orange-600 focus:ring-orange-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">O (OR)</span>
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {logicalOperator === 'AND'
+                  ? 'Ambas condiciones deben cumplirse'
+                  : 'Al menos una condición debe cumplirse'}
+              </p>
+            </div>
+          )}
+
+          {/* Field Selection */}
+          <div>
+            <label className={labelClasses}>Campo a evaluar *</label>
+            <select
+              value={field}
+              onChange={(e) => {
+                setField(e.target.value);
+                setValue(''); // Reset value when field changes
+              }}
+              className={inputClasses}
+            >
+              <option value="">Seleccionar campo...</option>
+              {availableFields.map(f => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Operator Selection */}
+          <div>
+            <label className={labelClasses}>Operador *</label>
+            <select
+              value={operator}
+              onChange={(e) => setOperator(e.target.value as ConditionOperator)}
+              className={inputClasses}
+            >
+              {applicableOperators.map(op => (
+                <option key={op} value={op}>{OPERATOR_LABELS[op]}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Value Input */}
+          {!['is_empty', 'is_not_empty'].includes(operator) && (
+            <div>
+              <label className={labelClasses}>Valor *</label>
+              {selectedField?.type === 'boolean' ? (
+                <select
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className={inputClasses}
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="true">Sí / Verdadero</option>
+                  <option value="false">No / Falso</option>
+                </select>
+              ) : selectedField?.type === 'number' ? (
+                <input
+                  type="number"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className={inputClasses}
+                  placeholder="Ingresa un número"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className={inputClasses}
+                  placeholder={['in_list', 'not_in_list'].includes(operator) ? 'valor1, valor2, valor3' : 'Ingresa un valor'}
+                />
+              )}
+              {['in_list', 'not_in_list'].includes(operator) && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Separa los valores con comas
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Preview */}
+          {field && operator && (
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+              <p className="text-xs font-medium text-purple-700 dark:text-purple-300">Vista previa:</p>
+              <p className="text-sm text-purple-900 dark:text-purple-100 mt-1">
+                {!isFirst && <span className="text-purple-600 dark:text-purple-400">{logicalOperator === 'AND' ? 'Y ' : 'O '}</span>}
+                <span className="font-medium">{selectedField?.label || field}</span>
+                {' '}
+                <span className="text-purple-600 dark:text-purple-400">{OPERATOR_LABELS[operator]}</span>
+                {' '}
+                {!['is_empty', 'is_not_empty'].includes(operator) && (
+                  <span className="font-medium">&quot;{value}&quot;</span>
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-end gap-3 rounded-b-xl">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+          >
+            Guardar Condición
           </button>
         </div>
       </div>

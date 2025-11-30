@@ -64,10 +64,20 @@ function evaluateCondition(
       return fieldValue === null || fieldValue === undefined || fieldValue === '';
     case 'is_not_empty':
       return fieldValue !== null && fieldValue !== undefined && fieldValue !== '';
-    case 'in_list':
-      return Array.isArray(conditionValue) && conditionValue.includes(fieldValue);
-    case 'not_in_list':
-      return Array.isArray(conditionValue) && !conditionValue.includes(fieldValue);
+    case 'in_list': {
+      // Handle both array and comma-separated string
+      const listValues = Array.isArray(conditionValue)
+        ? conditionValue
+        : String(conditionValue).split(',').map(v => v.trim());
+      return listValues.includes(String(fieldValue));
+    }
+    case 'not_in_list': {
+      // Handle both array and comma-separated string
+      const listValues = Array.isArray(conditionValue)
+        ? conditionValue
+        : String(conditionValue).split(',').map(v => v.trim());
+      return !listValues.includes(String(fieldValue));
+    }
     default:
       return false;
   }
