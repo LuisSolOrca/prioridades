@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -64,8 +64,8 @@ const AVAILABLE_VARIABLES = [
   ]},
 ];
 
-export default function EditEmailTemplatePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function EditEmailTemplatePage({ params }: { params: { id: string } }) {
+  const id = params.id as string;
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
