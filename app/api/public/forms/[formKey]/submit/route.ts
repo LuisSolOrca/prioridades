@@ -375,6 +375,13 @@ async function processSubmission(
 
     // Enviar notificaciones (no debe fallar el proceso principal)
     try {
+      console.log('[WebForm] Notifications config:', {
+        notifyOnSubmission: form.notifyOnSubmission,
+        assignToUserId: form.assignToUserId,
+        createdBy: form.createdBy,
+        notifyEmails: form.notifyEmails,
+      });
+
       if (form.notifyOnSubmission) {
         const notifyUsers: string[] = [];
 
@@ -388,6 +395,8 @@ async function processSubmission(
           notifyUsers.push(form.createdBy.toString());
         }
 
+        console.log('[WebForm] Users to notify:', notifyUsers);
+
         // Crear notificaciones in-app
         for (const userId of notifyUsers) {
           await Notification.create({
@@ -397,6 +406,7 @@ async function processSubmission(
             message: `Se recibió una nueva respuesta del formulario "${form.name}". Email: ${contactData.email || 'No proporcionado'}`,
           });
         }
+        console.log('[WebForm] In-app notifications created');
 
         // Preparar datos para el email
         const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
@@ -425,36 +435,42 @@ async function processSubmission(
         // Enviar emails a usuarios del sistema
         if (notifyUsers.length > 0) {
           const users = await User.find({ _id: { $in: notifyUsers } }).select('email name');
+          console.log('[WebForm] Found users for email:', users.map(u => ({ id: u._id, email: u.email })));
+
           for (const user of users) {
             if (user.email) {
               const emailContent = emailTemplates.webFormSubmission(emailParams);
-              await sendEmail({
+              console.log('[WebForm] Sending email to:', user.email);
+              const result = await sendEmail({
                 to: user.email,
                 subject: emailContent.subject,
                 html: emailContent.html,
               });
-              console.log(`[WebForm] Email notification sent to user: ${user.email}`);
+              console.log('[WebForm] Email result:', result);
             }
           }
         }
 
         // Enviar emails a direcciones externas configuradas
         if (form.notifyEmails && form.notifyEmails.length > 0) {
+          console.log('[WebForm] Sending to external emails:', form.notifyEmails);
           const emailContent = emailTemplates.webFormSubmission(emailParams);
           for (const email of form.notifyEmails) {
             if (email && email.includes('@')) {
-              await sendEmail({
+              const result = await sendEmail({
                 to: email,
                 subject: emailContent.subject,
                 html: emailContent.html,
               });
-              console.log(`[WebForm] Email notification sent to external: ${email}`);
+              console.log(`[WebForm] External email to ${email} result:`, result);
             }
           }
         }
+      } else {
+        console.log('[WebForm] Notifications disabled for this form');
       }
     } catch (notifyError: any) {
-      console.error('[WebForm] Error sending notifications (non-fatal):', notifyError.message);
+      console.error('[WebForm] Error sending notifications (non-fatal):', notifyError.message, notifyError.stack);
     }
 
     // Trigger workflow si está habilitado (no debe fallar el proceso principal)
