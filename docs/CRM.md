@@ -1123,7 +1123,7 @@ interface IClient {
 
 **Ubicación:** `/crm/email-tracking`
 
-El sistema de Email Tracking permite monitorear el engagement de los emails enviados desde el CRM.
+El sistema de Email Tracking permite monitorear el engagement de los emails enviados desde el CRM, incluyendo emails de secuencias y workflows automatizados.
 
 ### Funcionalidades
 
@@ -1131,6 +1131,8 @@ El sistema de Email Tracking permite monitorear el engagement de los emails envi
 - 🔗 **Tracking de Clicks** - Registra clicks en enlaces dentro del email
 - 💬 **Detección de Respuestas** - Identifica cuando el contacto responde
 - 📊 **Métricas por Periodo** - Dashboard con estadísticas de engagement
+- 🔄 **Integración con Workflows** - Tracking automático de emails enviados por workflows CRM
+- 📧 **Integración con Secuencias** - Tracking de emails de secuencias automatizadas
 
 ### Métricas Disponibles
 
@@ -1142,6 +1144,7 @@ El sistema de Email Tracking permite monitorear el engagement de los emails envi
 | Clicks | Total de clicks en enlaces |
 | Tasa de Clicks | % de emails con al menos un click |
 | Respuestas | Emails que recibieron respuesta |
+| Rebotes | Emails que no pudieron entregarse |
 
 ### Cómo Funciona
 
@@ -1150,12 +1153,25 @@ El sistema de Email Tracking permite monitorear el engagement de los emails envi
 3. Los enlaces se reescriben para pasar por el servidor de tracking
 4. Las respuestas se detectan mediante monitoreo del inbox (si está configurado)
 
+### Orígenes del Tracking
+
+Los emails pueden originarse de diferentes fuentes:
+
+| Origen | Descripción |
+|--------|-------------|
+| Actividad | Email enviado manualmente desde un deal o contacto |
+| Secuencia | Email automático de una secuencia (`sequenceEnrollmentId`) |
+| Workflow | Email automático de un workflow CRM (`workflowExecutionId`) |
+| Prioridad | Email de workflow de prioridades (`priorityId`) |
+
 ### API Endpoints
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | GET | `/api/crm/email-tracking` | Obtener estadísticas de tracking |
 | GET | `/api/crm/email-tracking/[id]` | Detalle de un email específico |
+| GET | `/api/track/open/[trackingId]` | Endpoint del pixel de apertura |
+| GET | `/api/track/click/[trackingId]` | Endpoint de tracking de clicks |
 
 ---
 
@@ -1282,7 +1298,7 @@ interface WorkflowCondition {
 
 | Acción | Descripción |
 |--------|-------------|
-| `send_email` | Enviar email automático |
+| `send_email` | Enviar email automático (con plantilla o contenido manual) |
 | `create_task` | Crear tarea para el vendedor |
 | `update_field` | Actualizar campo del registro |
 | `add_tag` | Agregar etiqueta |
@@ -1290,6 +1306,22 @@ interface WorkflowCondition {
 | `send_notification` | Enviar notificación in-app |
 | `add_to_sequence` | Agregar a secuencia de emails |
 | `webhook` | Llamar webhook externo |
+
+### Acción: Enviar Email
+
+La acción `send_email` permite enviar emails automáticos con tracking integrado:
+
+**Opciones de Contenido:**
+| Opción | Descripción |
+|--------|-------------|
+| Escribir manualmente | Definir asunto y cuerpo directamente en el workflow |
+| Usar plantilla | Seleccionar una plantilla de email prediseñada |
+
+**Configuración:**
+- **Destinatario:** Owner del deal, Contacto, Cliente, o email específico
+- **Plantilla:** Solo se muestran plantillas con scope `workflows` o `both`
+- **Variables:** Se reemplazan automáticamente con datos del contexto
+- **Tracking:** Todos los emails se registran automáticamente en Email Tracking
 
 ### Ejemplos de Workflows
 
@@ -1397,7 +1429,9 @@ El editor visual permite crear emails profesionales sin conocimientos técnicos:
 
 ### Variables Disponibles
 
-Las variables se insertan usando la sintaxis `{{categoria.campo}}`:
+Las variables se insertan usando la sintaxis `{{categoria.campo}}`. El sistema unificado de variables (`lib/templateVariables.ts`) asegura consistencia entre secuencias, workflows y plantillas.
+
+**Variables Comunes (Secuencias y Workflows):**
 
 **Contacto:**
 | Variable | Descripción | Ejemplo |
@@ -1415,12 +1449,14 @@ Las variables se insertan usando la sintaxis `{{categoria.campo}}`:
 | `{{client.name}}` | Nombre empresa | Empresa ABC |
 | `{{client.industry}}` | Industria | Tecnología |
 | `{{client.website}}` | Sitio web | www.empresa.com |
+| `{{client.email}}` | Email corporativo | info@empresa.com |
+| `{{client.phone}}` | Teléfono corporativo | +52 55 1111 2222 |
 
 **Oportunidad:**
 | Variable | Descripción | Ejemplo |
 |----------|-------------|---------|
 | `{{deal.title}}` | Título del deal | Implementación CRM |
-| `{{deal.value}}` | Valor | $150,000 |
+| `{{deal.value}}` | Valor (formateado) | $150,000.00 MXN |
 | `{{deal.stage}}` | Etapa | Propuesta |
 
 **Remitente:**
@@ -1434,17 +1470,31 @@ Las variables se insertan usando la sintaxis `{{categoria.campo}}`:
 **Fechas:**
 | Variable | Descripción | Ejemplo |
 |----------|-------------|---------|
-| `{{date.today}}` | Fecha de hoy | 28 de noviembre, 2025 |
-| `{{date.tomorrow}}` | Fecha de mañana | 29 de noviembre, 2025 |
-| `{{date.nextWeek}}` | Próxima semana | 5 de diciembre, 2025 |
+| `{{today}}` | Fecha de hoy | 28 de noviembre de 2025 |
+| `{{tomorrow}}` | Fecha de mañana | 29 de noviembre de 2025 |
+| `{{nextWeek}}` | Próxima semana | 5 de diciembre de 2025 |
+
+**Variables Exclusivas de Workflows (Prioridades):**
+
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `{{priority.title}}` | Título de la prioridad | Cerrar proyecto ABC |
+| `{{priority.status}}` | Estado | EN_TIEMPO, EN_RIESGO, BLOQUEADO |
+| `{{priority.completion}}` | % Completado | 75 |
+| `{{priority.owner}}` | Responsable | Juan Pérez |
+
+> **Nota:** Las variables de prioridad solo están disponibles en workflows, no en secuencias de email.
 
 ### Biblioteca de Plantillas
 
-El editor incluye acceso a una biblioteca de plantillas reutilizables:
+**Ubicación:** `/crm/email-templates`
+
+El sistema incluye una biblioteca centralizada de plantillas de email reutilizables:
 
 **Funcionalidades:**
 - 🔍 **Búsqueda** - Buscar por nombre o contenido
 - 🏷️ **Categorías** - Filtrar por tipo de plantilla
+- 🎯 **Scope** - Filtrar por contexto de uso (secuencias, workflows, ambos)
 - 📊 **Uso** - Ver cuántas veces se ha usado cada plantilla
 - ⭐ **Recientes** - Acceso rápido a plantillas usadas recientemente
 
@@ -1457,24 +1507,46 @@ El editor incluye acceso a una biblioteca de plantillas reutilizables:
 | `closing` | Cierre - Cerrar ventas y negociaciones |
 | `other` | Otros - Plantillas generales |
 
-### Guardar como Plantilla
+**Scope de Plantillas:**
+| Scope | Descripción | Variables Disponibles |
+|-------|-------------|----------------------|
+| `sequences` | Solo para secuencias de email | Variables comunes |
+| `workflows` | Solo para workflows CRM | Variables comunes + prioridad |
+| `both` | Disponible en ambos contextos | Variables comunes |
 
-Al crear un email en una secuencia, se puede guardar como plantilla reutilizable:
+> **Importante:** El scope determina dónde puede usarse la plantilla y qué variables están disponibles en el editor.
 
-1. Click en "Guardar como Plantilla" en el editor
+### Crear Plantilla de Email
+
+**Ubicación:** `/crm/email-templates/new`
+
+1. Click en "Nueva Plantilla"
 2. Asignar nombre descriptivo
-3. Agregar descripción (opcional)
-4. Seleccionar categoría
-5. Marcar si es compartida con el equipo
-6. Guardar
+3. Seleccionar categoría
+4. **Seleccionar scope** (Secuencias, Workflows, o Ambos)
+5. Escribir asunto del email
+6. Diseñar contenido con el editor visual
+7. Marcar si es compartida con el equipo
+8. Guardar
 
-**Campos del Modal:**
+**Campos del Formulario:**
 | Campo | Requerido | Descripción |
 |-------|-----------|-------------|
 | Nombre | ✅ | Nombre identificativo de la plantilla |
-| Descripción | ❌ | Cuándo usar esta plantilla |
 | Categoría | ✅ | Tipo de plantilla |
+| **Scope** | ✅ | Contexto de uso (secuencias/workflows/ambos) |
+| Descripción | ❌ | Cuándo usar esta plantilla |
+| Asunto | ✅ | Línea de asunto del email |
+| Contenido | ✅ | Cuerpo del email (HTML) |
 | Compartir | ❌ | Si otros usuarios pueden usarla |
+
+### Ayuda de Variables
+
+El editor muestra automáticamente las variables disponibles según el scope seleccionado:
+
+- **Scope "Secuencias":** Solo variables comunes
+- **Scope "Workflows":** Variables comunes + variables de prioridad
+- **Scope "Ambos":** Variables comunes (las de prioridad no estarán disponibles en secuencias)
 
 ### Estados de Contacto en Secuencia
 
@@ -1510,9 +1582,18 @@ Al crear un email en una secuencia, se puede guardar como plantilla reutilizable
 | DELETE | `/api/crm/email-templates/[id]` | Eliminar plantilla |
 
 **Parámetros de query (GET):**
-- `category` - Filtrar por categoría
-- `search` - Buscar por nombre/contenido
-- `shared` - Solo plantillas compartidas
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `category` | string | Filtrar por categoría (outreach, follow_up, etc.) |
+| `search` | string | Buscar por nombre o contenido |
+| `scope` | string | Filtrar por scope: `sequences`, `workflows`, o `both` |
+| `includeShared` | boolean | Incluir plantillas compartidas (default: true) |
+
+**Ejemplo de uso con scope:**
+```
+GET /api/crm/email-templates?scope=workflows
+```
+Retorna solo plantillas con scope `workflows` o `both`.
 
 ---
 

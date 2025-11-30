@@ -14,6 +14,9 @@ import {
   Info,
   Copy,
   Check,
+  Sparkles,
+  Wand2,
+  AlertCircle,
 } from 'lucide-react';
 
 const RichTextEditor = dynamic(() => import('@/components/crm/RichTextEditor'), {
@@ -38,6 +41,13 @@ const SCOPE_OPTIONS = [
   { value: 'both', label: 'Ambos (Secuencias y Workflows)', description: 'Disponible en secuencias de email y workflows CRM' },
   { value: 'sequences', label: 'Solo Secuencias', description: 'Solo para secuencias de email automatizadas' },
   { value: 'workflows', label: 'Solo Workflows', description: 'Solo para automatizaciones de workflows CRM' },
+];
+
+const TONE_OPTIONS = [
+  { value: 'professional', label: 'Profesional', description: 'Formal y corporativo' },
+  { value: 'friendly', label: 'Amigable', description: 'Cercano pero profesional' },
+  { value: 'persuasive', label: 'Persuasivo', description: 'Enfocado en beneficios' },
+  { value: 'urgent', label: 'Urgente', description: 'Con sentido de urgencia' },
 ];
 
 const AVAILABLE_VARIABLES = {
@@ -89,6 +99,14 @@ export default function NewEmailTemplatePage() {
   const [showVariablesHelp, setShowVariablesHelp] = useState(false);
   const [copiedVariable, setCopiedVariable] = useState<string | null>(null);
 
+  // AI Generation State
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [aiDescription, setAiDescription] = useState('');
+  const [aiTone, setAiTone] = useState('professional');
+  const [generating, setGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [variablesUsed, setVariablesUsed] = useState<string[]>([]);
+
   const copyVariable = (variable: string) => {
     navigator.clipboard.writeText(variable);
     setCopiedVariable(variable);
@@ -111,6 +129,59 @@ export default function NewEmailTemplatePage() {
       vars.push(...AVAILABLE_VARIABLES.workflows);
     }
     return vars;
+  };
+
+  // Generar plantilla con IA
+  const handleAIGenerate = async () => {
+    if (!aiDescription.trim() || aiDescription.trim().length < 10) {
+      setAiError('Por favor describe con más detalle lo que necesitas (mínimo 10 caracteres)');
+      return;
+    }
+
+    setGenerating(true);
+    setAiError(null);
+    setVariablesUsed([]);
+
+    try {
+      const res = await fetch('/api/crm/email-templates/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: aiDescription,
+          scope: form.scope,
+          category: form.category,
+          tone: aiTone,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAiError(data.error || 'Error al generar la plantilla');
+        return;
+      }
+
+      // Actualizar el formulario con el contenido generado
+      setForm((prev) => ({
+        ...prev,
+        subject: data.subject,
+        body: data.body,
+      }));
+
+      // Mostrar variables utilizadas
+      if (data.variablesUsed && data.variablesUsed.length > 0) {
+        setVariablesUsed(data.variablesUsed);
+      }
+
+      // Cerrar el panel después de generar exitosamente
+      setShowAIPanel(false);
+      setAiDescription('');
+    } catch (error) {
+      console.error('Error generating template:', error);
+      setAiError('Error de conexión. Por favor intenta de nuevo.');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handleSave = async () => {
@@ -239,6 +310,129 @@ export default function NewEmailTemplatePage() {
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
+
+          {/* AI Generation Panel */}
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800 rounded-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowAIPanel(!showAIPanel)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-purple-100/50 dark:hover:bg-purple-900/30 transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg">
+                  <Sparkles size={20} className="text-purple-600 dark:text-purple-300" />
+                </div>
+                <div>
+                  <span className="font-semibold text-purple-800 dark:text-purple-200 block">
+                    Generar con IA
+                  </span>
+                  <span className="text-sm text-purple-600 dark:text-purple-400">
+                    Describe lo que necesitas y la IA creará el contenido
+                  </span>
+                </div>
+              </div>
+              <ChevronDown
+                size={20}
+                className={`text-purple-600 dark:text-purple-400 transition-transform ${showAIPanel ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {showAIPanel && (
+              <div className="p-4 border-t border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-800 space-y-4">
+                {/* AI Description Textarea */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Describe la plantilla que necesitas
+                  </label>
+                  <textarea
+                    value={aiDescription}
+                    onChange={(e) => {
+                      setAiDescription(e.target.value);
+                      setAiError(null);
+                    }}
+                    placeholder="Ej: Un email de seguimiento para prospectos que no han respondido en 2 semanas, recordándoles los beneficios de nuestro servicio y proponiendo una llamada breve."
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Mientras más detallada sea tu descripción, mejor será el resultado. Mínimo 10 caracteres.
+                  </p>
+                </div>
+
+                {/* Tone Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tono del mensaje
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {TONE_OPTIONS.map((tone) => (
+                      <button
+                        key={tone.value}
+                        type="button"
+                        onClick={() => setAiTone(tone.value)}
+                        className={`px-3 py-2 rounded-lg border text-sm transition ${
+                          aiTone === tone.value
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700'
+                        }`}
+                      >
+                        <span className="font-medium block">{tone.label}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{tone.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Error Message */}
+                {aiError && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                    <AlertCircle size={16} className="flex-shrink-0" />
+                    {aiError}
+                  </div>
+                )}
+
+                {/* Generate Button */}
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    La IA usará la categoría ({CATEGORY_OPTIONS.find(c => c.value === form.category)?.label}) y scope ({SCOPE_OPTIONS.find(s => s.value === form.scope)?.label}) seleccionados.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleAIGenerate}
+                    disabled={generating || aiDescription.trim().length < 10}
+                    className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium shadow-sm"
+                  >
+                    {generating ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 size={18} />
+                        Generar Plantilla
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Variables Used Notification */}
+          {variablesUsed.length > 0 && (
+            <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <Check size={18} className="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  Plantilla generada con éxito
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  Variables utilizadas: {variablesUsed.join(', ')}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Subject */}
           <div>
