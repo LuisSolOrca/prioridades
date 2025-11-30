@@ -302,13 +302,22 @@ export default function WorkflowDetailPage() {
 
   const fetchChannels = async () => {
     try {
+      console.log('[fetchChannels] Fetching...');
       const res = await fetch('/api/channels');
+      console.log('[fetchChannels] Response status:', res.status);
       if (res.ok) {
         const data = await res.json();
-        setChannels(data);
+        console.log('[fetchChannels] Data received:', data?.length, 'channels');
+        if (data?.length > 0) {
+          console.log('[fetchChannels] First channel:', JSON.stringify(data[0]));
+        }
+        setChannels(data || []);
+      } else {
+        const errorText = await res.text();
+        console.error('[fetchChannels] Error response:', errorText);
       }
     } catch (error) {
-      console.error('Error fetching channels:', error);
+      console.error('[fetchChannels] Exception:', error);
     }
   };
 
