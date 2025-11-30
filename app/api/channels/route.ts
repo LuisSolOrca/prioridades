@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Channel from '@/models/Channel';
+import '@/models/Project'; // Necesario para populate
 
 /**
  * GET /api/channels
