@@ -39,7 +39,8 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const query: any = { sequenceId: id };
+    const objectId = new mongoose.Types.ObjectId(id);
+    const query: any = { sequenceId: objectId };
     if (status) {
       query.status = status;
     }
