@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
-import WebForm from '@/models/WebForm';
+import WebForm, { IWebForm } from '@/models/WebForm';
 import WebFormSubmission from '@/models/WebFormSubmission';
 import mongoose from 'mongoose';
 
@@ -36,7 +36,7 @@ export async function GET(
     const formId = new mongoose.Types.ObjectId(params.id);
 
     // Obtener el formulario
-    const form = await WebForm.findById(params.id).lean();
+    const form = await WebForm.findById(params.id).lean() as IWebForm | null;
     if (!form) {
       return NextResponse.json({ error: 'Formulario no encontrado' }, { status: 404 });
     }

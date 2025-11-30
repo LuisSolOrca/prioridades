@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import WebForm from '@/models/WebForm';
+import WebForm, { IWebForm } from '@/models/WebForm';
 
 /**
  * GET /api/public/forms/[formKey]
@@ -17,7 +17,7 @@ export async function GET(
       formKey: params.formKey,
       isActive: true,
       isPublished: true,
-    }).lean();
+    }).lean() as IWebForm | null;
 
     if (!form) {
       return NextResponse.json(
