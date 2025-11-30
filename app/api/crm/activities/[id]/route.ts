@@ -132,6 +132,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // Solo administradores pueden eliminar actividades
+    const userRole = (session.user as any).role;
+    if (userRole !== 'ADMIN') {
+      return NextResponse.json({ error: 'Solo administradores pueden eliminar actividades' }, { status: 403 });
+    }
+
     if (!hasPermission(session, 'viewCRM')) {
       return NextResponse.json({ error: 'Sin permiso para usar CRM' }, { status: 403 });
     }
@@ -139,13 +145,16 @@ export async function DELETE(
     await connectDB();
     const { id } = await params;
 
-    const activity = await Activity.findByIdAndDelete(id);
-
+    const activity = await Activity.findById(id);
     if (!activity) {
       return NextResponse.json({ error: 'Actividad no encontrada' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    await Activity.findByIdAndDelete(id);
+
+    console.log(`[Activities API] Activity deleted by admin: ${id}`);
+
+    return NextResponse.json({ success: true, message: 'Actividad eliminada correctamente' });
   } catch (error: any) {
     console.error('Error deleting activity:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

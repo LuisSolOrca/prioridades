@@ -24,7 +24,8 @@ import {
   User,
   Check,
   ArrowRight,
-  MessageSquare
+  MessageSquare,
+  Trash2
 } from 'lucide-react';
 import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
@@ -117,6 +118,28 @@ export default function ActivitiesPage() {
       console.error('Error completing task:', error);
     }
   };
+
+  const handleDeleteActivity = async (activityId: string, activityTitle: string) => {
+    if (!confirm(`¿Estás seguro de eliminar la actividad "${activityTitle}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/crm/activities/' + activityId, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Error al eliminar la actividad');
+        return;
+      }
+      loadActivities();
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      alert('Error al eliminar la actividad');
+    }
+  };
+
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
 
   const filteredActivities = activities.filter(activity =>
     activity.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -292,20 +315,31 @@ export default function ActivitiesPage() {
                       </div>
 
                       {/* Task completion */}
-                      {activity.type === 'task' && !activity.isCompleted && (
-                        <button
-                          onClick={() => handleCompleteTask(activity._id)}
-                          className="flex-shrink-0 p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition"
-                          title="Marcar como completada"
-                        >
-                          <Check size={20} />
-                        </button>
-                      )}
-                      {activity.type === 'task' && activity.isCompleted && (
-                        <span className="flex-shrink-0 p-2 text-green-600">
-                          <Check size={20} />
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {activity.type === 'task' && !activity.isCompleted && (
+                          <button
+                            onClick={() => handleCompleteTask(activity._id)}
+                            className="flex-shrink-0 p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition"
+                            title="Marcar como completada"
+                          >
+                            <Check size={20} />
+                          </button>
+                        )}
+                        {activity.type === 'task' && activity.isCompleted && (
+                          <span className="flex-shrink-0 p-2 text-green-600">
+                            <Check size={20} />
+                          </span>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDeleteActivity(activity._id, activity.title)}
+                            className="flex-shrink-0 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
+                            title="Eliminar actividad"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Associations */}
