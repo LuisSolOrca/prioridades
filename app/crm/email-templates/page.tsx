@@ -429,18 +429,6 @@ export default function EmailTemplatesPage() {
                   dangerouslySetInnerHTML={{ __html: previewTemplate.body }}
                 />
               </div>
-              {previewTemplate.availableVariables && previewTemplate.availableVariables.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Variables utilizadas:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {previewTemplate.availableVariables.map((v, i) => (
-                      <code key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-                        {v}
-                      </code>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
