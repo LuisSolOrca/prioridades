@@ -49,6 +49,8 @@
 16. [Email Tracking](#email-tracking)
 17. [Lead Scoring](#lead-scoring)
 18. [Workflows y Automatizaciones](#workflows-y-automatizaciones)
+    - [Acción: Crear Prioridad](#acción-crear-prioridad)
+    - [Acción: Enviar Mensaje a Canal](#acción-enviar-mensaje-a-canal)
 19. [Secuencias de Email](#secuencias-de-email)
     - [Editor Visual de Plantillas](#editor-visual-de-plantillas-de-email)
     - [Variables Disponibles](#variables-disponibles)
@@ -1302,12 +1304,17 @@ interface WorkflowCondition {
 |--------|-------------|
 | `send_email` | Enviar email automático (con plantilla o contenido manual) |
 | `create_task` | Crear tarea para el vendedor |
+| `create_activity` | Crear actividad (nota, llamada, reunión) |
 | `update_field` | Actualizar campo del registro |
+| `move_stage` | Mover deal a otra etapa |
 | `add_tag` | Agregar etiqueta |
+| `remove_tag` | Quitar etiqueta |
 | `assign_owner` | Cambiar vendedor asignado |
 | `send_notification` | Enviar notificación in-app |
-| `add_to_sequence` | Agregar a secuencia de emails |
 | `webhook` | Llamar webhook externo |
+| `delay` | Esperar tiempo antes de siguiente acción |
+| **`create_priority`** | **Crear prioridad semanal** |
+| **`send_channel_message`** | **Enviar mensaje a canal de proyecto** |
 
 ### Acción: Enviar Email
 
@@ -1324,6 +1331,83 @@ La acción `send_email` permite enviar emails automáticos con tracking integrad
 - **Plantilla:** Solo se muestran plantillas con scope `workflows` o `both`
 - **Variables:** Se reemplazan automáticamente con datos del contexto
 - **Tracking:** Todos los emails se registran automáticamente en Email Tracking
+
+### Acción: Crear Prioridad
+
+La acción `create_priority` permite crear prioridades semanales automáticamente desde workflows del CRM.
+
+**Campos Configurables:**
+
+| Campo | Requerido | Descripción |
+|-------|-----------|-------------|
+| Título | ✅ | Título de la prioridad (soporta variables) |
+| Descripción | ❌ | Descripción detallada |
+| Tipo | ✅ | `ESTRATEGICA` o `OPERATIVA` |
+| Estado inicial | ✅ | `EN_TIEMPO`, `EN_RIESGO`, `BLOQUEADO` |
+| Semana | ✅ | Offset: 0 (actual), 1 (próxima), 2 (en 2 semanas) |
+| Asignar a | ✅ | `deal_owner`, `trigger_user`, `specific_user` |
+| Cliente | ✅ | `deal_client` o `specific_client` |
+| Proyecto | ❌ | Proyecto asociado (opcional) |
+| Iniciativas | ✅ | Una o más iniciativas estratégicas |
+
+**Variables disponibles en título/descripción:**
+```
+{{deal.title}} - Título del deal
+{{deal.value}} - Valor del deal
+{{contact.name}} - Nombre del contacto
+{{client.name}} - Nombre del cliente
+```
+
+**Ejemplo de uso:**
+```
+Trigger: deal_won
+Acción: create_priority
+  - Título: "Onboarding cliente {{client.name}}"
+  - Tipo: OPERATIVA
+  - Estado: EN_TIEMPO
+  - Semana: Próxima semana
+  - Asignar a: Owner del deal
+  - Cliente: Cliente del deal
+  - Iniciativas: [Nuevo Negocio, Eficiencia Operativa]
+```
+
+### Acción: Enviar Mensaje a Canal
+
+La acción `send_channel_message` permite enviar mensajes automáticos a canales de comunicación de proyectos.
+
+**Campos Configurables:**
+
+| Campo | Requerido | Descripción |
+|-------|-----------|-------------|
+| Proyecto | ✅ | Proyecto donde está el canal |
+| Canal | ✅ | Canal o subcanal de destino |
+| Contenido | ✅ | Mensaje (soporta variables y hashtags) |
+| Tags | ❌ | Tags adicionales para el mensaje |
+
+**Características:**
+- Selector jerárquico de canales y subcanales
+- Soporte de variables para personalización
+- Extracción automática de hashtags del contenido
+- Tags adicionales configurables
+
+**Variables disponibles:**
+```
+{{deal.title}} - Título del deal
+{{deal.value}} - Valor formateado ($XX,XXX.XX MXN)
+{{deal.stage}} - Etapa actual
+{{contact.name}} - Nombre del contacto
+{{client.name}} - Nombre del cliente
+```
+
+**Ejemplo de uso:**
+```
+Trigger: deal_won
+Acción: send_channel_message
+  - Proyecto: "Ventas 2024"
+  - Canal: #celebraciones
+  - Contenido: "🎉 ¡Deal ganado! {{deal.title}} por {{deal.value}} con {{client.name}} #victoria #ventas"
+  - Tags: [crm, automatico]
+```
 
 ### Ejemplos de Workflows
 
@@ -1343,6 +1427,18 @@ La acción `send_email` permite enviar emails automáticos con tracking integrad
 - Trigger: `scheduled` (diario)
 - Condición: `days_since_activity > 7`
 - Acción: `send_notification` al vendedor
+
+**4. Crear Prioridad al Ganar Deal:**
+- Trigger: `deal_won`
+- Condición: ninguna
+- Acciones:
+  - `create_priority` "Onboarding {{client.name}}" asignada al owner
+  - `send_channel_message` al canal #victorias
+
+**5. Notificar al Equipo en Canal:**
+- Trigger: `deal_created`
+- Condición: `value > 100000`
+- Acción: `send_channel_message` "🔥 Nuevo deal grande: {{deal.title}} - {{deal.value}}"
 
 ### API Endpoints
 
