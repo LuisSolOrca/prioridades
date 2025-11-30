@@ -86,6 +86,16 @@ interface Enrollment {
   nextStepAt?: string;
 }
 
+interface Contact {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  clientId?: { _id: string; name: string };
+  isActive: boolean;
+}
+
 const STEP_TYPE_CONFIG = {
   email: { icon: Mail, label: 'Email', color: 'indigo' },
   task: { icon: CheckSquare, label: 'Tarea', color: 'yellow' },
@@ -126,6 +136,13 @@ export default function SequenceBuilderPage() {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [saveTemplateStep, setSaveTemplateStep] = useState<number | null>(null);
+
+  // Enroll modal state
+  const [availableContacts, setAvailableContacts] = useState<Contact[]>([]);
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
 
   const user = session?.user as any;
   const isAdmin = user?.role === 'ADMIN';
@@ -177,6 +194,79 @@ export default function SequenceBuilderPage() {
       console.error('Error fetching enrollments:', error);
     }
   };
+
+  const fetchContacts = async () => {
+    setLoadingContacts(true);
+    try {
+      const res = await fetch('/api/crm/contacts?activeOnly=true');
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableContacts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  const handleOpenEnrollModal = () => {
+    setShowEnrollModal(true);
+    setSelectedContactIds([]);
+    setContactSearch('');
+    fetchContacts();
+  };
+
+  const handleEnrollContacts = async () => {
+    if (selectedContactIds.length === 0) {
+      alert('Selecciona al menos un contacto');
+      return;
+    }
+
+    setEnrolling(true);
+    try {
+      const res = await fetch(`/api/crm/sequences/${id}/enroll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactIds: selectedContactIds }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Se enrollaron ${data.enrolled} contacto(s) exitosamente`);
+        setShowEnrollModal(false);
+        setSelectedContactIds([]);
+        fetchEnrollments();
+        fetchSequence();
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Error al enrollar contactos');
+      }
+    } catch (error) {
+      console.error('Error enrolling contacts:', error);
+      alert('Error al enrollar contactos');
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const toggleContactSelection = (contactId: string) => {
+    setSelectedContactIds(prev =>
+      prev.includes(contactId)
+        ? prev.filter(id => id !== contactId)
+        : [...prev, contactId]
+    );
+  };
+
+  const filteredContacts = availableContacts.filter(contact => {
+    const searchLower = contactSearch.toLowerCase();
+    return (
+      contact.firstName.toLowerCase().includes(searchLower) ||
+      contact.lastName.toLowerCase().includes(searchLower) ||
+      (contact.email?.toLowerCase().includes(searchLower)) ||
+      (contact.clientId?.name?.toLowerCase().includes(searchLower))
+    );
+  });
 
   const handleSave = async () => {
     if (!sequence.name.trim()) {
@@ -764,7 +854,7 @@ export default function SequenceBuilderPage() {
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Contactos Enrollados</h3>
                 <button
-                  onClick={() => setShowEnrollModal(true)}
+                  onClick={handleOpenEnrollModal}
                   className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
                 >
                   <UserPlus className="w-4 h-4" />
@@ -851,6 +941,132 @@ export default function SequenceBuilderPage() {
             setSaveTemplateStep(null);
           }}
         />
+      )}
+
+      {/* Enroll Contacts Modal */}
+      {showEnrollModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Enrollar Contactos
+              </h3>
+              <button
+                onClick={() => setShowEnrollModal(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={contactSearch}
+                  onChange={(e) => setContactSearch(e.target.value)}
+                  placeholder="Buscar contactos por nombre, email o empresa..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              </div>
+              {selectedContactIds.length > 0 && (
+                <p className="mt-2 text-sm text-indigo-600 dark:text-indigo-400">
+                  {selectedContactIds.length} contacto(s) seleccionado(s)
+                </p>
+              )}
+            </div>
+
+            {/* Contact List */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingContacts ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 animate-spin text-indigo-600" />
+                </div>
+              ) : filteredContacts.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  {contactSearch ? 'No se encontraron contactos' : 'No hay contactos disponibles'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredContacts.map((contact) => (
+                    <label
+                      key={contact._id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                        selectedContactIds.includes(contact._id)
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedContactIds.includes(contact._id)}
+                        onChange={() => toggleContactSelection(contact._id)}
+                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {contact.firstName} {contact.lastName}
+                        </p>
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                          {contact.email && <span>{contact.email}</span>}
+                          {contact.clientId?.name && (
+                            <span className="text-indigo-600 dark:text-indigo-400">
+                              {contact.clientId.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  if (selectedContactIds.length === filteredContacts.length) {
+                    setSelectedContactIds([]);
+                  } else {
+                    setSelectedContactIds(filteredContacts.map(c => c._id));
+                  }
+                }}
+                className="text-sm text-indigo-600 hover:text-indigo-700"
+              >
+                {selectedContactIds.length === filteredContacts.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowEnrollModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleEnrollContacts}
+                  disabled={selectedContactIds.length === 0 || enrolling}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {enrolling ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Enrollando...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Enrollar ({selectedContactIds.length})
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
