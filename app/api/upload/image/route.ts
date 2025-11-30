@@ -73,10 +73,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate signed URL with long expiration (1 year for email images)
+    // Generate signed URL with maximum allowed expiration (7 days for S3 signature v4)
+    // Note: For permanent email images, consider using R2 public bucket
     const url = await getDownloadUrl({
       key,
-      expiresIn: 365 * 24 * 60 * 60, // 1 year
+      expiresIn: 7 * 24 * 60 * 60, // 7 days (max allowed)
     });
 
     return NextResponse.json({
