@@ -24,6 +24,11 @@ export interface IUser {
     canEditHistoricalPriorities: boolean;
     canManageProjects: boolean;
     canManageKPIs: boolean;
+    // CRM Permissions
+    viewCRM: boolean;
+    canManageDeals: boolean;
+    canManageContacts: boolean;
+    canManagePipelineStages: boolean;
   };
   emailNotifications?: {
     enabled: boolean;
@@ -123,6 +128,11 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
       canEditHistoricalPriorities: { type: Boolean, default: false },
       canManageProjects: { type: Boolean, default: false },
       canManageKPIs: { type: Boolean, default: false },
+      // CRM Permissions
+      viewCRM: { type: Boolean, default: true },
+      canManageDeals: { type: Boolean, default: true },
+      canManageContacts: { type: Boolean, default: true },
+      canManagePipelineStages: { type: Boolean, default: false },
     },
     default: function() {
       return {
@@ -139,6 +149,11 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
         canEditHistoricalPriorities: this.role === 'ADMIN',
         canManageProjects: this.role === 'ADMIN',
         canManageKPIs: this.role === 'ADMIN',
+        // CRM Permissions
+        viewCRM: true,
+        canManageDeals: true,
+        canManageContacts: true,
+        canManagePipelineStages: this.role === 'ADMIN',
       };
     },
   },

@@ -47,6 +47,11 @@ export async function PUT(
         canEditHistoricalPriorities: user.role === 'ADMIN',
         canManageProjects: user.role === 'ADMIN',
         canManageKPIs: user.role === 'ADMIN',
+        // CRM Permissions
+        viewCRM: true,
+        canManageDeals: true,
+        canManageContacts: true,
+        canManagePipelineStages: user.role === 'ADMIN',
       };
     }
 
@@ -65,6 +70,11 @@ export async function PUT(
       canEditHistoricalPriorities: permissions.canEditHistoricalPriorities !== undefined ? permissions.canEditHistoricalPriorities : (user.permissions.canEditHistoricalPriorities ?? (user.role === 'ADMIN')),
       canManageProjects: permissions.canManageProjects !== undefined ? permissions.canManageProjects : (user.permissions.canManageProjects ?? (user.role === 'ADMIN')),
       canManageKPIs: permissions.canManageKPIs !== undefined ? permissions.canManageKPIs : (user.permissions.canManageKPIs ?? (user.role === 'ADMIN')),
+      // CRM Permissions
+      viewCRM: permissions.viewCRM !== undefined ? permissions.viewCRM : (user.permissions.viewCRM ?? true),
+      canManageDeals: permissions.canManageDeals !== undefined ? permissions.canManageDeals : (user.permissions.canManageDeals ?? true),
+      canManageContacts: permissions.canManageContacts !== undefined ? permissions.canManageContacts : (user.permissions.canManageContacts ?? true),
+      canManagePipelineStages: permissions.canManagePipelineStages !== undefined ? permissions.canManagePipelineStages : (user.permissions.canManagePipelineStages ?? (user.role === 'ADMIN')),
     };
 
     // Marcar como modificado explícitamente
