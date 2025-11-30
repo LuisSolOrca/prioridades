@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Mail,
   Eye,
@@ -24,7 +25,20 @@ import {
   Search,
   Plus,
   Sparkles,
+  Code,
+  Type,
 } from 'lucide-react';
+
+// Dynamic import to avoid SSR issues with TipTap
+const RichTextEditor = dynamic(() => import('./RichTextEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 min-h-[250px] bg-gray-50 dark:bg-gray-800 animate-pulse">
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+    </div>
+  ),
+});
 
 interface EmailTemplateEditorProps {
   subject: string;
@@ -130,6 +144,7 @@ export default function EmailTemplateEditor({
   const [templateSearch, setTemplateSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [activeField, setActiveField] = useState<'subject' | 'body'>('body');
+  const [useRichEditor, setUseRichEditor] = useState(true);
 
   const subjectRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -266,39 +281,33 @@ export default function EmailTemplateEditor({
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        {/* Formatting buttons */}
+        {/* Editor mode toggle */}
         <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
           <button
             type="button"
-            onClick={() => insertFormatting('bold')}
-            className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
-            title="Negrita"
+            onClick={() => setUseRichEditor(true)}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-sm ${
+              useRichEditor
+                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+            title="Editor visual"
           >
-            <Bold size={16} />
+            <Type size={14} />
+            Visual
           </button>
           <button
             type="button"
-            onClick={() => insertFormatting('italic')}
-            className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
-            title="Cursiva"
+            onClick={() => setUseRichEditor(false)}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-sm ${
+              !useRichEditor
+                ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+            title="Editor HTML"
           >
-            <Italic size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => insertFormatting('link')}
-            className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
-            title="Enlace"
-          >
-            <LinkIcon size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => insertFormatting('list')}
-            className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
-            title="Lista"
-          >
-            <List size={16} />
+            <Code size={14} />
+            HTML
           </button>
         </div>
 
@@ -429,30 +438,42 @@ export default function EmailTemplateEditor({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Cuerpo del mensaje
             </label>
-            <textarea
-              ref={bodyRef}
-              value={body}
-              onChange={(e) => onBodyChange(e.target.value)}
-              onFocus={() => setActiveField('body')}
-              placeholder={`Hola {{contact.firstName}},
+            {useRichEditor ? (
+              <RichTextEditor
+                content={body}
+                onChange={onBodyChange}
+                placeholder="Escribe tu mensaje aquí... Puedes usar variables como {{contact.firstName}}"
+                minHeight={compact ? '200px' : '300px'}
+              />
+            ) : (
+              <>
+                <textarea
+                  ref={bodyRef}
+                  value={body}
+                  onChange={(e) => onBodyChange(e.target.value)}
+                  onFocus={() => setActiveField('body')}
+                  placeholder={`<p>Hola {{contact.firstName}},</p>
 
-Espero que te encuentres bien. Me pongo en contacto contigo porque...
+<p>Espero que te encuentres bien. Me pongo en contacto contigo porque...</p>
 
-**Beneficios para {{client.name}}:**
-• Beneficio 1
-• Beneficio 2
-• Beneficio 3
+<h3>Beneficios para {{client.name}}:</h3>
+<ul>
+  <li>Beneficio 1</li>
+  <li>Beneficio 2</li>
+  <li>Beneficio 3</li>
+</ul>
 
-¿Te gustaría agendar una llamada para {{date.nextWeek}}?
+<p>¿Te gustaría agendar una llamada para {{date.nextWeek}}?</p>
 
-Saludos,
-{{user.signature}}`}
-              rows={compact ? 8 : 12}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm resize-y"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Usa **texto** para negrita, _texto_ para cursiva, [texto](url) para enlaces
-            </p>
+<p>Saludos,<br>{{user.signature}}</p>`}
+                  rows={compact ? 8 : 12}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm resize-y"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Modo HTML: puedes usar etiquetas HTML como &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;img&gt;, etc.
+                </p>
+              </>
+            )}
           </div>
         </div>
 
