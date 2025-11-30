@@ -67,7 +67,15 @@ const IMAGE_SIZES = [
 const ResizableImage = Image.extend({
   addAttributes() {
     return {
-      ...this.parent?.(),
+      src: {
+        default: null,
+      },
+      alt: {
+        default: null,
+      },
+      title: {
+        default: null,
+      },
       width: {
         default: '100%',
         parseHTML: element => element.getAttribute('width') || element.style.width || '100%',
