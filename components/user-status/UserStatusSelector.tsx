@@ -13,16 +13,17 @@ import {
 } from 'lucide-react';
 import { STATUS_COLORS, STATUS_PRESETS } from '@/models/UserStatus';
 import UserStatusIndicator from './UserStatusIndicator';
+import { useUserStatus } from '@/hooks/useUserStatus';
 
 type PresenceStatus = 'online' | 'away' | 'dnd' | 'invisible';
 
 interface UserStatusSelectorProps {
-  currentStatus: PresenceStatus;
+  currentStatus?: PresenceStatus;
   customStatus?: string;
   customStatusEmoji?: string;
-  onStatusChange: (status: PresenceStatus) => void;
-  onCustomStatusChange: (text?: string, emoji?: string, expiresAt?: Date) => void;
-  onClearCustomStatus: () => void;
+  onStatusChange?: (status: PresenceStatus) => void;
+  onCustomStatusChange?: (text?: string, emoji?: string, expiresAt?: Date) => void;
+  onClearCustomStatus?: () => void;
   compact?: boolean;
   className?: string;
 }
@@ -60,20 +61,40 @@ const STATUS_OPTIONS: Array<{
 ];
 
 export default function UserStatusSelector({
-  currentStatus,
-  customStatus,
-  customStatusEmoji,
-  onStatusChange,
-  onCustomStatusChange,
-  onClearCustomStatus,
+  currentStatus: propCurrentStatus,
+  customStatus: propCustomStatus,
+  customStatusEmoji: propCustomStatusEmoji,
+  onStatusChange: propOnStatusChange,
+  onCustomStatusChange: propOnCustomStatusChange,
+  onClearCustomStatus: propOnClearCustomStatus,
   compact = false,
   className = '',
 }: UserStatusSelectorProps) {
+  // Use hook for self-managed mode (when no props provided)
+  const hookResult = useUserStatus();
+
+  // Determine if we're in controlled or self-managed mode
+  const isControlled = propOnStatusChange !== undefined;
+
+  // Use prop values if provided, otherwise use hook values
+  const currentStatus = propCurrentStatus ?? (hookResult.status?.status || 'online');
+  const customStatus = propCustomStatus ?? hookResult.status?.customStatus;
+  const customStatusEmoji = propCustomStatusEmoji ?? hookResult.status?.customStatusEmoji;
+  const onStatusChange = propOnStatusChange ?? hookResult.updateStatus;
+  const onCustomStatusChange = propOnCustomStatusChange ?? hookResult.updateCustomStatus;
+  const onClearCustomStatus = propOnClearCustomStatus ?? hookResult.clearCustomStatus;
+
   const [isOpen, setIsOpen] = useState(false);
   const [showCustomStatusInput, setShowCustomStatusInput] = useState(false);
   const [customText, setCustomText] = useState(customStatus || '');
   const [customEmoji, setCustomEmoji] = useState(customStatusEmoji || '');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync customText/customEmoji when status changes
+  useEffect(() => {
+    setCustomText(customStatus || '');
+    setCustomEmoji(customStatusEmoji || '');
+  }, [customStatus, customStatusEmoji]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

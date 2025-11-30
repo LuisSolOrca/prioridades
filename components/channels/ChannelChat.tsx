@@ -137,6 +137,8 @@ import FileUpload from '../FileUpload';
 import AttachmentCard from '../AttachmentCard';
 import VoiceRecorder from './VoiceRecorder';
 import VoicePlayer from './VoicePlayer';
+import { OnlineUsersPanel } from '@/components/user-status';
+import { useUserStatus } from '@/hooks/useUserStatus';
 
 interface Priority {
   _id: string;
@@ -209,6 +211,10 @@ interface ChannelChatProps {
 
 export default function ChannelChat({ projectId }: ChannelChatProps) {
   const { data: session } = useSession();
+
+  // User status tracking (heartbeat, presence)
+  useUserStatus();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [pinnedMessages, setPinnedMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -5782,16 +5788,11 @@ export default function ChannelChat({ projectId }: ChannelChatProps) {
             }}
           />
           <div className="flex items-center gap-3">
-            {/* Online Users Indicator */}
-            {onlineUsers.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400" title={onlineUsers.map(u => u.info.name).join(', ')}>
-                <div className="relative">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
-                </div>
-                <span className="font-medium">{onlineUsers.length} en línea</span>
-              </div>
-            )}
+            {/* Online Users Panel with Status */}
+            <OnlineUsersPanel
+              onlineUsers={onlineUsers}
+              typingUsers={typingUsers}
+            />
             <div className="text-xs text-gray-500 dark:text-gray-400">
               {selectedChannelName && `# ${selectedChannelName}`}
             </div>

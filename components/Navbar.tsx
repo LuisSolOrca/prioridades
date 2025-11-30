@@ -7,6 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import SessionRefreshButton from './SessionRefreshButton';
+import { UserStatusSelector } from '@/components/user-status';
 import {
   LayoutDashboard,
   ListTodo,
@@ -151,6 +152,10 @@ export default function Navbar() {
                         Administrador
                       </span>
                     )}
+                  </div>
+                  {/* User Status Selector */}
+                  <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                    <UserStatusSelector compact />
                   </div>
                   <button
                     onClick={() => {
