@@ -1203,6 +1203,50 @@ function ActionConfigModal({
                 </p>
               )}
             </div>
+            <div>
+              <label className={labelClasses}>Tareas (checklist)</label>
+              <div className="space-y-2">
+                {(config.priorityChecklist || []).map((task: string, index: number) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={task}
+                      onChange={(e) => {
+                        const newChecklist = [...(config.priorityChecklist || [])];
+                        newChecklist[index] = e.target.value;
+                        setConfig({ ...config, priorityChecklist: newChecklist });
+                      }}
+                      className={inputClasses}
+                      placeholder={`Tarea ${index + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newChecklist = (config.priorityChecklist || []).filter((_: string, i: number) => i !== index);
+                        setConfig({ ...config, priorityChecklist: newChecklist });
+                      }}
+                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newChecklist = [...(config.priorityChecklist || []), ''];
+                    setConfig({ ...config, priorityChecklist: newChecklist });
+                  }}
+                  className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar tarea
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Las tareas también soportan variables como {"{{deal.title}}"}, {"{{client.name}}"}, etc.
+              </p>
+            </div>
           </>
         );
 

@@ -1349,8 +1349,9 @@ La acción `create_priority` permite crear prioridades semanales automáticament
 | Cliente | ✅ | `deal_client` o `specific_client` |
 | Proyecto | ❌ | Proyecto asociado (opcional) |
 | Iniciativas | ✅ | Una o más iniciativas estratégicas |
+| **Tareas** | ❌ | Lista de tareas (checklist) para la prioridad |
 
-**Variables disponibles en título/descripción:**
+**Variables disponibles en título/descripción/tareas:**
 ```
 {{deal.title}} - Título del deal
 {{deal.value}} - Valor del deal
@@ -1369,6 +1370,11 @@ Acción: create_priority
   - Asignar a: Owner del deal
   - Cliente: Cliente del deal
   - Iniciativas: [Nuevo Negocio, Eficiencia Operativa]
+  - Tareas:
+    - "Agendar llamada de kick-off con {{contact.name}}"
+    - "Enviar documentación de bienvenida"
+    - "Configurar acceso al portal de cliente"
+    - "Programar capacitación inicial"
 ```
 
 ### Acción: Enviar Mensaje a Canal

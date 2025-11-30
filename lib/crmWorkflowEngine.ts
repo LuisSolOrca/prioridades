@@ -571,6 +571,15 @@ async function executeAction(
         }
 
         try {
+          // Procesar checklist - reemplazar variables en cada tarea
+          const checklistItems = (config.priorityChecklist || [])
+            .filter((text: string) => text && text.trim())
+            .map((text: string) => ({
+              text: replaceVariables(text, context),
+              completed: false,
+              createdAt: new Date(),
+            }));
+
           const priority = await Priority.create({
             title: title || 'Prioridad de workflow',
             description,
@@ -583,7 +592,7 @@ async function executeAction(
             clientId,
             projectId: config.priorityProjectId || undefined,
             initiativeIds: initiativeIds.map(id => new mongoose.Types.ObjectId(id)),
-            checklist: [],
+            checklist: checklistItems,
             evidenceLinks: [],
           });
 

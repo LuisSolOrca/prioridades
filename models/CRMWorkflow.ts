@@ -90,6 +90,7 @@ export interface ICRMWorkflowAction {
     priorityClientId?: string;
     priorityProjectId?: string;
     priorityInitiativeIds?: string[];
+    priorityChecklist?: string[];      // Lista de tareas (texto) para agregar a la prioridad
 
     // Para send_channel_message
     channelProjectId?: string;         // Proyecto donde está el canal
