@@ -60,13 +60,30 @@ export async function PUT(
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
+    // Build update object with all allowed fields
+    const updateData: any = {};
+
+    // Basic fields
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.isActive !== undefined) updateData.isActive = body.isActive;
+
+    // CRM fields
+    if (body.industry !== undefined) updateData.industry = body.industry;
+    if (body.website !== undefined) updateData.website = body.website;
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.address !== undefined) updateData.address = body.address;
+    if (body.logo !== undefined) updateData.logo = body.logo;
+    if (body.annualRevenue !== undefined) updateData.annualRevenue = body.annualRevenue;
+    if (body.employeeCount !== undefined) updateData.employeeCount = body.employeeCount;
+    if (body.source !== undefined) updateData.source = body.source;
+    if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.customFields !== undefined) updateData.customFields = body.customFields;
+    if (body.crmNotes !== undefined) updateData.crmNotes = body.crmNotes;
+
     const client = await Client.findByIdAndUpdate(
       id,
-      {
-        name: body.name,
-        description: body.description,
-        isActive: body.isActive,
-      },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
 
