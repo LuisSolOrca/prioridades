@@ -814,6 +814,67 @@ export const emailTemplates = {
     };
   },
 
+  webFormSubmission: (params: {
+    formName: string;
+    submissionData: Record<string, any>;
+    contactName?: string;
+    contactEmail?: string;
+    companyName?: string;
+    source?: string;
+    submissionUrl: string;
+  }) => {
+    const dataRows = Object.entries(params.submissionData)
+      .filter(([key]) => !key.startsWith('_'))
+      .map(([key, value]) => `
+        <tr>
+          <td style="padding: 10px 15px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #374151; width: 35%;">
+            ${key}
+          </td>
+          <td style="padding: 10px 15px; border-bottom: 1px solid #e5e7eb; color: #1f2937;">
+            ${value || '-'}
+          </td>
+        </tr>
+      `).join('');
+
+    return {
+      subject: `🎯 Nuevo Lead: ${params.contactName || params.companyName || 'Formulario'} - ${params.formName}`,
+      html: generateEmailHTML({
+        headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+        headerTitle: '🎯 Nuevo Lead Capturado',
+        content: `
+          <p style="font-size: 16px; color: #1f2937;">
+            Se ha recibido una nueva respuesta del formulario <strong>${params.formName}</strong>
+          </p>
+
+          ${params.contactName || params.companyName ? `
+            <div class="info-box" style="border-color: #3b82f6; background: #eff6ff; margin-top: 20px;">
+              <h3 style="color: #1d4ed8; margin: 0 0 10px 0;">👤 Información del Lead</h3>
+              ${params.contactName ? `<p style="margin: 5px 0;"><strong>Nombre:</strong> ${params.contactName}</p>` : ''}
+              ${params.companyName ? `<p style="margin: 5px 0;"><strong>Empresa:</strong> ${params.companyName}</p>` : ''}
+              ${params.contactEmail ? `<p style="margin: 5px 0;"><strong>Email:</strong> ${params.contactEmail}</p>` : ''}
+              ${params.source ? `<p style="margin: 5px 0;"><strong>Fuente:</strong> ${params.source}</p>` : ''}
+            </div>
+          ` : ''}
+
+          <div style="margin: 25px 0;">
+            <h3 style="color: #1f2937; margin-bottom: 15px;">📋 Datos del Formulario</h3>
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+              ${dataRows}
+            </table>
+          </div>
+
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="${params.submissionUrl}" class="button" style="background: #3b82f6;">Ver Lead en CRM</a>
+          </div>
+
+          <p style="color: #9ca3af; font-size: 13px; margin-top: 25px; text-align: center;">
+            Este lead ha sido capturado automáticamente desde tu formulario web.
+          </p>
+        `
+      }),
+    };
+  },
+
   standupCreated: (params: {
     userName: string;
     projectName: string;

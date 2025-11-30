@@ -9,6 +9,7 @@ import Notification from '@/models/Notification';
 import User from '@/models/User';
 import mongoose from 'mongoose';
 import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
+import { sendEmail, emailTemplates } from '@/lib/email';
 
 // Rate limiting simple (en producción usar Redis)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -373,6 +374,7 @@ async function processSubmission(
         notifyUsers.push(form.createdBy.toString());
       }
 
+      // Crear notificaciones in-app
       for (const userId of notifyUsers) {
         await Notification.create({
           userId,
@@ -380,6 +382,61 @@ async function processSubmission(
           title: `Nueva submission: ${form.name}`,
           message: `Se recibió una nueva respuesta del formulario "${form.name}". Email: ${contactData.email || 'No proporcionado'}`,
         });
+      }
+
+      // Preparar datos para el email
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const submissionUrl = contactId
+        ? `${baseUrl}/crm/contacts/${contactId}`
+        : `${baseUrl}/crm/web-forms/${form._id}/submissions`;
+
+      // Formatear datos del formulario para el email
+      const formattedData: Record<string, any> = {};
+      for (const field of form.fields) {
+        if (data[field.name] !== undefined && data[field.name] !== '') {
+          formattedData[field.label] = data[field.name];
+        }
+      }
+
+      const emailParams = {
+        formName: form.name,
+        submissionData: formattedData,
+        contactName: `${contactData.firstName || ''} ${contactData.lastName || ''}`.trim() || undefined,
+        contactEmail: contactData.email,
+        companyName: clientData.name || contactData.company,
+        source: 'Formulario Web',
+        submissionUrl,
+      };
+
+      // Enviar emails a usuarios del sistema
+      if (notifyUsers.length > 0) {
+        const users = await User.find({ _id: { $in: notifyUsers } }).select('email name');
+        for (const user of users) {
+          if (user.email) {
+            const emailContent = emailTemplates.webFormSubmission(emailParams);
+            await sendEmail({
+              to: user.email,
+              subject: emailContent.subject,
+              html: emailContent.html,
+            });
+            console.log(`[WebForm] Email notification sent to user: ${user.email}`);
+          }
+        }
+      }
+
+      // Enviar emails a direcciones externas configuradas
+      if (form.notifyEmails && form.notifyEmails.length > 0) {
+        const emailContent = emailTemplates.webFormSubmission(emailParams);
+        for (const email of form.notifyEmails) {
+          if (email && email.includes('@')) {
+            await sendEmail({
+              to: email,
+              subject: emailContent.subject,
+              html: emailContent.html,
+            });
+            console.log(`[WebForm] Email notification sent to external: ${email}`);
+          }
+        }
       }
     }
 
