@@ -71,20 +71,25 @@ export async function GET(request: NextRequest) {
           totalEmailsReplied: 0,
         };
 
+        // Cap rates at 100% to handle any data inconsistencies
+        const openRate = stats.totalEmailsSent > 0
+          ? Math.min(100, Math.round((stats.totalEmailsOpened / stats.totalEmailsSent) * 100))
+          : 0;
+        const clickRate = stats.totalEmailsOpened > 0
+          ? Math.min(100, Math.round((stats.totalEmailsClicked / stats.totalEmailsOpened) * 100))
+          : 0;
+        const replyRate = stats.totalEmailsSent > 0
+          ? Math.min(100, Math.round((stats.totalEmailsReplied / stats.totalEmailsSent) * 100))
+          : 0;
+
         return {
           ...seq,
           activeEnrolled: activeCount,
           completedCount: completedCount,
           totalEnrolled: totalCount,
-          openRate: stats.totalEmailsSent > 0
-            ? Math.round((stats.totalEmailsOpened / stats.totalEmailsSent) * 100)
-            : 0,
-          clickRate: stats.totalEmailsOpened > 0
-            ? Math.round((stats.totalEmailsClicked / stats.totalEmailsOpened) * 100)
-            : 0,
-          replyRate: stats.totalEmailsSent > 0
-            ? Math.round((stats.totalEmailsReplied / stats.totalEmailsSent) * 100)
-            : 0,
+          openRate,
+          clickRate,
+          replyRate,
         };
       })
     );

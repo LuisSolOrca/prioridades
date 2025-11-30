@@ -66,8 +66,8 @@ export async function GET(
         );
       }
 
-      // Si el email pertenece a una secuencia, actualizar las stats del enrollment
-      if (result.sequenceEnrollmentId) {
+      // Si el email pertenece a una secuencia y es la PRIMERA apertura, actualizar las stats del enrollment
+      if (result.sequenceEnrollmentId && result.openCount === 1) {
         await SequenceEnrollment.updateOne(
           { _id: result.sequenceEnrollmentId },
           { $inc: { emailsOpened: 1 } }

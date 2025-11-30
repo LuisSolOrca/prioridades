@@ -90,8 +90,8 @@ export async function GET(
         );
       }
 
-      // Si el email pertenece a una secuencia, actualizar las stats del enrollment
-      if (result.sequenceEnrollmentId) {
+      // Si el email pertenece a una secuencia y es el PRIMER click, actualizar las stats del enrollment
+      if (result.sequenceEnrollmentId && result.clickCount === 1) {
         const updateData: any = { $inc: { emailsClicked: 1 } };
         // Si no se había abierto antes, también contar como apertura
         if (!result.openedAt) {
