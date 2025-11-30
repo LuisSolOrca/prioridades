@@ -187,7 +187,7 @@ async function executeAction(
       }
 
       case 'create_task': {
-        const Activity = (await import('@/models/Activity')).default;
+        const ActivityModel = (await import('@/models/Activity')).default;
 
         const title = replaceVariables(config.taskTitle || '', context);
         const description = replaceVariables(config.taskDescription || '', context);
@@ -209,43 +209,59 @@ async function executeAction(
           }
         }
 
+        // Determinar el creador y asignado
+        const creatorId = context.userId || context.deal?.ownerId;
         let assignToId = context.deal?.ownerId || context.userId;
         if (config.taskAssignTo === 'specific_user' && config.taskAssignToId) {
           assignToId = config.taskAssignToId;
         }
 
-        const task = await Activity.create({
+        // Determinar clientId - puede venir del contexto o del deal
+        const clientId = context.client?._id || context.deal?.clientId || context.activity?.clientId;
+
+        const task = await ActivityModel.create({
           type: 'task',
-          title,
+          title: title || 'Tarea de workflow',
           description,
           dealId: context.deal?._id,
           contactId: context.contact?._id,
-          clientId: context.client?._id || context.deal?.clientId,
-          userId: assignToId,
+          clientId,
+          createdBy: creatorId,
+          assignedTo: assignToId,
           dueDate,
           isCompleted: false,
         });
 
+        console.log(`[CRM Workflow] Task created: ${task._id}`);
         return { success: true, result: { taskId: task._id } };
       }
 
       case 'create_activity': {
-        const Activity = (await import('@/models/Activity')).default;
+        const ActivityModel = (await import('@/models/Activity')).default;
 
         const title = replaceVariables(config.activityTitle || '', context);
         const description = replaceVariables(config.activityDescription || '', context);
 
-        const activity = await Activity.create({
+        // Determinar el creador
+        const creatorId = context.userId || context.deal?.ownerId;
+
+        // Determinar clientId - puede venir del contexto o del deal
+        const clientId = context.client?._id || context.deal?.clientId || context.activity?.clientId;
+
+        const newActivity = await ActivityModel.create({
           type: config.activityType || 'note',
-          title,
+          title: title || 'Actividad de workflow',
           description,
           dealId: context.deal?._id,
           contactId: context.contact?._id,
-          clientId: context.client?._id || context.deal?.clientId,
-          userId: context.deal?.ownerId || context.userId,
+          clientId,
+          createdBy: creatorId,
+          isCompleted: true, // Las notas y actividades que no son tareas se marcan como completadas
+          completedAt: new Date(),
         });
 
-        return { success: true, result: { activityId: activity._id } };
+        console.log(`[CRM Workflow] Activity created: ${newActivity._id}`);
+        return { success: true, result: { activityId: newActivity._id } };
       }
 
       case 'update_field': {
@@ -475,16 +491,22 @@ export async function triggerWorkflows(
       case 'deal':
         fullContext.deal = await Deal.findById(context.entityId)
           .populate('clientId')
+          .populate('contactId')
           .populate('stageId')
           .populate('ownerId', 'name email')
+          .populate('createdBy', 'name email')
           .lean();
         if (fullContext.deal?.clientId) {
           fullContext.client = fullContext.deal.clientId;
+        }
+        if (fullContext.deal?.contactId) {
+          fullContext.contact = fullContext.deal.contactId;
         }
         break;
       case 'contact':
         fullContext.contact = await Contact.findById(context.entityId)
           .populate('clientId')
+          .populate('createdBy', 'name email')
           .lean();
         if (fullContext.contact?.clientId) {
           fullContext.client = fullContext.contact.clientId;
@@ -496,9 +518,19 @@ export async function triggerWorkflows(
       case 'activity':
         fullContext.activity = await Activity.findById(context.entityId)
           .populate('dealId')
+          .populate('clientId')
+          .populate('contactId')
+          .populate('createdBy', 'name email')
+          .populate('assignedTo', 'name email')
           .lean();
         if (fullContext.activity?.dealId) {
           fullContext.deal = fullContext.activity.dealId;
+        }
+        if (fullContext.activity?.clientId) {
+          fullContext.client = fullContext.activity.clientId;
+        }
+        if (fullContext.activity?.contactId) {
+          fullContext.contact = fullContext.activity.contactId;
         }
         break;
     }
