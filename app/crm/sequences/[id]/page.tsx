@@ -141,7 +141,8 @@ export default function SequenceBuilderPage() {
     if (tabFromUrl) {
       setActiveTab(tabFromUrl);
     }
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [saveTemplateStep, setSaveTemplateStep] = useState<number | null>(null);
