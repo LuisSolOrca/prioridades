@@ -436,8 +436,6 @@ export default function EmailTemplatesPage() {
           </div>
         </div>
       )}
-
-        </div>
       </div>
 
       {/* Click outside to close menu */}
