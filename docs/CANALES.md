@@ -7,6 +7,7 @@
    - [Crear Prioridad desde Mensaje](#crear-prioridad-desde-mensaje)
    - [Marcadores de Lectura](#marcadores-de-lectura)
 4. [Tiempo Real y Presencia](#tiempo-real-y-presencia)
+   - [Estados de Usuario](#estados-de-usuario)
 5. [Canales y Subcanales](#canales-y-subcanales)
    - [Canales Privados](#canales-privados)
 6. [Formato Markdown](#formato-markdown)
@@ -56,6 +57,7 @@ El sistema de **Canales** es una plataforma de comunicación **en tiempo real co
 - 🚀 **Mensajes instantáneos** sin recargar la página
 - ⌨️ **Typing indicators** - ve quién está escribiendo
 - 🟢 **Presencia de usuarios** - ve quién está en línea
+- 🎭 **Estados de usuario** - Online, Ausente, No molestar, Invisible con estado personalizado
 - 📜 **Scroll infinito** con lazy loading de mensajes antiguos
 - 👥 **Menciones de usuarios** con notificaciones
 - 📌 **Menciones de prioridades** con previsualizaciones
@@ -299,6 +301,107 @@ El sistema muestra quiénes están conectados al canal en tiempo real:
 - Saber si un compañero está disponible antes de mencionar
 - Coordinar respuestas en tiempo real
 - Ver actividad del canal
+
+### Estados de Usuario
+
+El sistema incluye un **sistema completo de estados de usuario** similar a Slack/Discord, permitiendo a los usuarios indicar su disponibilidad y estado actual.
+
+#### Tipos de Estado de Presencia
+
+| Estado | Icono | Descripción |
+|--------|-------|-------------|
+| **En línea** | 🟢 | Disponible y activo |
+| **Ausente** | 🟡 | Temporalmente no disponible |
+| **No molestar** | 🔴 | Sin notificaciones |
+| **Invisible** | ⚫ | Aparece como desconectado para otros |
+
+#### Panel de Usuarios En Línea
+
+El header del chat muestra un panel expandible con todos los usuarios conectados:
+
+**Características:**
+- 🔘 Click en el indicador "X en línea" expande el panel
+- 👤 Lista de usuarios con su avatar, nombre y estado
+- 🎭 Indicador visual del estado de cada usuario
+- ⌨️ Sección separada mostrando usuarios escribiendo
+- 📅 "Visto por última vez" para usuarios offline
+
+**Información mostrada por usuario:**
+```
+┌─────────────────────────────────────┐
+│ 🟢 Juan Pérez                       │
+│    ☕ Tomando café                  │
+├─────────────────────────────────────┤
+│ 🟡 María García                     │
+│    Visto hace 5 min                 │
+├─────────────────────────────────────┤
+│ 🔴 Carlos López                     │
+│    🎧 En reunión                    │
+└─────────────────────────────────────┘
+```
+
+#### Estado Personalizado
+
+Los usuarios pueden establecer un **estado personalizado** con emoji y texto:
+
+**Presets disponibles:**
+- 📅 En reunión
+- 🏠 Trabajando desde casa
+- 🎧 Enfocado
+- ☕ Tomando un descanso
+- 🏖️ De vacaciones
+- 🤒 Enfermo
+
+**Estado personalizado:**
+1. Click en tu avatar en la barra de navegación
+2. Selecciona un estado de presencia (En línea, Ausente, etc.)
+3. Opcionalmente agrega un estado personalizado:
+   - Selecciona un emoji
+   - Escribe un texto descriptivo (máx. 100 caracteres)
+4. El estado se sincroniza en tiempo real con todos los canales
+
+#### Last Seen (Última Conexión)
+
+Para usuarios que no están en línea, el sistema muestra cuándo fue su última actividad:
+
+**Formato:**
+- "Visto ahora" - hace menos de 1 minuto
+- "Visto hace X min" - hace menos de 1 hora
+- "Visto hace Xh" - hace menos de 24 horas
+- "Visto hace Xd" - hace menos de 7 días
+- "Visto DD/MM/YYYY" - hace más de 7 días
+
+#### Heartbeat y Detección de Presencia
+
+El sistema utiliza un mecanismo de **heartbeat** para detectar la presencia real:
+
+**Funcionamiento:**
+1. Al conectarse: Se envía evento `connect`
+2. Cada 30 segundos: Se envía `heartbeat` al servidor
+3. Al cambiar de pestaña: Se detecta y puede marcar como ausente
+4. Al desconectarse: Se envía evento `disconnect`
+
+**API Endpoints:**
+- `GET /api/user/status` - Obtener estado actual
+- `PUT /api/user/status` - Actualizar estado
+- `POST /api/user/status/heartbeat` - Enviar heartbeat
+- `POST /api/user/status/bulk` - Obtener estados de múltiples usuarios
+
+#### Sincronización en Tiempo Real
+
+Los cambios de estado se propagan instantáneamente via Pusher:
+
+**Canal:** `presence-global`
+**Evento:** `user-status-changed`
+
+```javascript
+{
+  userId: "507f1f77bcf86cd799439011",
+  status: "away",
+  customStatus: "En reunión",
+  customStatusEmoji: "📅"
+}
+```
 
 ### Reconexión Automática
 
