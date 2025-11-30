@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import Navbar from '@/components/Navbar';
 import {
   ArrowLeft,
   Save,
@@ -64,6 +66,7 @@ const AVAILABLE_VARIABLES = [
 
 export default function EditEmailTemplatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -163,27 +166,34 @@ export default function EditEmailTemplatePage({ params }: { params: Promise<{ id
     }
   };
 
+  if (!session) return null;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Loader2 className="animate-spin text-emerald-600" size={40} />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content flex items-center justify-center min-h-[80vh]">
+          <Loader2 className="animate-spin text-emerald-600" size={40} />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/crm/email-templates')}
-              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div>
+      <Navbar />
+      <div className="pt-16 main-content px-4 py-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/crm/email-templates')}
+                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <FileText className="text-emerald-600" size={28} />
                 Editar Plantilla
@@ -359,6 +369,7 @@ export default function EditEmailTemplatePage({ params }: { params: Promise<{ id
               Compartir con todo el equipo (visible para todos los usuarios)
             </label>
           </div>
+        </div>
         </div>
       </div>
 

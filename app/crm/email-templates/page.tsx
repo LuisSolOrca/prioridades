@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
 import {
   Plus,
   Search,
@@ -52,6 +54,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function EmailTemplatesPage() {
+  const { data: session } = useSession();
   const router = useRouter();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,26 +140,26 @@ export default function EmailTemplatesPage() {
     return matchesSearch && matchesCategory;
   });
 
+  if (!session) return null;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Loader2 className="animate-spin text-emerald-600" size={40} />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="pt-16 main-content flex items-center justify-center min-h-[80vh]">
+          <Loader2 className="animate-spin text-emerald-600" size={40} />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/crm')}
-              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <ArrowLeft size={20} />
-            </button>
+      <Navbar />
+      <div className="pt-16 main-content px-4 py-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <FileText className="text-emerald-600" size={28} />
@@ -433,6 +436,9 @@ export default function EmailTemplatesPage() {
           </div>
         </div>
       )}
+
+        </div>
+      </div>
 
       {/* Click outside to close menu */}
       {openMenuId && (
