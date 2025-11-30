@@ -383,7 +383,7 @@ export default function SequencesPage() {
                   {/* Footer */}
                   <div
                     className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-                    onClick={() => router.push(`/crm/sequences/${sequence._id}`)}
+                    onClick={() => router.push(`/crm/sequences/${sequence._id}?tab=enrollments`)}
                   >
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <span className="flex items-center gap-1">

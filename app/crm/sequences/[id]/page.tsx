@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import EmailTemplateEditor from '@/components/crm/EmailTemplateEditor';
 import SaveTemplateModal from '@/components/crm/SaveTemplateModal';
@@ -110,7 +110,9 @@ const LINKEDIN_ACTIONS = [
 
 export default function SequenceBuilderPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  const tabFromUrl = searchParams.get('tab') as 'builder' | 'settings' | 'enrollments' | null;
   const { data: session } = useSession();
   const router = useRouter();
   const isNew = id === 'new';
@@ -132,7 +134,7 @@ export default function SequenceBuilderPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'builder' | 'settings' | 'enrollments'>('builder');
+  const [activeTab, setActiveTab] = useState<'builder' | 'settings' | 'enrollments'>(tabFromUrl || 'builder');
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [saveTemplateStep, setSaveTemplateStep] = useState<number | null>(null);
