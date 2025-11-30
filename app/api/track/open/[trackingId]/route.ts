@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import EmailTracking from '@/models/EmailTracking';
+import SequenceEnrollment from '@/models/SequenceEnrollment';
 
 // GIF transparente 1x1 pixel (43 bytes)
 const TRANSPARENT_GIF = Buffer.from(
@@ -62,6 +63,14 @@ export async function GET(
         await EmailTracking.updateOne(
           { trackingId, openedAt: { $exists: false } },
           { $set: { openedAt: now } }
+        );
+      }
+
+      // Si el email pertenece a una secuencia, actualizar las stats del enrollment
+      if (result.sequenceEnrollmentId) {
+        await SequenceEnrollment.updateOne(
+          { _id: result.sequenceEnrollmentId },
+          { $inc: { emailsOpened: 1 } }
         );
       }
     }

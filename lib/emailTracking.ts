@@ -11,6 +11,7 @@ export interface EmailTrackingOptions {
   contactId?: string | mongoose.Types.ObjectId;
   clientId?: string | mongoose.Types.ObjectId;
   userId: string | mongoose.Types.ObjectId;
+  sequenceEnrollmentId?: string | mongoose.Types.ObjectId;
   subject: string;
   recipientEmail: string;
   recipientName?: string;
@@ -77,6 +78,7 @@ export async function createTrackedEmail(options: EmailTrackingOptions): Promise
     contactId: options.contactId,
     clientId: options.clientId,
     userId: options.userId,
+    sequenceEnrollmentId: options.sequenceEnrollmentId,
     subject: options.subject,
     bodyPreview,
     recipientEmail: options.recipientEmail,

@@ -43,20 +43,48 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Get enrollment counts for each sequence
+    // Get enrollment counts and email stats for each sequence
     const sequencesWithStats = await Promise.all(
       sequences.map(async (seq) => {
-        const [activeCount, completedCount, totalCount] = await Promise.all([
+        const [activeCount, completedCount, totalCount, enrollmentStats] = await Promise.all([
           SequenceEnrollment.countDocuments({ sequenceId: seq._id, status: 'active' }),
           SequenceEnrollment.countDocuments({ sequenceId: seq._id, status: 'completed' }),
           SequenceEnrollment.countDocuments({ sequenceId: seq._id }),
+          SequenceEnrollment.aggregate([
+            { $match: { sequenceId: seq._id } },
+            {
+              $group: {
+                _id: null,
+                totalEmailsSent: { $sum: '$emailsSent' },
+                totalEmailsOpened: { $sum: '$emailsOpened' },
+                totalEmailsClicked: { $sum: '$emailsClicked' },
+                totalEmailsReplied: { $sum: '$emailsReplied' },
+              },
+            },
+          ]),
         ]);
+
+        const stats = enrollmentStats[0] || {
+          totalEmailsSent: 0,
+          totalEmailsOpened: 0,
+          totalEmailsClicked: 0,
+          totalEmailsReplied: 0,
+        };
 
         return {
           ...seq,
           activeEnrolled: activeCount,
           completedCount: completedCount,
           totalEnrolled: totalCount,
+          openRate: stats.totalEmailsSent > 0
+            ? Math.round((stats.totalEmailsOpened / stats.totalEmailsSent) * 100)
+            : 0,
+          clickRate: stats.totalEmailsOpened > 0
+            ? Math.round((stats.totalEmailsClicked / stats.totalEmailsOpened) * 100)
+            : 0,
+          replyRate: stats.totalEmailsSent > 0
+            ? Math.round((stats.totalEmailsReplied / stats.totalEmailsSent) * 100)
+            : 0,
         };
       })
     );

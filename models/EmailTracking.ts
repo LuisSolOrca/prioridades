@@ -20,6 +20,7 @@ export interface IEmailTracking {
   contactId?: mongoose.Types.ObjectId;
   clientId?: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;      // Usuario que envió el email
+  sequenceEnrollmentId?: mongoose.Types.ObjectId; // Enrollment de secuencia (opcional)
 
   // Contenido
   subject: string;
@@ -86,6 +87,11 @@ const EmailTrackingSchema = new Schema<IEmailTracking>({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    index: true,
+  },
+  sequenceEnrollmentId: {
+    type: Schema.Types.ObjectId,
+    ref: 'SequenceEnrollment',
     index: true,
   },
 

@@ -205,6 +205,7 @@ async function processEnrollmentStep(
         contactId: contact._id,
         clientId: enrollment.clientId,
         userId: userId,
+        sequenceEnrollmentId: enrollment._id,
         subject: subject,
         recipientEmail: contact.email,
         recipientName: `${contact.firstName || ''} ${contact.lastName || ''}`.trim(),

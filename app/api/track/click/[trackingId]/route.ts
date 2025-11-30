@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import EmailTracking from '@/models/EmailTracking';
+import SequenceEnrollment from '@/models/SequenceEnrollment';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +87,19 @@ export async function GET(
             $set: { openedAt: now, lastOpenedAt: now },
             $inc: { openCount: 1 },
           }
+        );
+      }
+
+      // Si el email pertenece a una secuencia, actualizar las stats del enrollment
+      if (result.sequenceEnrollmentId) {
+        const updateData: any = { $inc: { emailsClicked: 1 } };
+        // Si no se había abierto antes, también contar como apertura
+        if (!result.openedAt) {
+          updateData.$inc.emailsOpened = 1;
+        }
+        await SequenceEnrollment.updateOne(
+          { _id: result.sequenceEnrollmentId },
+          updateData
         );
       }
     }
