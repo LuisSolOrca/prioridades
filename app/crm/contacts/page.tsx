@@ -527,9 +527,12 @@ export default function ContactsPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-white">
+                          <Link
+                            href={`/crm/contacts/${contact._id}`}
+                            className="font-semibold text-white hover:underline"
+                          >
                             {contact.firstName} {contact.lastName}
-                          </h3>
+                          </Link>
                           {contact.isPrimary && (
                             <Star size={14} className="text-yellow-300 fill-yellow-300" />
                           )}
