@@ -55,6 +55,7 @@ export default function WebFormsPage() {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -91,18 +92,23 @@ export default function WebFormsPage() {
 
     try {
       setCreating(true);
+      setError(null);
       const res = await fetch('/api/crm/web-forms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newFormName.trim() }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        const newForm = await res.json();
-        router.push(`/crm/web-forms/${newForm._id}`);
+        router.push(`/crm/web-forms/${data._id}`);
+      } else {
+        setError(data.error || 'Error al crear formulario');
       }
-    } catch (error) {
-      console.error('Error creating form:', error);
+    } catch (err: any) {
+      console.error('Error creating form:', err);
+      setError(err.message || 'Error de conexión');
     } finally {
       setCreating(false);
     }
@@ -466,6 +472,11 @@ export default function WebFormsPage() {
             </h2>
 
             <div className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Nombre del formulario
@@ -485,6 +496,7 @@ export default function WebFormsPage() {
                   onClick={() => {
                     setShowNewModal(false);
                     setNewFormName('');
+                    setError(null);
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
