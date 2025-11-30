@@ -44,14 +44,23 @@ export async function POST(
   try {
     await connectDB();
 
+    const formKey = params.formKey;
+    console.log('[WebForm Submit] Looking for formKey:', formKey);
+
     // Buscar el formulario
     const form = await WebForm.findOne({
-      formKey: params.formKey,
+      formKey: formKey,
       isActive: true,
       isPublished: true,
     });
 
+    console.log('[WebForm Submit] Form found:', form ? 'yes' : 'no', form ? { id: form._id, isActive: form.isActive, isPublished: form.isPublished } : null);
+
     if (!form) {
+      // Debug: buscar sin filtros para ver el estado real
+      const formAny = await WebForm.findOne({ formKey: formKey });
+      console.log('[WebForm Submit] Form without filters:', formAny ? { isActive: formAny.isActive, isPublished: formAny.isPublished } : 'NOT FOUND');
+
       return NextResponse.json(
         { error: 'Formulario no encontrado o no publicado' },
         { status: 404 }
