@@ -304,19 +304,6 @@ export default function Navbar() {
                 >
                   <Hash size={22} />
                 </button>
-                {hasPermission('viewCRM') && (
-                  <button
-                    onClick={() => handleNavigation('/crm')}
-                    className={`w-full flex justify-center p-3 rounded-lg transition ${
-                      pathname?.startsWith('/crm')
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                    title="CRM"
-                  >
-                    <Handshake size={22} />
-                  </button>
-                )}
                 {hasPermission('viewAutomations') && (
                   <button
                     onClick={() => handleNavigation('/workflows')}
@@ -380,6 +367,24 @@ export default function Navbar() {
                 >
                   <TrendingUp size={22} />
                 </button>
+
+                {/* CRM - Collapsed view with distinctive style */}
+                {hasPermission('viewCRM') && (
+                  <>
+                    <div className="pt-3 pb-2 border-t border-emerald-200 dark:border-emerald-800 mx-2" />
+                    <button
+                      onClick={() => handleNavigation('/crm')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname?.startsWith('/crm')
+                          ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
+                          : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
+                      }`}
+                      title="CRM - Ventas"
+                    >
+                      <Handshake size={22} />
+                    </button>
+                  </>
+                )}
 
                 {user.area === 'Tecnología' && (
                   <>
@@ -602,143 +607,156 @@ export default function Navbar() {
                   onClick={() => handleNavigation('/channels')}
                 />
 
-                {/* CRM Section */}
-                {hasPermission('viewCRM') && (
+                {/* Gestión Section */}
+                {(hasPermission('viewAutomations') || hasPermission('viewHistory') || hasPermission('canManageProjects') || hasPermission('canManageKPIs')) && (
                   <>
                     <div className="pt-4 pb-2">
-                      <p className="text-xs font-semibold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider px-4">
-                        CRM
+                      <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-4">
+                        Gestión
                       </p>
                     </div>
-                    <NavButton
-                      icon={<Handshake size={20} />}
-                      label="Dashboard CRM"
-                      active={pathname === '/crm'}
-                      onClick={() => handleNavigation('/crm')}
-                    />
-                    {hasPermission('canManageDeals') && (
+                    {hasPermission('viewAutomations') && (
                       <NavButton
-                        icon={<DollarSign size={20} />}
-                        label="Pipeline de Ventas"
-                        active={pathname === '/crm/deals'}
-                        onClick={() => handleNavigation('/crm/deals')}
+                        icon={<Zap size={20} />}
+                        label="Automatizaciones"
+                        active={pathname?.startsWith('/workflows') || false}
+                        onClick={() => handleNavigation('/workflows')}
                       />
                     )}
-                    {hasPermission('canManageContacts') && (
+                    {hasPermission('viewHistory') && (
                       <NavButton
-                        icon={<UserCircle size={20} />}
-                        label="Contactos"
-                        active={pathname === '/crm/contacts'}
-                        onClick={() => handleNavigation('/crm/contacts')}
+                        icon={<History size={20} />}
+                        label="Historial"
+                        active={pathname === '/history'}
+                        onClick={() => handleNavigation('/history')}
+                      />
+                    )}
+                    {hasPermission('canManageProjects') && (
+                      <NavButton
+                        icon={<FolderKanban size={20} />}
+                        label="Proyectos"
+                        active={pathname === '/projects'}
+                        onClick={() => handleNavigation('/projects')}
+                      />
+                    )}
+                    {hasPermission('canManageKPIs') && (
+                      <NavButton
+                        icon={<TrendingUp size={20} />}
+                        label="Gestión de KPIs"
+                        active={pathname?.startsWith('/admin/kpis') || false}
+                        onClick={() => handleNavigation('/admin/kpis')}
                       />
                     )}
                     <NavButton
-                      icon={<Building2 size={20} />}
-                      label="Clientes"
-                      active={pathname?.startsWith('/crm/clients') || false}
-                      onClick={() => handleNavigation('/crm/clients')}
-                    />
-                    <NavButton
-                      icon={<Clock size={20} />}
-                      label="Actividades"
-                      active={pathname === '/crm/activities'}
-                      onClick={() => handleNavigation('/crm/activities')}
-                    />
-                    <NavButton
-                      icon={<Package size={20} />}
-                      label="Productos"
-                      active={pathname === '/crm/products'}
-                      onClick={() => handleNavigation('/crm/products')}
-                    />
-                    <NavButton
-                      icon={<Target size={20} />}
-                      label="Metas de Venta"
-                      active={pathname?.startsWith('/crm/quotas') || false}
-                      onClick={() => handleNavigation('/crm/quotas')}
-                    />
-                    <NavButton
-                      icon={<Zap size={20} />}
-                      label="Workflows"
-                      active={pathname?.startsWith('/crm/workflows') || false}
-                      onClick={() => handleNavigation('/crm/workflows')}
-                    />
-                    <NavButton
-                      icon={<Mail size={20} />}
-                      label="Email Tracking"
-                      active={pathname?.startsWith('/crm/email-tracking') || false}
-                      onClick={() => handleNavigation('/crm/email-tracking')}
-                    />
-                    <NavButton
-                      icon={<Target size={20} />}
-                      label="Lead Scoring"
-                      active={pathname?.startsWith('/crm/lead-scoring') || false}
-                      onClick={() => handleNavigation('/crm/lead-scoring')}
-                    />
-                    <NavButton
-                      icon={<Send size={20} />}
-                      label="Secuencias"
-                      active={pathname?.startsWith('/crm/sequences') || false}
-                      onClick={() => handleNavigation('/crm/sequences')}
-                    />
-                    <NavButton
-                      icon={<BarChart3 size={20} />}
-                      label="Reportes CRM"
-                      active={pathname === '/crm/reports'}
-                      onClick={() => handleNavigation('/crm/reports')}
-                    />
-                    <NavButton
-                      icon={<Copy size={20} />}
-                      label="Duplicados"
-                      active={pathname === '/crm/duplicates'}
-                      onClick={() => handleNavigation('/crm/duplicates')}
-                    />
-                    <NavButton
-                      icon={<Settings size={20} />}
-                      label="Campos Personalizados"
-                      active={pathname?.startsWith('/crm/settings/custom-fields') || false}
-                      onClick={() => handleNavigation('/crm/settings/custom-fields')}
+                      icon={<TrendingUp size={20} />}
+                      label="Seguimiento de KPIs"
+                      active={pathname === '/kpi-tracking'}
+                      onClick={() => handleNavigation('/kpi-tracking')}
                     />
                   </>
                 )}
 
-                {hasPermission('viewAutomations') && (
-                  <NavButton
-                    icon={<Zap size={20} />}
-                    label="Automatizaciones"
-                    active={pathname?.startsWith('/workflows') || false}
-                    onClick={() => handleNavigation('/workflows')}
-                  />
+                {/* CRM Section - Distintivo con fondo */}
+                {hasPermission('viewCRM') && (
+                  <div className="mt-4 mx-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 overflow-hidden">
+                    <div className="py-2 px-3 bg-emerald-100 dark:bg-emerald-900/40 border-b border-emerald-200 dark:border-emerald-800">
+                      <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-2">
+                        <Handshake size={14} />
+                        CRM - Ventas
+                      </p>
+                    </div>
+                    <div className="p-1 space-y-0.5">
+                      <NavButton
+                        icon={<Handshake size={20} />}
+                        label="Dashboard CRM"
+                        active={pathname === '/crm'}
+                        onClick={() => handleNavigation('/crm')}
+                      />
+                      {hasPermission('canManageDeals') && (
+                        <NavButton
+                          icon={<DollarSign size={20} />}
+                          label="Pipeline de Ventas"
+                          active={pathname === '/crm/deals'}
+                          onClick={() => handleNavigation('/crm/deals')}
+                        />
+                      )}
+                      {hasPermission('canManageContacts') && (
+                        <NavButton
+                          icon={<UserCircle size={20} />}
+                          label="Contactos"
+                          active={pathname === '/crm/contacts'}
+                          onClick={() => handleNavigation('/crm/contacts')}
+                        />
+                      )}
+                      <NavButton
+                        icon={<Building2 size={20} />}
+                        label="Clientes"
+                        active={pathname?.startsWith('/crm/clients') || false}
+                        onClick={() => handleNavigation('/crm/clients')}
+                      />
+                      <NavButton
+                        icon={<Clock size={20} />}
+                        label="Actividades"
+                        active={pathname === '/crm/activities'}
+                        onClick={() => handleNavigation('/crm/activities')}
+                      />
+                      <NavButton
+                        icon={<Package size={20} />}
+                        label="Productos"
+                        active={pathname === '/crm/products'}
+                        onClick={() => handleNavigation('/crm/products')}
+                      />
+                      <NavButton
+                        icon={<Target size={20} />}
+                        label="Metas de Venta"
+                        active={pathname?.startsWith('/crm/quotas') || false}
+                        onClick={() => handleNavigation('/crm/quotas')}
+                      />
+                      <NavButton
+                        icon={<Zap size={20} />}
+                        label="Workflows CRM"
+                        active={pathname?.startsWith('/crm/workflows') || false}
+                        onClick={() => handleNavigation('/crm/workflows')}
+                      />
+                      <NavButton
+                        icon={<Mail size={20} />}
+                        label="Email Tracking"
+                        active={pathname?.startsWith('/crm/email-tracking') || false}
+                        onClick={() => handleNavigation('/crm/email-tracking')}
+                      />
+                      <NavButton
+                        icon={<Target size={20} />}
+                        label="Lead Scoring"
+                        active={pathname?.startsWith('/crm/lead-scoring') || false}
+                        onClick={() => handleNavigation('/crm/lead-scoring')}
+                      />
+                      <NavButton
+                        icon={<Send size={20} />}
+                        label="Secuencias"
+                        active={pathname?.startsWith('/crm/sequences') || false}
+                        onClick={() => handleNavigation('/crm/sequences')}
+                      />
+                      <NavButton
+                        icon={<BarChart3 size={20} />}
+                        label="Reportes CRM"
+                        active={pathname === '/crm/reports'}
+                        onClick={() => handleNavigation('/crm/reports')}
+                      />
+                      <NavButton
+                        icon={<Copy size={20} />}
+                        label="Duplicados"
+                        active={pathname === '/crm/duplicates'}
+                        onClick={() => handleNavigation('/crm/duplicates')}
+                      />
+                      <NavButton
+                        icon={<Settings size={20} />}
+                        label="Campos Personalizados"
+                        active={pathname?.startsWith('/crm/settings/custom-fields') || false}
+                        onClick={() => handleNavigation('/crm/settings/custom-fields')}
+                      />
+                    </div>
+                  </div>
                 )}
-                {hasPermission('viewHistory') && (
-                  <NavButton
-                    icon={<History size={20} />}
-                    label="Historial"
-                    active={pathname === '/history'}
-                    onClick={() => handleNavigation('/history')}
-                  />
-                )}
-                {hasPermission('canManageProjects') && (
-                  <NavButton
-                    icon={<FolderKanban size={20} />}
-                    label="Proyectos"
-                    active={pathname === '/projects'}
-                    onClick={() => handleNavigation('/projects')}
-                  />
-                )}
-                {hasPermission('canManageKPIs') && (
-                  <NavButton
-                    icon={<TrendingUp size={20} />}
-                    label="Gestión de KPIs"
-                    active={pathname?.startsWith('/admin/kpis') || false}
-                    onClick={() => handleNavigation('/admin/kpis')}
-                  />
-                )}
-                <NavButton
-                  icon={<TrendingUp size={20} />}
-                  label="Seguimiento de KPIs"
-                  active={pathname === '/kpi-tracking'}
-                  onClick={() => handleNavigation('/kpi-tracking')}
-                />
 
                 {user.area === 'Tecnología' && (
                   <>
