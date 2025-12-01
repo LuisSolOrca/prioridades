@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -92,7 +92,7 @@ const MAIN_FILTER_TYPES: SearchableEntityType[] = [
   'channelMessage', 'product', 'kpi',
 ];
 
-export default function GlobalSearchPage() {
+function GlobalSearchContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -530,5 +530,23 @@ export default function GlobalSearchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading fallback component
+function SearchLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+    </div>
+  );
+}
+
+// Export with Suspense boundary for useSearchParams
+export default function GlobalSearchPage() {
+  return (
+    <Suspense fallback={<SearchLoadingFallback />}>
+      <GlobalSearchContent />
+    </Suspense>
   );
 }
