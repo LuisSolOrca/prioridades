@@ -6,6 +6,39 @@ import Project from '@/models/Project';
 import User from '@/models/User';
 import mongoose from 'mongoose';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Validar ID
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
+    const project = await Project.findById(params.id)
+      .populate('projectManager.userId', 'name email')
+      .lean();
+
+    if (!project) {
+      return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
+    }
+
+    return NextResponse.json(project);
+  } catch (error: any) {
+    console.error('Error fetching project:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
