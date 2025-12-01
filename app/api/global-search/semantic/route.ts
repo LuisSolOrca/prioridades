@@ -46,10 +46,10 @@ const SEMANTIC_SEARCH_TYPES: SearchableEntityType[] = [
   'channelMessage', 'comment', 'activity', 'milestone',
 ];
 
-// Límites
-const MAX_ITEMS_PER_TYPE = 30;
-const MAX_TOTAL_CONTEXT = 150;
-const MAX_RESULTS = 20;
+// Límites - mantener bajo para no exceder tokens de Groq
+const MAX_ITEMS_PER_TYPE = 15;
+const MAX_TOTAL_CONTEXT = 50;
+const MAX_RESULTS = 15;
 
 interface ExtractedContent {
   index: number;
@@ -238,39 +238,24 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Construir contexto para Groq
+    // Construir contexto para Groq (limitar tamaño)
     const contentContext = allContent.map((item) => (
-      `[${item.index}] ${ENTITY_TYPE_LABELS[item.type]}: ${item.title}
-${item.content.substring(0, 250)}`
-    )).join('\n\n');
+      `[${item.index}] ${ENTITY_TYPE_LABELS[item.type]}: ${item.title} - ${item.content.substring(0, 150)}`
+    )).join('\n');
 
-    const systemPrompt = `Eres un asistente de búsqueda semántica experto para un sistema empresarial. Tu tarea es encontrar contenido relevante basándote en el SIGNIFICADO y CONCEPTO de la consulta, no solo en palabras clave.
+    const systemPrompt = `Eres un asistente de búsqueda semántica. Encuentra contenido relevante por SIGNIFICADO, no solo palabras clave.
 
-IMPORTANTE - Busca por significado semántico:
-- Si buscan "ventas del trimestre", considera deals, KPIs de ventas, reportes
-- Si buscan "problemas de rendimiento", considera prioridades bloqueadas, KPIs bajos, actividades de troubleshooting
-- Si buscan "clientes importantes", considera deals de alto valor, clientes con múltiples proyectos
-- Si buscan "pendientes urgentes", considera prioridades en riesgo, deals próximos a cerrar
-- Si buscan "comunicación con cliente X", considera mensajes, actividades, comentarios relacionados
-- Considera sinónimos: "ingresos" = "ventas" = "revenue", "problema" = "issue" = "bloqueo"
-- Entiende el contexto empresarial: CRM, KPIs, prioridades, proyectos
+Busca por significado: sinónimos, conceptos relacionados, contexto empresarial.
+Ejemplos: "ventas" incluye deals y KPIs. "problemas" incluye bloqueados y riesgos.
 
-Prioriza resultados que:
-1. Responden directamente a la intención del usuario
-2. Son recientes o activos
-3. Tienen mayor relevancia semántica
+Responde SOLO con un JSON array de índices ordenados por relevancia: [5, 12, 3]
+Máximo ${limit} resultados. Si no hay relevantes: []`;
 
-Responde ÚNICAMENTE con un JSON array de los índices más relevantes, ordenados por relevancia.
-Formato: [5, 12, 3, 8] (máximo ${limit} resultados)
-Si no hay resultados relevantes: []`;
-
-    const userPrompt = `Consulta del usuario: "${query}"
-
-Contenido disponible:
+    const userPrompt = `Buscar: "${query}"
 
 ${contentContext}
 
-Devuelve los índices de los ${limit} elementos más relevantes semánticamente.`;
+Índices relevantes:`;
 
     // Llamar a Groq API
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -291,10 +276,25 @@ Devuelve los índices de los ${limit} elementos más relevantes semánticamente.
     });
 
     if (!groqResponse.ok) {
-      const errorData = await groqResponse.json();
-      console.error('Groq API error:', errorData);
+      const errorText = await groqResponse.text();
+      console.error('Groq API error:', groqResponse.status, errorText);
+
+      // Intentar parsear el error
+      let errorMessage = 'Error al comunicarse con la IA';
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error?.message) {
+          errorMessage = `IA Error: ${errorData.error.message}`;
+        }
+      } catch (e) {
+        // Si no se puede parsear, usar el texto directamente
+        if (errorText) {
+          errorMessage = `Error de IA: ${errorText.substring(0, 100)}`;
+        }
+      }
+
       return NextResponse.json({
-        error: 'Error al comunicarse con la IA'
+        error: errorMessage
       }, { status: 500 });
     }
 
