@@ -22,6 +22,8 @@ import {
   AlertTriangle,
   Flag,
   Edit,
+  MessageCircle,
+  Send,
 } from 'lucide-react';
 
 interface ChecklistItem {
@@ -42,6 +44,17 @@ interface Initiative {
   _id: string;
   name: string;
   color: string;
+}
+
+interface Comment {
+  _id: string;
+  text: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
 }
 
 interface Priority {
@@ -82,7 +95,10 @@ export default function PriorityDetailPage() {
   const priorityId = params.id as string;
 
   const [priority, setPriority] = useState<Priority | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -96,18 +112,74 @@ export default function PriorityDetailPage() {
   const loadPriority = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/priorities/${priorityId}`);
-      if (!res.ok) {
+      const [priorityRes, commentsRes] = await Promise.all([
+        fetch(`/api/priorities/${priorityId}`),
+        fetch(`/api/comments?priorityId=${priorityId}`),
+      ]);
+
+      if (!priorityRes.ok) {
         router.push('/priorities');
         return;
       }
-      const data = await res.json();
+
+      const data = await priorityRes.json();
       setPriority(data);
+
+      if (commentsRes.ok) {
+        const commentsData = await commentsRes.json();
+        setComments(commentsData);
+      }
     } catch (error) {
       console.error('Error loading priority:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || submittingComment) return;
+
+    setSubmittingComment(true);
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priorityId,
+          text: newComment.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        setNewComment('');
+        // Recargar comentarios
+        const commentsRes = await fetch(`/api/comments?priorityId=${priorityId}`);
+        if (commentsRes.ok) {
+          const commentsData = await commentsRes.json();
+          setComments(commentsData);
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const formatCommentDate = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `hace ${diffMins}m`;
+    if (diffHours < 24) return `hace ${diffHours}h`;
+    if (diffDays < 7) return `hace ${diffDays}d`;
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
   };
 
   const getStatusConfig = (status: string) => {
@@ -388,6 +460,72 @@ export default function PriorityDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Comments */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-b dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                  <MessageCircle size={20} className="text-purple-500" />
+                  Comentarios ({comments.length})
+                </h2>
+              </div>
+
+              {/* Comment List */}
+              <div className="divide-y dark:divide-gray-700 max-h-96 overflow-y-auto">
+                {comments.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                    No hay comentarios aún
+                  </div>
+                ) : (
+                  comments.map((comment) => (
+                    <div key={comment._id} className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                          {comment.userId?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-gray-800 dark:text-gray-100 text-sm">
+                              {comment.userId?.name || 'Usuario'}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {formatCommentDate(comment.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-wrap break-words">
+                            {comment.text}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* New Comment Form */}
+              <form onSubmit={handleSubmitComment} className="p-4 border-t dark:border-gray-700">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Escribe un comentario..."
+                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim() || submittingComment}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {submittingComment ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Send size={16} />
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
           {/* Sidebar */}
