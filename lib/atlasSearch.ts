@@ -97,7 +97,7 @@ export const SEARCHABLE_ENTITIES: Record<SearchableEntityType, SearchableEntityC
     searchFields: ['content', 'voiceMessage.transcription'],
     titleField: 'content',
     subtitleFields: [],
-    urlPattern: '/projects/{projectId}/channels/{channelId}',
+    urlPattern: '/channels/{channelId}',
     icon: 'MessageSquare',
     priority: 70,
   },
