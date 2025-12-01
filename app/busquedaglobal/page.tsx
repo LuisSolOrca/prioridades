@@ -230,8 +230,11 @@ function GlobalSearchContent() {
     }
   }, [selectedTypes, searchAll, searchMode]);
 
-  // Debounce para búsqueda
+  // Debounce para búsqueda de texto (NO para semántica)
   useEffect(() => {
+    // Solo auto-buscar en modo texto
+    if (searchMode === 'semantic') return;
+
     const timer = setTimeout(() => {
       if (query.length >= 2) {
         performSearch(query);
@@ -247,15 +250,32 @@ function GlobalSearchContent() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query, performSearch]);
+  }, [query, performSearch, searchMode]);
 
-  // Re-buscar cuando cambian los filtros o el modo
+  // Re-buscar cuando cambian los filtros (solo en modo texto)
   useEffect(() => {
-    const minLength = searchMode === 'semantic' ? 3 : 2;
-    if (query.length >= minLength) {
+    if (searchMode === 'semantic') return;
+    if (query.length >= 2) {
       performSearch(query);
     }
-  }, [selectedTypes, searchAll, searchMode]);
+  }, [selectedTypes, searchAll]);
+
+  // Handler para búsqueda semántica manual
+  const handleSemanticSearch = () => {
+    if (query.length >= 3) {
+      performSearch(query);
+      // Actualizar URL
+      const newUrl = `/busquedaglobal?q=${encodeURIComponent(query)}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+  };
+
+  // Handler para Enter en modo semántico
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchMode === 'semantic' && query.length >= 3) {
+      handleSemanticSearch();
+    }
+  };
 
   // Toggle tipo de filtro
   const toggleType = (type: SearchableEntityType) => {
@@ -323,29 +343,51 @@ function GlobalSearchContent() {
 
           {/* Barra de búsqueda */}
           <div className="relative mb-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={searchMode === 'semantic'
-                  ? "Buscar por conceptos... (ej: 'deals próximos a cerrar', 'problemas de rendimiento')"
-                  : "Buscar en todo el sistema..."
-                }
-                className="w-full pl-12 pr-12 py-4 text-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-              />
-              {(query || loading) && (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={searchMode === 'semantic'
+                    ? "Buscar por conceptos... (ej: 'deals próximos a cerrar')"
+                    : "Buscar en todo el sistema..."
+                  }
+                  className="w-full pl-12 pr-12 py-4 text-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
+                />
+                {(query || loading) && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                    ) : (
+                      <X className="w-5 h-5 text-gray-400" />
+                    )}
+                  </button>
+                )}
+              </div>
+              {/* Botón de búsqueda solo en modo semántico */}
+              {searchMode === 'semantic' && (
                 <button
-                  onClick={clearSearch}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                  onClick={handleSemanticSearch}
+                  disabled={query.length < 3 || loading}
+                  className={`px-6 py-4 rounded-xl font-medium flex items-center gap-2 transition-all ${
+                    query.length >= 3 && !loading
+                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 shadow-lg hover:shadow-xl'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                  }`}
                 >
                   {loading ? (
-                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <X className="w-5 h-5 text-gray-400" />
+                    <Brain className="w-5 h-5" />
                   )}
+                  Buscar
                 </button>
               )}
             </div>
@@ -381,7 +423,7 @@ function GlobalSearchContent() {
             {searchMode === 'semantic' && (
               <p className="text-sm text-purple-600 dark:text-purple-400 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
-                Búsqueda inteligente con IA - entiende sinónimos y contexto
+                Presiona Enter o el botón para buscar con IA
               </p>
             )}
           </div>
