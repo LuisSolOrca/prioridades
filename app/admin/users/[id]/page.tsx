@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import PermissionGuard from '@/components/PermissionGuard';
 import {
   User,
   ArrowLeft,
@@ -58,14 +59,9 @@ export default function UserDetailPage() {
       router.push('/login');
     }
     if (status === 'authenticated') {
-      // Check admin role
-      if (session?.user?.role !== 'ADMIN') {
-        router.push('/dashboard');
-        return;
-      }
       loadData();
     }
-  }, [status, router, userId, session]);
+  }, [status, router, userId]);
 
   const loadData = async () => {
     try {
@@ -127,6 +123,7 @@ export default function UserDetailPage() {
   const roleConfig = getRoleConfig(user.role);
 
   return (
+    <PermissionGuard permission="viewDashboard" requireAdmin showNavbar={false}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-4xl mx-auto">
@@ -292,5 +289,6 @@ export default function UserDetailPage() {
         </div>
       </div>
     </div>
+    </PermissionGuard>
   );
 }

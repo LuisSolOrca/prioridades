@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import PermissionGuard from '@/components/PermissionGuard';
 import {
   Target,
   ArrowLeft,
@@ -112,6 +113,7 @@ export default function InitiativeDetailPage() {
   if (!session || !initiative) return null;
 
   return (
+    <PermissionGuard permission="viewDashboard" requireAdmin showNavbar={false}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       <div className="pt-16 main-content px-4 py-6 max-w-4xl mx-auto">
@@ -238,5 +240,6 @@ export default function InitiativeDetailPage() {
         </div>
       </div>
     </div>
+    </PermissionGuard>
   );
 }

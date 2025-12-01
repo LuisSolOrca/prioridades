@@ -1,35 +1,84 @@
 'use client';
 
-import { usePermissions } from '@/hooks/usePermissions';
-import { useRouter } from 'next/navigation';
+import { usePermissions, UserPermissions } from '@/hooks/usePermissions';
+import AccessDenied from '@/components/AccessDenied';
+import Navbar from '@/components/Navbar';
+import { Loader2 } from 'lucide-react';
 
 interface PermissionGuardProps {
   children: React.ReactNode;
-  permission: 'viewDashboard' | 'viewAreaDashboard' | 'viewMyPriorities' | 'viewReports' | 'viewAnalytics' | 'viewLeaderboard' | 'viewAutomations' | 'viewHistory';
-  fallbackPath?: string;
+  permission: keyof UserPermissions;
+  requireAdmin?: boolean;
+  showNavbar?: boolean;
+  customMessage?: string;
 }
 
-export default function PermissionGuard({ children, permission, fallbackPath = '/dashboard' }: PermissionGuardProps) {
-  const { hasPermission } = usePermissions();
-  const router = useRouter();
+// Mapeo de permisos a nombres legibles
+const PERMISSION_LABELS: Record<keyof UserPermissions, string> = {
+  viewDashboard: 'Ver Dashboard',
+  viewAreaDashboard: 'Ver Dashboard de Área',
+  viewMyPriorities: 'Ver Mis Prioridades',
+  viewReports: 'Ver Reportes',
+  viewAnalytics: 'Ver Analíticas',
+  viewLeaderboard: 'Ver Leaderboard',
+  viewAutomations: 'Ver Automatizaciones',
+  viewHistory: 'Ver Historial',
+  canReassignPriorities: 'Reasignar Prioridades',
+  canCreateMilestones: 'Crear Hitos',
+  canEditHistoricalPriorities: 'Editar Prioridades Históricas',
+  canManageProjects: 'Gestionar Proyectos',
+  canManageKPIs: 'Gestionar KPIs',
+  viewCRM: 'Ver CRM',
+  canManageDeals: 'Gestionar Deals',
+  canManageContacts: 'Gestionar Contactos',
+  canManagePipelineStages: 'Gestionar Etapas de Pipeline',
+};
 
-  if (!hasPermission(permission)) {
+export default function PermissionGuard({
+  children,
+  permission,
+  requireAdmin = false,
+  showNavbar = true,
+  customMessage,
+}: PermissionGuardProps) {
+  const { hasPermission, isAdmin, isLoading } = usePermissions();
+
+  // Mostrar loading mientras se cargan los permisos
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md max-w-md">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-            Acceso Denegado
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            No tienes permiso para acceder a esta sección.
-          </p>
-          <button
-            onClick={() => router.push(fallbackPath)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Volver al Dashboard
-          </button>
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Verificar si requiere admin
+  if (requireAdmin && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {showNavbar && <Navbar />}
+        <div className={showNavbar ? 'pt-16' : ''}>
+          <AccessDenied
+            title="Acceso Restringido"
+            message={customMessage || "Esta sección es exclusiva para administradores."}
+            requiredRole="Administrador"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar permiso específico
+  if (!hasPermission(permission)) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {showNavbar && <Navbar />}
+        <div className={showNavbar ? 'pt-16' : ''}>
+          <AccessDenied
+            title="Acceso Denegado"
+            message={customMessage || `No tienes permiso para acceder a esta sección.`}
+            requiredRole={PERMISSION_LABELS[permission]}
+          />
         </div>
       </div>
     );
