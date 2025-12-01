@@ -6,9 +6,45 @@ import User from '@/models/User';
 import StrategicInitiative from '@/models/StrategicInitiative';
 import Client from '@/models/Client';
 import Project from '@/models/Project';
-import { getWeekDates } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Get week dates adjusted for Mexico City timezone (CST/CDT = UTC-6/UTC-5)
+ * This ensures consistency between frontend (browser in Mexico) and backend (Vercel in UTC)
+ */
+function getWeekDatesForTimezone(date: Date = new Date()): { monday: Date; friday: Date } {
+  // Mexico City timezone offset (CST = UTC-6, CDT = UTC-5)
+  // We use -6 hours as the standard offset for CST
+  const MEXICO_OFFSET_HOURS = -6;
+
+  // Convert UTC time to Mexico time
+  const mexicoTime = new Date(date.getTime() + (MEXICO_OFFSET_HOURS * 60 * 60 * 1000));
+
+  // Calculate Monday of the week in Mexico time
+  const day = mexicoTime.getUTCDay();
+  const diff = mexicoTime.getUTCDate() - day + (day === 0 ? -6 : 1);
+
+  // Create Monday at midnight Mexico time (which is 06:00 UTC)
+  const mondayMexico = new Date(Date.UTC(
+    mexicoTime.getUTCFullYear(),
+    mexicoTime.getUTCMonth(),
+    diff,
+    -MEXICO_OFFSET_HOURS, // 6:00 UTC = 00:00 Mexico
+    0, 0, 0
+  ));
+
+  // Create Friday at 23:59:59.999 Mexico time (which is 05:59:59.999 UTC next day)
+  const fridayMexico = new Date(Date.UTC(
+    mexicoTime.getUTCFullYear(),
+    mexicoTime.getUTCMonth(),
+    diff + 4,
+    23 - MEXICO_OFFSET_HOURS, // 29 = 23 + 6, but we need to handle day overflow
+    59, 59, 999
+  ));
+
+  return { monday: mondayMexico, friday: fridayMexico };
+}
 
 /**
  * API endpoint to automatically reschedule priorities that expired in EN_TIEMPO status
@@ -28,12 +64,11 @@ export async function POST() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Get current week's Monday and Friday using the same logic as the rest of the app
-    // This will reschedule expired priorities to the current week
-    const currentWeek = getWeekDates(now);
+    // Get current week's Monday and Friday using timezone-aware calculation
+    // This ensures dates match what users see in Mexico timezone
+    const currentWeek = getWeekDatesForTimezone(now);
     const currentMonday = currentWeek.monday;
-    const currentFriday = new Date(currentWeek.friday);
-    currentFriday.setHours(23, 59, 59, 999);
+    const currentFriday = currentWeek.friday;
 
     // Find priorities that:
     // 1. Have weekEnd before today (expired)
