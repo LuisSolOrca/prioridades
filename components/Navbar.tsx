@@ -384,6 +384,17 @@ export default function Navbar() {
                 >
                   <TrendingUp size={22} />
                 </button>
+                <button
+                  onClick={() => handleNavigation('/initiatives')}
+                  className={`w-full flex justify-center p-3 rounded-lg transition ${
+                    pathname === '/initiatives'
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  title="Iniciativas Estratégicas"
+                >
+                  <Target size={22} />
+                </button>
 
                 {/* CRM - Collapsed view with distinctive style */}
                 {hasPermission('viewCRM') && (
@@ -639,6 +650,18 @@ export default function Navbar() {
                   active={pathname?.startsWith('/channels') || false}
                   onClick={() => handleNavigation('/channels')}
                 />
+                <NavButton
+                  icon={<TrendingUp size={20} />}
+                  label="Seguimiento de KPIs"
+                  active={pathname === '/kpi-tracking'}
+                  onClick={() => handleNavigation('/kpi-tracking')}
+                />
+                <NavButton
+                  icon={<Target size={20} />}
+                  label="Iniciativas"
+                  active={pathname === '/initiatives'}
+                  onClick={() => handleNavigation('/initiatives')}
+                />
 
                 {/* Gestión Section */}
                 {(hasPermission('viewAutomations') || hasPermission('viewHistory') || hasPermission('canManageProjects') || hasPermission('canManageKPIs')) && (
@@ -680,12 +703,6 @@ export default function Navbar() {
                         onClick={() => handleNavigation('/admin/kpis')}
                       />
                     )}
-                    <NavButton
-                      icon={<TrendingUp size={20} />}
-                      label="Seguimiento de KPIs"
-                      active={pathname === '/kpi-tracking'}
-                      onClick={() => handleNavigation('/kpi-tracking')}
-                    />
                   </>
                 )}
 
