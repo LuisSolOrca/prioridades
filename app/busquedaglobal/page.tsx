@@ -36,6 +36,8 @@ import {
   Settings,
   Clock,
   ArrowRight,
+  Sparkles,
+  Brain,
 } from 'lucide-react';
 import { ENTITY_TYPE_LABELS, SearchableEntityType } from '@/lib/atlasSearch';
 
@@ -107,6 +109,8 @@ function GlobalSearchContent() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showAllTypes, setShowAllTypes] = useState(false);
   const [searchAll, setSearchAll] = useState(false);
+  const [semanticMode, setSemanticMode] = useState(false);
+  const [searchMode, setSearchMode] = useState<'text' | 'semantic'>('text');
 
   // Cargar búsquedas recientes del localStorage
   useEffect(() => {
@@ -161,28 +165,59 @@ function GlobalSearchContent() {
       return;
     }
 
+    // Búsqueda semántica requiere mínimo 3 caracteres
+    if (searchMode === 'semantic' && searchQuery.length < 3) {
+      setResults([]);
+      setCounts({});
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams({ q: searchQuery });
+      let data: GlobalSearchResponse;
 
-      if (selectedTypes.length > 0) {
-        params.set('types', selectedTypes.join(','));
-      } else if (searchAll) {
-        params.set('all', 'true');
+      if (searchMode === 'semantic') {
+        // Búsqueda semántica con Groq
+        const res = await fetch('/api/global-search/semantic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: searchQuery,
+            types: selectedTypes.length > 0 ? selectedTypes : undefined,
+            limit: 20,
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Error en la búsqueda semántica');
+        }
+
+        data = await res.json();
+      } else {
+        // Búsqueda tradicional con Atlas Search
+        const params = new URLSearchParams({ q: searchQuery });
+
+        if (selectedTypes.length > 0) {
+          params.set('types', selectedTypes.join(','));
+        } else if (searchAll) {
+          params.set('all', 'true');
+        }
+
+        params.set('limit', '50');
+
+        const res = await fetch(`/api/global-search?${params}`);
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Error en la búsqueda');
+        }
+
+        data = await res.json();
       }
 
-      params.set('limit', '50');
-
-      const res = await fetch(`/api/global-search?${params}`);
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error en la búsqueda');
-      }
-
-      const data: GlobalSearchResponse = await res.json();
       setResults(data.results);
       setCounts(data.counts);
       saveRecentSearch(searchQuery);
@@ -193,7 +228,7 @@ function GlobalSearchContent() {
     } finally {
       setLoading(false);
     }
-  }, [selectedTypes, searchAll]);
+  }, [selectedTypes, searchAll, searchMode]);
 
   // Debounce para búsqueda
   useEffect(() => {
@@ -214,12 +249,13 @@ function GlobalSearchContent() {
     return () => clearTimeout(timer);
   }, [query, performSearch]);
 
-  // Re-buscar cuando cambian los filtros
+  // Re-buscar cuando cambian los filtros o el modo
   useEffect(() => {
-    if (query.length >= 2) {
+    const minLength = searchMode === 'semantic' ? 3 : 2;
+    if (query.length >= minLength) {
       performSearch(query);
     }
-  }, [selectedTypes, searchAll]);
+  }, [selectedTypes, searchAll, searchMode]);
 
   // Toggle tipo de filtro
   const toggleType = (type: SearchableEntityType) => {
@@ -286,7 +322,7 @@ function GlobalSearchContent() {
           </div>
 
           {/* Barra de búsqueda */}
-          <div className="relative mb-6">
+          <div className="relative mb-4">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -294,7 +330,10 @@ function GlobalSearchContent() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar en todo el sistema..."
+                placeholder={searchMode === 'semantic'
+                  ? "Buscar por conceptos... (ej: 'deals próximos a cerrar', 'problemas de rendimiento')"
+                  : "Buscar en todo el sistema..."
+                }
                 className="w-full pl-12 pr-12 py-4 text-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
               />
               {(query || loading) && (
@@ -310,6 +349,41 @@ function GlobalSearchContent() {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Toggle de modo de búsqueda */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+              <button
+                onClick={() => setSearchMode('text')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  searchMode === 'text'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                <Search className="w-4 h-4" />
+                Texto
+              </button>
+              <button
+                onClick={() => setSearchMode('semantic')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  searchMode === 'semantic'
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                <Brain className="w-4 h-4" />
+                Conceptos
+                <Sparkles className="w-3 h-3" />
+              </button>
+            </div>
+            {searchMode === 'semantic' && (
+              <p className="text-sm text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Búsqueda inteligente con IA - entiende sinónimos y contexto
+              </p>
+            )}
           </div>
 
           {/* Filtros por tipo */}
@@ -425,11 +499,13 @@ function GlobalSearchContent() {
           )}
 
           {/* Resultados */}
-          {query.length >= 2 ? (
+          {query.length >= (searchMode === 'semantic' ? 3 : 2) ? (
             results.length > 0 ? (
               <div className="space-y-6">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  {searchMode === 'semantic' && <Brain className="w-4 h-4 text-purple-500" />}
                   {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}
+                  {searchMode === 'semantic' && ' por relevancia semántica'}
                 </p>
 
                 {Object.entries(groupedResults).map(([type, typeResults]) => (
@@ -487,12 +563,18 @@ function GlobalSearchContent() {
               </div>
             ) : !loading ? (
               <div className="text-center py-12">
-                <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                {searchMode === 'semantic' ? (
+                  <Brain className="w-12 h-12 text-purple-300 dark:text-purple-700 mx-auto mb-4" />
+                ) : (
+                  <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                )}
                 <p className="text-gray-500 dark:text-gray-400">
                   No se encontraron resultados para "{query}"
                 </p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                  Intenta con otros términos o revisa los filtros
+                  {searchMode === 'semantic'
+                    ? 'Intenta describir lo que buscas de otra manera'
+                    : 'Intenta con otros términos o revisa los filtros'}
                 </p>
               </div>
             ) : null
@@ -520,10 +602,24 @@ function GlobalSearchContent() {
               )}
 
               <div className="text-center py-8">
-                <Search className="w-16 h-16 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  Escribe al menos 2 caracteres para buscar
-                </p>
+                {searchMode === 'semantic' ? (
+                  <>
+                    <Brain className="w-16 h-16 text-purple-200 dark:text-purple-800 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Escribe al menos 3 caracteres para buscar por conceptos
+                    </p>
+                    <p className="text-sm text-purple-500 dark:text-purple-400 mt-2">
+                      Ejemplos: "deals importantes", "tareas atrasadas", "clientes de tecnología"
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-16 h-16 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Escribe al menos 2 caracteres para buscar
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           )}
