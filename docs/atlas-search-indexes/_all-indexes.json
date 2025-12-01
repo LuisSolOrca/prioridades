@@ -1,0 +1,865 @@
+{
+  "priorities": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "title": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "contacts": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "firstName": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "lastName": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "email": {
+            "type": "string",
+            "analyzer": "lucene.keyword"
+          },
+          "phone": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "position": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "deals": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "title": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "clients": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "industry": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "crmNotes": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "projects": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "purpose": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "users": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "email": {
+            "type": "string",
+            "analyzer": "lucene.keyword"
+          },
+          "area": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "channelmessages": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "content": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "voiceMessage": {
+            "type": "document",
+            "fields": {
+              "transcription": [
+                {
+                  "type": "string",
+                  "analyzer": "lucene.spanish"
+                },
+                {
+                  "type": "autocomplete",
+                  "analyzer": "lucene.standard"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "comments": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "text": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "kpis": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "strategicObjective": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "products": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "sku": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "category": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "emailtemplates": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "subject": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "body": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "channels": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "activities": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "title": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "outcome": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "quotes": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "title": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "milestones": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "title": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "webforms": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "title": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "workflows": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "crmworkflows": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "strategicinitiatives": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "pipelines": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "pipelinestages": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "competitors": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "website": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "emailsequences": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "badges": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "description": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "customfields": {
+    "name": "global_search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "name": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "label": [
+            {
+              "type": "string",
+              "analyzer": "lucene.spanish"
+            },
+            {
+              "type": "autocomplete",
+              "analyzer": "lucene.standard"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

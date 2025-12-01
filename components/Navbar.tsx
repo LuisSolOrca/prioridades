@@ -44,6 +44,7 @@ import {
   Copy,
   FileText,
   FileInput,
+  Search,
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -217,6 +218,20 @@ export default function Navbar() {
             {sidebarCollapsed ? (
               // Collapsed view - only icons
               <>
+                {/* Búsqueda Global - siempre visible arriba de todo */}
+                <button
+                  onClick={() => handleNavigation('/busquedaglobal')}
+                  className={`w-full flex justify-center p-3 rounded-lg transition mb-2 ${
+                    pathname === '/busquedaglobal'
+                      ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                      : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 bg-purple-50/50 dark:bg-purple-900/20'
+                  }`}
+                  title="Búsqueda Global"
+                >
+                  <Search size={22} />
+                </button>
+                <div className="border-b border-gray-200 dark:border-gray-700 mb-2" />
+
                 {hasPermission('viewDashboard') && (
                   <button
                     onClick={() => handleNavigation('/dashboard')}
@@ -554,6 +569,22 @@ export default function Navbar() {
             ) : (
               // Expanded view - icons and labels
               <>
+                {/* Búsqueda Global - siempre visible arriba de todo */}
+                <div className="mb-2">
+                  <button
+                    onClick={() => handleNavigation('/busquedaglobal')}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition ${
+                      pathname === '/busquedaglobal'
+                        ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                        : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 bg-purple-50/50 dark:bg-purple-900/20'
+                    }`}
+                  >
+                    <Search size={20} />
+                    <span>Búsqueda Global</span>
+                  </button>
+                </div>
+                <div className="border-b border-gray-200 dark:border-gray-700 mb-2" />
+
                 {hasPermission('viewDashboard') && (
                   <NavButton
                     icon={<LayoutDashboard size={20} />}

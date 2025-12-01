@@ -1,0 +1,50 @@
+{
+  "name": "global_search",
+  "definition": {
+    "mappings": {
+      "dynamic": false,
+      "fields": {
+        "name": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "description": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "industry": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "crmNotes": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ]
+      }
+    }
+  }
+}

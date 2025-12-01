@@ -1,0 +1,54 @@
+{
+  "name": "global_search",
+  "definition": {
+    "mappings": {
+      "dynamic": false,
+      "fields": {
+        "firstName": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "lastName": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "email": {
+          "type": "string",
+          "analyzer": "lucene.keyword"
+        },
+        "phone": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "position": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ]
+      }
+    }
+  }
+}

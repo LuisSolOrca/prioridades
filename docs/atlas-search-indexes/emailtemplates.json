@@ -1,0 +1,50 @@
+{
+  "name": "global_search",
+  "definition": {
+    "mappings": {
+      "dynamic": false,
+      "fields": {
+        "name": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "description": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "subject": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ],
+        "body": [
+          {
+            "type": "string",
+            "analyzer": "lucene.spanish"
+          },
+          {
+            "type": "autocomplete",
+            "analyzer": "lucene.standard"
+          }
+        ]
+      }
+    }
+  }
+}
