@@ -34,49 +34,55 @@
     - [Tipos de Actividad](#tipos-de-actividad)
     - [Registro de Actividades](#registro-de-actividades)
     - [Tareas Pendientes](#tareas-pendientes)
-12. [Importación de Datos](#importación-de-datos)
+    - [Vista de Calendario](#vista-de-calendario)
+12. [Métricas Financieras](#métricas-financieras)
+    - [Indicadores de Ventas](#indicadores-de-ventas)
+    - [Indicadores Financieros](#indicadores-financieros)
+    - [Retención y Churn](#retención-y-churn)
+    - [Concentración de Cartera](#concentración-de-cartera)
+13. [Importación de Datos](#importación-de-datos)
     - [Tipos de Importación](#tipos-de-importación)
     - [Flujo de Importación](#flujo-de-importación)
     - [Mapeo de Columnas](#mapeo-de-columnas)
-13. [Reportes CRM](#reportes-crm)
+14. [Reportes CRM](#reportes-crm)
     - [Métricas del Pipeline](#métricas-del-pipeline)
     - [Tendencia Mensual](#tendencia-mensual)
     - [Forecast](#forecast)
     - [Rendimiento por Vendedor](#rendimiento-por-vendedor)
     - [Exportación PDF](#exportación-pdf)
-14. [Modelos de Datos](#modelos-de-datos)
-15. [API Endpoints](#api-endpoints)
-16. [Email Tracking](#email-tracking)
-17. [Lead Scoring](#lead-scoring)
-18. [Workflows y Automatizaciones](#workflows-y-automatizaciones)
+15. [Modelos de Datos](#modelos-de-datos)
+16. [API Endpoints](#api-endpoints)
+17. [Email Tracking](#email-tracking)
+18. [Lead Scoring](#lead-scoring)
+19. [Workflows y Automatizaciones](#workflows-y-automatizaciones)
     - [Acción: Crear Prioridad](#acción-crear-prioridad)
     - [Acción: Enviar Mensaje a Canal](#acción-enviar-mensaje-a-canal)
-19. [Secuencias de Email](#secuencias-de-email)
+20. [Secuencias de Email](#secuencias-de-email)
     - [Editor Visual de Plantillas](#editor-visual-de-plantillas-de-email)
     - [Variables Disponibles](#variables-disponibles)
     - [Biblioteca de Plantillas](#biblioteca-de-plantillas)
     - [Generación con IA](#generación-de-plantillas-con-ia)
-20. [Campos Personalizados](#campos-personalizados)
-21. [Detección de Duplicados](#detección-de-duplicados)
-22. [Cuotas y Metas de Ventas](#cuotas-y-metas-de-ventas)
-23. [Integración con Canales](#integración-con-canales)
-24. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
-25. [Competidores](#competidores)
-26. [Webhooks Salientes](#webhooks-salientes)
-27. [Funciones de Inteligencia Artificial](#funciones-de-inteligencia-artificial)
+21. [Campos Personalizados](#campos-personalizados)
+22. [Detección de Duplicados](#detección-de-duplicados)
+23. [Cuotas y Metas de Ventas](#cuotas-y-metas-de-ventas)
+24. [Integración con Canales](#integración-con-canales)
+25. [Limitaciones y Consideraciones](#limitaciones-y-consideraciones)
+26. [Competidores](#competidores)
+27. [Webhooks Salientes](#webhooks-salientes)
+28. [Funciones de Inteligencia Artificial](#funciones-de-inteligencia-artificial)
     - [Asistente de Email](#asistente-de-email)
     - [Resumen Inteligente](#resumen-inteligente)
     - [Siguiente Mejor Acción](#siguiente-mejor-acción-next-best-action)
     - [Predicción de Cierre](#predicción-de-cierre)
     - [Panel Unificado de IA](#panel-unificado-de-ia)
-28. [Formularios WebToLead](#formularios-webtolead)
+29. [Formularios WebToLead](#formularios-webtolead)
     - [Crear Formulario](#crear-formulario)
     - [Builder de Campos](#builder-de-campos)
     - [Personalización de Estilos](#personalización-de-estilos)
     - [Acciones Post-Submit](#acciones-post-submit)
     - [Códigos de Embed](#códigos-de-embed)
     - [Submissions y Conversiones](#submissions-y-conversiones)
-29. [Changelog](#changelog)
+30. [Changelog](#changelog)
 
 ---
 
@@ -127,6 +133,9 @@ El **Sistema CRM** (Customer Relationship Management) es un módulo integrado en
 - ⚡ **Siguiente Mejor Acción** - Recomendaciones priorizadas con IA
 - 🎯 **Predicción de Cierre** - Probabilidad de ganar deals con factores y recomendaciones
 - 📝 **Formularios WebToLead** - Captura de leads desde sitios externos con builder visual y embed
+- 📅 **Vista de Calendario** - Calendario mensual de actividades con filtros y navegación
+- 📊 **Métricas Financieras Avanzadas** - Dashboard con 22+ indicadores de ventas y finanzas
+- 💰 **Campos Financieros** - Tipo de deal, MRR, costo de venta, margen y tracking de ciclo de vida
 
 ---
 
@@ -171,30 +180,72 @@ interface UserPermissions {
 
 **Ubicación:** `/crm`
 
-El dashboard proporciona una vista general del estado del CRM:
+El dashboard proporciona una vista completa del estado del CRM con más de 22 indicadores clave de rendimiento organizados en secciones visuales profesionales.
 
-### Métricas Principales
+### Selector de Período
+
+En la parte superior del dashboard se puede seleccionar el período de análisis:
+- **Mes** - Métricas del mes actual vs mes anterior
+- **Trimestre** - Métricas del trimestre actual vs trimestre anterior
+- **Año** - Métricas del año actual vs año anterior
+
+### Métricas de Rendimiento de Ventas
+
+**Gauges Circulares:**
+| Métrica | Descripción |
+|---------|-------------|
+| **Win Rate** | % de deals ganados sobre deals cerrados |
+| **Conversión** | % de deals que avanzan en el pipeline |
+| **Cuota** | % de cumplimiento de la cuota de ventas |
+
+**KPIs en Cards:**
+| Métrica | Descripción |
+|---------|-------------|
+| **Velocidad Pipeline** | Velocidad promedio de conversión del pipeline |
+| **Ciclo de Venta** | Días promedio para cerrar un deal |
+| **Lead → Oportunidad** | Tasa de conversión de leads a oportunidades |
+| **Ticket Promedio** | Valor promedio de deals ganados |
+
+### Distribución de Leads
+
+Visualización de leads por temperatura:
+- 🔴 **Hot** - Leads calientes, alta probabilidad de cierre
+- 🟡 **Warm** - Leads tibios, requieren seguimiento
+- 🔵 **Cold** - Leads fríos, necesitan nurturing
+
+### Actividad y Engagement
 
 | Métrica | Descripción |
 |---------|-------------|
-| **Total Pipeline** | Valor total de deals abiertos |
-| **Valor Ponderado** | Suma de (valor × probabilidad) de cada deal |
-| **Deals Abiertos** | Cantidad de deals activos |
-| **Clientes** | Total de clientes registrados |
-| **Contactos** | Total de contactos activos |
+| **Actividades/Deal** | Promedio de actividades por oportunidad |
+| **No-Show Meetings** | % de reuniones sin asistencia |
+| **Clientes Recurrentes** | % de clientes con múltiples compras |
 
-### Secciones del Dashboard
+### Rendimiento por Vendedor
 
-1. **KPIs Rápidos** - Cards con métricas clave
-2. **Pipeline Visual** - Resumen de deals por etapa con barras de progreso
-3. **Deals Recientes** - Lista de últimos deals creados/actualizados
-4. **Actividades Recientes** - Últimas actividades registradas
-5. **Accesos Rápidos** - Botones para navegar a secciones principales:
-   - Pipeline de Ventas
-   - Contactos
-   - Clientes
-   - Productos
-   - Importar
+Ranking de vendedores con:
+- Posición en el ranking
+- Nombre del vendedor
+- Valor total ganado
+- Cantidad de deals
+- Barra de progreso visual
+
+### Comparación de Períodos
+
+Indicadores de cambio vs período anterior:
+- 📈 **Valor Ganado** - Cambio % en valor cerrado
+- 📊 **Deals Ganados** - Cambio % en cantidad de deals
+- 🎯 **Win Rate** - Cambio en puntos porcentuales
+
+### Métricas Financieras
+
+Ver sección [Métricas Financieras](#métricas-financieras) para detalles completos de indicadores financieros.
+
+### Pipeline por Etapa
+
+Visualización del pipeline con barras de progreso por etapa mostrando:
+- Cantidad de deals por etapa
+- Valor total y valor ponderado
 
 ---
 
@@ -624,6 +675,181 @@ Las actividades de tipo `task` tienen funcionalidad adicional:
 - 📅 **Fecha de vencimiento** - Alertas visuales para vencidas
 - 👤 **Asignación** - Puede asignarse a otro usuario
 - 📋 **Filtro "Solo pendientes"** - Ver solo tareas sin completar
+
+### Vista de Calendario
+
+**Ubicación:** `/crm/calendar`
+
+Vista de calendario mensual que muestra todas las actividades del CRM de forma visual.
+
+**Características:**
+- 📅 **Vista mensual** - Navegación mes a mes con flechas o botón "Hoy"
+- 🎨 **Tarjetas por tipo** - Cada actividad se muestra como card con color según tipo
+- 🔍 **Filtros avanzados** - Por tipo de actividad, responsable y estado
+- ⏰ **Hora visible** - Muestra la hora de cada actividad en la tarjeta
+- ✅ **Estado visual** - Indicador de completado/pendiente
+- 🔗 **Acceso rápido** - Click en actividad abre el detalle del deal asociado
+
+**Filtros disponibles:**
+| Filtro | Opciones |
+|--------|----------|
+| **Tipo** | Todos, Llamada, Email, Reunión, Tarea, Nota |
+| **Responsable** | Todos los usuarios o usuario específico |
+| **Estado** | Todas, Solo completadas, Solo pendientes |
+
+**Colores por tipo de actividad:**
+| Tipo | Color de fondo |
+|------|----------------|
+| Llamada | Azul |
+| Email | Verde |
+| Reunión | Púrpura |
+| Tarea | Ámbar |
+| Nota | Gris |
+
+**API:** `GET /api/crm/activities/calendar?start={fecha}&end={fecha}`
+
+---
+
+## Métricas Financieras
+
+**Ubicación:** `/crm` (sección inferior del dashboard)
+
+El dashboard incluye una sección completa de métricas financieras para análisis avanzado del negocio.
+
+### Indicadores de Ventas
+
+**KPIs de Revenue:**
+| Métrica | Descripción |
+|---------|-------------|
+| **MRR** | Monthly Recurring Revenue - Ingresos recurrentes mensuales |
+| **ARR** | Annual Recurring Revenue - MRR × 12 |
+| **CLTV Promedio** | Customer Lifetime Value - Valor promedio de vida del cliente |
+| **Revenue/Vendedor** | Ingresos promedio generados por vendedor |
+
+### Indicadores Financieros
+
+**Margen y Rentabilidad:**
+| Métrica | Descripción | Cálculo |
+|---------|-------------|---------|
+| **Tasa de Margen** | % de margen sobre ventas | (Valor - Costo) / Valor × 100 |
+| **Margen Promedio** | Margen promedio por deal | Σ Márgenes / # Deals |
+| **Margen Total** | Suma total de márgenes | Σ (Valor - Costo de venta) |
+
+**Visualización:**
+- Barra de progreso con colores según performance
+  - 🟢 Verde: >30% margen
+  - 🟡 Ámbar: 15-30% margen
+  - 🔴 Rojo: <15% margen
+
+### Retención y Churn
+
+**Gauges Circulares:**
+| Métrica | Descripción | Fórmula |
+|---------|-------------|---------|
+| **Tasa de Retención** | % de clientes retenidos | Activos / (Activos + Perdidos) × 100 |
+| **Tasa de Churn** | % de clientes perdidos | Perdidos / (Activos + Perdidos) × 100 |
+
+**Contadores por Estado:**
+| Estado | Color | Descripción |
+|--------|-------|-------------|
+| **Activos** | Verde | Clientes con status "active" |
+| **En Riesgo** | Ámbar | Clientes con status "at_risk" |
+| **Perdidos** | Rojo | Clientes con status "churned" |
+
+### Expansión de Ingresos
+
+| Métrica | Descripción |
+|---------|-------------|
+| **Tasa de Upsell** | % de clientes con deals de upsell/cross-sell |
+| **Nuevo Negocio** | Ingresos de deals tipo "new_business" |
+| **Upsell/Cross-sell** | Ingresos de deals tipo "upsell" o "cross_sell" |
+| **Renovaciones** | Ingresos de deals tipo "renewal" |
+
+### Concentración de Cartera
+
+**Análisis de Riesgo:**
+- **Indicador de Concentración** - % de ingresos en Top 10 clientes
+  - 🟢 <30%: Cartera diversificada
+  - 🟡 30-50%: Concentración moderada
+  - 🔴 >50%: Alta concentración (riesgo)
+
+**Top Clientes:**
+Muestra los 5 principales clientes con:
+- Posición en ranking (medalla para top 3)
+- Nombre del cliente
+- Ingresos totales
+- % del total de ingresos
+
+### Campos Financieros en Deals
+
+Para habilitar las métricas financieras, los deals incluyen campos adicionales:
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `dealType` | Enum | new_business, upsell, cross_sell, renewal |
+| `isRecurring` | Boolean | Indica si es ingreso recurrente |
+| `recurringFrequency` | Enum | monthly, quarterly, yearly |
+| `recurringValue` | Number | Valor mensual recurrente (MRR) |
+| `costOfSale` | Number | Costo de venta para calcular margen |
+| `margin` | Number | Margen calculado (valor - costo) |
+
+**Formulario de Deal:**
+Los campos aparecen en una sección "Información Financiera" con:
+- Selector de tipo de deal
+- Campo de costo de venta
+- Checkbox "Es ingreso recurrente" que expande:
+  - Frecuencia de recurrencia
+  - Valor mensual (MRR)
+
+### Campos de Ciclo de Vida en Clientes
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `status` | Enum | prospect, active, at_risk, churned, inactive |
+| `acquisitionCost` | Number | Costo de adquisición del cliente (CAC) |
+| `monthlyRecurringRevenue` | Number | MRR actual del cliente |
+| `lifetimeValue` | Number | CLTV calculado o estimado |
+| `firstDealDate` | Date | Fecha del primer deal ganado |
+| `lastDealDate` | Date | Fecha del último deal ganado |
+| `churnedAt` | Date | Fecha en que se perdió el cliente |
+| `churnReason` | String | Razón de pérdida |
+
+**Formulario de Cliente:**
+Los campos aparecen en una sección "Ciclo de Vida y Finanzas" con:
+- Selector de estado del cliente
+- Campo de costo de adquisición (CAC)
+- Campo de MRR del cliente
+- Campo de CLTV (solo en edición)
+
+### API de Analytics
+
+**Endpoint:** `GET /api/crm/analytics?period={month|quarter|year}`
+
+**Response incluye:**
+```typescript
+{
+  // Métricas de ventas
+  winRate: number,
+  conversionRate: number,
+  pipelineVelocity: number,
+  avgSalesCycleDays: number,
+
+  // Métricas financieras
+  mrr: number,
+  arr: number,
+  avgCustomerLifetimeValue: number,
+  avgMargin: number,
+  marginRate: number,
+  retentionRate: number,
+  churnRate: number,
+  upsellRate: number,
+  portfolioConcentration: number,
+
+  // Desglose
+  topClients: [{ clientId, clientName, revenue, percentage }],
+  dealsByOwner: [{ ownerId, ownerName, count, value, wonValue }]
+}
+```
 
 ---
 
@@ -3144,6 +3370,35 @@ interface WebFormSubmission {
 ---
 
 ## Changelog
+
+### v2.10.0 - 1 de Diciembre 2025
+- ✨ **Vista de Calendario de Actividades** - Nueva vista mensual para actividades
+  - Navegación mes a mes con botones de navegación
+  - Cards de actividad con colores por tipo
+  - Filtros por tipo, responsable y estado de completado
+  - Hora y estado visual en cada actividad
+  - Click para ver detalle del deal asociado
+  - API dedicada: `/api/crm/activities/calendar`
+  - Página: `/crm/calendar`
+- ✨ **Dashboard de Métricas Financieras** - 22+ indicadores de ventas y finanzas
+  - **Indicadores de Revenue**: MRR, ARR, CLTV, Revenue por vendedor
+  - **Margen y Rentabilidad**: Tasa de margen, margen promedio y total
+  - **Retención y Churn**: Gauges circulares con tasas y contadores
+  - **Expansión de Ingresos**: Upsell rate, desglose por tipo de deal
+  - **Concentración de Cartera**: Top 10 clientes con % de ingresos
+  - Selector de período (mes/trimestre/año) con comparación
+  - Comparación vs período anterior con indicadores de cambio
+- ✨ **Campos Financieros en Deals** - Nuevos campos para métricas
+  - Tipo de deal: nuevo negocio, upsell, cross-sell, renovación
+  - Ingreso recurrente con frecuencia y valor MRR
+  - Costo de venta para cálculo de margen
+  - Sección visual "Información Financiera" en formularios
+- ✨ **Campos de Ciclo de Vida en Clientes** - Tracking de clientes
+  - Estado: prospecto, activo, en riesgo, inactivo, perdido
+  - Costo de adquisición (CAC)
+  - MRR y CLTV del cliente
+  - Sección visual "Ciclo de Vida y Finanzas" en formularios
+- 🔄 **API de Analytics mejorada** - `/api/crm/analytics` con todas las métricas financieras
 
 ### v2.9.0 - 30 de Noviembre 2025
 - ✨ **Formularios WebToLead** - Captura de leads desde sitios externos
