@@ -367,10 +367,13 @@ export interface LeaderboardResetResult {
  */
 export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardResetResult> {
   try {
-    // Obtener top 3 del mes
-    const topUsers = await User.find({ isActive: true }).sort({ 'gamification.currentMonthPoints': -1 }).limit(3);
+    // Obtener TODOS los usuarios activos
+    const allActiveUsers = await User.find({ isActive: true });
 
-    if (topUsers.length === 0) {
+    // Filtrar Francisco Puente del leaderboard (igual que en getMonthlyLeaderboard)
+    const eligibleUsers = allActiveUsers.filter(u => u._id.toString() !== DIRECCION_GENERAL_USER_ID);
+
+    if (eligibleUsers.length === 0) {
       return {
         resetCompleted: false,
         winners: [],
@@ -379,8 +382,37 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
       };
     }
 
-    // Obtener TODOS los usuarios activos para enviarles copia
-    const allActiveUsers = await User.find({ isActive: true });
+    // Calcular puntos REALES para cada usuario (basados en prioridades, no en valor almacenado)
+    const usersWithCalculatedPoints = await Promise.all(
+      eligibleUsers.map(async (user) => {
+        const calculatedPoints = await calculateCurrentMonthPoints(user._id.toString());
+        return {
+          user,
+          points: calculatedPoints
+        };
+      })
+    );
+
+    // Ordenar por puntos calculados (descendente) y tomar top 3
+    const sortedUsers = usersWithCalculatedPoints
+      .filter(u => u.points > 0)
+      .sort((a, b) => b.points - a.points);
+
+    const topUsers = sortedUsers.slice(0, 3);
+
+    if (topUsers.length === 0) {
+      // No hay usuarios con puntos positivos, solo resetear
+      await User.updateMany(
+        { isActive: true },
+        { $set: { 'gamification.currentMonthPoints': 0 } }
+      );
+      return {
+        resetCompleted: true,
+        winners: [],
+        emailsSent: 0,
+        totalUsersNotified: 0
+      };
+    }
 
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
@@ -396,10 +428,8 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
     let totalUsersNotified = 0;
 
     // Enviar emails personalizados a cada ganador del top 3
-    for (let i = 0; i < topUsers.length && i < 3; i++) {
-      const user = topUsers[i];
-      if (!user.gamification || user.gamification.currentMonthPoints <= 0) continue;
-
+    for (let i = 0; i < topUsers.length; i++) {
+      const { user, points } = topUsers[i];
       const rank = i + 1;
       const info = rankInfo[i];
 
@@ -427,17 +457,17 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
                 <!-- Top 3 del mes -->
                 <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
                   <h3 style="color: #1f2937; margin-top: 0;">🏆 Top 3 del mes</h3>
-                  ${topUsers.map((u, idx) => `
+                  ${topUsers.map((entry, idx) => `
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin: 8px 0; background: ${idx === i ? '#fef3c7' : '#f9fafb'}; border-radius: 8px; border-left: 4px solid ${rankInfo[idx].color};">
                       <div style="display: flex; align-items: center;">
                         <span style="font-size: 24px; margin-right: 12px;">${rankInfo[idx].emoji}</span>
                         <div>
-                          <div style="font-weight: bold; color: #1f2937;">${u.name}</div>
+                          <div style="font-weight: bold; color: #1f2937;">${entry.user.name}</div>
                           <div style="font-size: 12px; color: #6b7280;">Puesto #${idx + 1}</div>
                         </div>
                       </div>
                       <div style="text-align: right;">
-                        <div style="font-size: 20px; font-weight: bold; color: ${rankInfo[idx].color};">${u.gamification?.currentMonthPoints || 0}</div>
+                        <div style="font-size: 20px; font-weight: bold; color: ${rankInfo[idx].color};">${entry.points}</div>
                         <div style="font-size: 12px; color: #6b7280;">puntos</div>
                       </div>
                     </div>
@@ -468,15 +498,16 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
         html: emailContent.html
       });
 
-      winners.push({ name: user.name, rank, points: user.gamification.currentMonthPoints });
+      winners.push({ name: user.name, rank, points });
       emailsSent++;
     }
 
     // Enviar copia a TODOS los usuarios activos (que no sean ganadores)
-    const nonWinners = allActiveUsers.filter(u => !topUsers.slice(0, 3).some(top => top._id.equals(u._id)));
+    const topUserIds = topUsers.map(t => t.user._id.toString());
+    const nonWinners = allActiveUsers.filter(u => !topUserIds.includes(u._id.toString()));
     const nonWinnerEmails = nonWinners.map(u => u.email);
 
-    if (nonWinnerEmails.length > 0 && topUsers.length > 0) {
+    if (nonWinnerEmails.length > 0) {
       const notificationEmail = {
         subject: `🏆 Ganadores del Leaderboard del mes`,
         html: `
@@ -497,17 +528,17 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
 
                 <!-- Top 3 del mes -->
                 <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                  ${topUsers.map((u, idx) => `
+                  ${topUsers.map((entry, idx) => `
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin: 8px 0; background: #f9fafb; border-radius: 8px; border-left: 4px solid ${rankInfo[idx].color};">
                       <div style="display: flex; align-items: center;">
                         <span style="font-size: 24px; margin-right: 12px;">${rankInfo[idx].emoji}</span>
                         <div>
-                          <div style="font-weight: bold; color: #1f2937;">${u.name}</div>
+                          <div style="font-weight: bold; color: #1f2937;">${entry.user.name}</div>
                           <div style="font-size: 12px; color: #6b7280;">Medalla de ${rankInfo[idx].medal}</div>
                         </div>
                       </div>
                       <div style="text-align: right;">
-                        <div style="font-size: 20px; font-weight: bold; color: ${rankInfo[idx].color};">${u.gamification?.currentMonthPoints || 0}</div>
+                        <div style="font-size: 20px; font-weight: bold; color: ${rankInfo[idx].color};">${entry.points}</div>
                         <div style="font-size: 12px; color: #6b7280;">puntos</div>
                       </div>
                     </div>
