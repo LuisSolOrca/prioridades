@@ -17,6 +17,11 @@ export async function GET() {
 
     const nextResetDate = getNextResetDate();
 
+    // Calcular días restantes
+    const now = new Date();
+    const diffTime = nextResetDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
     return NextResponse.json({
       nextResetDate: nextResetDate.toISOString(),
       formattedDate: nextResetDate.toLocaleDateString('es-MX', {
@@ -29,6 +34,7 @@ export async function GET() {
         hour: '2-digit',
         minute: '2-digit',
       }),
+      daysUntilReset: diffDays,
     });
   } catch (error) {
     console.error('Error obteniendo próxima fecha de reset:', error);

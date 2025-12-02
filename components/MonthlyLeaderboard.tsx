@@ -16,6 +16,7 @@ interface NextResetInfo {
   nextResetDate: string;
   formattedDate: string;
   formattedTime: string;
+  daysUntilReset: number;
 }
 
 export default function MonthlyLeaderboard() {
@@ -196,8 +197,13 @@ export default function MonthlyLeaderboard() {
                 El <strong>{nextReset.formattedDate}</strong> a las <strong>{nextReset.formattedTime}</strong>
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-3xl">🏆</div>
+            <div className="text-right bg-purple-100 dark:bg-purple-800 rounded-lg px-3 py-2">
+              <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                {nextReset.daysUntilReset}
+              </div>
+              <div className="text-xs text-purple-700 dark:text-purple-300">
+                {nextReset.daysUntilReset === 1 ? 'día' : 'días'}
+              </div>
             </div>
           </div>
           <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-700">
