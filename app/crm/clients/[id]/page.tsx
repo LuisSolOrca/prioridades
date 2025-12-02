@@ -124,6 +124,11 @@ export default function ClientDetailPage() {
     source: '',
     tags: [] as string[],
     crmNotes: '',
+    // Lifecycle and financial fields
+    status: 'prospect' as 'prospect' | 'active' | 'at_risk' | 'churned' | 'inactive',
+    acquisitionCost: 0,
+    monthlyRecurringRevenue: 0,
+    lifetimeValue: 0,
   });
   const [newTag, setNewTag] = useState('');
 
@@ -201,6 +206,11 @@ export default function ClientDetailPage() {
         source: clientData.source || '',
         tags: clientData.tags || [],
         crmNotes: clientData.crmNotes || '',
+        // Lifecycle and financial fields
+        status: clientData.status || 'prospect',
+        acquisitionCost: clientData.acquisitionCost || 0,
+        monthlyRecurringRevenue: clientData.monthlyRecurringRevenue || 0,
+        lifetimeValue: clientData.lifetimeValue || 0,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -852,6 +862,63 @@ export default function ClientDetailPage() {
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
+                </div>
+
+                {/* Lifecycle and Financial Section */}
+                <div className="col-span-2 border-t dark:border-gray-700 pt-4 mt-2">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                    <TrendingUp size={16} className="text-emerald-500" />
+                    Ciclo de Vida y Finanzas
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado del Cliente</label>
+                      <select
+                        value={editForm.status}
+                        onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="prospect">Prospecto</option>
+                        <option value="active">Activo</option>
+                        <option value="at_risk">En Riesgo</option>
+                        <option value="inactive">Inactivo</option>
+                        <option value="churned">Perdido</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Costo Adquisición (CAC)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editForm.acquisitionCost || ''}
+                        onChange={(e) => setEditForm({ ...editForm, acquisitionCost: Number(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="Costo de adquisición"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">MRR del Cliente</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editForm.monthlyRecurringRevenue || ''}
+                        onChange={(e) => setEditForm({ ...editForm, monthlyRecurringRevenue: Number(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="Ingresos mensuales recurrentes"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CLTV (Lifetime Value)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editForm.lifetimeValue || ''}
+                        onChange={(e) => setEditForm({ ...editForm, lifetimeValue: Number(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="Valor de vida del cliente"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">

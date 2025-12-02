@@ -253,6 +253,12 @@ export default function DealDetailPage() {
     contactId: '',
     ownerId: '',
     tags: '',
+    // Financial fields
+    dealType: 'new_business' as 'new_business' | 'upsell' | 'cross_sell' | 'renewal',
+    isRecurring: false,
+    recurringFrequency: '' as '' | 'monthly' | 'quarterly' | 'yearly',
+    recurringValue: 0,
+    costOfSale: 0,
   });
 
   const [newActivity, setNewActivity] = useState({
@@ -353,6 +359,12 @@ export default function DealDetailPage() {
         contactId: dealData.contactId?._id || '',
         ownerId: dealData.ownerId?._id || '',
         tags: dealData.tags?.join(', ') || '',
+        // Financial fields
+        dealType: dealData.dealType || 'new_business',
+        isRecurring: dealData.isRecurring || false,
+        recurringFrequency: dealData.recurringFrequency || '',
+        recurringValue: dealData.recurringValue || 0,
+        costOfSale: dealData.costOfSale || 0,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -1632,6 +1644,92 @@ export default function DealDetailPage() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Ej: urgente, expansión, renovación"
                 />
+              </div>
+
+              {/* Financial Fields Section */}
+              <div className="border-t dark:border-gray-700 pt-4 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <DollarSign size={16} className="text-emerald-500" />
+                  Información Financiera
+                </h4>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Tipo de Deal
+                    </label>
+                    <select
+                      value={editForm.dealType}
+                      onChange={(e) => setEditForm({ ...editForm, dealType: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      <option value="new_business">Nuevo Negocio</option>
+                      <option value="upsell">Upsell</option>
+                      <option value="cross_sell">Cross-sell</option>
+                      <option value="renewal">Renovación</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Costo de Venta
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editForm.costOfSale || ''}
+                      onChange={(e) => setEditForm({ ...editForm, costOfSale: Number(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="Para cálculo de margen"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.isRecurring}
+                      onChange={(e) => setEditForm({ ...editForm, isRecurring: e.target.checked })}
+                      className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Es ingreso recurrente (MRR)
+                    </span>
+                  </label>
+                </div>
+
+                {editForm.isRecurring && (
+                  <div className="grid grid-cols-2 gap-4 mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Frecuencia
+                      </label>
+                      <select
+                        value={editForm.recurringFrequency}
+                        onChange={(e) => setEditForm({ ...editForm, recurringFrequency: e.target.value as any })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="monthly">Mensual</option>
+                        <option value="quarterly">Trimestral</option>
+                        <option value="yearly">Anual</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Valor Mensual (MRR)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editForm.recurringValue || ''}
+                        onChange={(e) => setEditForm({ ...editForm, recurringValue: Number(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="Valor mensual recurrente"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">

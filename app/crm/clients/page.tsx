@@ -81,6 +81,10 @@ export default function ClientsListPage() {
     industry: '',
     website: '',
     phone: '',
+    // Lifecycle and financial fields
+    status: 'prospect' as 'prospect' | 'active' | 'at_risk' | 'churned' | 'inactive',
+    acquisitionCost: 0,
+    monthlyRecurringRevenue: 0,
   });
 
   useEffect(() => {
@@ -144,7 +148,16 @@ export default function ClientsListPage() {
         throw new Error(error.error || 'Error al crear cliente');
       }
       setShowNewModal(false);
-      setNewClient({ name: '', description: '', industry: '', website: '', phone: '' });
+      setNewClient({
+        name: '',
+        description: '',
+        industry: '',
+        website: '',
+        phone: '',
+        status: 'prospect',
+        acquisitionCost: 0,
+        monthlyRecurringRevenue: 0,
+      });
       loadData();
     } catch (error: any) {
       alert(error.message);
@@ -854,6 +867,61 @@ export default function ClientsListPage() {
                   placeholder="https://ejemplo.com"
                 />
               </div>
+
+              {/* Lifecycle and Financial Fields */}
+              <div className="border-t dark:border-gray-700 pt-4 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <TrendingUp size={16} className="text-emerald-500" />
+                  Ciclo de Vida y Finanzas
+                </h4>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Estado del Cliente
+                    </label>
+                    <select
+                      value={newClient.status}
+                      onChange={(e) => setNewClient({ ...newClient, status: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      <option value="prospect">Prospecto</option>
+                      <option value="active">Activo</option>
+                      <option value="at_risk">En Riesgo</option>
+                      <option value="inactive">Inactivo</option>
+                      <option value="churned">Perdido</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Costo de Adquisición (CAC)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newClient.acquisitionCost || ''}
+                      onChange={(e) => setNewClient({ ...newClient, acquisitionCost: Number(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      placeholder="Costo para adquirir este cliente"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    MRR del Cliente
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newClient.monthlyRecurringRevenue || ''}
+                    onChange={(e) => setNewClient({ ...newClient, monthlyRecurringRevenue: Number(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="Ingresos mensuales recurrentes de este cliente"
+                  />
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
                 <button
                   type="button"
