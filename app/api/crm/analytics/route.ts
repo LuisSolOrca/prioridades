@@ -193,15 +193,19 @@ export async function GET(request: NextRequest) {
       .map(d => {
         const created = new Date(d.createdAt);
         const closed = new Date(d.actualCloseDate!);
-        return (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+        const days = (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+        // Mínimo 1 día para evitar divisiones extremas
+        return Math.max(days, 1);
       });
     const avgSalesCycleDays = cycledurations.length > 0
       ? cycledurations.reduce((a, b) => a + b, 0) / cycledurations.length
       : 0;
 
     // Pipeline Velocity: (# oportunidades × valor promedio × win rate) / ciclo promedio
-    const pipelineVelocity = avgSalesCycleDays > 0
-      ? (openDeals.length * averageDealSize * (winRate / 100)) / avgSalesCycleDays
+    // Usar mínimo 1 día para el ciclo para evitar números irreales
+    const effectiveCycleDays = Math.max(avgSalesCycleDays, 1);
+    const pipelineVelocity = effectiveCycleDays > 0
+      ? (openDeals.length * averageDealSize * (winRate / 100)) / effectiveCycleDays
       : 0;
 
     // Obtener actividades
