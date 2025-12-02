@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import Activity from '@/models/Activity';
+// Import referenced models to ensure they're registered for populate
+import '@/models/Client';
+import '@/models/Contact';
+import '@/models/Deal';
+import '@/models/User';
 import { hasPermission } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
