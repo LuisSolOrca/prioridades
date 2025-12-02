@@ -26,6 +26,8 @@ import {
   Filter,
   X,
   MessageSquare,
+  Info,
+  ChevronDown,
 } from 'lucide-react';
 
 interface Activity {
@@ -130,6 +132,7 @@ export default function CrmCalendarPage() {
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [assignedToFilter, setAssignedToFilter] = useState<string>('');
   const [showCompletedTasks, setShowCompletedTasks] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Modal
   const [showModal, setShowModal] = useState(false);
@@ -468,6 +471,73 @@ export default function CrmCalendarPage() {
             </div>
           </div>
         )}
+
+        {/* Help Card */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl overflow-hidden mb-6">
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+          >
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <Info size={18} />
+              <span className="font-medium">Cómo usar el calendario de actividades</span>
+            </div>
+            <ChevronDown
+              size={18}
+              className={`text-blue-600 dark:text-blue-400 transition-transform ${showHelp ? 'rotate-180' : ''}`}
+            />
+          </button>
+          {showHelp && (
+            <div className="p-4 border-t border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-800">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                    <Calendar size={16} className="text-blue-500" />
+                    Navegación
+                  </h4>
+                  <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <li>• Usa las flechas para cambiar de mes</li>
+                    <li>• Presiona "Hoy" para ir al día actual</li>
+                    <li>• Los días del mes actual se muestran más destacados</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                    <Filter size={16} className="text-blue-500" />
+                    Filtros
+                  </h4>
+                  <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <li>• Filtra por tipo de actividad</li>
+                    <li>• Filtra por responsable asignado</li>
+                    <li>• Muestra u oculta tareas completadas</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                    <CheckSquare size={16} className="text-blue-500" />
+                    Actividades
+                  </h4>
+                  <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <li>• Haz clic en una actividad para ver el deal</li>
+                    <li>• Marca tareas como completadas con el checkbox</li>
+                    <li>• Cada tipo tiene un color distintivo</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Colores por tipo</h4>
+                <div className="flex flex-wrap gap-3">
+                  {Object.entries(ACTIVITY_CONFIG).filter(([key]) => key !== 'channel_message').map(([key, config]) => (
+                    <div key={key} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${config.bgLight} ${config.bgDark} ${config.border} border`}>
+                      <config.icon size={14} style={{ color: config.color }} />
+                      <span className={`text-sm font-medium ${config.text}`}>{config.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Calendar Navigation */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
