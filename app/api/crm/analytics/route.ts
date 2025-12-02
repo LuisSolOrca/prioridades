@@ -188,24 +188,28 @@ export async function GET(request: NextRequest) {
     const averageDealSize = wonDeals.length > 0 ? totalWonValue / wonDeals.length : 0;
 
     // Sales Cycle Duration (promedio de días para cerrar)
+    // Nota: Los deals a menudo se registran después de trabajo previo de negociación,
+    // por lo que usamos 30 días como mínimo por defecto para ventas B2B
+    const DEFAULT_SALES_CYCLE_DAYS = 30;
+
     const cycledurations = wonDeals
       .filter(d => d.actualCloseDate && d.createdAt)
       .map(d => {
         const created = new Date(d.createdAt);
         const closed = new Date(d.actualCloseDate!);
         const days = (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-        // Mínimo 1 día para evitar divisiones extremas
-        return Math.max(days, 1);
-      });
-    const avgSalesCycleDays = cycledurations.length > 0
+        return days;
+      })
+      .filter(days => days >= 7); // Solo considerar ciclos de 7+ días como datos válidos
+
+    // Usar el promedio real si tenemos suficientes datos válidos, sino usar default
+    const avgSalesCycleDays = cycledurations.length >= 3
       ? cycledurations.reduce((a, b) => a + b, 0) / cycledurations.length
-      : 0;
+      : DEFAULT_SALES_CYCLE_DAYS;
 
     // Pipeline Velocity: (# oportunidades × valor promedio × win rate) / ciclo promedio
-    // Usar mínimo 1 día para el ciclo para evitar números irreales
-    const effectiveCycleDays = Math.max(avgSalesCycleDays, 1);
-    const pipelineVelocity = effectiveCycleDays > 0
-      ? (openDeals.length * averageDealSize * (winRate / 100)) / effectiveCycleDays
+    const pipelineVelocity = avgSalesCycleDays > 0
+      ? (openDeals.length * averageDealSize * (winRate / 100)) / avgSalesCycleDays
       : 0;
 
     // Obtener actividades
