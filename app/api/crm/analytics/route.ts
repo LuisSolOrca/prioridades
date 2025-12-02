@@ -7,6 +7,7 @@ import Activity from '@/models/Activity';
 import SalesQuota from '@/models/SalesQuota';
 import PipelineStage from '@/models/PipelineStage';
 import User from '@/models/User';
+import Client from '@/models/Client';
 import { hasPermission } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
@@ -59,6 +60,38 @@ interface SalesMetrics {
     dealsWonChange: number;
     winRateChange: number;
   };
+
+  // === MÉTRICAS FINANCIERAS ===
+  // Lifetime Value
+  avgCustomerLifetimeValue: number;  // CLTV promedio
+  totalCustomerLifetimeValue: number; // CLTV total
+
+  // Margen
+  avgMargin: number;                  // Margen promedio por deal
+  totalMargin: number;                // Margen total
+  marginRate: number;                 // % de margen
+
+  // Retención y Churn
+  retentionRate: number;              // Tasa de retención
+  churnRate: number;                  // Tasa de pérdida
+  activeCustomers: number;            // Clientes activos
+  churnedCustomers: number;           // Clientes perdidos
+  atRiskCustomers: number;            // Clientes en riesgo
+
+  // Revenue
+  revenuePerSalesperson: number;      // Revenue promedio por vendedor
+  mrr: number;                        // Monthly Recurring Revenue
+  arr: number;                        // Annual Recurring Revenue
+
+  // Expansión
+  upsellRate: number;                 // Tasa de upsell
+  upsellRevenue: number;              // Ingresos por upsell
+  newBusinessRevenue: number;         // Ingresos nuevo negocio
+  renewalRevenue: number;             // Ingresos por renovaciones
+
+  // Concentración
+  portfolioConcentration: number;     // % de ingresos en top 10 clientes
+  topClients: { clientId: string; clientName: string; revenue: number; percentage: number }[];
 }
 
 export async function GET(request: NextRequest) {
@@ -256,6 +289,138 @@ export async function GET(request: NextRequest) {
       ? winRate - prevPeriodWinRate
       : 0;
 
+    // === MÉTRICAS FINANCIERAS ===
+
+    // Obtener todos los clientes para métricas de retención
+    const allClients = await Client.find({}).lean();
+    const activeClients = allClients.filter(c => c.status === 'active').length;
+    const churnedClients = allClients.filter(c => c.status === 'churned').length;
+    const atRiskClients = allClients.filter(c => c.status === 'at_risk').length;
+    const totalClientsWithStatus = activeClients + churnedClients;
+
+    // Tasa de retención y churn
+    const retentionRate = totalClientsWithStatus > 0
+      ? (activeClients / totalClientsWithStatus) * 100
+      : 100;
+    const churnRate = totalClientsWithStatus > 0
+      ? (churnedClients / totalClientsWithStatus) * 100
+      : 0;
+
+    // CLTV (Customer Lifetime Value)
+    // Calculamos desde los campos del cliente o estimamos desde deals
+    const clientsWithCLTV = allClients.filter(c => c.lifetimeValue && c.lifetimeValue > 0);
+    const avgCustomerLifetimeValue = clientsWithCLTV.length > 0
+      ? clientsWithCLTV.reduce((sum, c) => sum + (c.lifetimeValue || 0), 0) / clientsWithCLTV.length
+      : averageDealSize * (recurringCustomersRate > 0 ? (1 + recurringCustomersRate / 100) : 1);
+
+    const totalCustomerLifetimeValue = clientsWithCLTV.length > 0
+      ? clientsWithCLTV.reduce((sum, c) => sum + (c.lifetimeValue || 0), 0)
+      : totalWonValue;
+
+    // Margen (desde deals que tengan costOfSale)
+    const dealsWithMargin = wonDeals.filter(d => d.margin !== undefined && d.margin !== null);
+    const dealsWithCost = wonDeals.filter(d => d.costOfSale !== undefined && d.costOfSale !== null);
+
+    let totalMargin = 0;
+    let avgMargin = 0;
+    let marginRate = 0;
+
+    if (dealsWithMargin.length > 0) {
+      totalMargin = dealsWithMargin.reduce((sum, d) => sum + (d.margin || 0), 0);
+      avgMargin = totalMargin / dealsWithMargin.length;
+      marginRate = totalWonValue > 0 ? (totalMargin / totalWonValue) * 100 : 0;
+    } else if (dealsWithCost.length > 0) {
+      // Calcular margen desde costo de venta
+      totalMargin = dealsWithCost.reduce((sum, d) => sum + (d.value - (d.costOfSale || 0)), 0);
+      avgMargin = totalMargin / dealsWithCost.length;
+      const totalValueWithCost = dealsWithCost.reduce((sum, d) => sum + d.value, 0);
+      marginRate = totalValueWithCost > 0 ? (totalMargin / totalValueWithCost) * 100 : 0;
+    }
+
+    // MRR y ARR (desde deals recurrentes)
+    const recurringDeals = wonDeals.filter(d => d.isRecurring);
+    let mrr = 0;
+
+    recurringDeals.forEach(deal => {
+      if (deal.recurringValue) {
+        mrr += deal.recurringValue;
+      } else if (deal.recurringFrequency) {
+        // Convertir a mensual si no hay recurringValue
+        switch (deal.recurringFrequency) {
+          case 'monthly':
+            mrr += deal.value;
+            break;
+          case 'quarterly':
+            mrr += deal.value / 3;
+            break;
+          case 'yearly':
+            mrr += deal.value / 12;
+            break;
+        }
+      }
+    });
+
+    // También considerar MRR desde clientes
+    const clientMRR = allClients.reduce((sum, c) => sum + (c.monthlyRecurringRevenue || 0), 0);
+    mrr = Math.max(mrr, clientMRR); // Usar el mayor valor disponible
+
+    const arr = mrr * 12;
+
+    // Revenue por vendedor
+    const salespeople = dealsByOwner.filter(o => o.ownerName !== 'Sin asignar');
+    const revenuePerSalesperson = salespeople.length > 0
+      ? salespeople.reduce((sum, o) => sum + o.wonValue, 0) / salespeople.length
+      : 0;
+
+    // Tasa de Upsell y Revenue por tipo
+    const upsellDeals = wonDeals.filter(d => d.dealType === 'upsell' || d.dealType === 'cross_sell');
+    const newBusinessDeals = wonDeals.filter(d => d.dealType === 'new_business' || !d.dealType);
+    const renewalDeals = wonDeals.filter(d => d.dealType === 'renewal');
+
+    const upsellRevenue = upsellDeals.reduce((sum, d) => sum + d.value, 0);
+    const newBusinessRevenue = newBusinessDeals.reduce((sum, d) => sum + d.value, 0);
+    const renewalRevenue = renewalDeals.reduce((sum, d) => sum + d.value, 0);
+
+    // Tasa de upsell: clientes con upsell / total clientes activos
+    const clientsWithUpsell = new Set(upsellDeals.map(d => d.clientId?.toString())).size;
+    const upsellRate = totalCustomers > 0 ? (clientsWithUpsell / totalCustomers) * 100 : 0;
+
+    // Concentración de cartera (Top 10 clientes)
+    const clientRevenueMap = new Map<string, { name: string; revenue: number }>();
+    wonDeals.forEach(deal => {
+      const clientId = deal.clientId?.toString();
+      if (clientId) {
+        const existing = clientRevenueMap.get(clientId) || { name: '', revenue: 0 };
+        clientRevenueMap.set(clientId, {
+          name: existing.name,
+          revenue: existing.revenue + deal.value
+        });
+      }
+    });
+
+    // Obtener nombres de clientes
+    const clientIds = Array.from(clientRevenueMap.keys());
+    const clientsData = await Client.find({ _id: { $in: clientIds } }, 'name').lean();
+    clientsData.forEach(c => {
+      const entry = clientRevenueMap.get(c._id.toString());
+      if (entry) {
+        entry.name = c.name;
+      }
+    });
+
+    // Ordenar y calcular top clientes
+    const sortedClients = Array.from(clientRevenueMap.entries())
+      .map(([id, data]) => ({ clientId: id, clientName: data.name, revenue: data.revenue }))
+      .sort((a, b) => b.revenue - a.revenue);
+
+    const top10Revenue = sortedClients.slice(0, 10).reduce((sum, c) => sum + c.revenue, 0);
+    const portfolioConcentration = totalWonValue > 0 ? (top10Revenue / totalWonValue) * 100 : 0;
+
+    const topClients = sortedClients.slice(0, 10).map(c => ({
+      ...c,
+      percentage: totalWonValue > 0 ? (c.revenue / totalWonValue) * 100 : 0
+    }));
+
     const metrics: SalesMetrics = {
       winRate: Math.round(winRate * 10) / 10,
       conversionRate: Math.round(conversionRate * 10) / 10,
@@ -286,7 +451,32 @@ export async function GET(request: NextRequest) {
         wonValueChange: Math.round(wonValueChange * 10) / 10,
         dealsWonChange: Math.round(dealsWonChange * 10) / 10,
         winRateChange: Math.round(winRateChange * 10) / 10
-      }
+      },
+
+      // Métricas Financieras
+      avgCustomerLifetimeValue: Math.round(avgCustomerLifetimeValue),
+      totalCustomerLifetimeValue: Math.round(totalCustomerLifetimeValue),
+      avgMargin: Math.round(avgMargin),
+      totalMargin: Math.round(totalMargin),
+      marginRate: Math.round(marginRate * 10) / 10,
+      retentionRate: Math.round(retentionRate * 10) / 10,
+      churnRate: Math.round(churnRate * 10) / 10,
+      activeCustomers: activeClients,
+      churnedCustomers: churnedClients,
+      atRiskCustomers: atRiskClients,
+      revenuePerSalesperson: Math.round(revenuePerSalesperson),
+      mrr: Math.round(mrr),
+      arr: Math.round(arr),
+      upsellRate: Math.round(upsellRate * 10) / 10,
+      upsellRevenue: Math.round(upsellRevenue),
+      newBusinessRevenue: Math.round(newBusinessRevenue),
+      renewalRevenue: Math.round(renewalRevenue),
+      portfolioConcentration: Math.round(portfolioConcentration * 10) / 10,
+      topClients: topClients.map(c => ({
+        ...c,
+        revenue: Math.round(c.revenue),
+        percentage: Math.round(c.percentage * 10) / 10
+      }))
     };
 
     return NextResponse.json(metrics);

@@ -1,5 +1,8 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
+// Estado del cliente en el ciclo de vida
+export type ClientStatus = 'prospect' | 'active' | 'at_risk' | 'churned' | 'inactive';
+
 export interface IClient {
   _id: mongoose.Types.ObjectId;
   name: string;
@@ -17,6 +20,20 @@ export interface IClient {
   tags?: string[];
   customFields?: Record<string, any>;
   crmNotes?: string;
+
+  // Campos financieros y de ciclo de vida
+  status?: ClientStatus;          // Estado del cliente
+  firstDealDate?: Date;           // Fecha del primer deal ganado
+  lastDealDate?: Date;            // Fecha del último deal ganado
+  acquisitionCost?: number;       // Costo de adquisición del cliente (CAC)
+  churnedAt?: Date;               // Fecha en que se perdió el cliente
+  churnReason?: string;           // Razón de pérdida
+  lifetimeValue?: number;         // CLTV calculado
+  totalRevenue?: number;          // Ingresos totales históricos
+  dealCount?: number;             // Número de deals ganados
+  avgDealValue?: number;          // Valor promedio de deal
+  monthlyRecurringRevenue?: number; // MRR actual del cliente
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,6 +104,54 @@ const ClientSchema = new Schema<IClient>({
   crmNotes: {
     type: String,
     trim: true,
+  },
+
+  // Campos financieros y de ciclo de vida
+  status: {
+    type: String,
+    enum: ['prospect', 'active', 'at_risk', 'churned', 'inactive'],
+    default: 'prospect',
+  },
+  firstDealDate: {
+    type: Date,
+  },
+  lastDealDate: {
+    type: Date,
+  },
+  acquisitionCost: {
+    type: Number,
+    min: 0,
+  },
+  churnedAt: {
+    type: Date,
+  },
+  churnReason: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'La razón de pérdida no puede exceder 500 caracteres'],
+  },
+  lifetimeValue: {
+    type: Number,
+    min: 0,
+  },
+  totalRevenue: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
+  dealCount: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
+  avgDealValue: {
+    type: Number,
+    min: 0,
+  },
+  monthlyRecurringRevenue: {
+    type: Number,
+    min: 0,
+    default: 0,
   },
 }, {
   timestamps: true,

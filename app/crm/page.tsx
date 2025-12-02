@@ -38,6 +38,14 @@ import {
   Phone,
   Mail,
   RefreshCw,
+  Wallet,
+  TrendingUp as Growth,
+  ShieldCheck,
+  UserMinus,
+  AlertTriangle,
+  Repeat,
+  BadgeDollarSign,
+  Crown,
 } from 'lucide-react';
 import CrmHelpCard from '@/components/crm/CrmHelpCard';
 import CrmAINextActions from '@/components/crm/CrmAINextActions';
@@ -102,6 +110,26 @@ interface SalesMetrics {
     dealsWonChange: number;
     winRateChange: number;
   };
+  // Financial Metrics
+  avgCustomerLifetimeValue: number;
+  totalCustomerLifetimeValue: number;
+  avgMargin: number;
+  totalMargin: number;
+  marginRate: number;
+  retentionRate: number;
+  churnRate: number;
+  activeCustomers: number;
+  churnedCustomers: number;
+  atRiskCustomers: number;
+  revenuePerSalesperson: number;
+  mrr: number;
+  arr: number;
+  upsellRate: number;
+  upsellRevenue: number;
+  newBusinessRevenue: number;
+  renewalRevenue: number;
+  portfolioConcentration: number;
+  topClients: { clientId: string; clientName: string; revenue: number; percentage: number }[];
 }
 
 // Componente de Gauge circular para porcentajes
@@ -701,6 +729,198 @@ export default function CRMDashboard() {
                 </div>
               </div>
             )}
+
+            {/* === MÉTRICAS FINANCIERAS === */}
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <Wallet className="text-emerald-500" size={22} />
+                Metricas Financieras
+              </h2>
+
+              {/* Revenue KPIs Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <KPICard
+                  title="MRR"
+                  value={metrics.mrr}
+                  subtitle="Ingresos recurrentes mensuales"
+                  icon={Repeat}
+                  format="currency"
+                  color="emerald"
+                />
+                <KPICard
+                  title="ARR"
+                  value={metrics.arr}
+                  subtitle="Ingresos recurrentes anuales"
+                  icon={BadgeDollarSign}
+                  format="currency"
+                  color="blue"
+                />
+                <KPICard
+                  title="CLTV Promedio"
+                  value={metrics.avgCustomerLifetimeValue}
+                  subtitle="Valor de vida del cliente"
+                  icon={Crown}
+                  format="currency"
+                  color="purple"
+                />
+                <KPICard
+                  title="Revenue/Vendedor"
+                  value={metrics.revenuePerSalesperson}
+                  subtitle="Promedio por vendedor"
+                  icon={Users}
+                  format="currency"
+                  color="cyan"
+                />
+              </div>
+
+              {/* Financial Metrics Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Margen y Rentabilidad */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
+                    <TrendingUp className="text-emerald-500" size={20} />
+                    Margen y Rentabilidad
+                  </h3>
+                  <div className="space-y-5">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-600 dark:text-gray-400">Tasa de Margen</span>
+                        <span className={`text-2xl font-bold ${metrics.marginRate > 30 ? 'text-emerald-600' : metrics.marginRate > 15 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {metrics.marginRate}%
+                        </span>
+                      </div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${metrics.marginRate > 30 ? 'bg-emerald-500' : metrics.marginRate > 15 ? 'bg-amber-500' : 'bg-red-500'}`}
+                          style={{ width: `${Math.min(metrics.marginRate, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Margen Promedio</p>
+                        <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{formatCurrency(metrics.avgMargin)}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Margen Total</p>
+                        <p className="text-lg font-bold text-emerald-600">{formatCurrency(metrics.totalMargin)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Retención y Churn */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
+                    <ShieldCheck className="text-blue-500" size={20} />
+                    Retención de Clientes
+                  </h3>
+                  <div className="flex justify-around mb-6">
+                    <CircularGauge
+                      value={metrics.retentionRate}
+                      label="Retención"
+                      sublabel="Clientes retenidos"
+                      color={metrics.retentionRate > 80 ? '#10b981' : metrics.retentionRate > 60 ? '#f59e0b' : '#ef4444'}
+                      size={100}
+                    />
+                    <CircularGauge
+                      value={metrics.churnRate}
+                      label="Churn"
+                      sublabel="Clientes perdidos"
+                      color={metrics.churnRate < 10 ? '#10b981' : metrics.churnRate < 20 ? '#f59e0b' : '#ef4444'}
+                      size={100}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                      <p className="text-xl font-bold text-emerald-600">{metrics.activeCustomers}</p>
+                      <p className="text-xs text-gray-500">Activos</p>
+                    </div>
+                    <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                      <p className="text-xl font-bold text-amber-600">{metrics.atRiskCustomers}</p>
+                      <p className="text-xs text-gray-500">En Riesgo</p>
+                    </div>
+                    <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                      <p className="text-xl font-bold text-red-600">{metrics.churnedCustomers}</p>
+                      <p className="text-xs text-gray-500">Perdidos</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expansión y Upsell */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
+                    <Growth className="text-purple-500" size={20} />
+                    Expansion de Ingresos
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-gray-600 dark:text-gray-400 text-sm">Tasa de Upsell</span>
+                        <span className="font-bold text-purple-600">{metrics.upsellRate}%</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-purple-500 rounded-full" style={{ width: `${metrics.upsellRate}%` }} />
+                      </div>
+                    </div>
+                    <div className="space-y-3 mt-4">
+                      <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Nuevo Negocio</span>
+                        <span className="font-bold text-blue-600">{formatCurrency(metrics.newBusinessRevenue)}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Upsell / Cross-sell</span>
+                        <span className="font-bold text-purple-600">{formatCurrency(metrics.upsellRevenue)}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Renovaciones</span>
+                        <span className="font-bold text-emerald-600">{formatCurrency(metrics.renewalRevenue)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Portfolio Concentration & Top Clients */}
+              {metrics.topClients && metrics.topClients.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                      <Crown className="text-amber-500" size={20} />
+                      Concentración de Cartera
+                    </h3>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      metrics.portfolioConcentration > 50 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                      metrics.portfolioConcentration > 30 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    }`}>
+                      Top 10: {metrics.portfolioConcentration}% del revenue
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {metrics.topClients.slice(0, 5).map((client, idx) => (
+                      <div key={client.clientId} className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            idx === 0 ? 'bg-amber-500 text-white' :
+                            idx === 1 ? 'bg-gray-400 text-white' :
+                            idx === 2 ? 'bg-amber-700 text-white' :
+                            'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                          }`}>
+                            {idx + 1}
+                          </div>
+                          <span className="font-medium text-gray-800 dark:text-gray-100 truncate" title={client.clientName}>
+                            {client.clientName || 'Cliente'}
+                          </span>
+                        </div>
+                        <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{formatCurrency(client.revenue)}</p>
+                        <p className="text-xs text-gray-500">{client.percentage}% del total</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
 

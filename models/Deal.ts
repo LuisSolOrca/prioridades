@@ -11,6 +11,12 @@ export interface IScoreBreakdown {
   engagementDetails?: { action: string; points: number; count: number }[];
 }
 
+// Tipo de frecuencia de recurrencia
+export type RecurringFrequency = 'monthly' | 'quarterly' | 'yearly';
+
+// Tipo de deal
+export type DealType = 'new_business' | 'upsell' | 'cross_sell' | 'renewal';
+
 export interface IDeal {
   _id: mongoose.Types.ObjectId;
   title: string;
@@ -29,6 +35,15 @@ export interface IDeal {
   tags?: string[];
   customFields?: Record<string, any>;
   projectId?: mongoose.Types.ObjectId;
+
+  // Campos financieros para métricas avanzadas
+  dealType?: DealType;                    // Tipo: nuevo negocio, upsell, cross-sell, renovación
+  isRecurring?: boolean;                  // ¿Es ingreso recurrente?
+  recurringFrequency?: RecurringFrequency; // Frecuencia de recurrencia
+  recurringValue?: number;                // Valor mensual recurrente (MRR)
+  costOfSale?: number;                    // Costo de venta/servicio (para margen)
+  margin?: number;                        // Margen calculado (value - costOfSale)
+  originalDealId?: mongoose.Types.ObjectId; // Referencia al deal original si es upsell/renewal
 
   // Lead Scoring fields
   leadScore?: number;
@@ -119,6 +134,36 @@ const DealSchema = new Schema<IDeal>({
   projectId: {
     type: Schema.Types.ObjectId,
     ref: 'Project',
+  },
+
+  // Campos financieros para métricas avanzadas
+  dealType: {
+    type: String,
+    enum: ['new_business', 'upsell', 'cross_sell', 'renewal'],
+    default: 'new_business',
+  },
+  isRecurring: {
+    type: Boolean,
+    default: false,
+  },
+  recurringFrequency: {
+    type: String,
+    enum: ['monthly', 'quarterly', 'yearly'],
+  },
+  recurringValue: {
+    type: Number,
+    min: 0,
+  },
+  costOfSale: {
+    type: Number,
+    min: 0,
+  },
+  margin: {
+    type: Number,
+  },
+  originalDealId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Deal',
   },
 
   // Lead Scoring fields
