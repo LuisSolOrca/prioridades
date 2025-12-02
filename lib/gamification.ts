@@ -581,10 +581,18 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
 
     // Guardar la fecha del reset en SystemSettings para que calculateCurrentMonthPoints
     // use esta fecha como inicio del nuevo período
-    const resetDate = new Date();
+    // Usamos el próximo lunes como fecha de corte para que las prioridades de la semana
+    // actual no cuenten en el nuevo período
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const daysUntilNextMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
+    const nextMonday = new Date(now);
+    nextMonday.setDate(nextMonday.getDate() + daysUntilNextMonday);
+    nextMonday.setHours(0, 0, 0, 0);
+
     await SystemSettings.findOneAndUpdate(
       {},
-      { $set: { lastLeaderboardReset: resetDate } },
+      { $set: { lastLeaderboardReset: nextMonday } },
       { upsert: true }
     );
 
@@ -635,6 +643,7 @@ export async function calculateCurrentMonthPoints(userId: string) {
 
     if (settings?.lastLeaderboardReset) {
       // Usar la fecha del último reset como inicio del período
+      // Esta fecha ya viene como el próximo lunes a las 00:00:00
       periodStart = new Date(settings.lastLeaderboardReset);
     } else {
       // Fallback: usar 4 semanas atrás si no hay reset previo
@@ -646,8 +655,8 @@ export async function calculateCurrentMonthPoints(userId: string) {
       // Ajustar al lunes más cercano
       const dayOfWeek = periodStart.getDay();
       periodStart.setDate(periodStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      periodStart.setHours(0, 0, 0, 0);
     }
-    periodStart.setHours(0, 0, 0, 0);
 
     // Buscar prioridades cuya semana empiece desde el inicio del período
     const priorities = await Priority.find({
