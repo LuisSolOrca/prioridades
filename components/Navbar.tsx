@@ -45,6 +45,7 @@ import {
   FileText,
   FileInput,
   Search,
+  Calendar,
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -749,6 +750,12 @@ export default function Navbar() {
                         label="Actividades"
                         active={pathname === '/crm/activities'}
                         onClick={() => handleNavigation('/crm/activities')}
+                      />
+                      <NavButton
+                        icon={<Calendar size={20} />}
+                        label="Calendario"
+                        active={pathname === '/crm/calendar'}
+                        onClick={() => handleNavigation('/crm/calendar')}
                       />
                       <NavButton
                         icon={<Package size={20} />}
