@@ -13,6 +13,7 @@ export interface ISystemSettings {
   isActive: boolean;
   lastWeeklyReportSent?: Date;
   lastMonthlyReportSent?: Date;
+  lastLeaderboardReset?: Date; // Fecha del último reset del leaderboard
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +66,9 @@ const SystemSettingsSchema = new Schema<ISystemSettings>({
     type: Date,
   },
   lastMonthlyReportSent: {
+    type: Date,
+  },
+  lastLeaderboardReset: {
     type: Date,
   },
 }, {

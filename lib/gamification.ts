@@ -1,6 +1,7 @@
 import User from '@/models/User';
 import Badge from '@/models/Badge';
 import Priority from '@/models/Priority';
+import SystemSettings from '@/models/SystemSettings';
 import { sendEmail, emailTemplates } from './email';
 import { DIRECCION_GENERAL_USER_ID } from './direccionGeneralFilter';
 
@@ -578,6 +579,15 @@ export async function resetMonthlyPointsAndNotifyWinner(): Promise<LeaderboardRe
       { $set: { 'gamification.currentMonthPoints': 0 } }
     );
 
+    // Guardar la fecha del reset en SystemSettings para que calculateCurrentMonthPoints
+    // use esta fecha como inicio del nuevo período
+    const resetDate = new Date();
+    await SystemSettings.findOneAndUpdate(
+      {},
+      { $set: { lastLeaderboardReset: resetDate } },
+      { upsert: true }
+    );
+
     return {
       resetCompleted: true,
       winners,
@@ -615,27 +625,34 @@ export function getNextResetDate(): Date {
 
 /**
  * Calcula los puntos del mes actual para un usuario basándose en sus prioridades
- * El "mes" va de lunes a lunes por períodos de aproximadamente 4 semanas
+ * Usa la fecha del último reset del leaderboard como punto de inicio
  */
 export async function calculateCurrentMonthPoints(userId: string) {
   try {
-    const now = new Date();
+    // Obtener la fecha del último reset del leaderboard
+    const settings = await SystemSettings.findOne();
+    let periodStart: Date;
 
-    // Calcular el inicio del mes: hace aproximadamente 4 semanas, redondeando al lunes más cercano
-    const daysAgo = 28; // 4 semanas
-    const monthStartApprox = new Date(now);
-    monthStartApprox.setDate(monthStartApprox.getDate() - daysAgo);
+    if (settings?.lastLeaderboardReset) {
+      // Usar la fecha del último reset como inicio del período
+      periodStart = new Date(settings.lastLeaderboardReset);
+    } else {
+      // Fallback: usar 4 semanas atrás si no hay reset previo
+      const now = new Date();
+      const daysAgo = 28;
+      periodStart = new Date(now);
+      periodStart.setDate(periodStart.getDate() - daysAgo);
 
-    // Ajustar al lunes más cercano (día 1 de la semana, donde domingo = 0)
-    const dayOfWeek = monthStartApprox.getDay();
-    const daysToMonday = dayOfWeek === 0 ? 1 : (dayOfWeek === 1 ? 0 : (8 - dayOfWeek));
-    monthStartApprox.setDate(monthStartApprox.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    monthStartApprox.setHours(0, 0, 0, 0);
+      // Ajustar al lunes más cercano
+      const dayOfWeek = periodStart.getDay();
+      periodStart.setDate(periodStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    }
+    periodStart.setHours(0, 0, 0, 0);
 
-    // Buscar prioridades cuya semana empiece desde ese lunes
+    // Buscar prioridades cuya semana empiece desde el inicio del período
     const priorities = await Priority.find({
       userId,
-      weekStart: { $gte: monthStartApprox }
+      weekStart: { $gte: periodStart }
     });
 
     let points = 0;
