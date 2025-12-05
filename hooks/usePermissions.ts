@@ -42,10 +42,10 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   canEditHistoricalPriorities: false,
   canManageProjects: false,
   canManageKPIs: false,
-  // CRM Permissions - Por defecto solo admins tienen acceso
-  viewCRM: false,
-  canManageDeals: false,
-  canManageContacts: false,
+  // CRM Permissions - defaults consistentes con modelo User
+  viewCRM: true,
+  canManageDeals: true,
+  canManageContacts: true,
   canManagePipelineStages: false,
   // Marketing Permissions
   viewMarketing: true,

@@ -49,10 +49,10 @@ export const authOptions: NextAuthOptions = {
           canEditHistoricalPriorities: user.role === 'ADMIN',
           canManageProjects: user.role === 'ADMIN',
           canManageKPIs: user.role === 'ADMIN',
-          // CRM Permissions
-          viewCRM: false,
-          canManageDeals: false,
-          canManageContacts: false,
+          // CRM Permissions - defaults consistentes con modelo User
+          viewCRM: true,
+          canManageDeals: true,
+          canManageContacts: true,
           canManagePipelineStages: false,
           // Marketing Permissions
           viewMarketing: true,
