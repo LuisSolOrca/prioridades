@@ -257,10 +257,10 @@ export default function MarketingDashboardWidget() {
       {/* Platform Status */}
       <div>
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          Plataformas ({data.connectedPlatforms} conectadas)
+          Plataformas ({data.connectedPlatforms ?? 0} conectadas)
         </p>
         <div className="flex flex-wrap gap-2">
-          {data.platformStatuses.map((platform) => {
+          {(data.platformStatuses || []).map((platform) => {
             const info = PLATFORM_INFO[platform.platform] || {
               name: platform.platform,
               icon: '📊',
@@ -293,7 +293,7 @@ export default function MarketingDashboardWidget() {
       {/* Campaign Count */}
       <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {data.activeCampaigns} campañas activas
+          {data.activeCampaigns ?? 0} campañas activas
         </span>
         <Link
           href="/marketing/campaigns"
