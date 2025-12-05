@@ -61,30 +61,45 @@ export function usePermissions() {
   const isLoading = status === 'loading';
   const user = session?.user as any;
 
-  // Si es admin, tiene todos los permisos por defecto
   const isAdmin = user?.role === 'ADMIN';
+  const userPerms = user?.permissions || {};
 
-  // Obtener permisos del usuario o usar defaults
+  // Helper: Si el permiso está explícitamente definido, usarlo. Si no, usar default (admin=true, user=default)
+  const getPermission = (key: keyof UserPermissions): boolean => {
+    if (userPerms[key] !== undefined) {
+      return userPerms[key];
+    }
+    // Si no está definido, admin tiene true, usuarios normales usan default
+    return isAdmin ? true : DEFAULT_PERMISSIONS[key];
+  };
+
+  // Obtener permisos - los valores explícitos tienen precedencia sobre el rol
   const permissions: UserPermissions = {
-    ...DEFAULT_PERMISSIONS,
-    ...(user?.permissions || {}),
-    // Admin siempre puede reasignar, gestionar proyectos y gestionar KPIs
-    canReassignPriorities: isAdmin || user?.permissions?.canReassignPriorities || false,
-    canManageProjects: isAdmin || user?.permissions?.canManageProjects || false,
-    canManageKPIs: isAdmin || user?.permissions?.canManageKPIs || false,
-    // CRM - Admin siempre tiene acceso completo
-    viewCRM: isAdmin || user?.permissions?.viewCRM || false,
-    canManageDeals: isAdmin || user?.permissions?.canManageDeals || false,
-    canManageContacts: isAdmin || user?.permissions?.canManageContacts || false,
-    canManagePipelineStages: isAdmin || user?.permissions?.canManagePipelineStages || false,
-    // Marketing - Admin siempre tiene acceso completo
-    // Usar !== undefined para respetar valores false explícitos
-    viewMarketing: isAdmin || (user?.permissions?.viewMarketing !== undefined ? user.permissions.viewMarketing : DEFAULT_PERMISSIONS.viewMarketing),
-    canManageCampaigns: isAdmin || (user?.permissions?.canManageCampaigns !== undefined ? user.permissions.canManageCampaigns : DEFAULT_PERMISSIONS.canManageCampaigns),
-    canPublishCampaigns: isAdmin || user?.permissions?.canPublishCampaigns || false,
-    canManageWhatsApp: isAdmin || user?.permissions?.canManageWhatsApp || false,
-    canViewWebAnalytics: isAdmin || (user?.permissions?.canViewWebAnalytics !== undefined ? user.permissions.canViewWebAnalytics : DEFAULT_PERMISSIONS.canViewWebAnalytics),
-    canConfigureMarketingIntegrations: isAdmin || user?.permissions?.canConfigureMarketingIntegrations || false,
+    viewDashboard: getPermission('viewDashboard'),
+    viewAreaDashboard: getPermission('viewAreaDashboard'),
+    viewMyPriorities: getPermission('viewMyPriorities'),
+    viewReports: getPermission('viewReports'),
+    viewAnalytics: getPermission('viewAnalytics'),
+    viewLeaderboard: getPermission('viewLeaderboard'),
+    viewAutomations: getPermission('viewAutomations'),
+    viewHistory: getPermission('viewHistory'),
+    canReassignPriorities: getPermission('canReassignPriorities'),
+    canCreateMilestones: getPermission('canCreateMilestones'),
+    canEditHistoricalPriorities: getPermission('canEditHistoricalPriorities'),
+    canManageProjects: getPermission('canManageProjects'),
+    canManageKPIs: getPermission('canManageKPIs'),
+    // CRM Permissions
+    viewCRM: getPermission('viewCRM'),
+    canManageDeals: getPermission('canManageDeals'),
+    canManageContacts: getPermission('canManageContacts'),
+    canManagePipelineStages: getPermission('canManagePipelineStages'),
+    // Marketing Permissions
+    viewMarketing: getPermission('viewMarketing'),
+    canManageCampaigns: getPermission('canManageCampaigns'),
+    canPublishCampaigns: getPermission('canPublishCampaigns'),
+    canManageWhatsApp: getPermission('canManageWhatsApp'),
+    canViewWebAnalytics: getPermission('canViewWebAnalytics'),
+    canConfigureMarketingIntegrations: getPermission('canConfigureMarketingIntegrations'),
   };
 
   const hasPermission = (permission: keyof UserPermissions): boolean => {
