@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import CrmHelpCard from '@/components/crm/CrmHelpCard';
 import CrmAINextActions from '@/components/crm/CrmAINextActions';
+import MarketingDashboardWidget from '@/components/marketing/MarketingDashboardWidget';
 
 interface PipelineStage {
   _id: string;
@@ -1064,6 +1065,13 @@ export default function CRMDashboard() {
           </div>
         )}
 
+        {/* Marketing Widget */}
+        {permissions.viewMarketing && (
+          <div className="mt-6">
+            <MarketingDashboardWidget />
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
@@ -1073,6 +1081,7 @@ export default function CRMDashboard() {
             { path: '/crm/calendar', icon: Calendar, label: 'Calendario', sublabel: 'Actividades', color: 'amber' },
             { path: '/crm/products', icon: Package, label: 'Productos', sublabel: 'Catalogo', color: 'orange' },
             { path: '/crm/import', icon: Upload, label: 'Importar', sublabel: 'CSV/Excel', color: 'cyan' },
+            ...(permissions.viewMarketing ? [{ path: '/marketing', icon: TrendingUp, label: 'Marketing', sublabel: 'Campañas', color: 'pink' }] : []),
           ].map(item => (
             <button
               key={item.path}

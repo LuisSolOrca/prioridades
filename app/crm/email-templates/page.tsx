@@ -21,6 +21,7 @@ import {
   Calendar,
   ArrowLeft,
   Sparkles,
+  Shield,
 } from 'lucide-react';
 import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
@@ -30,13 +31,16 @@ interface EmailTemplate {
   description?: string;
   category: string;
   subject: string;
-  body: string;
-  usageCount: number;
+  body?: string;
+  blocks?: any[];
+  globalStyles?: any;
+  usageCount?: number;
   lastUsedAt?: string;
-  isActive: boolean;
-  isShared: boolean;
-  createdBy: { _id: string; name: string };
-  createdAt: string;
+  isActive?: boolean;
+  isShared?: boolean;
+  isSystem?: boolean;
+  createdBy?: { _id: string; name: string };
+  createdAt?: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -44,6 +48,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   follow_up: 'Seguimiento',
   nurture: 'Nurturing',
   closing: 'Cierre',
+  meeting: 'Reuniones',
+  quote: 'Cotizaciones',
   other: 'Otro',
 };
 
@@ -52,6 +58,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   follow_up: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   nurture: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   closing: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  meeting: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+  quote: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   other: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
 };
 
@@ -119,13 +127,19 @@ export default function EmailTemplatesPage() {
           category: template.category,
           subject: template.subject,
           body: template.body,
+          blocks: template.blocks,
+          globalStyles: template.globalStyles,
           isShared: false,
         }),
       });
 
       if (res.ok) {
         const newTemplate = await res.json();
-        setTemplates([newTemplate, ...templates]);
+        // Add after system templates
+        const systemCount = templates.filter(t => t.isSystem).length;
+        const newTemplates = [...templates];
+        newTemplates.splice(systemCount, 0, newTemplate);
+        setTemplates(newTemplates);
       }
     } catch (error) {
       console.error('Error duplicating template:', error);
@@ -270,10 +284,14 @@ export default function EmailTemplatesPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${CATEGORY_COLORS[template.category]}`}>
-                        {CATEGORY_LABELS[template.category]}
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${CATEGORY_COLORS[template.category] || CATEGORY_COLORS.other}`}>
+                        {CATEGORY_LABELS[template.category] || template.category}
                       </span>
-                      {template.isShared ? (
+                      {template.isSystem ? (
+                        <span title="Plantilla de sistema" className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                          <Shield size={12} /> Sistema
+                        </span>
+                      ) : template.isShared ? (
                         <span title="Compartida"><Users size={14} className="text-blue-500" /></span>
                       ) : (
                         <span title="Privada"><Lock size={14} className="text-gray-400" /></span>
@@ -291,7 +309,7 @@ export default function EmailTemplatesPage() {
                       <MoreVertical size={18} />
                     </button>
                     {openMenuId === template._id && (
-                      <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
+                      <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
                         <button
                           onClick={() => {
                             setPreviewTemplate(template);
@@ -309,7 +327,8 @@ export default function EmailTemplatesPage() {
                           }}
                           className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                         >
-                          <Edit2 size={16} /> Editar
+                          {template.isSystem ? <Copy size={16} /> : <Edit2 size={16} />}
+                          {template.isSystem ? 'Usar como base' : 'Editar'}
                         </button>
                         <button
                           onClick={() => handleDuplicate(template)}
@@ -317,16 +336,18 @@ export default function EmailTemplatesPage() {
                         >
                           <Copy size={16} /> Duplicar
                         </button>
-                        <button
-                          onClick={() => {
-                            setTemplateToDelete(template);
-                            setShowDeleteModal(true);
-                            setOpenMenuId(null);
-                          }}
-                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                        >
-                          <Trash2 size={16} /> Eliminar
-                        </button>
+                        {!template.isSystem && (
+                          <button
+                            onClick={() => {
+                              setTemplateToDelete(template);
+                              setShowDeleteModal(true);
+                              setOpenMenuId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                          >
+                            <Trash2 size={16} /> Eliminar
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -343,21 +364,30 @@ export default function EmailTemplatesPage() {
                 )}
 
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-gray-700">
-                  <div className="flex items-center gap-1">
-                    <Mail size={14} />
-                    <span>{template.usageCount} usos</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar size={14} />
-                    <span>{new Date(template.createdAt).toLocaleDateString()}</span>
-                  </div>
+                  {template.isSystem ? (
+                    <div className="flex items-center gap-1">
+                      <Shield size={14} className="text-amber-500" />
+                      <span>Plantilla predefinida</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Mail size={14} />
+                      <span>{template.usageCount || 0} usos</span>
+                    </div>
+                  )}
+                  {template.createdAt && (
+                    <div className="flex items-center gap-1">
+                      <Calendar size={14} />
+                      <span>{new Date(template.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  )}
                 </div>
 
                 <button
                   onClick={() => router.push(`/crm/email-templates/${template._id}/edit`)}
                   className="w-full mt-3 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition"
                 >
-                  Editar Plantilla
+                  {template.isSystem ? 'Usar como Base' : 'Editar Plantilla'}
                 </button>
               </div>
             ))}
@@ -366,20 +396,24 @@ export default function EmailTemplatesPage() {
 
         {/* Stats Summary */}
         {templates.length > 0 && (
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{templates.length}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Plantillas</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {templates.filter(t => t.isShared).length}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Compartidas</p>
+              <p className="text-2xl font-bold text-amber-600">{templates.filter(t => t.isSystem).length}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">De Sistema</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {templates.reduce((sum, t) => sum + t.usageCount, 0)}
+                {templates.filter(t => !t.isSystem).length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Personalizadas</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {templates.reduce((sum, t) => sum + (t.usageCount || 0), 0)}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Usos Totales</p>
             </div>
@@ -434,8 +468,13 @@ export default function EmailTemplatesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 Vista Previa
+                {previewTemplate.isSystem && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                    <Shield size={12} /> Sistema
+                  </span>
+                )}
               </h3>
               <button
                 onClick={() => {
@@ -457,10 +496,61 @@ export default function EmailTemplatesPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Contenido:</p>
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
-                  dangerouslySetInnerHTML={{ __html: previewTemplate.body }}
-                />
+                {previewTemplate.blocks && previewTemplate.blocks.length > 0 ? (
+                  <div
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    style={{ backgroundColor: previewTemplate.globalStyles?.backgroundColor || '#f5f5f5' }}
+                  >
+                    <div
+                      style={{
+                        maxWidth: previewTemplate.globalStyles?.contentWidth || 600,
+                        margin: '0 auto',
+                        fontFamily: previewTemplate.globalStyles?.fontFamily || 'Arial, sans-serif',
+                        color: previewTemplate.globalStyles?.textColor || '#333333',
+                      }}
+                    >
+                      {previewTemplate.blocks.map((block: any, idx: number) => (
+                        <div key={idx} style={block.styles || {}}>
+                          {block.type === 'text' && (
+                            <div dangerouslySetInnerHTML={{ __html: typeof block.content === 'string' ? block.content : (block.content?.text || block.content?.html || '') }} />
+                          )}
+                          {block.type === 'button' && (
+                            <div style={{ textAlign: block.styles?.textAlign || 'center' }}>
+                              <a
+                                href="#"
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '12px 24px',
+                                  backgroundColor: block.content?.backgroundColor || '#10B981',
+                                  color: block.content?.color || '#ffffff',
+                                  borderRadius: block.content?.borderRadius || '8px',
+                                  textDecoration: 'none',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {block.content?.text || 'Botón'}
+                              </a>
+                            </div>
+                          )}
+                          {block.type === 'image' && block.content?.src && (
+                            <img src={block.content.src} alt={block.content.alt || ''} style={{ maxWidth: '100%', height: 'auto' }} />
+                          )}
+                          {block.type === 'divider' && (
+                            <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '16px 0' }} />
+                          )}
+                          {block.type === 'spacer' && (
+                            <div style={{ height: block.content?.height || 20 }} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+                    dangerouslySetInnerHTML={{ __html: previewTemplate.body || '' }}
+                  />
+                )}
               </div>
             </div>
           </div>

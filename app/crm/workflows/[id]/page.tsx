@@ -14,6 +14,8 @@ import ReactFlow, {
   Connection,
   MarkerType,
   Panel,
+  Handle,
+  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import Navbar from '@/components/Navbar';
@@ -46,6 +48,9 @@ import {
   Hash,
   Filter,
   Edit2,
+  GitBranch,
+  Split,
+  ArrowRight,
 } from 'lucide-react';
 import {
   TRIGGER_LABELS,
@@ -127,12 +132,14 @@ const ACTION_ICONS: Record<string, any> = {
   delay: Clock,
   create_priority: Target,
   send_channel_message: MessageSquare,
+  condition: GitBranch,
+  split: Split,
 };
 
 // Custom node components with dark mode support
 function TriggerNode({ data }: { data: any }) {
   return (
-    <div className="bg-yellow-100 dark:bg-yellow-900/50 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg p-4 min-w-[200px] shadow-lg">
+    <div className="bg-yellow-100 dark:bg-yellow-900/50 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg p-4 min-w-[200px] shadow-lg relative">
       <div className="flex items-center gap-2 mb-2">
         <Zap className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
         <span className="font-bold text-yellow-800 dark:text-yellow-200">Trigger</span>
@@ -146,13 +153,15 @@ function TriggerNode({ data }: { data: any }) {
           </div>
         </div>
       )}
+      <Handle type="source" position={Position.Bottom} className="w-3 h-3 !bg-yellow-500" />
     </div>
   );
 }
 
 function ConditionNode({ data }: { data: any }) {
   return (
-    <div className="bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-400 dark:border-purple-600 rounded-lg p-3 min-w-[180px] shadow-lg">
+    <div className="bg-purple-100 dark:bg-purple-900/50 border-2 border-purple-400 dark:border-purple-600 rounded-lg p-3 min-w-[180px] shadow-lg relative">
+      <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-purple-500" />
       <div className="flex items-center gap-2 mb-1">
         <Filter className="w-4 h-4 text-purple-600 dark:text-purple-400" />
         <span className="font-bold text-xs text-purple-800 dark:text-purple-200">Condiciones</span>
@@ -169,6 +178,7 @@ function ConditionNode({ data }: { data: any }) {
           </div>
         ))}
       </div>
+      <Handle type="source" position={Position.Bottom} className="w-3 h-3 !bg-purple-500" />
     </div>
   );
 }
@@ -176,7 +186,8 @@ function ConditionNode({ data }: { data: any }) {
 function ActionNode({ data }: { data: any }) {
   const Icon = ACTION_ICONS[data.actionType] || Settings;
   return (
-    <div className="bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-400 dark:border-blue-600 rounded-lg p-4 min-w-[200px] shadow-lg">
+    <div className="bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-400 dark:border-blue-600 rounded-lg p-4 min-w-[200px] shadow-lg relative">
+      <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-blue-500" />
       <div className="flex items-center gap-2 mb-2">
         <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         <span className="font-bold text-blue-800 dark:text-blue-200">
@@ -189,6 +200,84 @@ function ActionNode({ data }: { data: any }) {
           <Clock className="w-3 h-3" /> Esperar {data.delay} min
         </p>
       )}
+      <Handle type="source" position={Position.Bottom} className="w-3 h-3 !bg-blue-500" />
+    </div>
+  );
+}
+
+// Nodo para branching condicional (Si/Entonces)
+function ConditionBranchNode({ data }: { data: any }) {
+  return (
+    <div className="bg-amber-100 dark:bg-amber-900/50 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-4 min-w-[220px] shadow-lg relative">
+      <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-amber-500" />
+      <div className="flex items-center gap-2 mb-2">
+        <GitBranch className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+        <span className="font-bold text-amber-800 dark:text-amber-200">Condición</span>
+      </div>
+      <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">{data.label}</p>
+      <div className="flex gap-4 text-xs">
+        <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+          <ArrowRight className="w-3 h-3" />
+          <span>Sí: {data.trueBranchCount || 0} acciones</span>
+        </div>
+        <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+          <ArrowRight className="w-3 h-3" />
+          <span>No: {data.falseBranchCount || 0} acciones</span>
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} id="true" className="w-3 h-3 !bg-green-500" style={{ left: '30%' }} />
+      <Handle type="source" position={Position.Bottom} id="false" className="w-3 h-3 !bg-red-500" style={{ left: '70%' }} />
+    </div>
+  );
+}
+
+// Nodo para división A/B
+function SplitBranchNode({ data }: { data: any }) {
+  return (
+    <div className="bg-cyan-100 dark:bg-cyan-900/50 border-2 border-cyan-400 dark:border-cyan-600 rounded-lg p-4 min-w-[220px] shadow-lg relative">
+      <Handle type="target" position={Position.Top} className="w-3 h-3 !bg-cyan-500" />
+      <div className="flex items-center gap-2 mb-2">
+        <Split className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+        <span className="font-bold text-cyan-800 dark:text-cyan-200">División A/B</span>
+      </div>
+      <p className="text-sm text-cyan-700 dark:text-cyan-300 mb-2">{data.label}</p>
+      <div className="flex gap-4 text-xs">
+        <div className="flex items-center gap-1 text-cyan-600 dark:text-cyan-400">
+          <span className="font-medium">A:</span> {data.percentageA || 50}%
+        </div>
+        <div className="flex items-center gap-1 text-cyan-600 dark:text-cyan-400">
+          <span className="font-medium">B:</span> {100 - (data.percentageA || 50)}%
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} id="A" className="w-3 h-3 !bg-cyan-500" style={{ left: '30%' }} />
+      <Handle type="source" position={Position.Bottom} id="B" className="w-3 h-3 !bg-cyan-500" style={{ left: '70%' }} />
+    </div>
+  );
+}
+
+// Nodo para acciones dentro de una rama
+function BranchActionNode({ data }: { data: any }) {
+  const Icon = ACTION_ICONS[data.actionType] || Settings;
+  const branchColor = data.branchType === 'true' || data.branchType === 'A'
+    ? 'green' : 'red';
+
+  return (
+    <div className={`border-2 rounded-lg p-3 min-w-[180px] shadow-md relative ${
+      branchColor === 'green'
+        ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700'
+        : 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700'
+    }`}>
+      <Handle type="target" position={Position.Top} className={`w-3 h-3 ${branchColor === 'green' ? '!bg-green-500' : '!bg-red-500'}`} />
+      <div className="flex items-center gap-2 mb-1">
+        <Icon className={`w-4 h-4 ${branchColor === 'green' ? 'text-green-600' : 'text-red-600'}`} />
+        <span className={`font-medium text-sm ${branchColor === 'green' ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+          {ACTION_LABELS[data.actionType as CRMActionType] || data.actionType}
+        </span>
+      </div>
+      <p className={`text-xs ${branchColor === 'green' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+        {data.label}
+      </p>
+      <Handle type="source" position={Position.Bottom} className={`w-3 h-3 ${branchColor === 'green' ? '!bg-green-500' : '!bg-red-500'}`} />
     </div>
   );
 }
@@ -197,6 +286,9 @@ const nodeTypes = {
   trigger: TriggerNode,
   condition: ConditionNode,
   action: ActionNode,
+  conditionBranch: ConditionBranchNode,
+  splitBranch: SplitBranchNode,
+  branchAction: BranchActionNode,
 };
 
 export default function WorkflowDetailPage() {
@@ -212,6 +304,11 @@ export default function WorkflowDetailPage() {
   const [showConditionModal, setShowConditionModal] = useState(false);
   const [editingCondition, setEditingCondition] = useState<WorkflowCondition | null>(null);
   const [showExecutions, setShowExecutions] = useState(false);
+  const [addingToBranch, setAddingToBranch] = useState<{
+    parentActionId: string;
+    branchKey: 'trueBranch' | 'falseBranch' | 'splitBranchA' | 'splitBranchB';
+  } | null>(null);
+  const [showBranchActionPicker, setShowBranchActionPicker] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -342,13 +439,14 @@ export default function WorkflowDetailPage() {
     const newEdges: Edge[] = [];
     let yOffset = 50;
     let lastNodeId = '';
+    const centerX = 350;
 
     // Trigger node
     if (formData.triggerType) {
       newNodes.push({
         id: 'trigger',
         type: 'trigger',
-        position: { x: 250, y: yOffset },
+        position: { x: centerX, y: yOffset },
         data: {
           label: TRIGGER_LABELS[formData.triggerType as CRMTriggerType] || formData.triggerType,
           conditions: formData.conditions,
@@ -358,7 +456,7 @@ export default function WorkflowDetailPage() {
       yOffset += 100;
     }
 
-    // Condition node (if there are conditions)
+    // Condition node (if there are trigger conditions)
     if (formData.conditions.length > 0 && formData.triggerType) {
       const conditionsWithLabels = formData.conditions.map(cond => ({
         ...cond,
@@ -367,12 +465,11 @@ export default function WorkflowDetailPage() {
       newNodes.push({
         id: 'conditions',
         type: 'condition',
-        position: { x: 250, y: yOffset },
+        position: { x: centerX, y: yOffset },
         data: {
           conditions: conditionsWithLabels,
         },
       });
-      // Connect trigger to conditions
       newEdges.push({
         id: 'edge_trigger_conditions',
         source: 'trigger',
@@ -388,31 +485,207 @@ export default function WorkflowDetailPage() {
       yOffset += 80 + (formData.conditions.length * 20);
     }
 
-    // Action nodes
-    formData.actions.forEach((action, index) => {
-      const nodeId = `action_${index}`;
-      newNodes.push({
-        id: nodeId,
-        type: 'action',
-        position: { x: 250, y: yOffset + index * 120 },
-        data: {
-          label: getActionLabel(action),
-          actionType: action.type,
-          delay: action.delay,
-        },
+    // Recursive function to render actions with branching
+    const renderActions = (
+      actions: any[],
+      startY: number,
+      startX: number,
+      parentNodeId: string,
+      sourceHandle?: string,
+      branchType?: 'true' | 'false' | 'A' | 'B',
+      depth: number = 0
+    ): number => {
+      let currentY = startY;
+      let prevNodeId = parentNodeId;
+      let prevSourceHandle = sourceHandle;
+
+      actions.forEach((action, index) => {
+        const nodeId = `action_${action.id}`;
+        const isBranching = action.type === 'condition' || action.type === 'split';
+
+        if (isBranching) {
+          // Render branching node
+          const branchNodeType = action.type === 'condition' ? 'conditionBranch' : 'splitBranch';
+          newNodes.push({
+            id: nodeId,
+            type: branchNodeType,
+            position: { x: startX, y: currentY },
+            data: {
+              label: getActionLabel(action),
+              actionType: action.type,
+              trueBranchCount: action.config?.trueBranch?.length || 0,
+              falseBranchCount: action.config?.falseBranch?.length || 0,
+              percentageA: action.config?.splitPercentageA || 50,
+            },
+          });
+
+          // Connect to previous node
+          newEdges.push({
+            id: `edge_${nodeId}`,
+            source: prevNodeId,
+            sourceHandle: prevSourceHandle,
+            target: nodeId,
+            type: 'smoothstep',
+            markerEnd: { type: MarkerType.ArrowClosed },
+            style: { stroke: branchType === 'true' || branchType === 'A' ? '#22c55e' : branchType === 'false' || branchType === 'B' ? '#ef4444' : '#6b7280', strokeWidth: 2 },
+          });
+
+          const branchOffset = 180 + (depth * 50);
+          let maxBranchY = currentY + 100;
+
+          // Render true/A branch
+          const trueBranchActions = action.type === 'condition'
+            ? (action.config?.trueBranch || []).map((id: string) => formData.actions.find(a => a.id === id)).filter(Boolean)
+            : (action.config?.splitBranchA || []).map((id: string) => formData.actions.find(a => a.id === id)).filter(Boolean);
+
+          if (trueBranchActions.length > 0) {
+            const trueBranchY = renderActions(
+              trueBranchActions,
+              currentY + 100,
+              startX - branchOffset,
+              nodeId,
+              action.type === 'condition' ? 'true' : 'A',
+              action.type === 'condition' ? 'true' : 'A',
+              depth + 1
+            );
+            maxBranchY = Math.max(maxBranchY, trueBranchY);
+          } else {
+            // Add placeholder for empty branch
+            const placeholderId = `placeholder_${nodeId}_true`;
+            newNodes.push({
+              id: placeholderId,
+              type: 'branchAction',
+              position: { x: startX - branchOffset, y: currentY + 100 },
+              data: {
+                label: '+ Agregar acción',
+                actionType: 'placeholder',
+                branchType: action.type === 'condition' ? 'true' : 'A',
+                parentActionId: action.id,
+                branchKey: action.type === 'condition' ? 'trueBranch' : 'splitBranchA',
+              },
+            });
+            newEdges.push({
+              id: `edge_${placeholderId}`,
+              source: nodeId,
+              sourceHandle: action.type === 'condition' ? 'true' : 'A',
+              target: placeholderId,
+              type: 'smoothstep',
+              markerEnd: { type: MarkerType.ArrowClosed },
+              style: { stroke: '#22c55e', strokeWidth: 2, strokeDasharray: '5,5' },
+              label: action.type === 'condition' ? 'Sí' : `A (${action.config?.splitPercentageA || 50}%)`,
+              labelStyle: { fontSize: 10, fill: '#22c55e' },
+              labelBgStyle: { fill: 'white', fillOpacity: 0.8 },
+            });
+          }
+
+          // Render false/B branch
+          const falseBranchActions = action.type === 'condition'
+            ? (action.config?.falseBranch || []).map((id: string) => formData.actions.find(a => a.id === id)).filter(Boolean)
+            : (action.config?.splitBranchB || []).map((id: string) => formData.actions.find(a => a.id === id)).filter(Boolean);
+
+          if (falseBranchActions.length > 0) {
+            const falseBranchY = renderActions(
+              falseBranchActions,
+              currentY + 100,
+              startX + branchOffset,
+              nodeId,
+              action.type === 'condition' ? 'false' : 'B',
+              action.type === 'condition' ? 'false' : 'B',
+              depth + 1
+            );
+            maxBranchY = Math.max(maxBranchY, falseBranchY);
+          } else {
+            // Add placeholder for empty branch
+            const placeholderId = `placeholder_${nodeId}_false`;
+            newNodes.push({
+              id: placeholderId,
+              type: 'branchAction',
+              position: { x: startX + branchOffset, y: currentY + 100 },
+              data: {
+                label: '+ Agregar acción',
+                actionType: 'placeholder',
+                branchType: action.type === 'condition' ? 'false' : 'B',
+                parentActionId: action.id,
+                branchKey: action.type === 'condition' ? 'falseBranch' : 'splitBranchB',
+              },
+            });
+            newEdges.push({
+              id: `edge_${placeholderId}`,
+              source: nodeId,
+              sourceHandle: action.type === 'condition' ? 'false' : 'B',
+              target: placeholderId,
+              type: 'smoothstep',
+              markerEnd: { type: MarkerType.ArrowClosed },
+              style: { stroke: '#ef4444', strokeWidth: 2, strokeDasharray: '5,5' },
+              label: action.type === 'condition' ? 'No' : `B (${100 - (action.config?.splitPercentageA || 50)}%)`,
+              labelStyle: { fontSize: 10, fill: '#ef4444' },
+              labelBgStyle: { fill: 'white', fillOpacity: 0.8 },
+            });
+          }
+
+          currentY = maxBranchY + 50;
+        } else {
+          // Regular action node
+          const nodeType = branchType ? 'branchAction' : 'action';
+          newNodes.push({
+            id: nodeId,
+            type: nodeType,
+            position: { x: startX, y: currentY },
+            data: {
+              label: getActionLabel(action),
+              actionType: action.type,
+              delay: action.delay,
+              branchType: branchType,
+            },
+          });
+
+          // Connect to previous node
+          const edgeColor = branchType === 'true' || branchType === 'A' ? '#22c55e' : branchType === 'false' || branchType === 'B' ? '#ef4444' : '#6b7280';
+          newEdges.push({
+            id: `edge_${nodeId}`,
+            source: prevNodeId,
+            sourceHandle: prevSourceHandle,
+            target: nodeId,
+            type: 'smoothstep',
+            markerEnd: { type: MarkerType.ArrowClosed },
+            style: { stroke: edgeColor, strokeWidth: 2 },
+            ...(index === 0 && branchType ? {
+              label: branchType === 'true' ? 'Sí' : branchType === 'false' ? 'No' : branchType,
+              labelStyle: { fontSize: 10, fill: edgeColor },
+              labelBgStyle: { fill: 'white', fillOpacity: 0.8 },
+            } : {}),
+          });
+
+          currentY += 100;
+        }
+
+        prevNodeId = nodeId;
+        prevSourceHandle = undefined;
       });
 
-      // Connect to previous node
-      const prevNodeId = index === 0 ? lastNodeId : `action_${index - 1}`;
-      newEdges.push({
-        id: `edge_${index}`,
-        source: prevNodeId,
-        target: nodeId,
-        type: 'smoothstep',
-        markerEnd: { type: MarkerType.ArrowClosed },
-        style: { stroke: '#6b7280', strokeWidth: 2 },
+      return currentY;
+    };
+
+    // Get top-level actions (not inside branches)
+    const topLevelActions = formData.actions.filter(action => {
+      // Check if this action is referenced in any branch
+      return !formData.actions.some(a => {
+        if (a.type === 'condition') {
+          return (a.config?.trueBranch || []).includes(action.id) ||
+                 (a.config?.falseBranch || []).includes(action.id);
+        }
+        if (a.type === 'split') {
+          return (a.config?.splitBranchA || []).includes(action.id) ||
+                 (a.config?.splitBranchB || []).includes(action.id);
+        }
+        return false;
       });
     });
+
+    // Render top-level actions
+    if (topLevelActions.length > 0) {
+      renderActions(topLevelActions, yOffset, centerX, lastNodeId);
+    }
 
     setNodes(newNodes);
     setEdges(newEdges);
@@ -446,6 +719,12 @@ export default function WorkflowDetailPage() {
         return action.config?.priorityTitle || 'Crear prioridad';
       case 'send_channel_message':
         return action.config?.channelMessageContent?.substring(0, 30) + '...' || 'Mensaje a canal';
+      case 'condition':
+        const condCount = action.config?.conditions?.length || 0;
+        return `Si ${condCount} condición(es)...`;
+      case 'split':
+        const pctA = action.config?.splitPercentageA || 50;
+        return `División A/B (${pctA}% / ${100 - pctA}%)`;
       default:
         return action.type;
     }
@@ -519,24 +798,113 @@ export default function WorkflowDetailPage() {
     setShowActionModal(true);
   };
 
+  // Add action to a specific branch
+  const addActionToBranch = (type: CRMActionType, parentActionId: string, branchKey: string) => {
+    const newAction = {
+      id: `action_${Date.now()}`,
+      type,
+      config: {},
+      delay: 0,
+      order: formData.actions.length,
+    };
+    setEditingAction(newAction);
+    setAddingToBranch({ parentActionId, branchKey: branchKey as any });
+    setShowActionModal(true);
+    setShowBranchActionPicker(false);
+  };
+
+  // Handle click on placeholder node to add action to branch
+  const handleNodeClick = useCallback((event: any, node: Node) => {
+    if (node.data?.actionType === 'placeholder' && node.data?.parentActionId) {
+      setAddingToBranch({
+        parentActionId: node.data.parentActionId,
+        branchKey: node.data.branchKey,
+      });
+      setShowBranchActionPicker(true);
+    }
+  }, []);
+
   const saveAction = (action: any) => {
     const existingIndex = formData.actions.findIndex(a => a.id === action.id);
+
     if (existingIndex >= 0) {
+      // Update existing action
       const newActions = [...formData.actions];
       newActions[existingIndex] = action;
       setFormData({ ...formData, actions: newActions });
     } else {
-      setFormData({ ...formData, actions: [...formData.actions, action] });
+      // New action
+      if (addingToBranch) {
+        // Add to specific branch
+        const { parentActionId, branchKey } = addingToBranch;
+        const newActions = [...formData.actions, action];
+        const parentIndex = newActions.findIndex(a => a.id === parentActionId);
+
+        if (parentIndex >= 0) {
+          const parentAction = { ...newActions[parentIndex] };
+          parentAction.config = { ...parentAction.config };
+          parentAction.config[branchKey] = [...(parentAction.config[branchKey] || []), action.id];
+          newActions[parentIndex] = parentAction;
+        }
+
+        setFormData({ ...formData, actions: newActions });
+        setAddingToBranch(null);
+      } else {
+        // Add to main flow
+        setFormData({ ...formData, actions: [...formData.actions, action] });
+      }
     }
     setShowActionModal(false);
     setEditingAction(null);
   };
 
   const removeAction = (actionId: string) => {
-    setFormData({
-      ...formData,
-      actions: formData.actions.filter(a => a.id !== actionId),
-    });
+    // Also remove from any branch that contains this action
+    const newActions = formData.actions
+      .filter(a => a.id !== actionId)
+      .map(action => {
+        if (action.type === 'condition' || action.type === 'split') {
+          const config = { ...action.config };
+          if (config.trueBranch) {
+            config.trueBranch = config.trueBranch.filter((id: string) => id !== actionId);
+          }
+          if (config.falseBranch) {
+            config.falseBranch = config.falseBranch.filter((id: string) => id !== actionId);
+          }
+          if (config.splitBranchA) {
+            config.splitBranchA = config.splitBranchA.filter((id: string) => id !== actionId);
+          }
+          if (config.splitBranchB) {
+            config.splitBranchB = config.splitBranchB.filter((id: string) => id !== actionId);
+          }
+          return { ...action, config };
+        }
+        return action;
+      });
+    setFormData({ ...formData, actions: newActions });
+  };
+
+  // Get branch info for an action
+  const getActionBranchInfo = (actionId: string): { parentId: string; branch: string } | null => {
+    for (const action of formData.actions) {
+      if (action.type === 'condition') {
+        if (action.config?.trueBranch?.includes(actionId)) {
+          return { parentId: action.id, branch: 'Sí' };
+        }
+        if (action.config?.falseBranch?.includes(actionId)) {
+          return { parentId: action.id, branch: 'No' };
+        }
+      }
+      if (action.type === 'split') {
+        if (action.config?.splitBranchA?.includes(actionId)) {
+          return { parentId: action.id, branch: 'A' };
+        }
+        if (action.config?.splitBranchB?.includes(actionId)) {
+          return { parentId: action.id, branch: 'B' };
+        }
+      }
+    }
+    return null;
   };
 
   // Condition management functions
@@ -818,39 +1186,169 @@ export default function WorkflowDetailPage() {
                 Acciones ({formData.actions.length})
               </h3>
 
-              {/* Actions List */}
+              {/* Actions List with Hierarchy */}
               <div className="space-y-2 mb-4">
                 {formData.actions.map((action, index) => {
                   const Icon = ACTION_ICONS[action.type] || Settings;
+                  const branchInfo = getActionBranchInfo(action.id);
+                  const isBranching = action.type === 'condition' || action.type === 'split';
+
+                  // Don't show actions that are inside branches in the main list
+                  if (branchInfo) return null;
+
                   return (
-                    <div
-                      key={action.id}
-                      className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 dark:text-gray-500 w-4">{index + 1}</span>
-                        <Icon className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm text-gray-900 dark:text-gray-100">{getActionLabel(action)}</span>
-                      </div>
-                      {isAdmin && (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingAction(action);
-                              setShowActionModal(true);
-                            }}
-                            className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                          >
-                            <Settings className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => removeAction(action.id)}
-                            className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                    <div key={action.id} className="space-y-1">
+                      <div
+                        className={`bg-white dark:bg-gray-700 border rounded-lg p-3 ${
+                          isBranching
+                            ? action.type === 'condition'
+                              ? 'border-amber-300 dark:border-amber-700'
+                              : 'border-cyan-300 dark:border-cyan-700'
+                            : 'border-gray-200 dark:border-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400 dark:text-gray-500 w-4">{index + 1}</span>
+                            <Icon className={`w-4 h-4 ${
+                              isBranching
+                                ? action.type === 'condition' ? 'text-amber-500' : 'text-cyan-500'
+                                : 'text-blue-500'
+                            }`} />
+                            <span className="text-sm text-gray-900 dark:text-gray-100">{getActionLabel(action)}</span>
+                          </div>
+                          {isAdmin && (
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingAction(action);
+                                  setShowActionModal(true);
+                                }}
+                                className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                              >
+                                <Settings className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => removeAction(action.id)}
+                                className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      )}
+
+                        {/* Branch management for condition/split actions */}
+                        {isBranching && isAdmin && (
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* True/A Branch */}
+                              <div className={`rounded-lg p-2 ${
+                                action.type === 'condition'
+                                  ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                                  : 'bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800'
+                              }`}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`text-xs font-medium ${
+                                    action.type === 'condition' ? 'text-green-700 dark:text-green-300' : 'text-cyan-700 dark:text-cyan-300'
+                                  }`}>
+                                    {action.type === 'condition' ? '✓ Sí' : `A (${action.config?.splitPercentageA || 50}%)`}
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setAddingToBranch({
+                                        parentActionId: action.id,
+                                        branchKey: action.type === 'condition' ? 'trueBranch' : 'splitBranchA',
+                                      });
+                                      setShowBranchActionPicker(true);
+                                    }}
+                                    className="text-xs text-green-600 dark:text-green-400 hover:text-green-700"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                <div className="space-y-1">
+                                  {((action.type === 'condition' ? action.config?.trueBranch : action.config?.splitBranchA) || [])
+                                    .map((actionId: string) => {
+                                      const branchAction = formData.actions.find(a => a.id === actionId);
+                                      if (!branchAction) return null;
+                                      const BranchIcon = ACTION_ICONS[branchAction.type] || Settings;
+                                      return (
+                                        <div key={actionId} className="flex items-center gap-1 text-xs bg-white dark:bg-gray-700 rounded px-2 py-1">
+                                          <BranchIcon className="w-3 h-3 text-green-500" />
+                                          <span className="truncate text-gray-700 dark:text-gray-300">
+                                            {getActionLabel(branchAction)}
+                                          </span>
+                                          <button
+                                            onClick={() => removeAction(actionId)}
+                                            className="ml-auto text-gray-400 hover:text-red-500"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+                                  {((action.type === 'condition' ? action.config?.trueBranch : action.config?.splitBranchA) || []).length === 0 && (
+                                    <p className="text-xs text-gray-400 italic">Sin acciones</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* False/B Branch */}
+                              <div className={`rounded-lg p-2 ${
+                                action.type === 'condition'
+                                  ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                                  : 'bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800'
+                              }`}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`text-xs font-medium ${
+                                    action.type === 'condition' ? 'text-red-700 dark:text-red-300' : 'text-cyan-700 dark:text-cyan-300'
+                                  }`}>
+                                    {action.type === 'condition' ? '✗ No' : `B (${100 - (action.config?.splitPercentageA || 50)}%)`}
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setAddingToBranch({
+                                        parentActionId: action.id,
+                                        branchKey: action.type === 'condition' ? 'falseBranch' : 'splitBranchB',
+                                      });
+                                      setShowBranchActionPicker(true);
+                                    }}
+                                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-700"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                <div className="space-y-1">
+                                  {((action.type === 'condition' ? action.config?.falseBranch : action.config?.splitBranchB) || [])
+                                    .map((actionId: string) => {
+                                      const branchAction = formData.actions.find(a => a.id === actionId);
+                                      if (!branchAction) return null;
+                                      const BranchIcon = ACTION_ICONS[branchAction.type] || Settings;
+                                      return (
+                                        <div key={actionId} className="flex items-center gap-1 text-xs bg-white dark:bg-gray-700 rounded px-2 py-1">
+                                          <BranchIcon className="w-3 h-3 text-red-500" />
+                                          <span className="truncate text-gray-700 dark:text-gray-300">
+                                            {getActionLabel(branchAction)}
+                                          </span>
+                                          <button
+                                            onClick={() => removeAction(actionId)}
+                                            className="ml-auto text-gray-400 hover:text-red-500"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+                                  {((action.type === 'condition' ? action.config?.falseBranch : action.config?.splitBranchB) || []).length === 0 && (
+                                    <p className="text-xs text-gray-400 italic">Sin acciones</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -859,17 +1357,28 @@ export default function WorkflowDetailPage() {
               {/* Add Action Button */}
               {isAdmin && (
                 <div className="space-y-2">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Agregar acción:</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Agregar acción al flujo principal:</p>
                   <div className="grid grid-cols-2 gap-2">
                     {actionTypes.map(([type, label]) => {
                       const Icon = ACTION_ICONS[type] || Settings;
+                      const isBranchingType = type === 'condition' || type === 'split';
                       return (
                         <button
                           key={type}
                           onClick={() => addAction(type)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+                          className={`flex items-center gap-2 px-3 py-2 text-xs border rounded-lg transition ${
+                            isBranchingType
+                              ? type === 'condition'
+                                ? 'border-amber-200 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 dark:hover:border-amber-600 bg-amber-50/50 dark:bg-amber-900/10'
+                                : 'border-cyan-200 dark:border-cyan-700 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 hover:border-cyan-300 dark:hover:border-cyan-600 bg-cyan-50/50 dark:bg-cyan-900/10'
+                              : 'border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-700'
+                          } text-gray-700 dark:text-gray-300`}
                         >
-                          <Icon className="w-4 h-4" />
+                          <Icon className={`w-4 h-4 ${
+                            isBranchingType
+                              ? type === 'condition' ? 'text-amber-500' : 'text-cyan-500'
+                              : ''
+                          }`} />
                           {label}
                         </button>
                       );
@@ -931,14 +1440,18 @@ export default function WorkflowDetailPage() {
               edges={edges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
+              onNodeClick={handleNodeClick}
               nodeTypes={nodeTypes}
               fitView
+              minZoom={0.3}
+              maxZoom={1.5}
+              defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
               className="bg-gray-200 dark:bg-gray-900"
             >
               <Background color="#9ca3af" gap={20} />
               <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg" />
               <Panel position="top-right" className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 text-xs text-gray-500 dark:text-gray-400">
-                Vista del flujo de trabajo
+                Clic en &quot;+ Agregar acción&quot; para añadir a una rama
               </Panel>
             </ReactFlow>
           </div>
@@ -973,6 +1486,66 @@ export default function WorkflowDetailPage() {
               setEditingCondition(null);
             }}
           />
+        )}
+
+        {/* Branch Action Picker Modal */}
+        {showBranchActionPicker && addingToBranch && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-blue-500" />
+                  Agregar acción a rama {addingToBranch.branchKey === 'trueBranch' || addingToBranch.branchKey === 'splitBranchA' ? (
+                    <span className="text-green-600">{addingToBranch.branchKey === 'trueBranch' ? '"Sí"' : '"A"'}</span>
+                  ) : (
+                    <span className="text-red-600">{addingToBranch.branchKey === 'falseBranch' ? '"No"' : '"B"'}</span>
+                  )}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowBranchActionPicker(false);
+                    setAddingToBranch(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 max-h-[60vh] overflow-y-auto">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  Selecciona el tipo de acción a agregar:
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {actionTypes
+                    .filter(([type]) => type !== 'condition' && type !== 'split') // Don't allow nested branching for now
+                    .map(([type, label]) => {
+                      const Icon = ACTION_ICONS[type] || Settings;
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => addActionToBranch(type, addingToBranch.parentActionId, addingToBranch.branchKey)}
+                          className="flex items-center gap-2 px-3 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+                        >
+                          <Icon className="w-5 h-5 text-blue-500" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-xl">
+                <button
+                  onClick={() => {
+                    setShowBranchActionPicker(false);
+                    setAddingToBranch(null);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -1303,6 +1876,212 @@ function ActionConfigModal({
               min={0}
             />
           </div>
+        );
+
+      case 'condition':
+        return (
+          <>
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <GitBranch className="w-4 h-4 inline mr-1" />
+                La condición evaluará los datos del trigger y ejecutará diferentes acciones según el resultado.
+              </p>
+            </div>
+
+            {/* Condiciones */}
+            <div>
+              <label className={labelClasses}>Condiciones a evaluar</label>
+              <div className="space-y-2 mb-2">
+                {(config.conditions || []).map((cond: any, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                    {idx > 0 && (
+                      <select
+                        value={cond.logic || 'AND'}
+                        onChange={(e) => {
+                          const newConds = [...(config.conditions || [])];
+                          newConds[idx] = { ...newConds[idx], logic: e.target.value };
+                          setConfig({ ...config, conditions: newConds });
+                        }}
+                        className="text-xs px-2 py-1 border rounded bg-white dark:bg-gray-600"
+                      >
+                        <option value="AND">Y</option>
+                        <option value="OR">O</option>
+                      </select>
+                    )}
+                    <input
+                      type="text"
+                      value={cond.field || ''}
+                      onChange={(e) => {
+                        const newConds = [...(config.conditions || [])];
+                        newConds[idx] = { ...newConds[idx], field: e.target.value };
+                        setConfig({ ...config, conditions: newConds });
+                      }}
+                      className="flex-1 text-sm px-2 py-1 border rounded bg-white dark:bg-gray-600"
+                      placeholder="Campo (ej: deal.value)"
+                    />
+                    <select
+                      value={cond.operator || 'equals'}
+                      onChange={(e) => {
+                        const newConds = [...(config.conditions || [])];
+                        newConds[idx] = { ...newConds[idx], operator: e.target.value };
+                        setConfig({ ...config, conditions: newConds });
+                      }}
+                      className="text-xs px-2 py-1 border rounded bg-white dark:bg-gray-600"
+                    >
+                      <option value="equals">=</option>
+                      <option value="not_equals">≠</option>
+                      <option value="greater_than">&gt;</option>
+                      <option value="less_than">&lt;</option>
+                      <option value="contains">contiene</option>
+                      <option value="is_empty">vacío</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={cond.value || ''}
+                      onChange={(e) => {
+                        const newConds = [...(config.conditions || [])];
+                        newConds[idx] = { ...newConds[idx], value: e.target.value };
+                        setConfig({ ...config, conditions: newConds });
+                      }}
+                      className="w-24 text-sm px-2 py-1 border rounded bg-white dark:bg-gray-600"
+                      placeholder="Valor"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newConds = (config.conditions || []).filter((_: any, i: number) => i !== idx);
+                        setConfig({ ...config, conditions: newConds });
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const newConds = [...(config.conditions || []), { field: '', operator: 'equals', value: '', logic: 'AND' }];
+                  setConfig({ ...config, conditions: newConds });
+                }}
+                className="text-sm text-amber-600 hover:text-amber-700 flex items-center gap-1"
+              >
+                <Plus className="w-4 h-4" /> Agregar condición
+              </button>
+            </div>
+
+            <div>
+              <label className={labelClasses}>Lógica entre condiciones</label>
+              <select
+                value={config.conditionLogic || 'AND'}
+                onChange={(e) => setConfig({ ...config, conditionLogic: e.target.value })}
+                className={inputClasses}
+              >
+                <option value="AND">Todas deben cumplirse (AND)</option>
+                <option value="OR">Al menos una debe cumplirse (OR)</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <div>
+                <label className={`${labelClasses} text-green-700 dark:text-green-400`}>
+                  ✓ Si se cumple (rama verdadera)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Selecciona las acciones que se ejecutarán si la condición es verdadera
+                </p>
+                <div className="text-xs text-green-600 bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                  {(config.trueBranch || []).length} acciones configuradas
+                </div>
+              </div>
+              <div>
+                <label className={`${labelClasses} text-red-700 dark:text-red-400`}>
+                  ✗ Si NO se cumple (rama falsa)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Selecciona las acciones que se ejecutarán si la condición es falsa
+                </p>
+                <div className="text-xs text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                  {(config.falseBranch || []).length} acciones configuradas
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              Tip: Para configurar las acciones de cada rama, primero guarda esta condición y luego podrás agregar acciones específicas para cada rama.
+            </p>
+          </>
+        );
+
+      case 'split':
+        return (
+          <>
+            <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-3 mb-4">
+              <p className="text-sm text-cyan-800 dark:text-cyan-200">
+                <Split className="w-4 h-4 inline mr-1" />
+                La división A/B enviará aleatoriamente a los contactos por una de las dos ramas según el porcentaje configurado.
+              </p>
+            </div>
+
+            <div>
+              <label className={labelClasses}>Nombre del test (opcional)</label>
+              <input
+                type="text"
+                value={config.splitName || ''}
+                onChange={(e) => setConfig({ ...config, splitName: e.target.value })}
+                className={inputClasses}
+                placeholder="Ej: Test de asunto de email"
+              />
+            </div>
+
+            <div>
+              <label className={labelClasses}>Distribución</label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="text-xs text-cyan-600 dark:text-cyan-400">Rama A</label>
+                  <input
+                    type="range"
+                    min={10}
+                    max={90}
+                    value={config.splitPercentageA || 50}
+                    onChange={(e) => setConfig({ ...config, splitPercentageA: parseInt(e.target.value) })}
+                    className="w-full"
+                  />
+                </div>
+                <div className="text-center w-24">
+                  <span className="text-lg font-bold text-cyan-600">{config.splitPercentageA || 50}%</span>
+                  <span className="text-gray-400 mx-1">/</span>
+                  <span className="text-lg font-bold text-cyan-600">{100 - (config.splitPercentageA || 50)}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <div className="bg-cyan-50 dark:bg-cyan-900/20 p-3 rounded-lg">
+                <label className={`${labelClasses} text-cyan-700 dark:text-cyan-400`}>
+                  Rama A ({config.splitPercentageA || 50}%)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Acciones para el grupo A
+                </p>
+                <div className="text-xs text-cyan-600">
+                  {(config.splitBranchA || []).length} acciones
+                </div>
+              </div>
+              <div className="bg-cyan-50 dark:bg-cyan-900/20 p-3 rounded-lg">
+                <label className={`${labelClasses} text-cyan-700 dark:text-cyan-400`}>
+                  Rama B ({100 - (config.splitPercentageA || 50)}%)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Acciones para el grupo B
+                </p>
+                <div className="text-xs text-cyan-600">
+                  {(config.splitBranchB || []).length} acciones
+                </div>
+              </div>
+            </div>
+          </>
         );
 
       case 'create_priority':

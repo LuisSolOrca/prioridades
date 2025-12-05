@@ -34,6 +34,18 @@ export interface IContact {
   scoreBreakdown?: IScoreBreakdown;
   lastEngagementAt?: Date;
 
+  // Email preferences
+  unsubscribed?: boolean;
+  unsubscribedAt?: Date;
+  unsubscribeReason?: string;
+  emailPreferences?: {
+    marketing: boolean;
+    newsletter: boolean;
+    promotions: boolean;
+    productUpdates: boolean;
+    events: boolean;
+  };
+
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -137,6 +149,26 @@ const ContactSchema = new Schema<IContact>({
     type: Date,
   },
 
+  // Email preferences
+  unsubscribed: {
+    type: Boolean,
+    default: false,
+  },
+  unsubscribedAt: {
+    type: Date,
+  },
+  unsubscribeReason: {
+    type: String,
+    trim: true,
+  },
+  emailPreferences: {
+    marketing: { type: Boolean, default: true },
+    newsletter: { type: Boolean, default: true },
+    promotions: { type: Boolean, default: true },
+    productUpdates: { type: Boolean, default: true },
+    events: { type: Boolean, default: true },
+  },
+
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -151,6 +183,7 @@ ContactSchema.index({ clientId: 1, isActive: 1 });
 ContactSchema.index({ email: 1 });
 ContactSchema.index({ lastName: 1, firstName: 1 });
 ContactSchema.index({ leadTemperature: 1, leadScore: -1 });
+ContactSchema.index({ unsubscribed: 1, isActive: 1 });
 
 // Virtual para nombre completo
 ContactSchema.virtual('fullName').get(function() {

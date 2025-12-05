@@ -97,9 +97,30 @@ export interface ICRMWorkflowAction {
     channelId?: string;                // Canal donde enviar el mensaje
     channelMessageContent?: string;    // Contenido del mensaje (soporta variables)
     channelMessageTags?: string[];     // Tags opcionales para el mensaje
+
+    // Para condition (branching condicional)
+    conditionField?: string;           // Campo a evaluar
+    conditionOperator?: string;        // Operador de comparación
+    conditionValue?: any;              // Valor a comparar
+    conditionLogic?: 'AND' | 'OR';     // Lógica para múltiples condiciones
+    conditions?: {                     // Múltiples condiciones
+      field: string;
+      operator: string;
+      value: any;
+    }[];
+    trueBranch?: string[];             // IDs de acciones si condición es verdadera
+    falseBranch?: string[];            // IDs de acciones si condición es falsa
+
+    // Para split (división A/B)
+    splitPercentageA?: number;         // Porcentaje para rama A (default 50)
+    splitBranchA?: string[];           // IDs de acciones para rama A
+    splitBranchB?: string[];           // IDs de acciones para rama B
   };
   delay?: number;             // Minutos de espera antes de ejecutar esta acción
   order: number;              // Orden de ejecución
+  // Para acciones anidadas en branches
+  parentActionId?: string;    // ID de la acción padre (condition/split)
+  branchType?: 'true' | 'false' | 'A' | 'B' | 'main';  // Tipo de rama
 }
 
 export interface ICRMWorkflow {
@@ -147,11 +168,14 @@ const WorkflowActionSchema = new Schema<ICRMWorkflowAction>({
     required: true,
     enum: ['send_email', 'send_notification', 'create_task', 'create_activity',
       'update_field', 'move_stage', 'assign_owner', 'add_tag', 'remove_tag',
-      'webhook', 'delay', 'create_priority', 'send_channel_message'],
+      'webhook', 'delay', 'create_priority', 'send_channel_message',
+      'condition', 'split'],
   },
   config: { type: Schema.Types.Mixed, default: {} },
   delay: { type: Number, default: 0 },
   order: { type: Number, required: true },
+  parentActionId: { type: String },
+  branchType: { type: String, enum: ['true', 'false', 'A', 'B', 'main'] },
 }, { _id: false });
 
 const CRMWorkflowSchema = new Schema<ICRMWorkflow>({

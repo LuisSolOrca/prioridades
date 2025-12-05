@@ -28,9 +28,10 @@ import CrmHelpCard from '@/components/crm/CrmHelpCard';
 
 // Constants (shared with server but safe for client)
 const ENGAGEMENT_ACTION_LABELS: Record<string, string> = {
-  email_opened: 'Email abierto',
-  email_clicked: 'Click en email',
-  email_replied: 'Email respondido',
+  // CRM Interactions
+  email_opened: 'Email CRM abierto',
+  email_clicked: 'Click en email CRM',
+  email_replied: 'Email CRM respondido',
   quote_viewed: 'Cotización vista',
   quote_accepted: 'Cotización aceptada',
   meeting_scheduled: 'Reunión agendada',
@@ -40,6 +41,48 @@ const ENGAGEMENT_ACTION_LABELS: Record<string, string> = {
   website_visited: 'Visita a sitio web',
   document_downloaded: 'Documento descargado',
   demo_requested: 'Demo solicitado',
+  // Marketing Interactions
+  landing_page_viewed: 'Landing page visitada',
+  landing_page_converted: 'Conversión en landing page',
+  marketing_email_opened: 'Email marketing abierto',
+  marketing_email_clicked: 'Click en email marketing',
+  ad_clicked: 'Click en anuncio',
+  ad_impression: 'Impresión de anuncio',
+  webinar_registered: 'Registro en webinar',
+  webinar_attended: 'Asistencia a webinar',
+  content_downloaded: 'Contenido descargado',
+  social_engagement: 'Interacción social',
+  chat_started: 'Chat iniciado',
+};
+
+// Categorías de acciones para agrupar en UI
+const ENGAGEMENT_ACTION_CATEGORIES: Record<string, { label: string; icon: string; actions: string[] }> = {
+  crm: {
+    label: 'CRM',
+    icon: '💼',
+    actions: [
+      'email_opened', 'email_clicked', 'email_replied',
+      'quote_viewed', 'quote_accepted',
+      'meeting_scheduled', 'meeting_completed',
+      'call_completed', 'form_submitted', 'demo_requested',
+    ],
+  },
+  marketing: {
+    label: 'Marketing',
+    icon: '📣',
+    actions: [
+      'landing_page_viewed', 'landing_page_converted',
+      'marketing_email_opened', 'marketing_email_clicked',
+      'ad_clicked', 'ad_impression',
+      'webinar_registered', 'webinar_attended',
+      'content_downloaded', 'social_engagement', 'chat_started',
+    ],
+  },
+  web: {
+    label: 'Web Analytics',
+    icon: '🌐',
+    actions: ['website_visited', 'document_downloaded'],
+  },
 };
 
 const FIT_OPERATOR_LABELS: Record<string, string> = {
@@ -67,6 +110,7 @@ const FIT_FIELDS = [
 ];
 
 const SUGGESTED_ENGAGEMENT_POINTS: Record<string, number> = {
+  // CRM Interactions
   email_opened: 5,
   email_clicked: 10,
   email_replied: 25,
@@ -79,6 +123,18 @@ const SUGGESTED_ENGAGEMENT_POINTS: Record<string, number> = {
   website_visited: 3,
   document_downloaded: 15,
   demo_requested: 45,
+  // Marketing Interactions
+  landing_page_viewed: 5,
+  landing_page_converted: 40,
+  marketing_email_opened: 3,
+  marketing_email_clicked: 8,
+  ad_clicked: 10,
+  ad_impression: 1,
+  webinar_registered: 25,
+  webinar_attended: 35,
+  content_downloaded: 20,
+  social_engagement: 5,
+  chat_started: 15,
 };
 
 interface FitRule {
@@ -312,7 +368,8 @@ export default function LeadScoringPage() {
           tips={[
             'El sistema asigna puntuación automática basada en criterios configurables',
             'Los leads se clasifican en Hot, Warm y Cold según su puntuación',
-            'Configura reglas personalizadas: tamaño del deal, actividad reciente, etapa del pipeline',
+            'Incluye interacciones de CRM (emails, llamadas, reuniones) y Marketing (landing pages, campañas, ads)',
+            'Configura reglas personalizadas: tamaño del deal, actividad reciente, engagement en marketing',
             'Enfoca tu tiempo en los leads con mayor probabilidad de cierre',
           ]}
         />
@@ -598,22 +655,39 @@ export default function LeadScoringPage() {
                       <h5 className="font-medium text-gray-900 dark:text-white mb-3">
                         Reglas de Engagement ({config.engagementRules.length})
                       </h5>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
-                        {config.engagementRules.map((rule) => (
-                          <div
-                            key={rule.id}
-                            className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded"
-                          >
-                            <span className="text-gray-600 dark:text-gray-400">
-                              {ENGAGEMENT_ACTION_LABELS[rule.action] || rule.action}
-                            </span>
-                            <span className="font-medium text-green-600">+{rule.points}</span>
+
+                      {/* Grouped by category */}
+                      {Object.entries(ENGAGEMENT_ACTION_CATEGORIES).map(([catKey, cat]) => {
+                        const categoryRules = config.engagementRules.filter(rule =>
+                          cat.actions.includes(rule.action)
+                        );
+                        if (categoryRules.length === 0) return null;
+
+                        return (
+                          <div key={catKey} className="mb-4 last:mb-0">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+                              <span>{cat.icon}</span> {cat.label}
+                            </p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
+                              {categoryRules.map((rule) => (
+                                <div
+                                  key={rule.id}
+                                  className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded"
+                                >
+                                  <span className="text-gray-600 dark:text-gray-400 truncate">
+                                    {ENGAGEMENT_ACTION_LABELS[rule.action] || rule.action}
+                                  </span>
+                                  <span className="font-medium text-green-600 ml-2">+{rule.points}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        ))}
-                        {config.engagementRules.length === 0 && (
-                          <p className="text-gray-500 col-span-full">Sin reglas de engagement</p>
-                        )}
-                      </div>
+                        );
+                      })}
+
+                      {config.engagementRules.length === 0 && (
+                        <p className="text-gray-500">Sin reglas de engagement</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1033,37 +1107,62 @@ function ConfigModal({
                 Agregar Regla
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {form.engagementRules.map((rule) => (
-                <div
-                  key={rule.id}
-                  className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                >
-                  <select
-                    value={rule.action}
-                    onChange={(e) => updateEngagementRule(rule.id, { action: e.target.value })}
-                    className="flex-1 px-2 py-1 border rounded bg-white dark:bg-gray-800 text-sm"
-                  >
-                    {Object.entries(ENGAGEMENT_ACTION_LABELS).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    value={rule.points}
-                    onChange={(e) => updateEngagementRule(rule.id, { points: Number(e.target.value) })}
-                    className="w-20 px-2 py-1 border rounded bg-white dark:bg-gray-800 text-sm"
-                    placeholder="Pts"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeEngagementRule(rule.id)}
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+
+            {/* Category tabs info */}
+            <div className="flex gap-2 mb-4 text-xs">
+              {Object.entries(ENGAGEMENT_ACTION_CATEGORIES).map(([key, cat]) => (
+                <span key={key} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                  {cat.icon} {cat.label}
+                </span>
               ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {form.engagementRules.map((rule) => {
+                // Determinar la categoría de la acción
+                const category = Object.entries(ENGAGEMENT_ACTION_CATEGORIES).find(
+                  ([_, cat]) => cat.actions.includes(rule.action)
+                );
+                const categoryIcon = category?.[1]?.icon || '📊';
+
+                return (
+                  <div
+                    key={rule.id}
+                    className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  >
+                    <span className="text-sm">{categoryIcon}</span>
+                    <select
+                      value={rule.action}
+                      onChange={(e) => updateEngagementRule(rule.id, { action: e.target.value })}
+                      className="flex-1 px-2 py-1 border rounded bg-white dark:bg-gray-800 text-sm"
+                    >
+                      {Object.entries(ENGAGEMENT_ACTION_CATEGORIES).map(([catKey, cat]) => (
+                        <optgroup key={catKey} label={`${cat.icon} ${cat.label}`}>
+                          {cat.actions.map(action => (
+                            <option key={action} value={action}>
+                              {ENGAGEMENT_ACTION_LABELS[action]}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      value={rule.points}
+                      onChange={(e) => updateEngagementRule(rule.id, { points: Number(e.target.value) })}
+                      className="w-20 px-2 py-1 border rounded bg-white dark:bg-gray-800 text-sm"
+                      placeholder="Pts"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeEngagementRule(rule.id)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
               {form.engagementRules.length === 0 && (
                 <p className="text-sm text-gray-500 text-center py-4 col-span-2">
                   Sin reglas de engagement. Agrega reglas para calificar según el comportamiento del lead.

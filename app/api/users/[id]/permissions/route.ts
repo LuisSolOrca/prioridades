@@ -52,6 +52,13 @@ export async function PUT(
         canManageDeals: true,
         canManageContacts: true,
         canManagePipelineStages: user.role === 'ADMIN',
+        // Marketing Permissions
+        viewMarketing: true,
+        canManageCampaigns: true,
+        canPublishCampaigns: user.role === 'ADMIN',
+        canManageWhatsApp: user.role === 'ADMIN',
+        canViewWebAnalytics: true,
+        canConfigureMarketingIntegrations: user.role === 'ADMIN',
       };
     }
 
@@ -75,6 +82,13 @@ export async function PUT(
       canManageDeals: permissions.canManageDeals !== undefined ? permissions.canManageDeals : (user.permissions.canManageDeals ?? true),
       canManageContacts: permissions.canManageContacts !== undefined ? permissions.canManageContacts : (user.permissions.canManageContacts ?? true),
       canManagePipelineStages: permissions.canManagePipelineStages !== undefined ? permissions.canManagePipelineStages : (user.permissions.canManagePipelineStages ?? (user.role === 'ADMIN')),
+      // Marketing Permissions
+      viewMarketing: permissions.viewMarketing !== undefined ? permissions.viewMarketing : (user.permissions.viewMarketing ?? true),
+      canManageCampaigns: permissions.canManageCampaigns !== undefined ? permissions.canManageCampaigns : (user.permissions.canManageCampaigns ?? true),
+      canPublishCampaigns: permissions.canPublishCampaigns !== undefined ? permissions.canPublishCampaigns : (user.permissions.canPublishCampaigns ?? (user.role === 'ADMIN')),
+      canManageWhatsApp: permissions.canManageWhatsApp !== undefined ? permissions.canManageWhatsApp : (user.permissions.canManageWhatsApp ?? (user.role === 'ADMIN')),
+      canViewWebAnalytics: permissions.canViewWebAnalytics !== undefined ? permissions.canViewWebAnalytics : (user.permissions.canViewWebAnalytics ?? true),
+      canConfigureMarketingIntegrations: permissions.canConfigureMarketingIntegrations !== undefined ? permissions.canConfigureMarketingIntegrations : (user.permissions.canConfigureMarketingIntegrations ?? (user.role === 'ADMIN')),
     };
 
     // Marcar como modificado explícitamente

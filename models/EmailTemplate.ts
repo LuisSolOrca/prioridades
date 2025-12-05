@@ -1,7 +1,24 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import { replaceTemplateVariables, TemplateScope } from '@/lib/templateVariables';
 
-export type TemplateCategory = 'outreach' | 'follow_up' | 'nurture' | 'closing' | 'other';
+export type TemplateCategory = 'outreach' | 'follow_up' | 'nurture' | 'closing' | 'meeting' | 'quote' | 'other';
+
+// Block structure for visual editor
+export interface IEmailBlock {
+  id: string;
+  type: 'text' | 'image' | 'button' | 'divider' | 'spacer' | 'columns' | 'html' | 'social' | 'video' | 'menu';
+  content: any;
+  styles?: Record<string, any>;
+  children?: IEmailBlock[];
+}
+
+export interface IGlobalStyles {
+  backgroundColor?: string;
+  contentWidth?: number;
+  fontFamily?: string;
+  textColor?: string;
+  linkColor?: string;
+}
 
 export interface IEmailTemplate {
   _id: mongoose.Types.ObjectId;
@@ -11,7 +28,11 @@ export interface IEmailTemplate {
   scope: TemplateScope; // 'sequences' | 'workflows' | 'both'
 
   subject: string;
-  body: string;
+  body: string; // Legacy HTML body or rendered from blocks
+
+  // Visual editor blocks (optional - new format)
+  blocks?: IEmailBlock[];
+  globalStyles?: IGlobalStyles;
 
   // Variables disponibles (para UI)
   availableVariables: string[];
@@ -23,6 +44,7 @@ export interface IEmailTemplate {
   // Metadata
   isActive: boolean;
   isShared: boolean; // Visible para todos los usuarios
+  isSystem?: boolean; // System template (CRM)
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -65,6 +87,8 @@ export const TEMPLATE_CATEGORY_LABELS: Record<TemplateCategory, string> = {
   follow_up: 'Seguimiento',
   nurture: 'Nurturing',
   closing: 'Cierre',
+  meeting: 'Reuniones',
+  quote: 'Cotizaciones',
   other: 'Otro',
 };
 
@@ -80,7 +104,7 @@ const EmailTemplateSchema = new Schema<IEmailTemplate>({
   },
   category: {
     type: String,
-    enum: ['outreach', 'follow_up', 'nurture', 'closing', 'other'],
+    enum: ['outreach', 'follow_up', 'nurture', 'closing', 'meeting', 'quote', 'other'],
     default: 'other',
   },
   scope: {
@@ -95,7 +119,17 @@ const EmailTemplateSchema = new Schema<IEmailTemplate>({
   },
   body: {
     type: String,
-    required: true,
+    default: '',
+  },
+
+  // Visual editor blocks (new format)
+  blocks: {
+    type: [Schema.Types.Mixed],
+    default: undefined,
+  },
+  globalStyles: {
+    type: Schema.Types.Mixed,
+    default: undefined,
   },
 
   availableVariables: {
@@ -110,6 +144,7 @@ const EmailTemplateSchema = new Schema<IEmailTemplate>({
   // Metadata
   isActive: { type: Boolean, default: true },
   isShared: { type: Boolean, default: false },
+  isSystem: { type: Boolean, default: false },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -126,11 +161,44 @@ EmailTemplateSchema.index({ category: 1 });
 EmailTemplateSchema.index({ scope: 1, isActive: 1 });
 EmailTemplateSchema.index({ usageCount: -1 });
 
-// Pre-save: extract variables from subject and body
+// Helper to extract text from blocks
+function extractTextFromBlocks(blocks: any[]): string {
+  let text = '';
+  for (const block of blocks) {
+    if (block.content) {
+      if (typeof block.content === 'string') {
+        text += ' ' + block.content;
+      } else if (block.content.text) {
+        text += ' ' + block.content.text;
+      }
+    }
+    if (block.children && Array.isArray(block.children)) {
+      text += ' ' + extractTextFromBlocks(block.children);
+    }
+  }
+  return text;
+}
+
+// Pre-save: extract variables and generate body from blocks
 EmailTemplateSchema.pre('save', function(next) {
   const variableRegex = /\{\{[\w.]+\}\}/g;
-  const subjectVars = this.subject.match(variableRegex) || [];
-  const bodyVars = this.body.match(variableRegex) || [];
+  const subjectVars = this.subject?.match(variableRegex) || [];
+
+  let bodyVars: string[] = [];
+
+  // If we have blocks, extract text from them for variable detection
+  if (this.blocks && Array.isArray(this.blocks) && this.blocks.length > 0) {
+    const blocksText = extractTextFromBlocks(this.blocks);
+    bodyVars = blocksText.match(variableRegex) || [];
+
+    // Generate a simple body from blocks for legacy compatibility
+    if (!this.body || this.body === '') {
+      this.body = blocksText.replace(/<[^>]*>/g, ' ').trim() || 'Email content';
+    }
+  } else if (this.body) {
+    bodyVars = this.body.match(variableRegex) || [];
+  }
+
   this.availableVariables = [...new Set([...subjectVars, ...bodyVars])];
   next();
 });

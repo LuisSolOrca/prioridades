@@ -10,6 +10,10 @@ import Contact from '@/models/Contact';
 import Client from '@/models/Client';
 import Activity from '@/models/Activity';
 import EmailTracking from '@/models/EmailTracking';
+import Touchpoint from '@/models/Touchpoint';
+import LandingPageView from '@/models/LandingPageView';
+import EmailCampaignRecipient from '@/models/EmailCampaignRecipient';
+import WebAnalyticsEvent from '@/models/WebAnalyticsEvent';
 import connectDB from '@/lib/mongodb';
 import Notification from '@/models/Notification';
 import mongoose from 'mongoose';
@@ -107,34 +111,41 @@ async function getEngagementActions(
   const since = new Date();
   since.setDate(since.getDate() - daysBack);
 
-  // Filtro base
-  const baseFilter: any = { createdAt: { $gte: since } };
-  if (dealId) baseFilter.dealId = dealId;
-  if (contactId) baseFilter.contactId = contactId;
-  if (clientId) baseFilter.clientId = clientId;
+  // Helper para incrementar conteo
+  const addAction = (action: EngagementAction, count: number) => {
+    if (count > 0) {
+      actions.set(action, (actions.get(action) || 0) + count);
+    }
+  };
 
-  // Contar actividades por tipo
+  // ========================================
+  // 1. CRM Activities (calls, meetings, etc.)
+  // ========================================
+  const activityFilter: any = { createdAt: { $gte: since } };
+  if (dealId) activityFilter.dealId = dealId;
+  if (contactId) activityFilter.contactId = contactId;
+  if (clientId) activityFilter.clientId = clientId;
+
   const activities = await Activity.aggregate([
-    { $match: baseFilter },
+    { $match: activityFilter },
     { $group: { _id: '$type', count: { $sum: 1 } } },
   ]);
 
-  // Mapear tipos de actividad a acciones de engagement
   const activityTypeMap: Record<string, EngagementAction> = {
     call: 'call_completed',
     meeting: 'meeting_completed',
     email: 'email_replied',
-    note: 'form_submitted',
+    task: 'form_submitted', // Tasks creadas desde formularios
   };
 
   activities.forEach((a: { _id: string; count: number }) => {
     const action = activityTypeMap[a._id];
-    if (action) {
-      actions.set(action, (actions.get(action) || 0) + a.count);
-    }
+    if (action) addAction(action, a.count);
   });
 
-  // Contar emails tracked
+  // ========================================
+  // 2. CRM Email Tracking (emails enviados desde CRM)
+  // ========================================
   if (dealId || contactId) {
     const emailFilter: any = { sentAt: { $gte: since } };
     if (dealId) emailFilter.dealId = dealId;
@@ -154,13 +165,15 @@ async function getEngagementActions(
 
     if (emailStats.length > 0) {
       const stats = emailStats[0];
-      if (stats.opened > 0) actions.set('email_opened', stats.opened);
-      if (stats.clicked > 0) actions.set('email_clicked', stats.clicked);
-      if (stats.replied > 0) actions.set('email_replied', stats.replied);
+      addAction('email_opened', stats.opened);
+      addAction('email_clicked', stats.clicked);
+      addAction('email_replied', stats.replied);
     }
   }
 
-  // Verificar cotizaciones
+  // ========================================
+  // 3. Quotes (cotizaciones)
+  // ========================================
   try {
     const Quote = mongoose.models.Quote;
     if (Quote && dealId) {
@@ -177,12 +190,136 @@ async function getEngagementActions(
 
       if (quoteStats.length > 0) {
         const stats = quoteStats[0];
-        if (stats.viewed > 0) actions.set('quote_viewed', stats.viewed);
-        if (stats.accepted > 0) actions.set('quote_accepted', stats.accepted);
+        addAction('quote_viewed', stats.viewed);
+        addAction('quote_accepted', stats.accepted);
       }
     }
   } catch (e) {
     // Quote model may not exist
+  }
+
+  // ========================================
+  // 4. Marketing Touchpoints
+  // ========================================
+  if (contactId) {
+    const touchpointStats = await Touchpoint.aggregate([
+      {
+        $match: {
+          contactId: new mongoose.Types.ObjectId(contactId),
+          occurredAt: { $gte: since },
+        },
+      },
+      { $group: { _id: '$type', count: { $sum: 1 } } },
+    ]);
+
+    // Mapear tipos de touchpoint a acciones de engagement
+    const touchpointTypeMap: Record<string, EngagementAction> = {
+      landing_page_view: 'landing_page_viewed',
+      landing_page_conversion: 'landing_page_converted',
+      ad_click: 'ad_clicked',
+      ad_impression: 'ad_impression',
+      form_submission: 'form_submitted',
+      content_download: 'content_downloaded',
+      webinar_registration: 'webinar_registered',
+      webinar_attendance: 'webinar_attended',
+      social_engagement: 'social_engagement',
+      chat_started: 'chat_started',
+      meeting_booked: 'meeting_scheduled',
+      email_open: 'marketing_email_opened',
+      email_click: 'marketing_email_clicked',
+    };
+
+    touchpointStats.forEach((tp: { _id: string; count: number }) => {
+      const action = touchpointTypeMap[tp._id];
+      if (action) addAction(action, tp.count);
+    });
+  }
+
+  // ========================================
+  // 5. Marketing Email Campaigns (Resend/bulk)
+  // ========================================
+  if (contactId) {
+    const campaignRecipientStats = await EmailCampaignRecipient.aggregate([
+      {
+        $match: {
+          contactId: new mongoose.Types.ObjectId(contactId),
+          sentAt: { $gte: since },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          opened: { $sum: { $cond: ['$opened', 1, 0] } },
+          clicked: { $sum: { $cond: ['$clicked', 1, 0] } },
+        },
+      },
+    ]);
+
+    if (campaignRecipientStats.length > 0) {
+      const stats = campaignRecipientStats[0];
+      addAction('marketing_email_opened', stats.opened);
+      addAction('marketing_email_clicked', stats.clicked);
+    }
+  }
+
+  // ========================================
+  // 6. Landing Page Views (additional tracking)
+  // ========================================
+  if (contactId) {
+    // Buscar visitorId asociado al contacto desde touchpoints
+    const contactTouchpoint = await Touchpoint.findOne({
+      contactId: new mongoose.Types.ObjectId(contactId),
+    }).select('visitorId').lean();
+
+    if (contactTouchpoint?.visitorId) {
+      const lpStats = await LandingPageView.aggregate([
+        {
+          $match: {
+            visitorId: contactTouchpoint.visitorId,
+            createdAt: { $gte: since },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            views: { $sum: 1 },
+            conversions: { $sum: { $cond: ['$converted', 1, 0] } },
+          },
+        },
+      ]);
+
+      if (lpStats.length > 0) {
+        const stats = lpStats[0];
+        addAction('landing_page_viewed', stats.views);
+        addAction('landing_page_converted', stats.conversions);
+      }
+    }
+  }
+
+  // ========================================
+  // 7. Web Analytics Events (downloads, page views)
+  // ========================================
+  if (contactId) {
+    const webAnalyticsStats = await WebAnalyticsEvent.aggregate([
+      {
+        $match: {
+          linkedContactId: new mongoose.Types.ObjectId(contactId),
+          eventTimestamp: { $gte: since },
+        },
+      },
+      { $group: { _id: '$eventCategory', count: { $sum: 1 } } },
+    ]);
+
+    const webAnalyticsMap: Record<string, EngagementAction> = {
+      PAGE_VIEW: 'website_visited',
+      DOWNLOAD: 'document_downloaded',
+      FORM_SUBMIT: 'form_submitted',
+    };
+
+    webAnalyticsStats.forEach((wa: { _id: string; count: number }) => {
+      const action = webAnalyticsMap[wa._id];
+      if (action) addAction(action, wa.count);
+    });
   }
 
   return actions;

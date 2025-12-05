@@ -48,7 +48,9 @@ export type CRMActionType =
   | 'webhook'
   | 'delay'
   | 'create_priority'
-  | 'send_channel_message';
+  | 'send_channel_message'
+  | 'condition'
+  | 'split';
 
 // Constantes para UI
 export const TRIGGER_LABELS: Record<CRMTriggerType, string> = {
@@ -84,6 +86,8 @@ export const ACTION_LABELS: Record<CRMActionType, string> = {
   delay: 'Esperar',
   create_priority: 'Crear prioridad',
   send_channel_message: 'Enviar mensaje a canal',
+  condition: 'Condición (Si/Entonces)',
+  split: 'División A/B',
 };
 
 export const OPERATOR_LABELS: Record<ConditionOperator, string> = {

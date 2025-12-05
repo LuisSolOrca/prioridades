@@ -29,6 +29,13 @@ export interface IUser {
     canManageDeals: boolean;
     canManageContacts: boolean;
     canManagePipelineStages: boolean;
+    // Marketing Permissions
+    viewMarketing: boolean;
+    canManageCampaigns: boolean;
+    canPublishCampaigns: boolean;
+    canManageWhatsApp: boolean;
+    canViewWebAnalytics: boolean;
+    canConfigureMarketingIntegrations: boolean;
   };
   emailNotifications?: {
     enabled: boolean;
@@ -133,6 +140,13 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
       canManageDeals: { type: Boolean, default: true },
       canManageContacts: { type: Boolean, default: true },
       canManagePipelineStages: { type: Boolean, default: false },
+      // Marketing Permissions
+      viewMarketing: { type: Boolean, default: true },
+      canManageCampaigns: { type: Boolean, default: true },
+      canPublishCampaigns: { type: Boolean, default: false },
+      canManageWhatsApp: { type: Boolean, default: false },
+      canViewWebAnalytics: { type: Boolean, default: true },
+      canConfigureMarketingIntegrations: { type: Boolean, default: false },
     },
     default: function() {
       return {
@@ -154,6 +168,13 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
         canManageDeals: true,
         canManageContacts: true,
         canManagePipelineStages: this.role === 'ADMIN',
+        // Marketing Permissions
+        viewMarketing: true,
+        canManageCampaigns: true,
+        canPublishCampaigns: this.role === 'ADMIN',
+        canManageWhatsApp: this.role === 'ADMIN',
+        canViewWebAnalytics: true,
+        canConfigureMarketingIntegrations: this.role === 'ADMIN',
       };
     },
   },

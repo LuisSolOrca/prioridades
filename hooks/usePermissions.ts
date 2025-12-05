@@ -19,6 +19,13 @@ export interface UserPermissions {
   canManageDeals: boolean;
   canManageContacts: boolean;
   canManagePipelineStages: boolean;
+  // Marketing Permissions
+  viewMarketing: boolean;
+  canManageCampaigns: boolean;
+  canPublishCampaigns: boolean;
+  canManageWhatsApp: boolean;
+  canViewWebAnalytics: boolean;
+  canConfigureMarketingIntegrations: boolean;
 }
 
 const DEFAULT_PERMISSIONS: UserPermissions = {
@@ -40,6 +47,13 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   canManageDeals: false,
   canManageContacts: false,
   canManagePipelineStages: false,
+  // Marketing Permissions
+  viewMarketing: true,
+  canManageCampaigns: true,
+  canPublishCampaigns: false,
+  canManageWhatsApp: false,
+  canViewWebAnalytics: true,
+  canConfigureMarketingIntegrations: false,
 };
 
 export function usePermissions() {
@@ -63,6 +77,13 @@ export function usePermissions() {
     canManageDeals: isAdmin || user?.permissions?.canManageDeals || false,
     canManageContacts: isAdmin || user?.permissions?.canManageContacts || false,
     canManagePipelineStages: isAdmin || user?.permissions?.canManagePipelineStages || false,
+    // Marketing - Admin siempre tiene acceso completo
+    viewMarketing: isAdmin || user?.permissions?.viewMarketing || DEFAULT_PERMISSIONS.viewMarketing,
+    canManageCampaigns: isAdmin || user?.permissions?.canManageCampaigns || DEFAULT_PERMISSIONS.canManageCampaigns,
+    canPublishCampaigns: isAdmin || user?.permissions?.canPublishCampaigns || false,
+    canManageWhatsApp: isAdmin || user?.permissions?.canManageWhatsApp || false,
+    canViewWebAnalytics: isAdmin || user?.permissions?.canViewWebAnalytics || DEFAULT_PERMISSIONS.canViewWebAnalytics,
+    canConfigureMarketingIntegrations: isAdmin || user?.permissions?.canConfigureMarketingIntegrations || false,
   };
 
   const hasPermission = (permission: keyof UserPermissions): boolean => {

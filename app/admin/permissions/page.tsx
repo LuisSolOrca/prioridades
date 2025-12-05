@@ -31,6 +31,13 @@ interface User {
     canManageDeals: boolean;
     canManageContacts: boolean;
     canManagePipelineStages: boolean;
+    // Marketing Permissions
+    viewMarketing: boolean;
+    canManageCampaigns: boolean;
+    canPublishCampaigns: boolean;
+    canManageWhatsApp: boolean;
+    canViewWebAnalytics: boolean;
+    canConfigureMarketingIntegrations: boolean;
   };
 }
 
@@ -81,6 +88,13 @@ export default function PermissionsManagementPage() {
           canManageDeals: true,
           canManageContacts: true,
           canManagePipelineStages: user.role === 'ADMIN',
+          // Marketing Permissions
+          viewMarketing: true,
+          canManageCampaigns: true,
+          canPublishCampaigns: user.role === 'ADMIN',
+          canManageWhatsApp: user.role === 'ADMIN',
+          canViewWebAnalytics: true,
+          canConfigureMarketingIntegrations: user.role === 'ADMIN',
         }
       }));
 
@@ -160,6 +174,13 @@ export default function PermissionsManagementPage() {
     canManageDeals: 'Gestionar Deals',
     canManageContacts: 'Gestionar Contactos',
     canManagePipelineStages: 'Configurar Pipeline',
+    // Marketing Permissions
+    viewMarketing: 'Ver Marketing',
+    canManageCampaigns: 'Gestionar Campañas',
+    canPublishCampaigns: 'Publicar Campañas',
+    canManageWhatsApp: 'Gestionar WhatsApp',
+    canViewWebAnalytics: 'Ver Web Analytics',
+    canConfigureMarketingIntegrations: 'Configurar Integraciones',
   };
 
   return (
@@ -475,6 +496,116 @@ export default function PermissionsManagementPage() {
                         </span>
                         <span className="text-xs text-gray-600 dark:text-gray-400">
                           Permite crear, editar y eliminar etapas del pipeline (configuración avanzada)
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Permisos Marketing */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                    📣 Marketing
+                  </h3>
+                  <div className="space-y-3">
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.viewMarketing ?? true}
+                        onChange={(e) => handlePermissionChange('viewMarketing', e.target.checked)}
+                        className="w-5 h-5 text-pink-600 rounded focus:ring-2 focus:ring-pink-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.viewMarketing}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite ver el Dashboard de Marketing y acceder al módulo
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canManageCampaigns ?? true}
+                        onChange={(e) => handlePermissionChange('canManageCampaigns', e.target.checked)}
+                        className="w-5 h-5 text-pink-600 rounded focus:ring-2 focus:ring-pink-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canManageCampaigns}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite crear y editar campañas de email, landing pages y contenido
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canPublishCampaigns ?? (selectedUser.role === 'ADMIN')}
+                        onChange={(e) => handlePermissionChange('canPublishCampaigns', e.target.checked)}
+                        className="w-5 h-5 text-pink-600 rounded focus:ring-2 focus:ring-pink-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canPublishCampaigns}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite publicar landing pages y enviar campañas de email
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canViewWebAnalytics ?? true}
+                        onChange={(e) => handlePermissionChange('canViewWebAnalytics', e.target.checked)}
+                        className="w-5 h-5 text-pink-600 rounded focus:ring-2 focus:ring-pink-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canViewWebAnalytics}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite ver analytics web, atribución y métricas de conversión
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canManageWhatsApp ?? (selectedUser.role === 'ADMIN')}
+                        onChange={(e) => handlePermissionChange('canManageWhatsApp', e.target.checked)}
+                        className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canManageWhatsApp}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite gestionar plantillas y campañas de WhatsApp
+                        </span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start space-x-3 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 cursor-pointer hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition">
+                      <input
+                        type="checkbox"
+                        checked={selectedUser.permissions?.canConfigureMarketingIntegrations ?? (selectedUser.role === 'ADMIN')}
+                        onChange={(e) => handlePermissionChange('canConfigureMarketingIntegrations', e.target.checked)}
+                        className="w-5 h-5 text-yellow-600 rounded focus:ring-2 focus:ring-yellow-500 mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 block">
+                          {permissionLabels.canConfigureMarketingIntegrations}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          Permite configurar integraciones con plataformas externas (Facebook Ads, Google Ads, etc.)
                         </span>
                       </div>
                     </label>

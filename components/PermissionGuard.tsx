@@ -32,6 +32,13 @@ const PERMISSION_LABELS: Record<keyof UserPermissions, string> = {
   canManageDeals: 'Gestionar Deals',
   canManageContacts: 'Gestionar Contactos',
   canManagePipelineStages: 'Gestionar Etapas de Pipeline',
+  // Marketing permissions
+  viewMarketing: 'Ver Marketing Hub',
+  canManageCampaigns: 'Gestionar Campañas',
+  canPublishCampaigns: 'Publicar Campañas',
+  canManageWhatsApp: 'Gestionar WhatsApp Business',
+  canViewWebAnalytics: 'Ver Web Analytics',
+  canConfigureMarketingIntegrations: 'Configurar Integraciones de Marketing',
 };
 
 export default function PermissionGuard({

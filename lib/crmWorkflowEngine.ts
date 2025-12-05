@@ -20,7 +20,38 @@ import ChannelMessage from '@/models/ChannelMessage';
 import { sendEmail } from '@/lib/email';
 import { createTrackedEmail } from '@/lib/emailTracking';
 import { replaceTemplateVariables } from '@/lib/templateVariables';
+import { getTemplateBodyHtml } from '@/lib/emailBlockRenderer';
 import { triggerPusherEvent } from '@/lib/pusher-server';
+
+/**
+ * Wrap simple HTML content in a complete email structure for tracking
+ */
+function wrapInEmailStructure(content: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          <tr>
+            <td style="padding: 20px;">
+              ${content}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
 
 export interface TriggerContext {
   entityType: 'deal' | 'contact' | 'client' | 'activity' | 'quote';
@@ -87,6 +118,50 @@ function evaluateCondition(
 // Obtener valor anidado de un objeto (ej: "deal.value")
 function getNestedValue(obj: Record<string, any>, path: string): any {
   return path.split('.').reduce((current, key) => current?.[key], obj);
+}
+
+// Evaluar una condición individual (para branching)
+function evaluateSingleCondition(operator: string, fieldValue: any, conditionValue: any): boolean {
+  switch (operator) {
+    case 'equals':
+      return fieldValue === conditionValue;
+    case 'not_equals':
+      return fieldValue !== conditionValue;
+    case 'greater_than':
+      return Number(fieldValue) > Number(conditionValue);
+    case 'less_than':
+      return Number(fieldValue) < Number(conditionValue);
+    case 'greater_or_equal':
+      return Number(fieldValue) >= Number(conditionValue);
+    case 'less_or_equal':
+      return Number(fieldValue) <= Number(conditionValue);
+    case 'contains':
+      return String(fieldValue).toLowerCase().includes(String(conditionValue).toLowerCase());
+    case 'not_contains':
+      return !String(fieldValue).toLowerCase().includes(String(conditionValue).toLowerCase());
+    case 'starts_with':
+      return String(fieldValue).toLowerCase().startsWith(String(conditionValue).toLowerCase());
+    case 'ends_with':
+      return String(fieldValue).toLowerCase().endsWith(String(conditionValue).toLowerCase());
+    case 'is_empty':
+      return fieldValue === null || fieldValue === undefined || fieldValue === '';
+    case 'is_not_empty':
+      return fieldValue !== null && fieldValue !== undefined && fieldValue !== '';
+    case 'in_list': {
+      const listValues = Array.isArray(conditionValue)
+        ? conditionValue
+        : String(conditionValue).split(',').map(v => v.trim());
+      return listValues.includes(String(fieldValue));
+    }
+    case 'not_in_list': {
+      const listValues = Array.isArray(conditionValue)
+        ? conditionValue
+        : String(conditionValue).split(',').map(v => v.trim());
+      return !listValues.includes(String(fieldValue));
+    }
+    default:
+      return false;
+  }
 }
 
 // Evaluar todas las condiciones de un workflow
@@ -188,17 +263,20 @@ async function executeAction(
             return { success: false, error: `Plantilla de email ${config.emailTemplateId} no encontrada` };
           }
           subject = replaceVariables(template.subject, context);
-          bodyHtml = replaceVariables(template.body, context);
+          // Use block renderer for templates (handles both legacy and block-based)
+          bodyHtml = getTemplateBodyHtml({
+            body: template.body,
+            blocks: template.blocks,
+            globalStyles: template.globalStyles,
+          });
+          bodyHtml = replaceVariables(bodyHtml, context);
           templateUsed = template.name;
-          console.log(`[CRM Workflow] Using template "${template.name}"`);
+          console.log(`[CRM Workflow] Using template "${template.name}" (blocks: ${template.blocks?.length || 0})`);
         } else {
           subject = replaceVariables(config.subject || '', context);
           const bodyText = replaceVariables(config.body || '', context);
-          bodyHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <p>${bodyText.replace(/\n/g, '<br>')}</p>
-            </div>
-          `;
+          // Wrap in complete email structure for proper tracking pixel insertion
+          bodyHtml = wrapInEmailStructure(`<p>${bodyText.replace(/\n/g, '<br>')}</p>`);
         }
 
         // Determinar destinatario
@@ -703,6 +781,59 @@ async function executeAction(
         }
       }
 
+      case 'condition': {
+        // Evaluar la condición y retornar qué rama ejecutar
+        let conditionResult = false;
+
+        if (config.conditions && config.conditions.length > 0) {
+          // Múltiples condiciones
+          const results = config.conditions.map(cond => {
+            const fieldValue = getNestedValue(context, cond.field);
+            return evaluateSingleCondition(cond.operator, fieldValue, cond.value);
+          });
+
+          if (config.conditionLogic === 'OR') {
+            conditionResult = results.some(r => r);
+          } else {
+            conditionResult = results.every(r => r);
+          }
+        } else if (config.conditionField && config.conditionOperator) {
+          // Condición simple
+          const fieldValue = getNestedValue(context, config.conditionField);
+          conditionResult = evaluateSingleCondition(config.conditionOperator, fieldValue, config.conditionValue);
+        }
+
+        console.log(`[CRM Workflow] Condition evaluated: ${conditionResult}`);
+
+        return {
+          success: true,
+          result: {
+            conditionResult,
+            branchToExecute: conditionResult ? 'true' : 'false',
+            trueBranch: config.trueBranch || [],
+            falseBranch: config.falseBranch || [],
+          },
+        };
+      }
+
+      case 'split': {
+        // División A/B basada en porcentaje
+        const percentageA = config.splitPercentageA ?? 50;
+        const random = Math.random() * 100;
+        const selectedBranch = random < percentageA ? 'A' : 'B';
+
+        console.log(`[CRM Workflow] Split: ${percentageA}% A / ${100 - percentageA}% B - Selected: ${selectedBranch}`);
+
+        return {
+          success: true,
+          result: {
+            selectedBranch,
+            splitBranchA: config.splitBranchA || [],
+            splitBranchB: config.splitBranchB || [],
+          },
+        };
+      }
+
       default:
         return { success: false, error: `Tipo de acción no soportado: ${action.type}` };
     }
@@ -838,61 +969,98 @@ export async function triggerWorkflows(
       const startTime = Date.now();
 
       try {
-        // Ordenar acciones por order
-        const sortedActions = [...workflow.actions].sort((a, b) => a.order - b.order);
+        // Función recursiva para ejecutar acciones con branches
+        async function executeActionsWithBranching(
+          actionIds: string[],
+          allActions: ICRMWorkflowAction[]
+        ): Promise<boolean> {
+          for (const actionId of actionIds) {
+            const action = allActions.find(a => a.id === actionId);
+            if (!action) continue;
 
-        // Ejecutar acciones en orden
-        for (const action of sortedActions) {
-          // Aplicar delay si existe
-          const totalDelay = (action.delay || 0) * 60 * 1000;
-          if (totalDelay > 0) {
-            await new Promise(resolve => setTimeout(resolve, Math.min(totalDelay, 5000))); // Max 5s para no bloquear
-          }
-
-          // Actualizar estado a running
-          await CRMWorkflowExecution.updateOne(
-            { _id: execution._id, 'actionLogs.actionId': action.id },
-            {
-              $set: {
-                'actionLogs.$.status': 'running',
-                'actionLogs.$.startedAt': new Date(),
-              },
+            // Aplicar delay si existe
+            const totalDelay = (action.delay || 0) * 60 * 1000;
+            if (totalDelay > 0) {
+              await new Promise(resolve => setTimeout(resolve, Math.min(totalDelay, 5000)));
             }
-          );
 
-          // Ejecutar acción
-          const result = await executeAction(action, fullContext, workflow._id as mongoose.Types.ObjectId);
+            // Actualizar estado a running
+            await CRMWorkflowExecution.updateOne(
+              { _id: execution._id, 'actionLogs.actionId': action.id },
+              {
+                $set: {
+                  'actionLogs.$.status': 'running',
+                  'actionLogs.$.startedAt': new Date(),
+                },
+              }
+            );
 
-          // Actualizar log de acción
-          await CRMWorkflowExecution.updateOne(
-            { _id: execution._id, 'actionLogs.actionId': action.id },
-            {
-              $set: {
-                'actionLogs.$.status': result.success ? 'completed' : 'failed',
-                'actionLogs.$.completedAt': new Date(),
-                'actionLogs.$.result': result.result,
-                'actionLogs.$.error': result.error,
-              },
+            // Ejecutar acción
+            const result = await executeAction(action, fullContext, workflow._id as mongoose.Types.ObjectId);
+
+            // Actualizar log de acción
+            await CRMWorkflowExecution.updateOne(
+              { _id: execution._id, 'actionLogs.actionId': action.id },
+              {
+                $set: {
+                  'actionLogs.$.status': result.success ? 'completed' : 'failed',
+                  'actionLogs.$.completedAt': new Date(),
+                  'actionLogs.$.result': result.result,
+                  'actionLogs.$.error': result.error,
+                },
+              }
+            );
+
+            // Si falla una acción, retornar false
+            if (!result.success) {
+              return false;
             }
-          );
 
-          // Si falla una acción, marcar workflow como failed y salir
-          if (!result.success) {
-            await CRMWorkflowExecution.findByIdAndUpdate(execution._id, {
-              status: 'failed',
-              completedAt: new Date(),
-              duration: Date.now() - startTime,
-              error: result.error,
-            });
-            break;
+            // Manejar branching para condition
+            if (action.type === 'condition' && result.result) {
+              const { conditionResult, trueBranch, falseBranch } = result.result;
+              const branchToExecute = conditionResult ? trueBranch : falseBranch;
+
+              if (branchToExecute && branchToExecute.length > 0) {
+                console.log(`[CRM Workflow] Executing ${conditionResult ? 'TRUE' : 'FALSE'} branch with ${branchToExecute.length} actions`);
+                const branchSuccess = await executeActionsWithBranching(branchToExecute, allActions);
+                if (!branchSuccess) return false;
+              }
+            }
+
+            // Manejar branching para split A/B
+            if (action.type === 'split' && result.result) {
+              const { selectedBranch, splitBranchA, splitBranchB } = result.result;
+              const branchToExecute = selectedBranch === 'A' ? splitBranchA : splitBranchB;
+
+              if (branchToExecute && branchToExecute.length > 0) {
+                console.log(`[CRM Workflow] Executing branch ${selectedBranch} with ${branchToExecute.length} actions`);
+                const branchSuccess = await executeActionsWithBranching(branchToExecute, allActions);
+                if (!branchSuccess) return false;
+              }
+            }
           }
+          return true;
         }
 
-        // Si llegamos aquí, todo fue exitoso
-        const finalExecution = await CRMWorkflowExecution.findById(execution._id);
-        const allCompleted = finalExecution?.actionLogs.every(l => l.status === 'completed');
+        // Obtener acciones principales (sin parentActionId o con branchType 'main')
+        const mainActions = workflow.actions
+          .filter(a => !a.parentActionId || a.branchType === 'main')
+          .sort((a, b) => a.order - b.order);
 
-        if (allCompleted) {
+        const mainActionIds = mainActions.map(a => a.id);
+
+        // Ejecutar acciones principales con soporte para branching
+        const success = await executeActionsWithBranching(mainActionIds, workflow.actions);
+
+        if (!success) {
+          await CRMWorkflowExecution.findByIdAndUpdate(execution._id, {
+            status: 'failed',
+            completedAt: new Date(),
+            duration: Date.now() - startTime,
+          });
+        } else {
+          // Marcar como completado
           await CRMWorkflowExecution.findByIdAndUpdate(execution._id, {
             status: 'completed',
             completedAt: new Date(),

@@ -516,6 +516,47 @@ Cada cliente puede tener un **contacto principal** marcado:
 - Al marcar uno como principal, los demás se desmarcan automáticamente
 - Útil para identificar al decisor o punto de contacto principal
 
+### Customer Journey (Página de Detalle)
+
+**Ubicación:** `/crm/contacts/[id]`
+
+La página de detalle del contacto incluye una sección de **Customer Journey** que muestra todas las interacciones de marketing del contacto:
+
+**Métricas del Journey:**
+| Métrica | Descripción |
+|---------|-------------|
+| Touchpoints | Total de interacciones registradas |
+| Conversiones | Formularios completados, landing pages convertidas |
+| Días | Duración del journey desde el primer touchpoint |
+
+**Tipos de Eventos Mostrados:**
+
+| Evento | Icono | Descripción |
+|--------|-------|-------------|
+| `page_view` | 👁️ | Vista de página web |
+| `form_submission` | 📝 | Formulario web enviado |
+| `email_open` | 📧 | Email abierto |
+| `email_click` | 🖱️ | Clic en enlace de email |
+| `landing_page_view` | 🌐 | Visita a landing page |
+| `landing_page_conversion` | 💰 | Conversión en landing page |
+
+**Canales Identificados:**
+- Email
+- Paid Social
+- Organic Social
+- Paid Search
+- Organic Search
+- Direct
+- Referral
+- Display
+
+**Funcionalidades:**
+- Timeline visual con iconos por tipo de evento
+- Desglose de canales utilizados
+- Metadata de cada evento (campaña, formulario, página)
+- Link a Attribution Reporting para análisis detallado
+- Expandir/colapsar eventos (muestra 5 más recientes por defecto)
+
 ---
 
 ## Productos
@@ -1741,29 +1782,49 @@ Paso 1 (Día 0) → [Espera 3 días] → Paso 2 → [Espera 5 días] → Paso 3 
 6. Define condiciones de salida
 7. Activa la secuencia
 
-### Editor Visual de Plantillas de Email
+### Editor Visual de Plantillas de Email (Block Editor)
 
-**Ubicación:** `/crm/sequences/[id]` → Al agregar/editar paso de email
+**Ubicación:** `/crm/email-templates/new` y `/crm/email-templates/[id]/edit`
 
-El editor visual permite crear emails profesionales sin conocimientos técnicos:
+El sistema utiliza un **editor visual de bloques** que permite crear emails profesionales con diseño avanzado sin conocimientos técnicos:
+
+**Tipos de Bloques Disponibles:**
+
+| Bloque | Descripción |
+|--------|-------------|
+| 📝 **Texto** | Párrafos con formato enriquecido (negritas, cursivas, listas) |
+| 🖼️ **Imagen** | Imágenes con alineación y tamaño personalizable |
+| 🔘 **Botón** | CTAs con color, borde y enlace configurables |
+| ➖ **Divisor** | Líneas horizontales con color y grosor |
+| ⬜ **Espaciador** | Espacio vertical configurable |
+| 📊 **Columnas** | Layout multi-columna (2-4 columnas) |
+| 📱 **Social** | Iconos de redes sociales con enlaces |
+| 🎬 **Video** | Thumbnail con link a video |
+| 📋 **Menú** | Links de navegación horizontal |
+| 💻 **HTML** | Código HTML personalizado |
 
 **Características del Editor:**
 
 | Funcionalidad | Descripción |
 |---------------|-------------|
-| 🔤 **Formato de Texto** | Negritas, cursivas, enlaces, listas ordenadas y no ordenadas |
-| 📝 **Variables Dinámicas** | Inserción de variables con dropdown organizado por categorías |
-| 📚 **Biblioteca de Plantillas** | Acceso a plantillas guardadas con búsqueda y filtros |
-| 👁️ **Vista Previa** | Previsualización en tiempo real con datos de ejemplo |
-| 💾 **Guardar como Plantilla** | Guardar el email actual para reutilizar |
+| 🎨 **Estilos Globales** | Color de fondo, ancho de contenido, tipografía |
+| 📝 **Variables Dinámicas** | Inserción de variables con dropdown organizado |
+| 🔄 **Drag & Drop** | Reordenar bloques arrastrándolos |
+| 👁️ **Vista Previa** | Previsualización en tiempo real |
+| 🎯 **Responsive** | Diseño adaptable a móviles |
+| 📧 **Tracking Integrado** | Compatible con pixel de apertura y tracking de clics |
 
-**Barra de Herramientas:**
-- **B** - Texto en negritas (`**texto**`)
-- **I** - Texto en cursiva (`*texto*`)
-- **🔗** - Insertar enlace (`[texto](url)`)
-- **• Lista** - Lista con viñetas
-- **1. Lista** - Lista numerada
-- **{x}** - Insertar variable dinámica
+**Panel de Propiedades (por bloque):**
+- Padding y márgenes
+- Colores de fondo y texto
+- Alineación y tamaño
+- Configuración específica del tipo de bloque
+
+**Generación con IA:**
+El editor incluye asistente de IA para generar contenido:
+1. Click en "Generar con IA"
+2. Describe el propósito del email
+3. El sistema genera bloques listos para personalizar
 
 ### Variables Disponibles
 
@@ -1827,7 +1888,7 @@ Las variables se insertan usando la sintaxis `{{categoria.campo}}`. El sistema u
 
 **Ubicación:** `/crm/email-templates`
 
-El sistema incluye una biblioteca centralizada de plantillas de email reutilizables:
+El sistema incluye una biblioteca centralizada de plantillas de email reutilizables con **plantillas de sistema predefinidas** y soporte para plantillas personalizadas.
 
 **Funcionalidades:**
 - 🔍 **Búsqueda** - Buscar por nombre o contenido
@@ -1835,6 +1896,7 @@ El sistema incluye una biblioteca centralizada de plantillas de email reutilizab
 - 🎯 **Scope** - Filtrar por contexto de uso (secuencias, workflows, ambos)
 - 📊 **Uso** - Ver cuántas veces se ha usado cada plantilla
 - ⭐ **Recientes** - Acceso rápido a plantillas usadas recientemente
+- 🛡️ **Plantillas de Sistema** - Templates predefinidos profesionales
 
 **Categorías de Plantillas:**
 | Categoría | Descripción |
@@ -1843,7 +1905,26 @@ El sistema incluye una biblioteca centralizada de plantillas de email reutilizab
 | `follow_up` | Seguimiento - Recordatorios y seguimientos |
 | `nurture` | Nutrición - Mantener relación a largo plazo |
 | `closing` | Cierre - Cerrar ventas y negociaciones |
+| `meeting` | Reuniones - Confirmaciones y agradecimientos |
+| `quote` | Cotizaciones - Envío y seguimiento de propuestas |
 | `other` | Otros - Plantillas generales |
+
+**Plantillas de Sistema (10 templates predefinidos):**
+
+| Template | Categoría | Descripción |
+|----------|-----------|-------------|
+| Primer Contacto | outreach | Email inicial de prospección |
+| Seguimiento Post-Llamada | follow_up | Después de llamada telefónica |
+| Confirmación de Reunión | meeting | Confirmar fecha y detalles |
+| Envío de Cotización | quote | Adjuntar propuesta comercial |
+| Seguimiento de Propuesta | follow_up | Seguimiento a cotización enviada |
+| Agradecimiento Post-Reunión | meeting | Agradecer y resumen de reunión |
+| Recordatorio de Pago | closing | Recordar pago pendiente |
+| Bienvenida Nuevo Cliente | closing | Onboarding de cliente ganado |
+| Reactivación de Contacto | nurture | Re-engagement de contacto inactivo |
+| Encuesta de Satisfacción | nurture | Solicitar feedback del cliente |
+
+> **Nota:** Las plantillas de sistema no pueden eliminarse, pero pueden usarse como base para crear copias personalizadas.
 
 **Scope de Plantillas:**
 | Scope | Descripción | Variables Disponibles |

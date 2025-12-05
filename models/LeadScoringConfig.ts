@@ -2,6 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 // Tipos de acciones de engagement
 export type EngagementAction =
+  // CRM Interactions
   | 'email_opened'
   | 'email_clicked'
   | 'email_replied'
@@ -13,7 +14,19 @@ export type EngagementAction =
   | 'form_submitted'
   | 'website_visited'
   | 'document_downloaded'
-  | 'demo_requested';
+  | 'demo_requested'
+  // Marketing Interactions
+  | 'landing_page_viewed'
+  | 'landing_page_converted'
+  | 'marketing_email_opened'
+  | 'marketing_email_clicked'
+  | 'ad_clicked'
+  | 'ad_impression'
+  | 'webinar_registered'
+  | 'webinar_attended'
+  | 'content_downloaded'
+  | 'social_engagement'
+  | 'chat_started';
 
 // Operadores para reglas de FIT
 export type FitOperator =
@@ -114,9 +127,16 @@ const EngagementRuleSchema = new Schema<IEngagementRule>({
   action: {
     type: String,
     required: true,
-    enum: ['email_opened', 'email_clicked', 'email_replied', 'quote_viewed',
+    enum: [
+      // CRM Interactions
+      'email_opened', 'email_clicked', 'email_replied', 'quote_viewed',
       'quote_accepted', 'meeting_scheduled', 'meeting_completed', 'call_completed',
-      'form_submitted', 'website_visited', 'document_downloaded', 'demo_requested'],
+      'form_submitted', 'website_visited', 'document_downloaded', 'demo_requested',
+      // Marketing Interactions
+      'landing_page_viewed', 'landing_page_converted', 'marketing_email_opened',
+      'marketing_email_clicked', 'ad_clicked', 'ad_impression', 'webinar_registered',
+      'webinar_attended', 'content_downloaded', 'social_engagement', 'chat_started',
+    ],
   },
   points: { type: Number, required: true },
   maxPointsPerDay: { type: Number },
@@ -226,9 +246,10 @@ export default LeadScoringConfig;
 
 // Constantes para UI
 export const ENGAGEMENT_ACTION_LABELS: Record<EngagementAction, string> = {
-  email_opened: 'Email abierto',
-  email_clicked: 'Click en email',
-  email_replied: 'Email respondido',
+  // CRM Interactions
+  email_opened: 'Email CRM abierto',
+  email_clicked: 'Click en email CRM',
+  email_replied: 'Email CRM respondido',
   quote_viewed: 'Cotización vista',
   quote_accepted: 'Cotización aceptada',
   meeting_scheduled: 'Reunión agendada',
@@ -238,6 +259,45 @@ export const ENGAGEMENT_ACTION_LABELS: Record<EngagementAction, string> = {
   website_visited: 'Visita a sitio web',
   document_downloaded: 'Documento descargado',
   demo_requested: 'Demo solicitado',
+  // Marketing Interactions
+  landing_page_viewed: 'Landing page visitada',
+  landing_page_converted: 'Conversión en landing page',
+  marketing_email_opened: 'Email marketing abierto',
+  marketing_email_clicked: 'Click en email marketing',
+  ad_clicked: 'Click en anuncio',
+  ad_impression: 'Impresión de anuncio',
+  webinar_registered: 'Registro en webinar',
+  webinar_attended: 'Asistencia a webinar',
+  content_downloaded: 'Contenido descargado',
+  social_engagement: 'Interacción social',
+  chat_started: 'Chat iniciado',
+};
+
+// Categorías de acciones para agrupar en UI
+export const ENGAGEMENT_ACTION_CATEGORIES: Record<string, { label: string; actions: EngagementAction[] }> = {
+  crm: {
+    label: 'CRM',
+    actions: [
+      'email_opened', 'email_clicked', 'email_replied',
+      'quote_viewed', 'quote_accepted',
+      'meeting_scheduled', 'meeting_completed',
+      'call_completed', 'form_submitted', 'demo_requested',
+    ],
+  },
+  marketing: {
+    label: 'Marketing',
+    actions: [
+      'landing_page_viewed', 'landing_page_converted',
+      'marketing_email_opened', 'marketing_email_clicked',
+      'ad_clicked', 'ad_impression',
+      'webinar_registered', 'webinar_attended',
+      'content_downloaded', 'social_engagement', 'chat_started',
+    ],
+  },
+  web: {
+    label: 'Web Analytics',
+    actions: ['website_visited', 'document_downloaded'],
+  },
 };
 
 export const FIT_OPERATOR_LABELS: Record<FitOperator, string> = {
@@ -269,6 +329,7 @@ export const FIT_FIELDS = [
 
 // Puntos sugeridos por acción
 export const SUGGESTED_ENGAGEMENT_POINTS: Record<EngagementAction, number> = {
+  // CRM Interactions
   email_opened: 5,
   email_clicked: 10,
   email_replied: 25,
@@ -281,4 +342,16 @@ export const SUGGESTED_ENGAGEMENT_POINTS: Record<EngagementAction, number> = {
   website_visited: 3,
   document_downloaded: 15,
   demo_requested: 45,
+  // Marketing Interactions
+  landing_page_viewed: 5,
+  landing_page_converted: 40,
+  marketing_email_opened: 3,
+  marketing_email_clicked: 8,
+  ad_clicked: 10,
+  ad_impression: 1,
+  webinar_registered: 25,
+  webinar_attended: 35,
+  content_downloaded: 20,
+  social_engagement: 5,
+  chat_started: 15,
 };

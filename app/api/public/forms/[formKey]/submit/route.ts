@@ -7,7 +7,9 @@ import Client from '@/models/Client';
 import Deal from '@/models/Deal';
 import Notification from '@/models/Notification';
 import User from '@/models/User';
+import Touchpoint from '@/models/Touchpoint';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 import { triggerWorkflowsSync } from '@/lib/crmWorkflowEngine';
 import { sendEmail, emailTemplates } from '@/lib/email';
 
@@ -372,6 +374,59 @@ async function processSubmission(
       status: 'processed',
       processedAt: new Date(),
     });
+
+    // Create touchpoint for form submission
+    try {
+      // Create a visitorId based on email or a random one
+      const email = data.email || contactData.email;
+      const visitorId = email
+        ? `form_${crypto.createHash('md5').update(email).digest('hex')}`
+        : `form_${crypto.randomUUID()}`;
+
+      // Detect channel from UTM params or referrer
+      const channel = (Touchpoint as any).detectChannel(
+        submission.utmSource,
+        submission.utmMedium,
+        submission.referrer
+      );
+
+      const touchpoint = new Touchpoint({
+        contactId,
+        visitorId,
+        sessionId: crypto.randomUUID(),
+        type: 'form_submission',
+        channel,
+        source: submission.utmSource || 'direct',
+        medium: submission.utmMedium,
+        campaign: submission.utmCampaign,
+        content: submission.utmContent,
+        term: submission.utmTerm,
+        referenceType: 'webForm',
+        referenceId: form._id,
+        url: submission.pageUrl,
+        referrer: submission.referrer,
+        metadata: {
+          formName: form.name,
+          formKey: form.formKey,
+          submissionId: submission._id.toString(),
+          email: email,
+          dealCreated: !!dealId,
+          dealId: dealId?.toString(),
+        },
+        occurredAt: new Date(),
+        isIdentified: !!contactId,
+      });
+
+      await touchpoint.save();
+      console.log(`[Touchpoint] Created form_submission touchpoint for ${form.name}`);
+
+      // If we have a contactId and visitorId, identify all previous touchpoints
+      if (contactId && email) {
+        await (Touchpoint as any).identifyVisitor(visitorId, contactId);
+      }
+    } catch (tpError) {
+      console.error('[WebForm] Error creating touchpoint (non-fatal):', tpError);
+    }
 
     // Enviar notificaciones (no debe fallar el proceso principal)
     try {

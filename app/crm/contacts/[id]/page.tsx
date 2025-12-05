@@ -19,6 +19,15 @@ import {
   FileText,
   DollarSign,
   Globe,
+  GitBranch,
+  MousePointer,
+  Eye,
+  MousePointerClick,
+  FileEdit,
+  ExternalLink,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface Contact {
@@ -57,6 +66,65 @@ interface Deal {
   createdAt: string;
 }
 
+interface JourneyEvent {
+  type: 'touchpoint' | 'conversion';
+  eventType: string;
+  channel?: string;
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  url?: string;
+  metadata?: Record<string, any>;
+  occurredAt: string;
+}
+
+interface CustomerJourney {
+  stats: {
+    totalTouchpoints: number;
+    totalConversions: number;
+    totalValue: number;
+    journeyDuration: number;
+    channels: string[];
+    channelBreakdown: Record<string, number>;
+  };
+  timeline: JourneyEvent[];
+}
+
+const TOUCHPOINT_LABELS: Record<string, string> = {
+  page_view: 'Vista de página',
+  form_submission: 'Formulario enviado',
+  email_open: 'Email abierto',
+  email_click: 'Clic en email',
+  landing_page_view: 'Vista de landing',
+  landing_page_conversion: 'Conversión en landing',
+  ad_click: 'Clic en anuncio',
+  ad_impression: 'Impresión de anuncio',
+  social_engagement: 'Interacción social',
+};
+
+const TOUCHPOINT_ICONS: Record<string, React.ReactNode> = {
+  page_view: <Eye className="w-4 h-4" />,
+  form_submission: <FileEdit className="w-4 h-4" />,
+  email_open: <Mail className="w-4 h-4" />,
+  email_click: <MousePointerClick className="w-4 h-4" />,
+  landing_page_view: <Globe className="w-4 h-4" />,
+  landing_page_conversion: <DollarSign className="w-4 h-4" />,
+  ad_click: <ExternalLink className="w-4 h-4" />,
+  default: <MousePointer className="w-4 h-4" />,
+};
+
+const CHANNEL_COLORS: Record<string, string> = {
+  email: 'bg-blue-500',
+  paid_social: 'bg-pink-500',
+  organic_social: 'bg-purple-500',
+  paid_search: 'bg-green-500',
+  organic_search: 'bg-teal-500',
+  direct: 'bg-gray-500',
+  referral: 'bg-orange-500',
+  display: 'bg-yellow-500',
+  other: 'bg-slate-500',
+};
+
 export default function ContactDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -65,6 +133,9 @@ export default function ContactDetailPage() {
 
   const [contact, setContact] = useState<Contact | null>(null);
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [journey, setJourney] = useState<CustomerJourney | null>(null);
+  const [journeyLoading, setJourneyLoading] = useState(false);
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +149,7 @@ export default function ContactDetailPage() {
     if (contactId) {
       fetchContact();
       fetchDeals();
+      fetchJourney();
     }
   }, [contactId]);
 
@@ -107,6 +179,21 @@ export default function ContactDetailPage() {
       }
     } catch (err) {
       console.error('Error fetching deals:', err);
+    }
+  };
+
+  const fetchJourney = async () => {
+    try {
+      setJourneyLoading(true);
+      const res = await fetch(`/api/marketing/attribution/journey/${contactId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setJourney(data);
+      }
+    } catch (err) {
+      console.error('Error fetching journey:', err);
+    } finally {
+      setJourneyLoading(false);
     }
   };
 
@@ -321,6 +408,128 @@ export default function ContactDetailPage() {
                   </div>
                 </div>
               )}
+
+              {/* Customer Journey */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <GitBranch className="text-purple-500" size={20} />
+                    Customer Journey
+                  </h2>
+                  {journey && journey.stats.totalTouchpoints > 0 && (
+                    <Link
+                      href="/marketing/attribution"
+                      className="text-sm text-purple-600 hover:underline"
+                    >
+                      Ver Attribution
+                    </Link>
+                  )}
+                </div>
+
+                {journeyLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="animate-spin text-purple-500" size={24} />
+                  </div>
+                ) : !journey || journey.stats.totalTouchpoints === 0 ? (
+                  <div className="text-center py-6 text-gray-500">
+                    <MousePointer className="mx-auto mb-2" size={32} />
+                    <p>Sin touchpoints registrados</p>
+                    <p className="text-sm mt-1">
+                      Los eventos de marketing aparecerán aquí cuando el contacto interactúe con emails, landing pages o formularios.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Journey Stats */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-purple-600">{journey.stats.totalTouchpoints}</p>
+                        <p className="text-xs text-gray-500">Touchpoints</p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-green-600">{journey.stats.totalConversions}</p>
+                        <p className="text-xs text-gray-500">Conversiones</p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{journey.stats.journeyDuration}</p>
+                        <p className="text-xs text-gray-500">Días</p>
+                      </div>
+                    </div>
+
+                    {/* Channels */}
+                    {journey.stats.channels.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {journey.stats.channels.map(ch => (
+                          <span
+                            key={ch}
+                            className={`px-2 py-1 rounded-full text-xs text-white capitalize ${CHANNEL_COLORS[ch] || 'bg-gray-500'}`}
+                          >
+                            {ch.replace('_', ' ')}
+                            {journey.stats.channelBreakdown[ch] && ` (${journey.stats.channelBreakdown[ch]})`}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Timeline */}
+                    <div className="relative">
+                      <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                      <div className="space-y-3">
+                        {(showAllEvents ? journey.timeline : journey.timeline.slice(0, 5)).map((event, idx) => (
+                          <div key={idx} className="relative flex items-start gap-3 pl-8">
+                            <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-white ${
+                              event.type === 'conversion' ? 'bg-green-500' : (CHANNEL_COLORS[event.channel || 'other'] || 'bg-gray-500')
+                            }`}>
+                              {TOUCHPOINT_ICONS[event.eventType] || TOUCHPOINT_ICONS.default}
+                            </div>
+                            <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                  {event.type === 'conversion' ? '🎉 Conversión' : (TOUCHPOINT_LABELS[event.eventType] || event.eventType)}
+                                </p>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(event.occurredAt).toLocaleDateString('es-ES', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
+                              <div className="mt-1 text-xs text-gray-500">
+                                {event.campaign && <span className="mr-2">📣 {event.campaign}</span>}
+                                {event.metadata?.formName && <span>📝 {event.metadata.formName}</span>}
+                                {event.metadata?.campaignName && <span>✉️ {event.metadata.campaignName}</span>}
+                                {event.metadata?.pageTitle && <span>🔗 {event.metadata.pageTitle}</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Show more button */}
+                    {journey.timeline.length > 5 && (
+                      <button
+                        onClick={() => setShowAllEvents(!showAllEvents)}
+                        className="mt-4 w-full py-2 text-sm text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg flex items-center justify-center gap-1"
+                      >
+                        {showAllEvents ? (
+                          <>
+                            <ChevronUp size={16} />
+                            Ver menos
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={16} />
+                            Ver {journey.timeline.length - 5} eventos más
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Sidebar */}

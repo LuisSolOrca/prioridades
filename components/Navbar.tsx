@@ -46,6 +46,14 @@ import {
   FileInput,
   Search,
   Calendar,
+  Megaphone,
+  RefreshCw,
+  Image,
+  Globe,
+  GitBranch,
+  MessageSquare,
+  Layout,
+  Brain,
 } from 'lucide-react';
 
 interface NavButtonProps {
@@ -575,6 +583,28 @@ export default function Navbar() {
                     >
                       <Trophy size={22} />
                     </button>
+                    <button
+                      onClick={() => handleNavigation('/admin/marketing-integrations')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/admin/marketing-integrations'
+                          ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Marketing Integraciones"
+                    >
+                      <Megaphone size={22} />
+                    </button>
+                    <button
+                      onClick={() => handleNavigation('/admin/marketing-sync')}
+                      className={`w-full flex justify-center p-3 rounded-lg transition ${
+                        pathname === '/admin/marketing-sync'
+                          ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      title="Marketing Sync"
+                    >
+                      <RefreshCw size={22} />
+                    </button>
                   </>
                 )}
               </>
@@ -827,6 +857,110 @@ export default function Navbar() {
                   </div>
                 )}
 
+                {/* Marketing Section */}
+                {hasPermission('viewMarketing') && (
+                  <div className="mt-4 mx-1 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 overflow-hidden">
+                    <div className="py-2 px-3 bg-purple-100 dark:bg-purple-900/40 border-b border-purple-200 dark:border-purple-800">
+                      <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider flex items-center gap-2">
+                        <Megaphone size={14} />
+                        Marketing
+                      </p>
+                    </div>
+                    <div className="p-1 space-y-0.5">
+                      <NavButton
+                        icon={<TrendingUp size={20} />}
+                        label="Marketing Hub"
+                        active={pathname === '/marketing'}
+                        onClick={() => handleNavigation('/marketing')}
+                      />
+                      {hasPermission('canManageCampaigns') && (
+                        <>
+                          <NavButton
+                            icon={<Target size={20} />}
+                            label="Campañas Ads"
+                            active={pathname?.startsWith('/marketing/campaigns') || false}
+                            onClick={() => handleNavigation('/marketing/campaigns')}
+                          />
+                          <NavButton
+                            icon={<Mail size={20} />}
+                            label="Email Campaigns"
+                            active={pathname?.startsWith('/marketing/email-campaigns') || false}
+                            onClick={() => handleNavigation('/marketing/email-campaigns')}
+                          />
+                          <NavButton
+                            icon={<Layout size={20} />}
+                            label="Templates Email"
+                            active={pathname?.startsWith('/marketing/email-templates') || false}
+                            onClick={() => handleNavigation('/marketing/email-templates')}
+                          />
+                          <NavButton
+                            icon={<Globe size={20} />}
+                            label="Landing Pages"
+                            active={pathname?.startsWith('/marketing/landing-pages') || false}
+                            onClick={() => handleNavigation('/marketing/landing-pages')}
+                          />
+                          <NavButton
+                            icon={<Users size={20} />}
+                            label="Audiencias"
+                            active={pathname === '/marketing/audiences'}
+                            onClick={() => handleNavigation('/marketing/audiences')}
+                          />
+                          <NavButton
+                            icon={<Image size={20} />}
+                            label="Creativos"
+                            active={pathname === '/marketing/creatives'}
+                            onClick={() => handleNavigation('/marketing/creatives')}
+                          />
+                        </>
+                      )}
+                      {hasPermission('canViewWebAnalytics') && (
+                        <>
+                          <NavButton
+                            icon={<BarChart3 size={20} />}
+                            label="Web Analytics"
+                            active={pathname === '/marketing/web-tracking'}
+                            onClick={() => handleNavigation('/marketing/web-tracking')}
+                          />
+                          <NavButton
+                            icon={<GitBranch size={20} />}
+                            label="Atribución"
+                            active={pathname?.startsWith('/marketing/attribution') || false}
+                            onClick={() => handleNavigation('/marketing/attribution')}
+                          />
+                          <NavButton
+                            icon={<Brain size={20} />}
+                            label="Análisis Sentimiento"
+                            active={pathname === '/marketing/sentiment'}
+                            onClick={() => handleNavigation('/marketing/sentiment')}
+                          />
+                        </>
+                      )}
+                      <NavButton
+                          icon={<Zap size={20} />}
+                          label="Automatizaciones"
+                          active={pathname?.startsWith('/marketing/automations') || false}
+                          onClick={() => handleNavigation('/marketing/automations')}
+                        />
+                      {hasPermission('canManageWhatsApp') && (
+                        <>
+                          <NavButton
+                            icon={<MessageSquare size={20} />}
+                            label="WhatsApp Business"
+                            active={pathname === '/marketing/whatsapp'}
+                            onClick={() => handleNavigation('/marketing/whatsapp')}
+                          />
+                          <NavButton
+                            icon={<FileText size={20} />}
+                            label="Templates WhatsApp"
+                            active={pathname?.startsWith('/marketing/whatsapp/templates') || false}
+                            onClick={() => handleNavigation('/marketing/whatsapp/templates')}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {user.area === 'Tecnología' && (
                   <>
                     <div className="pt-4 pb-2">
@@ -933,6 +1067,18 @@ export default function Navbar() {
                       label="Leaderboard"
                       active={pathname === '/admin/leaderboard-settings'}
                       onClick={() => handleNavigation('/admin/leaderboard-settings')}
+                    />
+                    <NavButton
+                      icon={<Megaphone size={20} />}
+                      label="Marketing Integrac."
+                      active={pathname === '/admin/marketing-integrations'}
+                      onClick={() => handleNavigation('/admin/marketing-integrations')}
+                    />
+                    <NavButton
+                      icon={<RefreshCw size={20} />}
+                      label="Marketing Sync"
+                      active={pathname === '/admin/marketing-sync'}
+                      onClick={() => handleNavigation('/admin/marketing-sync')}
                     />
                   </>
                 )}

@@ -11,6 +11,37 @@ import connectDB from '@/lib/mongodb';
 import { sendEmail } from '@/lib/email';
 import { createTrackedEmail } from '@/lib/emailTracking';
 import { replaceTemplateVariables } from '@/lib/templateVariables';
+import { getTemplateBodyHtml } from '@/lib/emailBlockRenderer';
+
+/**
+ * Wrap simple HTML content in a complete email structure for tracking
+ */
+function wrapInEmailStructure(content: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          <tr>
+            <td style="padding: 20px;">
+              ${content}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
 
 interface ProcessResult {
   processed: number;
@@ -100,25 +131,37 @@ async function processEnrollmentStep(
   switch (step.type) {
     case 'email': {
       let subject = step.subject || '';
-      let body = step.body || '';
+      let bodyHtml = '';
+      let bodyPlainText = step.body || '';
 
       // Use template if specified
       if (step.templateId) {
         const template = await EmailTemplate.findById(step.templateId);
         if (template) {
           subject = template.subject;
-          body = template.body;
+          // Use block renderer for templates (handles both legacy and block-based)
+          bodyHtml = getTemplateBodyHtml({
+            body: template.body,
+            blocks: template.blocks,
+            globalStyles: template.globalStyles,
+          });
+          bodyPlainText = template.body || '';
           // Update template usage
           await EmailTemplate.findByIdAndUpdate(step.templateId, {
             $inc: { usageCount: 1 },
             lastUsedAt: new Date(),
           });
         }
+      } else {
+        // Manual content - wrap in complete email structure for proper tracking
+        const content = bodyPlainText.replace(/\n/g, '<br>');
+        bodyHtml = wrapInEmailStructure(content);
       }
 
-      // Replace variables
+      // Replace variables in subject and body
       subject = replaceVariables(subject, templateData);
-      body = replaceVariables(body, templateData);
+      bodyHtml = replaceVariables(bodyHtml, templateData);
+      bodyPlainText = replaceVariables(bodyPlainText, templateData);
 
       // Verificar que el contacto tenga email
       if (!contact.email) {
@@ -129,7 +172,7 @@ async function processEnrollmentStep(
       const activity = await Activity.create({
         type: 'email',
         title: `Secuencia: ${subject}`,
-        description: body,
+        description: bodyPlainText,
         contactId: contact._id,
         dealId: enrollment.dealId,
         clientId: enrollment.clientId,
@@ -138,12 +181,8 @@ async function processEnrollmentStep(
         completedAt: new Date(),
       });
 
-      // Preparar el HTML del email
-      const emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${body.replace(/\n/g, '<br>')}
-        </div>
-      `;
+      // HTML del email ya preparado
+      const emailHtml = bodyHtml;
 
       // Crear email con tracking (pixel de apertura y tracking de links)
       const trackedEmail = await createTrackedEmail({
