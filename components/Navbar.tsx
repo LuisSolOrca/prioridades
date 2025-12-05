@@ -935,12 +935,14 @@ export default function Navbar() {
                           />
                         </>
                       )}
-                      <NavButton
+                      {hasPermission('canManageCampaigns') && (
+                        <NavButton
                           icon={<Zap size={20} />}
                           label="Automatizaciones"
                           active={pathname?.startsWith('/marketing/automations') || false}
                           onClick={() => handleNavigation('/marketing/automations')}
                         />
+                      )}
                       {hasPermission('canManageWhatsApp') && (
                         <>
                           <NavButton

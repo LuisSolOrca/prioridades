@@ -34,6 +34,35 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Contraseña incorrecta');
         }
 
+        // Defaults que se usan si el usuario no tiene permisos guardados
+        const defaultPermissions = {
+          viewDashboard: true,
+          viewAreaDashboard: true,
+          viewMyPriorities: true,
+          viewReports: true,
+          viewAnalytics: true,
+          viewLeaderboard: true,
+          viewAutomations: true,
+          viewHistory: true,
+          canReassignPriorities: user.role === 'ADMIN',
+          canCreateMilestones: true,
+          canEditHistoricalPriorities: user.role === 'ADMIN',
+          canManageProjects: user.role === 'ADMIN',
+          canManageKPIs: user.role === 'ADMIN',
+          // CRM Permissions
+          viewCRM: false,
+          canManageDeals: false,
+          canManageContacts: false,
+          canManagePipelineStages: false,
+          // Marketing Permissions
+          viewMarketing: true,
+          canManageCampaigns: true,
+          canPublishCampaigns: false,
+          canManageWhatsApp: false,
+          canViewWebAnalytics: true,
+          canConfigureMarketingIntegrations: false,
+        };
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -41,21 +70,8 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           area: user.area,
           isAreaLeader: user.isAreaLeader,
-          permissions: user.permissions || {
-            viewDashboard: true,
-            viewAreaDashboard: true,
-            viewMyPriorities: true,
-            viewReports: true,
-            viewAnalytics: true,
-            viewLeaderboard: true,
-            viewAutomations: true,
-            viewHistory: true,
-            canReassignPriorities: user.role === 'ADMIN',
-            canCreateMilestones: true,
-            canEditHistoricalPriorities: user.role === 'ADMIN',
-            canManageProjects: user.role === 'ADMIN',
-            canManageKPIs: user.role === 'ADMIN',
-          },
+          // Merge defaults con permisos guardados del usuario
+          permissions: { ...defaultPermissions, ...(user.permissions || {}) },
         };
       }
     })

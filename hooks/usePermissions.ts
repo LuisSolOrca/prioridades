@@ -78,11 +78,12 @@ export function usePermissions() {
     canManageContacts: isAdmin || user?.permissions?.canManageContacts || false,
     canManagePipelineStages: isAdmin || user?.permissions?.canManagePipelineStages || false,
     // Marketing - Admin siempre tiene acceso completo
-    viewMarketing: isAdmin || user?.permissions?.viewMarketing || DEFAULT_PERMISSIONS.viewMarketing,
-    canManageCampaigns: isAdmin || user?.permissions?.canManageCampaigns || DEFAULT_PERMISSIONS.canManageCampaigns,
+    // Usar !== undefined para respetar valores false explícitos
+    viewMarketing: isAdmin || (user?.permissions?.viewMarketing !== undefined ? user.permissions.viewMarketing : DEFAULT_PERMISSIONS.viewMarketing),
+    canManageCampaigns: isAdmin || (user?.permissions?.canManageCampaigns !== undefined ? user.permissions.canManageCampaigns : DEFAULT_PERMISSIONS.canManageCampaigns),
     canPublishCampaigns: isAdmin || user?.permissions?.canPublishCampaigns || false,
     canManageWhatsApp: isAdmin || user?.permissions?.canManageWhatsApp || false,
-    canViewWebAnalytics: isAdmin || user?.permissions?.canViewWebAnalytics || DEFAULT_PERMISSIONS.canViewWebAnalytics,
+    canViewWebAnalytics: isAdmin || (user?.permissions?.canViewWebAnalytics !== undefined ? user.permissions.canViewWebAnalytics : DEFAULT_PERMISSIONS.canViewWebAnalytics),
     canConfigureMarketingIntegrations: isAdmin || user?.permissions?.canConfigureMarketingIntegrations || false,
   };
 
