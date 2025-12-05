@@ -153,7 +153,8 @@ function CircularGauge({
   showTrend?: boolean;
   trendValue?: number;
 }) {
-  const percentage = Math.min((value / maxValue) * 100, 100);
+  const safeValue = value ?? 0;
+  const percentage = Math.min((safeValue / maxValue) * 100, 100);
   const strokeWidth = size * 0.1;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -189,7 +190,7 @@ function CircularGauge({
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-            {value.toFixed(0)}%
+            {safeValue.toFixed(0)}%
           </span>
           {showTrend && trendValue !== undefined && (
             <span className={`text-xs flex items-center gap-0.5 ${
@@ -266,7 +267,7 @@ function KPICard({
           <Icon size={24} />
         </div>
       </div>
-      {trend !== undefined && (
+      {trend !== undefined && trend !== null && !isNaN(trend) && (
         <div className="mt-3 flex items-center gap-2">
           <span className={`flex items-center gap-1 text-sm font-medium ${
             trend > 0 ? 'text-emerald-600 dark:text-emerald-400' :
@@ -274,7 +275,7 @@ function KPICard({
             'text-gray-500'
           }`}>
             {trend > 0 ? <TrendingUp size={16} /> : trend < 0 ? <TrendingDown size={16} /> : <Minus size={16} />}
-            {trend > 0 ? '+' : ''}{trend.toFixed(1)}%
+            {trend > 0 ? '+' : ''}{(trend ?? 0).toFixed(1)}%
           </span>
           {trendLabel && <span className="text-xs text-gray-500 dark:text-gray-400">{trendLabel}</span>}
         </div>
@@ -299,7 +300,9 @@ function ProgressBar({
   showPercentage?: boolean;
   height?: number;
 }) {
-  const percentage = maxValue > 0 ? Math.min((value / maxValue) * 100, 100) : 0;
+  const safeValue = value ?? 0;
+  const safeMax = maxValue ?? 1;
+  const percentage = safeMax > 0 ? Math.min((safeValue / safeMax) * 100, 100) : 0;
 
   return (
     <div>
