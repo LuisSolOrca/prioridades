@@ -238,7 +238,7 @@ function KPICard({
   };
 
   const formatValue = (val: number | undefined | null) => {
-    if (val === undefined || val === null) return '0';
+    if (val === undefined || val === null || isNaN(val)) return '0';
     switch (format) {
       case 'currency':
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(val);

@@ -73,29 +73,43 @@ export default function MarketingDashboardWidget() {
     }
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | undefined | null) => {
+    const safeValue = value ?? 0;
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: 'MXN',
       minimumFractionDigits: 0,
-    }).format(value);
+    }).format(safeValue);
   };
 
-  const formatNumber = (value: number) => {
+  const formatNumber = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) return '0';
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
     return value.toLocaleString();
   };
 
-  const getTrendIcon = (value: number) => {
-    if (value > 0) return <ArrowUpRight className="w-4 h-4 text-green-500" />;
-    if (value < 0) return <ArrowDownRight className="w-4 h-4 text-red-500" />;
+  const formatPercent = (value: number | undefined | null, decimals: number = 1) => {
+    const safeValue = value ?? 0;
+    return `${Math.abs(safeValue).toFixed(decimals)}%`;
+  };
+
+  const safeFixed = (value: number | undefined | null, decimals: number = 2) => {
+    const safeValue = value ?? 0;
+    return safeValue.toFixed(decimals);
+  };
+
+  const getTrendIcon = (value: number | undefined | null) => {
+    const v = value ?? 0;
+    if (v > 0) return <ArrowUpRight className="w-4 h-4 text-green-500" />;
+    if (v < 0) return <ArrowDownRight className="w-4 h-4 text-red-500" />;
     return <Minus className="w-4 h-4 text-gray-400" />;
   };
 
-  const getTrendColor = (value: number) => {
-    if (value > 0) return 'text-green-600 dark:text-green-400';
-    if (value < 0) return 'text-red-600 dark:text-red-400';
+  const getTrendColor = (value: number | undefined | null) => {
+    const v = value ?? 0;
+    if (v > 0) return 'text-green-600 dark:text-green-400';
+    if (v < 0) return 'text-red-600 dark:text-red-400';
     return 'text-gray-500';
   };
 
@@ -169,9 +183,9 @@ export default function MarketingDashboardWidget() {
             {formatCurrency(data.totalSpend)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Inversión</p>
-          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends.spendChange)}`}>
-            {getTrendIcon(data.trends.spendChange)}
-            {Math.abs(data.trends.spendChange).toFixed(1)}%
+          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends?.spendChange)}`}>
+            {getTrendIcon(data.trends?.spendChange)}
+            {formatPercent(data.trends?.spendChange)}
           </div>
         </div>
 
@@ -183,9 +197,9 @@ export default function MarketingDashboardWidget() {
             {formatNumber(data.totalImpressions)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Impresiones</p>
-          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends.impressionsChange)}`}>
-            {getTrendIcon(data.trends.impressionsChange)}
-            {Math.abs(data.trends.impressionsChange).toFixed(1)}%
+          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends?.impressionsChange)}`}>
+            {getTrendIcon(data.trends?.impressionsChange)}
+            {formatPercent(data.trends?.impressionsChange)}
           </div>
         </div>
 
@@ -197,9 +211,9 @@ export default function MarketingDashboardWidget() {
             {formatNumber(data.totalClicks)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Clicks</p>
-          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends.clicksChange)}`}>
-            {getTrendIcon(data.trends.clicksChange)}
-            {Math.abs(data.trends.clicksChange).toFixed(1)}%
+          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends?.clicksChange)}`}>
+            {getTrendIcon(data.trends?.clicksChange)}
+            {formatPercent(data.trends?.clicksChange)}
           </div>
         </div>
 
@@ -211,9 +225,9 @@ export default function MarketingDashboardWidget() {
             {formatNumber(data.totalConversions)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Conversiones</p>
-          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends.conversionsChange)}`}>
-            {getTrendIcon(data.trends.conversionsChange)}
-            {Math.abs(data.trends.conversionsChange).toFixed(1)}%
+          <div className={`flex items-center justify-center gap-1 text-xs ${getTrendColor(data.trends?.conversionsChange)}`}>
+            {getTrendIcon(data.trends?.conversionsChange)}
+            {formatPercent(data.trends?.conversionsChange)}
           </div>
         </div>
       </div>
@@ -222,7 +236,7 @@ export default function MarketingDashboardWidget() {
       <div className="grid grid-cols-3 gap-4 mb-6 py-4 border-y border-gray-100 dark:border-gray-700">
         <div className="text-center">
           <p className="text-lg font-bold text-gray-900 dark:text-white">
-            {(data.avgCtr * 100).toFixed(2)}%
+            {safeFixed((data.avgCtr ?? 0) * 100, 2)}%
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">CTR Promedio</p>
         </div>
@@ -234,7 +248,7 @@ export default function MarketingDashboardWidget() {
         </div>
         <div className="text-center">
           <p className="text-lg font-bold text-green-600 dark:text-green-400">
-            {data.roas.toFixed(2)}x
+            {safeFixed(data.roas, 2)}x
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">ROAS</p>
         </div>
