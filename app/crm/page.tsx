@@ -400,12 +400,13 @@ export default function CRMDashboard() {
     }
   };
 
-  const formatCurrency = (value: number, currency: string = 'MXN') => {
+  const formatCurrency = (value: number | undefined | null, currency: string = 'MXN') => {
+    const safeValue = value ?? 0;
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
-    }).format(value);
+    }).format(safeValue);
   };
 
   // Calcular métricas adicionales locales
