@@ -63,6 +63,16 @@ export const authOptions: NextAuthOptions = {
           canConfigureMarketingIntegrations: false,
         };
 
+        // Convertir permisos de Mongoose a objeto plano y remover _id
+        let userPerms: Record<string, any> = {};
+        if (user.permissions) {
+          const permsAny = user.permissions as any;
+          userPerms = typeof permsAny.toObject === 'function'
+            ? permsAny.toObject()
+            : { ...user.permissions };
+          delete userPerms._id;
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -71,7 +81,7 @@ export const authOptions: NextAuthOptions = {
           area: user.area,
           isAreaLeader: user.isAreaLeader,
           // Merge defaults con permisos guardados del usuario
-          permissions: { ...defaultPermissions, ...(user.permissions || {}) },
+          permissions: { ...defaultPermissions, ...userPerms },
         };
       }
     })

@@ -236,7 +236,8 @@ function KPICard({
     cyan: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400',
   };
 
-  const formatValue = (val: number) => {
+  const formatValue = (val: number | undefined | null) => {
+    if (val === undefined || val === null) return '0';
     switch (format) {
       case 'currency':
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(val);
