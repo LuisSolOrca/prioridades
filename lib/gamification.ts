@@ -633,23 +633,22 @@ export function getNextResetDate(): Date {
 
 /**
  * Calcula los puntos del mes actual para un usuario basándose en sus prioridades
- * Usa las últimas 4 semanas como período de cálculo (período móvil)
+ * Usa la fecha del último reset del leaderboard como punto de inicio
  */
 export async function calculateCurrentMonthPoints(userId: string) {
   try {
+    const settings = await SystemSettings.findOne();
     const now = new Date();
     let periodStart: Date;
 
-    // Usar siempre las últimas 4 semanas como período (período móvil)
-    // Esto garantiza que siempre haya datos relevantes en el leaderboard
-    const daysAgo = 28;
-    periodStart = new Date(now);
-    periodStart.setDate(periodStart.getDate() - daysAgo);
-
-    // Ajustar al lunes más cercano (inicio de semana)
-    const dayOfWeek = periodStart.getDay();
-    periodStart.setDate(periodStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    periodStart.setHours(0, 0, 0, 0);
+    if (settings?.lastLeaderboardReset) {
+      // Usar la fecha del último reset como inicio del período
+      periodStart = new Date(settings.lastLeaderboardReset);
+    } else {
+      // Fallback: usar el primer día del mes actual
+      periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      periodStart.setHours(0, 0, 0, 0);
+    }
 
     // Buscar prioridades cuya semana empiece desde el inicio del período
     const priorities = await Priority.find({
