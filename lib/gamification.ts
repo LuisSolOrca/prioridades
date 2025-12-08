@@ -639,15 +639,27 @@ export async function calculateCurrentMonthPoints(userId: string) {
   try {
     // Obtener la fecha del último reset del leaderboard
     const settings = await SystemSettings.findOne();
+    const now = new Date();
     let periodStart: Date;
 
     if (settings?.lastLeaderboardReset) {
-      // Usar la fecha del último reset como inicio del período
-      // Esta fecha ya viene como el próximo lunes a las 00:00:00
-      periodStart = new Date(settings.lastLeaderboardReset);
+      const lastReset = new Date(settings.lastLeaderboardReset);
+
+      // Si lastLeaderboardReset es una fecha futura (próximo lunes después del reset),
+      // significa que el período actual empezó desde esa fecha pero aún no ha llegado.
+      // En ese caso, usamos esa fecha pero solo si ya pasó, sino usamos el lunes anterior.
+      if (lastReset > now) {
+        // La fecha del reset es futura, usar el lunes de la semana actual
+        const dayOfWeek = now.getDay();
+        periodStart = new Date(now);
+        periodStart.setDate(periodStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+        periodStart.setHours(0, 0, 0, 0);
+      } else {
+        // La fecha del reset ya pasó, usarla como inicio del período
+        periodStart = lastReset;
+      }
     } else {
       // Fallback: usar 4 semanas atrás si no hay reset previo
-      const now = new Date();
       const daysAgo = 28;
       periodStart = new Date(now);
       periodStart.setDate(periodStart.getDate() - daysAgo);
