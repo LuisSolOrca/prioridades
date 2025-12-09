@@ -239,28 +239,28 @@ export default function CampaignsPage() {
         {/* Campaigns Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Campaña
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Plataforma
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Presupuesto
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
                     Gastado
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
                     Rendimiento
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
                     Acciones
                   </th>
                 </tr>
@@ -268,78 +268,81 @@ export default function CampaignsPage() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {campaigns.map((campaign) => (
                   <tr key={campaign._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">
                           {campaign.name}
                         </p>
                         {campaign.description && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
                             {campaign.description}
                           </p>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <span
-                        className="px-2 py-1 rounded text-xs text-white font-medium"
+                        className="px-2 py-1 rounded text-xs text-white font-medium whitespace-nowrap"
                         style={{ backgroundColor: PLATFORM_COLORS[campaign.platform] }}
                       >
                         {PLATFORM_NAMES[campaign.platform]}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[campaign.status]}`}>
+                    <td className="px-4 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${STATUS_COLORS[campaign.status]}`}>
                         {STATUS_NAMES[campaign.status]}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
+                    <td className="px-4 py-4 text-right text-gray-900 dark:text-white whitespace-nowrap">
                       {formatCurrency(campaign.budget, campaign.currency)}
                       <span className="text-xs text-gray-500 ml-1">
                         /{campaign.budgetType === 'DAILY' ? 'día' : 'total'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
+                    <td className="px-4 py-4 text-right text-gray-900 dark:text-white whitespace-nowrap hidden lg:table-cell">
                       {formatCurrency(campaign.spentAmount || 0, campaign.currency)}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-4 text-sm">
+                    <td className="px-4 py-4 text-right hidden xl:table-cell">
+                      <div className="flex items-center justify-end gap-3 text-sm">
                         <div className="text-center">
-                          <p className="font-medium text-gray-900 dark:text-white">
+                          <p className="font-medium text-gray-900 dark:text-white text-xs">
                             {(campaign.metrics?.impressions || 0).toLocaleString()}
                           </p>
                           <p className="text-xs text-gray-500">Impr.</p>
                         </div>
                         <div className="text-center">
-                          <p className="font-medium text-gray-900 dark:text-white">
+                          <p className="font-medium text-gray-900 dark:text-white text-xs">
                             {(campaign.metrics?.clicks || 0).toLocaleString()}
                           </p>
                           <p className="text-xs text-gray-500">Clicks</p>
                         </div>
                         <div className="text-center">
-                          <p className="font-medium text-gray-900 dark:text-white">
+                          <p className="font-medium text-gray-900 dark:text-white text-xs">
                             {(campaign.metrics?.ctr || 0).toFixed(2)}%
                           </p>
                           <p className="text-xs text-gray-500">CTR</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right relative">
+                    <td className="px-4 py-4 text-center relative">
                       <button
-                        onClick={() => setActionMenuId(actionMenuId === campaign._id ? null : campaign._id)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActionMenuId(actionMenuId === campaign._id ? null : campaign._id);
+                        }}
+                        className="inline-flex items-center justify-center w-10 h-10 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                       >
                         <MoreHorizontal className="w-5 h-5 text-gray-500" />
                       </button>
 
                       {actionMenuId === campaign._id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                        <div className="absolute right-4 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
                           <button
                             onClick={() => {
                               router.push(`/marketing/campaigns/${campaign._id}`);
                               setActionMenuId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg"
                           >
                             <Eye className="w-4 h-4" />
                             Ver detalles
@@ -349,7 +352,7 @@ export default function CampaignsPage() {
                               router.push(`/marketing/campaigns/${campaign._id}/edit`);
                               setActionMenuId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             <Edit className="w-4 h-4" />
                             Editar
@@ -359,7 +362,7 @@ export default function CampaignsPage() {
                               handleArchive(campaign._id);
                               setActionMenuId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 last:rounded-b-lg"
                           >
                             <Trash2 className="w-4 h-4" />
                             Archivar
