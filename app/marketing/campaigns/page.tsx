@@ -236,189 +236,149 @@ export default function CampaignsPage() {
           )}
         </div>
 
-        {/* Campaigns Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Campaña
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Plataforma
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Presupuesto
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
-                    Gastado
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell">
-                    Rendimiento
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {campaigns.map((campaign) => (
-                  <tr key={campaign._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-4 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {campaign.name}
-                        </p>
-                        {campaign.description && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
-                            {campaign.description}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className="px-2 py-1 rounded text-xs text-white font-medium whitespace-nowrap"
-                        style={{ backgroundColor: PLATFORM_COLORS[campaign.platform] }}
-                      >
-                        {PLATFORM_NAMES[campaign.platform]}
+        {/* Campaigns List */}
+        <div className="space-y-4">
+          {campaigns.map((campaign) => (
+            <div
+              key={campaign._id}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between gap-4">
+                {/* Campaign Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                      {campaign.name}
+                    </h3>
+                    <span
+                      className="px-2 py-0.5 rounded text-xs text-white font-medium"
+                      style={{ backgroundColor: PLATFORM_COLORS[campaign.platform] }}
+                    >
+                      {PLATFORM_NAMES[campaign.platform]}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[campaign.status]}`}>
+                      {STATUS_NAMES[campaign.status]}
+                    </span>
+                  </div>
+
+                  {campaign.description && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+                      {campaign.description}
+                    </p>
+                  )}
+
+                  {/* Stats Row */}
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-900 dark:text-white font-medium">
+                        {formatCurrency(campaign.budget, campaign.currency)}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${STATUS_COLORS[campaign.status]}`}>
-                        {STATUS_NAMES[campaign.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-right text-gray-900 dark:text-white whitespace-nowrap">
-                      {formatCurrency(campaign.budget, campaign.currency)}
-                      <span className="text-xs text-gray-500 ml-1">
+                      <span className="text-gray-500 text-xs">
                         /{campaign.budgetType === 'DAILY' ? 'día' : 'total'}
                       </span>
-                    </td>
-                    <td className="px-4 py-4 text-right text-gray-900 dark:text-white whitespace-nowrap hidden lg:table-cell">
-                      {formatCurrency(campaign.spentAmount || 0, campaign.currency)}
-                    </td>
-                    <td className="px-4 py-4 text-right hidden xl:table-cell">
-                      <div className="flex items-center justify-end gap-3 text-sm">
-                        <div className="text-center">
-                          <p className="font-medium text-gray-900 dark:text-white text-xs">
-                            {(campaign.metrics?.impressions || 0).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-gray-500">Impr.</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-medium text-gray-900 dark:text-white text-xs">
-                            {(campaign.metrics?.clicks || 0).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-gray-500">Clicks</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-medium text-gray-900 dark:text-white text-xs">
-                            {(campaign.metrics?.ctr || 0).toFixed(2)}%
-                          </p>
-                          <p className="text-xs text-gray-500">CTR</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-center relative">
+                    </div>
+                    <div className="text-gray-500 dark:text-gray-400">
+                      Gastado: <span className="text-gray-900 dark:text-white font-medium">{formatCurrency(campaign.spentAmount || 0, campaign.currency)}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400">
+                      <span>{(campaign.metrics?.impressions || 0).toLocaleString()} impr.</span>
+                      <span>{(campaign.metrics?.clicks || 0).toLocaleString()} clicks</span>
+                      <span>{(campaign.metrics?.ctr || 0).toFixed(2)}% CTR</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="relative flex-shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActionMenuId(actionMenuId === campaign._id ? null : campaign._id);
+                    }}
+                    className="inline-flex items-center justify-center w-10 h-10 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    <MoreHorizontal className="w-5 h-5 text-gray-500" />
+                  </button>
+
+                  {actionMenuId === campaign._id && (
+                    <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActionMenuId(actionMenuId === campaign._id ? null : campaign._id);
+                        onClick={() => {
+                          router.push(`/marketing/campaigns/${campaign._id}`);
+                          setActionMenuId(null);
                         }}
-                        className="inline-flex items-center justify-center w-10 h-10 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
                       >
-                        <MoreHorizontal className="w-5 h-5 text-gray-500" />
+                        <Eye className="w-4 h-4" />
+                        Ver detalles
                       </button>
-
-                      {actionMenuId === campaign._id && (
-                        <div className="absolute right-4 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
-                          <button
-                            onClick={() => {
-                              router.push(`/marketing/campaigns/${campaign._id}`);
-                              setActionMenuId(null);
-                            }}
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Ver detalles
-                          </button>
-                          <button
-                            onClick={() => {
-                              router.push(`/marketing/campaigns/${campaign._id}/edit`);
-                              setActionMenuId(null);
-                            }}
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleArchive(campaign._id);
-                              setActionMenuId(null);
-                            }}
-                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 last:rounded-b-lg"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Archivar
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-
-                {campaigns.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
-                      <div className="text-gray-500 dark:text-gray-400">
-                        <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg font-medium">No hay campañas</p>
-                        <p className="text-sm mt-1">Crea tu primera campaña para comenzar</p>
-                        <button
-                          onClick={() => router.push('/marketing/campaigns/new')}
-                          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                          Crear Campaña
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Mostrando {(pagination.page - 1) * 20 + 1} - {Math.min(pagination.page * 20, pagination.total)} de {pagination.total}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
-                  disabled={pagination.page === 1}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm disabled:opacity-50"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
-                  disabled={pagination.page >= pagination.totalPages}
-                  className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm disabled:opacity-50"
-                >
-                  Siguiente
-                </button>
+                      <button
+                        onClick={() => {
+                          router.push(`/marketing/campaigns/${campaign._id}/edit`);
+                          setActionMenuId(null);
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleArchive(campaign._id);
+                          setActionMenuId(null);
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-b-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Archivar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+          ))}
+
+          {campaigns.length === 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center">
+              <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
+              <p className="text-lg font-medium text-gray-900 dark:text-white">No hay campañas</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Crea tu primera campaña para comenzar</p>
+              <button
+                onClick={() => router.push('/marketing/campaigns/new')}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Crear Campaña
+              </button>
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Mostrando {(pagination.page - 1) * 20 + 1} - {Math.min(pagination.page * 20, pagination.total)} de {pagination.total}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+                disabled={pagination.page === 1}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+                disabled={pagination.page >= pagination.totalPages}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
