@@ -3,7 +3,13 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import MarketingCampaign from '@/models/MarketingCampaign';
+import User from '@/models/User';
 import mongoose from 'mongoose';
+
+// Importar modelos para que estén registrados antes del populate
+import '@/models/Deal';
+import '@/models/Client';
+import '@/models/Contact';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
